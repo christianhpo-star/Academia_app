@@ -1,0 +1,24 @@
+name: Validate FORJA
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate JavaScript syntax
+        run: |
+          node --check app.js
+          node --check data.js
+          node --check engine.js
+          node --check sw.js
+      - name: Validate manifest and deployed assets
+        run: python3 tests/check_assets.py
+      - name: Test progression rules
+        run: node --test tests/engine.test.cjs
