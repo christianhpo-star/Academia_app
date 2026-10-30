@@ -2,16 +2,18 @@
 
 Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de força, acompanhar a evolução das cargas e sugerir quando **manter, repetir ou aumentar** com cautela. Feito sob medida para uma rotina com musculação 5–6 vezes por semana, Muay Thai às segundas, quartas e sextas e meta inicial de 88,3 para 82 kg até 14/01/2027.
 
-## Funcionalidades da versão 1
+## Funcionalidades da versão 1.1
 
 - Histórico real por exercício, com carga (kg ou kg/halter), repetições e RIR (repetições em reserva) **por série**.
 - Separa séries de **aquecimento** das séries efetivas; inclui o **supino com halteres** como exemplo editável: aquecimento 20 kg, depois 22,5 / 25 / 25 kg por halter. **Não apresenta essas cargas como treino concluído**.
 - Sugestão explicável de progressão: exige **duas sessões consecutivas** atingindo a meta antes de recomendar aumento. No modo pirâmide compara a série efetiva mais pesada; com carga estável avalia as séries efetivas.
 - Regra conservadora para o **joelho**: sem aumento automático caso haja dor no exercício, dor no dia seguinte ou ausência dessas informações. Uso de joelheira não é considerado liberação de carga.
-- Divisão flexível de blocos **A (costas/bíceps), C (quadríceps), B (peito/tríceps), D (posteriores/glúteos)**. Ajustes para fadiga e dor; possibilidade de escolher qualquer bloco manualmente.
+- Divisão flexível de blocos **A (costas/bíceps), C (quadríceps), B (peito/tríceps), D (posteriores/glúteos)**. A fila considera cada bloco pendente até a sessão ser **salva**; escolher outra ordem não marca os treinos pulados como concluídos. Repetir um bloco já feito na rodada não remove os outros. Com fadiga alta ou dor no joelho, se não houver superiores pendentes, recomenda **recuperação**, sem apagar pernas da fila.
+- **Comparação série a série** na tela do treino: mostra a carga, as repetições, o tipo de série (aquecimento ou efetiva) e o RIR da sessão anterior. Destaca melhora de repetições com a mesma carga e aumento de carga com desempenho mantido.
+- **Salvamento automático de rascunho** no armazenamento local do aparelho: escreve após cada edição de carga, repetições, RIR, observações, dor, adição/remoção ou alteração do tipo de série. Se a página for atualizada ou o navegador encerrar, a sessão em andamento é recuperada. Navegar entre telas não a descarta; só o botão Cancelar, com confirmação, elimina o rascunho.
 - Edição de exercícios, séries, metas de repetições, incremento de carga, unidade e método de progressão; ativação/desativação de variações.
 - Peso corporal e gráfico de tendência rumo à data-alvo.
-- **Local-first**: dados armazenados via `localStorage` no navegador, sem servidor ou conta; exportação/importação JSON e exportação de séries CSV.
+- **Local-first**: histórico e rascunho armazenados via `localStorage` no navegador, sem servidor ou conta; exportação/importação JSON do histórico e exportação de séries CSV. O backup JSON atual **não inclui** o rascunho não finalizado.
 - **PWA offline** após primeiro acesso HTTPS (incluindo GitHub Pages).
 
 ## Executar
@@ -26,6 +28,10 @@ Abra `http://localhost:8000/`. Para testes do motor de sugestão:
 
 ```bash
 node --test tests/engine.test.cjs
+python3 tests/check_assets.py
+
+# Opcional: teste automatizado de interface (Playwright + Chromium)
+python3 tests/smoke_persistence.py
 ```
 
 ## Publicação no GitHub Pages
@@ -41,7 +47,7 @@ node --test tests/engine.test.cjs
 
 Este é um **diário de treino com regras auxiliares**, não prescrição médica, fisioterapêutica ou avaliação da segurança da articulação. Dor localizada abaixo da patela deve ser examinada se recorrente; não progrida agressivamente no leg press só porque uma joelheira compressiva reduziu a dor. Se houver dor forte, travamento, instabilidade ou inchaço, suspenda o exercício provocador e procure atendimento.
 
-Não inclua dados pessoais sensíveis no código-fonte ou em issues públicos. O repositório contém apenas um exemplo de rotina; registros pessoais de treinos **não vão para o GitHub**. Os dados ficam somente no aparelho. Se apagar os dados do navegador ou trocar de aparelho, será necessário restaurar um backup. A exportação JSON contém dados de treino e peso; armazene-o com cuidado.
+Não inclua dados pessoais sensíveis no código-fonte ou em issues públicos. O repositório contém apenas um exemplo de rotina; registros pessoais de treinos **não vão para o GitHub**. Os dados ficam somente neste navegador/aparelho. O salvamento automático não sincroniza dados entre celulares, não equivale a backup externo e pode ser perdido se limpar dados do site, usar modo anônimo ou se o navegador esgotar a capacidade de armazenamento. Se apagar os dados do navegador ou trocar de aparelho, será necessário restaurar um backup do histórico concluído. A exportação JSON contém dados de treino e peso; armazene-o com cuidado.
 
 ## Melhorias previstas
 

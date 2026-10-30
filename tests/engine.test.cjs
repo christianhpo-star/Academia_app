@@ -54,3 +54,66 @@ test('progresso de peso considera registro mais recente',()=>{
   const p=Engine.progress([{weight:88.3,date:'2026-10-30'},{weight:86,date:'2026-11-13'}],88.3,82);
   assert.equal(p.current,86);assert.equal(p.remaining,4);assert.ok(p.percent>0);
 });
+
+const done = (id, planId) => ({id:`p${id}`,planId,timestamp:`2026-11-${String(id).padStart(2,'0')}T16:00:00Z`,entries:[{id:'irrelevant',sets:[{load:30,reps:12,warmup:false}]}]});
+test('ao realizar perna antes de costas, costas permanece pendente e volta a ser recomendada',()=>{
+  const r=Engine.nextWorkout([done(1,'C')],'normal',0,Data.rotation);
+  assert.equal(r.id,'A');
+  assert.deepEqual(r.pending,['A','B','D']);
+  assert.deepEqual(r.completed,['C']);
+});
+test('repetir treino ja realizado nao remove outros blocos pendentes',()=>{
+  const r=Engine.nextWorkout([done(1,'C'),done(2,'C')],'normal',0,Data.rotation);
+  assert.equal(r.id,'A');
+  assert.deepEqual(r.pending,['A','B','D']);
+});
+test('pendentes seguem por toda a rodada, independente da ordem',()=>{
+  const r=Engine.nextWorkout([done(1,'C'),done(2,'B'),done(3,'A')],'normal',0,Data.rotation);
+  assert.equal(r.id,'D');
+  assert.deepEqual(r.pending,['D']);
+  assert.deepEqual(r.completed,['A','C','B']);
+});
+test('rodada completa cria rodada nova e evita repetir bloco anterior imediatamente',()=>{
+  const sessions=[done(1,'C'),done(2,'B'),done(3,'D'),done(4,'A')];
+  const r=Engine.nextWorkout(sessions,'normal',0,Data.rotation);
+  assert.equal(r.completedRounds,1);
+  assert.deepEqual(r.pending,Data.rotation);
+  assert.equal(r.id,'C');
+});
+test('sem superiores pendentes e pernas com dor, a sugestao eh recuperar',()=>{
+  const sessions=[done(1,'A'),done(2,'B')];
+  const r=Engine.nextWorkout(sessions,'alta',1,Data.rotation);
+  assert.equal(r.id,null);
+  assert.equal(r.rest,true);
+  assert.deepEqual(r.pending,['C','D']);
+});
+test('dor redireciona para superiores pendentes, nao recupera bloco ja feito',()=>{
+  const r=Engine.nextWorkout([done(1,'A')],'alta',1,Data.rotation);
+  assert.equal(r.id,'B');
+  assert.deepEqual(r.pending,['C','B','D']);
+});
+test('comparacao da mesma carga reconhece mais repeticoes',()=>{
+  const prev={load:25,reps:10,warmup:false};
+  const now={load:25,reps:12,warmup:false};
+  const c=Engine.compareSet(prev,now);
+  assert.equal(c.kind,'good');
+  assert.match(c.label,/\+2/);
+});
+test('comparacao nunca confunde aquecimento e series efetivas',()=>{
+  const prev={load:20,reps:12,warmup:true};
+  const now={load:25,reps:12,warmup:false};
+  const c=Engine.compareSet(prev,now);
+  assert.equal(c.kind,'neutral');
+  assert.match(c.label,/Tipo/);
+});
+test('repeticoes nao informadas nao sao tratadas como progresso',()=>{
+  const c=Engine.compareSet({load:25,reps:12,warmup:false},{load:27.5,reps:'',warmup:false});
+  assert.equal(c.kind,'none');
+});
+
+test('registro vazio importado nao marca bloco como concluido',()=>{
+  const empty={planId:'C',timestamp:'2026-11-03T15:00:00Z',entries:[]};
+  const r=Engine.nextWorkout([empty],'normal',null,Data.rotation);
+  assert.equal(r.id,'A');
+  assert.deepEqual(r.pending,Data.rotation);
+});

@@ -82,17 +82,81 @@
       next: candidate,
       explanation: `Duas sessões consecutivas no topo da faixa (${ex.high} rep.) com esforço controlado${ex.knee ? ' e sem sintomas relatados' : ''}. Aumente somente se a execução seguir boa; comece na parte baixa da faixa.` };
   }
-  function nextWorkout(sessions, fatigue, kneePain, rotation = ['A', 'C', 'B', 'D']) {
-    const last = [...(sessions || [])].sort((a,b)=>(b.timestamp || '').localeCompare(a.timestamp || ''))[0];
-    const nextIndex = last && rotation.includes(last.planId) ? (rotation.indexOf(last.planId) + 1) % rotation.length : 0;
-    let index = nextIndex;
-    const legBlocked = fatigue === 'alta' || Number(kneePain) > 0;
-    if (legBlocked && ['C','D'].includes(rotation[index])) {
-      const upper = rotation.find((id, i) => i !== index && ['A','B'].includes(id) && id !== last?.planId);
-      if (upper) return { id: upper, reason: 'Pernas sensíveis: antecipe superiores ou descanse; retome o bloco de pernas quando recuperar.', modified: true };
-      return { id: rotation[index], reason: 'Priorize descanso se não houver grupo muscular recuperado.', modified: true };
+  // A rodada só termina quando os quatro blocos distintos foram concluídos.
+  // Repetir um bloco já feito não apaga os blocos ainda pendentes.
+  function pendingWorkouts(sessions, rotation = ['A', 'C', 'B', 'D']) {
+    const order = [...new Set(rotation)];
+    const done = new Set();
+    let completedRounds = 0;
+    const ordered = [...(sessions || [])]
+      .filter(s => order.includes(s.planId) && (s.entries || []).some(en => workSets(en).length))
+      .sort((a,b) => (a.timestamp || '').localeCompare(b.timestamp || ''));
+    for (const session of ordered) {
+      if (done.has(session.planId)) continue;
+      done.add(session.planId);
+      if (done.size === order.length) {
+        completedRounds++;
+        done.clear();
+      }
     }
-    return { id: rotation[index], reason: last ? 'Sequência alternada: superiores e inferiores.' : 'Comece pela sua divisão e ajuste conforme a recuperação.', modified: false };
+    return {
+      pending: order.filter(id => !done.has(id)),
+      completed: order.filter(id => done.has(id)),
+      completedRounds,
+    };
+  }
+  function nextWorkout(sessions, fatigue, kneePain, rotation = ['A', 'C', 'B', 'D']) {
+    const queue = pendingWorkouts(sessions, rotation);
+    const last = [...(sessions || [])]
+      .filter(s => rotation.includes(s.planId) && (s.entries || []).some(en => workSets(en).length))
+      .sort((a,b) => (b.timestamp || '').localeCompare(a.timestamp || ''))[0];
+    const legBlocked = fatigue === 'alta' || (kneePain != null && Number(kneePain) > 0);
+    let choice = queue.pending.find(id => id !== last?.planId) || queue.pending[0];
+    let modified = choice !== queue.pending[0];
+    if (legBlocked && ['C','D'].includes(choice)) {
+      const other = queue.pending.find(id => ['A','B'].includes(id) && id !== last?.planId);
+      if (!other) return {
+        ...queue, id: null, rest: true, modified: true,
+        reason: 'Pernas sensíveis e nenhum treino de superiores pendente: priorize a recuperação. Os blocos de pernas continuam na fila.',
+      };
+      choice = other;
+      modified = true;
+    }
+    return {
+      ...queue, id: choice, rest: false, modified,
+      reason: legBlocked && modified
+        ? 'Fadiga ou dor nas pernas: antecipe um treino de superiores ainda pendente. Os demais continuam na fila.'
+        : queue.completed.length > 0
+          ? 'Próximo bloco pendente desta rodada. Você pode mudar a ordem sem perder os outros.'
+          : queue.completedRounds > 0
+            ? 'Rodada completa! Vamos começar uma nova sequência, respeitando sua recuperação.'
+            : 'Inicie pelo bloco sugerido ou escolha outro. Os que não fizer continuam pendentes.',
+    };
+  }
+  // Compara a mesma posição de série, inclusive diferenciando aquecimento de série efetiva.
+  function compareSet(previous, current) {
+    if (!previous) return { kind:'none', label:'Primeiro registro desta série.' };
+    if (!!previous.warmup !== !!current?.warmup)
+      return { kind:'neutral', label:'Tipo de série diferente: comparação não aplicável.' };
+    const load = cleanNumber(current?.load), reps = cleanNumber(current?.reps);
+    const oldLoad = cleanNumber(previous.load), oldReps = cleanNumber(previous.reps);
+    if (load === null || reps === null || reps < 1)
+      return { kind:'none', label:'Registre carga e repetições para comparar.' };
+    if (oldLoad === null || oldReps === null)
+      return { kind:'none', label:'Não há valores anteriores comparáveis.' };
+    if (load > oldLoad) return {
+      kind: reps >= oldReps ? 'good' : 'neutral',
+      label: reps >= oldReps
+        ? `Carga +${formatWeight(roundWeight(load - oldLoad))} kg mantendo ou superando as repetições.`
+        : 'Carga maior com menos repetições: avalie técnica e esforço.',
+    };
+    if (load === oldLoad && reps > oldReps)
+      return {kind:'good',label:`+${reps - oldReps} repetição(ões) com a mesma carga!`};
+    if (load === oldLoad && reps === oldReps)
+      return {kind:'neutral',label:'Carga e repetições mantidas.'};
+    if (load === oldLoad)
+      return {kind:'neutral',label:'Menos repetições hoje: observe recuperação e fadiga.'};
+    return {kind:'neutral',label:'Carga reduzida hoje: ajuste conforme sua recuperação.'};
   }
   function progress(weights, start, goal) {
     const latest = [...(weights || [])].sort((a,b)=> (b.date || '').localeCompare(a.date || ''))[0];
@@ -102,7 +166,7 @@
     return { current, lost: roundWeight(lost), remaining: roundWeight(current - Number(goal)),
       percent: total > 0 ? Math.max(0, Math.min(100, Math.round(lost / total * 100))) : 0 };
   }
-  const api = { workSets, historyOf, topSet, cleanNumber, formatWeight, successful, kneeSafe, recommend, nextWorkout, progress };
+  const api = { workSets, historyOf, topSet, cleanNumber, formatWeight, successful, kneeSafe, recommend, pendingWorkouts, nextWorkout, compareSet, progress };
   root.AcademiaEngine = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -3,6 +3,7 @@
   const DATA = window.AcademiaData;
   const E = window.AcademiaEngine;
   const KEY = 'forja.academia.v1';
+  const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const fmt = E.formatWeight;
   const today = () => {
@@ -48,9 +49,74 @@
         ['A','B','C','D'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
         Number(x.high)>=Number(x.low) && Number(x.high)<=50 && Number(x.step)>0);
   }
+  function loadDraft(exercises) {
+    try {
+      const raw = localStorage.getItem(DRAFT_KEY);
+      if (!raw) return null;
+      const record = JSON.parse(raw);
+      const draft = record?.draft;
+      if (record.version !== 1 || !draft || !DATA.rotation.includes(draft.planId) ||
+          !draft.entries || typeof draft.entries !== 'object' || Array.isArray(draft.entries) ||
+          !Object.entries(draft.entries).every(([key, en]) => en && en.id === key &&
+            exercises.some(ex => ex.id === key) && Array.isArray(en.sets) && en.sets.length > 0 &&
+            en.sets.length <= 12 && en.sets.every(set => set && typeof set === 'object')))
+        throw new Error('Rascunho inválido');
+      return {draft, savedAt:record.savedAt};
+    } catch (err) {
+      console.warn('Rascunho não pôde ser recuperado; o histórico salvo foi preservado.', err);
+      return null;
+    }
+  }
   let state = load();
-  const ui = { tab:'home', plan:'A', editor:null, draft:null };
+  const recoveredDraft = loadDraft(state.exercises);
+  const ui = {
+    tab: recoveredDraft ? 'plans' : 'home',
+    plan: recoveredDraft?.draft.planId || 'A', editor:null,
+    draft: recoveredDraft?.draft || null,
+    recovered: Boolean(recoveredDraft),
+    draftSavedAt: recoveredDraft?.savedAt || null,
+    draftSaveOk: Boolean(recoveredDraft),
+  };
   let toastTimeout;
+  function draftStatusText() {
+    if (!ui.draftSaveOk) return 'Salvamento automático indisponível: não feche a página.';
+    const date = ui.draftSavedAt ? new Date(ui.draftSavedAt) : null;
+    const time = date && !Number.isNaN(date.getTime())
+      ? date.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'agora';
+    return `Rascunho salvo neste aparelho às ${time}.`;
+  }
+  function updateDraftIndicator() {
+    const el = document.getElementById('draft-status');
+    if (el) {
+      el.textContent = draftStatusText();
+      el.classList.toggle('save-error', !ui.draftSaveOk);
+    }
+  }
+  function persistDraft() {
+    if (!ui.draft) return false;
+    const savedAt = new Date().toISOString();
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify({version:1, savedAt, draft:ui.draft}));
+      ui.draftSavedAt = savedAt;
+      ui.draftSaveOk = true;
+      ui.recovered = false;
+      updateDraftIndicator();
+      return true;
+    } catch (err) {
+      console.error('Falha no salvamento automático', err);
+      ui.draftSaveOk = false;
+      updateDraftIndicator();
+      return false;
+    }
+  }
+  function clearDraft() {
+    try { localStorage.removeItem(DRAFT_KEY); }
+    catch (err) { console.warn('Não foi possível limpar o rascunho local.', err); }
+    ui.draft = null;
+    ui.draftSavedAt = null;
+    ui.recovered = false;
+    ui.draftSaveOk = false;
+  }
   function save() {
     try { localStorage.setItem(KEY,JSON.stringify(state)); return true; }
     catch (err) { notify('Armazenamento indisponível. Exporte um backup antes de sair.'); return false; }
@@ -75,7 +141,7 @@
   const tag = (name, className='') => `<span class="pill ${className}">${esc(name)}</span>`;
   function render() {
     const main = document.getElementById('screen');
-    main.innerHTML = ui.editor ? renderEditor() : ui.draft ? renderTraining() :
+    main.innerHTML = ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() :
       ui.tab === 'progress' ? renderProgress() : ui.tab === 'history' ? renderHistory() : renderSettings();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
@@ -96,10 +162,26 @@
       <button class="primary full mt-12" type="submit">Salvar peso</button>
     </form>`;
   }
+  function renderQueue(queue) {
+    return `<section class="queue-panel" aria-label="Treinos pendentes da rodada">
+      <div class="row-between"><strong>Rodada ${queue.completedRounds + 1}</strong><span class="tiny muted">${queue.completed.length} de ${DATA.rotation.length} blocos concluídos</span></div>
+      <div class="queue-chips">${DATA.rotation.map(id => {
+        const pending = queue.pending.includes(id);
+        return `<span class="queue-chip ${pending?'pending':'done'}">${pending?'◦':'✓'} ${esc(id)} · ${esc(planFor(id).title.split(' + ')[0])}${pending?'':' · feito'}</span>`;
+      }).join('')}</div>
+      <p class="tiny muted">Trocar a ordem não apaga os pendentes; repetir um bloco não conclui os demais.</p>
+    </section>`;
+  }
+  function resumeBanner() {
+    if (!ui.draft) return '';
+    return `<div class="callout good"><strong>Você tem um treino em andamento.</strong>
+      <p class="small mb-8">${esc(planFor(ui.draft.planId).title)} · ${esc(draftStatusText())}</p>
+      <button class="button-inline" data-action="resume">Continuar treino salvo</button></div>`;
+  }
   function renderHome() {
     const goal = E.progress(state.weights,state.settings.startWeight,state.settings.targetWeight);
     const left = dayGap(today(),state.settings.goalDate);
-    const next = getNext(), plan = planFor(next.id);
+    const next = getNext(), plan = next.id ? planFor(next.id) : null;
     const pending = dueKnee();
     const last = latestSessions()[0];
     const lastTop = state.exercises.map(x=>({x,r:E.recommend(x,state.sessions)}))
@@ -113,13 +195,15 @@
         <div class="progress-legend"><span>${goal.percent}% do percurso</span><span>${goal.remaining>0?`${fmt(goal.remaining)} kg até a meta`: 'Meta de peso atingida'}</span></div>
       </section>
       <div class="kpi-row"><div class="kpi"><strong>${state.sessions.length}</strong><span>treinos salvos</span></div><div class="kpi"><strong>${goal.lost>0?'−':''}${fmt(Math.abs(goal.lost))}</strong><span>kg desde o início</span></div><div class="kpi"><strong>14/01</strong><span>meta de 2027</span></div></div>
+      ${resumeBanner()}
       ${pending.length?`<div class="callout warn"><strong>Cheque o joelho no dia seguinte.</strong> Há ${pending.length} treino(s) de pernas aguardando registro. <button class="button-inline" data-action="navigate" data-to="history">Registrar agora</button></div>`:''}
-      <div class="section-row"><h2 class="section-title">Seu próximo treino</h2>${tag(`Bloco ${next.id}`,'green')}</div>
-      <section class="card"><div class="card-row"><div><h3>${esc(plan.title)}</h3><p>${esc(plan.subtitle)}</p></div><span class="rounded-emoji" aria-hidden="true">${plan.type==='upper'?'↗':'⌁'}</span></div>
+      <div class="section-row"><h2 class="section-title">Seu próximo treino</h2>${tag(next.rest?'Recuperação':`Bloco ${next.id}`,'green')}</div>
+      <section class="card"><div class="card-row"><div><h3>${plan?esc(plan.title):'Recuperação antes do próximo bloco'}</h3><p>${plan?esc(plan.subtitle):'Não há bloco de superiores pendente e liberado pela recuperação atual.'}</p></div><span class="rounded-emoji" aria-hidden="true">${plan?.type==='upper'?'↗':'⌁'}</span></div>
         <p class="bodycopy mt-12">${esc(next.reason)}</p>
+        ${renderQueue(next)}
         <div class="field-row mt-12"><div class="field"><label for="fatigue-home">Fadiga das pernas</label><select id="fatigue-home" data-setting="fatigue"><option value="normal" ${state.settings.fatigue==='normal'?'selected':''}>Normal</option><option value="moderada" ${state.settings.fatigue==='moderada'?'selected':''}>Moderada</option><option value="alta" ${state.settings.fatigue==='alta'?'selected':''}>Alta</option></select></div>
         <div class="field"><label for="knee-home">Dor no joelho agora</label><select id="knee-home" data-setting="kneePain">${painOptions(state.settings.kneePain)}</select></div></div>
-        <button class="primary full mt-12" data-action="start" data-plan="${next.id}">Iniciar ${esc(plan.title)}</button>
+        ${plan?`<button class="primary full mt-12" data-action="start" data-plan="${next.id}">Iniciar ${esc(plan.title)}</button>`:''}
         <button class="button-inline mt-8" data-action="navigate" data-to="plans">Escolher outro bloco</button>
       </section>
       ${last?`<div class="section-row"><h2 class="section-title">Última atividade</h2><span class="tiny muted">${dateBR(last.day)}</span></div><div class="card"><strong>${esc(planFor(last.planId).title)}</strong><p class="small muted mt-8">${last.entries.length} exercícios registrados · ${esc(last.energy||'Esforço não informado')}</p></div>`:''}
@@ -134,7 +218,9 @@
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
     const all=state.exercises.filter(x=>x.group===ui.plan);
-    return `${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D, alternando membros superiores e inferiores. Adapte a ordem conforme a fadiga.')}
+    return `${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D. Cada bloco realizado sai da fila; os outros continuam pendentes.')}
+      ${resumeBanner()}
+      ${renderQueue(next)}
       <div class="tabs" role="group" aria-label="Escolher grupo de treino">${DATA.plans.map(plan=>`<button class="tab-chip ${ui.plan===plan.id?'selected':''}" data-action="select-plan" data-plan="${plan.id}">${plan.id} · ${esc(plan.title.split(' ')[0])}</button>`).join('')}</div>
       <section class="workout-banner"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><p>${esc(p.subtitle)}</p><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button></section>
       <div class="section-row"><h2 class="section-title">Exercícios do bloco</h2><small>${all.filter(x=>x.active).length} ativos</small></div>
@@ -152,18 +238,23 @@
     return Array.from({length:ex.sets},()=>({load:'',reps:'',rir:'',warmup:false}));
   }
   function startWorkout(id) {
-    const chosen=planFor(id);
-    if(!chosen) return;
-    ui.plan=chosen.id;
+    if (!DATA.rotation.includes(id)) return;
+    if (ui.draft && !confirm('Existe um treino em andamento. Descartar esse rascunho e começar outro?')) return;
+    if (ui.draft) clearDraft();
+    ui.plan=id;
     ui.tab='plans';ui.editor=null;
     ui.draft={planId:id,energy:'normal',notes:'',entries:{}};
     currentExercises(id).forEach(ex => {ui.draft.entries[ex.id]={id:ex.id,sets:seedSets(ex),pain:''};});
+    persistDraft();
     render();window.scrollTo(0,0);
   }
   function renderTraining() {
     const p=planFor(ui.draft.planId);
     const entries=ui.draft.entries;
-    return `${headline('Sessão em andamento',p.title,'Anote o que realizou. As cargas preenchidas são referência; repetições e RIR devem ser informados após cada série.')}
+    return `${headline('Sessão em andamento',p.title,'As cargas preenchidas são referência; registre repetições e RIR após cada série.')}
+      <div class="callout ${ui.draftSaveOk?'good':'warn'}"><strong>${ui.recovered?'Treino recuperado após interrupção.':'Salvamento automático ativo.'}</strong>
+        <span class="draft-status ${ui.draftSaveOk?'':'save-error'}" id="draft-status" role="status">${esc(draftStatusText())}</span>
+        <p class="small mb-0">Cada edição é salva neste navegador. Você pode sair desta tela e retomar o treino.</p></div>
       <div class="callout">${p.type==='lower'?'Treino de pernas: registre dor no joelho durante os exercícios e no dia seguinte. Se doer, não aumente a carga.':'Carga por halter significa o peso de cada halter, não a soma do par.'}</div>
       ${Object.values(entries).map(en=>renderExercise(en)).join('')}
       <section class="card"><h2 class="section-title">Finalizar sessão</h2><div class="field mt-12"><label for="session-energy">Como foi a sessão?</label>
@@ -171,8 +262,24 @@
       <div class="field mt-12"><label for="session-notes">Observações (opcional)</label><textarea id="session-notes" data-draft-meta="notes" placeholder="Ex.: sono, dor, execução, Muay Thai no mesmo dia">${esc(ui.draft.notes)}</textarea></div></section>
       <div class="training-controls"><div class="btnrow"><button class="primary" style="flex:2" data-action="finish">Salvar treino</button><button class="ghost" style="flex:1" data-action="cancel">Cancelar</button></div></div>`;
   }
+  function setComparisonText(previous, current, ex) {
+    if (!previous) return `<span class="previous-set">Sem registro anterior desta série.</span>`;
+    const previousText = `${fmt(previous.load)} ${ex.unit} × ${previous.reps} rep. · ${previous.warmup?'aquecimento':'efetiva'}${previous.rir == null?'':` · RIR ${previous.rir}`}`;
+    const delta = E.compareSet(previous, current);
+    return `<span class="previous-set">Anterior: <strong>${esc(previousText)}</strong></span>
+      <span class="set-delta ${esc(delta.kind)}">${esc(delta.label)}</span>`;
+  }
+  function updateSetComparison(exId, index) {
+    const en = ui.draft?.entries[exId], ex = exerciseFor(exId);
+    if (!en || !ex) return;
+    const cell = [...document.querySelectorAll('.set-history')]
+      .find(node => node.dataset.ex === exId && Number(node.dataset.index) === index);
+    if (!cell) return;
+    const previous = history(exId)[0]?.entry.sets[index];
+    cell.innerHTML = setComparisonText(previous, en.sets[index], ex);
+  }
   function renderExercise(en) {
-    const ex=exerciseFor(en.id), reco=E.recommend(ex,state.sessions), hasData=history(ex.id).length>0;
+    const ex=exerciseFor(en.id), reco=E.recommend(ex,state.sessions), previousEntry=history(ex.id)[0]?.entry, hasData=!!previousEntry;
     const cls=reco.level==='protect'?'protect':['hold','confirm'].includes(reco.level)?'warn':'';
     return `<section class="exercise-card" data-exercise="${esc(ex.id)}">
       <div class="card-row"><div><h3>${esc(ex.name)}</h3><p class="small muted mt-8">Meta: ${ex.low}–${ex.high} rep. · ajuste de ${fmt(ex.step)} ${esc(ex.unit)}</p></div>${tag(ex.mode==='pyramid'?'Pirâmide':'Séries','')}</div>
@@ -183,7 +290,8 @@
       ${en.sets.map((set,i)=>`<div class="cell-label">${i+1}</div><button class="button-inline set-type ${set.warmup?'warmup':'work'}" data-action="toggle-warmup" data-ex="${esc(ex.id)}" data-index="${i}" title="Alternar entre aquecimento e série efetiva">${set.warmup?'Aquec.':'Efetiva'}</button>
       <input aria-label="Série ${i+1}, carga ${esc(ex.unit)} em ${esc(ex.name)}" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="load" value="${esc(set.load)}" />
       <input aria-label="Série ${i+1}, repetições em ${esc(ex.name)}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
-      <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />`).join('')}</div>
+      <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />
+      <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex)}</div>`).join('')}</div>
       <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button></div>
       ${ex.knee?`<div class="field mt-12"><label for="pain-${esc(ex.id)}">Dor no joelho durante o exercício (0–5+)</label><select id="pain-${esc(ex.id)}" data-ex-pain="${esc(ex.id)}" required>${painOptions(en.pain)}</select><span class="field-help">Informe 0 quando não sentiu dor. Este registro é necessário para salvar uma série efetiva deste exercício.</span></div>`:''}
     </section>`;
@@ -223,7 +331,10 @@
         return `<article class="card history-card"><div class="card-row"><div><strong class="session-date">${esc(planFor(session.planId).title)}</strong><p class="small muted mt-8">${dateBR(session.day)} · ${session.entries.length} exercícios · ${esc(session.energy||'Esforço não informado')}</p></div>${tag(`Bloco ${session.planId}`,'green')}</div>
         <ul class="mini-list">${session.entries.map(en=>{
           const ex=exerciseFor(en.id), top=E.topSet(en);
-          return `<li><div><strong>${esc(ex?.name||en.id)}</strong><br><span>${E.workSets(en).length} séries efetivas${en.pain!=null?' · dor joelho '+en.pain+'/5+':''}</span></div><div class="text-right"><strong>${top?`${fmt(top.load)} ${esc(ex?.unit||'kg')}`:'—'}</strong><br><span>${top?`${top.reps} rep.`:''}</span></div></li>`;
+          return `<li><div class="history-exercise"><strong>${esc(ex?.name||en.id)}</strong><br><span>${E.workSets(en).length} séries efetivas${en.pain!=null?' · dor joelho '+en.pain+'/5+':''}</span>
+            <details class="history-details"><summary>Ver todas as séries</summary><ol>${en.sets.map(set=>
+              `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${fmt(set.load)} ${esc(ex?.unit||'kg')} × ${set.reps} rep.${set.rir == null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
+          </div><div class="text-right"><strong>${top?`${fmt(top.load)} ${esc(ex?.unit||'kg')}`:'—'}</strong><br><span>${top?`${top.reps} rep.`:''}</span></div></li>`;
         }).join('')}</ul>
         ${session.notes?`<p class="small muted">Observações: ${esc(session.notes)}</p>`:''}
         ${needsDay?(canAssess?`<div class="callout warn"><strong>Como ficou o joelho no dia seguinte?</strong><div class="field-row mt-8"><div class="field"><label for="after-${esc(session.id)}">Dor após 24 h</label><select id="after-${esc(session.id)}" data-after-day="${esc(session.id)}">${painOptions('')}</select></div><div style="display:flex;align-items:end"><button class="secondary full" data-action="save-knee" data-id="${esc(session.id)}">Salvar</button></div></div></div>`:
@@ -268,13 +379,17 @@
   function collectDraft(event) {
     const el=event.target;
     if(!ui.draft) return;
-    if(el.dataset.draftMeta) {ui.draft[el.dataset.draftMeta]=el.value;return;}
+    if(el.dataset.draftMeta) {ui.draft[el.dataset.draftMeta]=el.value;persistDraft();return;}
     if(el.dataset.exPain && ui.draft.entries[el.dataset.exPain]) {
-      ui.draft.entries[el.dataset.exPain].pain=el.value;return;
+      ui.draft.entries[el.dataset.exPain].pain=el.value;persistDraft();return;
     }
     if(el.dataset.ex && el.dataset.field && el.dataset.index !== undefined) {
       const row=ui.draft.entries[el.dataset.ex]?.sets[Number(el.dataset.index)];
-      if(row) row[el.dataset.field]=el.value;
+      if(row) {
+        row[el.dataset.field]=el.value;
+        persistDraft();
+        updateSetComparison(el.dataset.ex, Number(el.dataset.index));
+      }
     }
   }
   function setWeight(form) {
@@ -326,9 +441,13 @@
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
       timestamp:now.toISOString(),day:today(),entries:result,kneeNextDay:null,
       energy:ui.draft.energy,notes:ui.draft.notes.trim().slice(0,1000)});
+    if (!save()) {
+      state.sessions.pop();
+      return notify('Não foi possível salvar o histórico. O rascunho foi mantido; não feche esta página.');
+    }
     const discomfort=result.some(en=>en.pain!==null && en.pain>0);
-    ui.draft=null;ui.tab='history';save();render();window.scrollTo(0,0);
-    notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':'Treino salvo. Histórico e sugestões atualizados.');
+    clearDraft();ui.tab='history';render();window.scrollTo(0,0);
+    notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':'Treino salvo. Histórico e treinos pendentes atualizados.');
   }
   function saveKnee(id) {
     const session=state.sessions.find(s=>s.id===id);
@@ -361,7 +480,10 @@
       const parsed=JSON.parse(await file.text());
       if(!validState(parsed))throw new Error('Estrutura incompatível');
       if(!confirm('Importar este backup substitui os registros salvos neste aparelho. Continuar?')) return;
-      state=parsed;ui.editor=null;ui.draft=null;ui.tab='home';save();render();notify('Backup importado com sucesso.');
+      const oldState=state;
+      state=parsed;
+      if (!save()) {state=oldState;return notify('Importação não concluída: falha ao salvar o histórico.');}
+      clearDraft();ui.editor=null;ui.tab='home';render();notify('Backup importado com sucesso.');
     }catch(err){notify('Não foi possível importar: verifique se é um backup FORJA válido.');}
     document.getElementById('import-file').value='';
   }
@@ -370,18 +492,19 @@
     if(action==='navigate') {ui.tab=btn.dataset.to;ui.editor=null;render();window.scrollTo(0,0);}
     else if(action==='select-plan') {ui.plan=btn.dataset.plan;render();}
     else if(action==='start') startWorkout(btn.dataset.plan);
-    else if(action==='add-set') {const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length<12){en.sets.push({load:'',reps:'',rir:'',warmup:false});render();}}
-    else if(action==='remove-set'){const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length>1){en.sets.pop();render();}}
-    else if(action==='toggle-warmup'){const set=ui.draft?.entries[btn.dataset.ex]?.sets[Number(btn.dataset.index)];if(set){set.warmup=!set.warmup;render();}}
+    else if(action==='add-set') {const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length<12){en.sets.push({load:'',reps:'',rir:'',warmup:false});persistDraft();render();}}
+    else if(action==='remove-set'){const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length>1){en.sets.pop();persistDraft();render();}}
+    else if(action==='toggle-warmup'){const set=ui.draft?.entries[btn.dataset.ex]?.sets[Number(btn.dataset.index)];if(set){set.warmup=!set.warmup;persistDraft();render();}}
     else if(action==='apply-reco'){
       const ex=exerciseFor(btn.dataset.ex), en=ui.draft?.entries[btn.dataset.ex], rec=E.recommend(ex,state.sessions);
       if(en&&rec.level==='increase'){
         const work=en.sets.filter(s=>!s.warmup);const heaviest=work.reduce((best,s)=> Number(s.load)>=Number(best?.load??-1)?s:best,null);
-        if(heaviest) {heaviest.load=rec.next;render();notify('Carga sugerida aplicada à série mais pesada. Ajuste conforme sua execução.');}
+        if(heaviest) {heaviest.load=rec.next;persistDraft();render();notify('Carga sugerida aplicada à série mais pesada. Ajuste conforme sua execução.');}
       }
     }
     else if(action==='finish')finishWorkout();
-    else if(action==='cancel'){if(confirm('Descartar o treino não salvo?')){ui.draft=null;render();}}
+    else if(action==='resume'){if(ui.draft){ui.tab='plans';ui.plan=ui.draft.planId;render();window.scrollTo(0,0);}}
+    else if(action==='cancel'){if(confirm('Descartar o treino em andamento e apagar seu rascunho salvo neste aparelho?')){clearDraft();render();}}
     else if(action==='edit-ex'){ui.editor={id:btn.dataset.ex};render();window.scrollTo(0,0);}
     else if(action==='add-ex'){ui.editor={id:null,group:btn.dataset.plan};render();window.scrollTo(0,0);}
     else if(action==='exit-editor'){ui.editor=null;render();}
@@ -391,20 +514,20 @@
     else if(action==='import-json')document.getElementById('import-file').click();
     else if(action==='reset'){
       if(confirm('Apagar permanentemente todos os registros deste aparelho? Exporte um backup antes de continuar.')){
-        state=initial();ui.draft=null;ui.editor=null;ui.tab='home';save();render();notify('Registros locais redefinidos.');
+        state=initial();clearDraft();ui.editor=null;ui.tab='home';save();render();notify('Registros locais redefinidos.');
       }
     }
   }
   document.getElementById('nav').addEventListener('click',event=>{
     const btn=event.target.closest('[data-tab]');if(!btn)return;
-    if(ui.draft && !confirm('Você possui um treino em andamento. Sair descarta os dados não salvos. Continuar?'))return;
-    ui.draft=null;ui.editor=null;ui.tab=btn.dataset.tab;render();window.scrollTo(0,0);
+    ui.editor=null;ui.tab=btn.dataset.tab;render();window.scrollTo(0,0);
   });
   const screen=document.getElementById('screen');
   screen.addEventListener('click',event=>{
     const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
   });
   screen.addEventListener('input',collectDraft);
+  window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
     collectDraft(event);
     const el=event.target;
