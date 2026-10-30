@@ -25,10 +25,18 @@
       ],
     }),
     ex('supino-barra', 'Supino reto com barra', 'B', 3, 6, 10, 2.5, { active: false }),
-    ex('supino-inclinado', 'Supino inclinado', 'B', 3, 8, 12, 2.5),
-    ex('voador', 'Voador (peck deck)', 'B', 3, 10, 15, 5),
+    ex('supino-inclinado', 'Supino inclinado com halteres', 'B', 4, 8, 12, 2.5, {
+      unit: 'kg/halter',
+      // Cargas aproximadas relatadas; nao sao series concluidas.
+      example: [20, 22.5, 22.5, 22.5].map(load => ({load, reps:'', rir:'', warmup:false})),
+    }),
+    ex('voador', 'Voador (peck deck)', 'B', 4, 10, 15, 5, {
+      example: [55, 55, 55, 55].map(load => ({load, reps:'', rir:'', warmup:false})),
+    }),
     ex('elevacao-lateral', 'Elevação lateral', 'B', 3, 12, 15, 2.5, { unit: 'kg/halter' }),
-    ex('triceps-testa', 'Tríceps testa', 'B', 3, 10, 12, 2.5),
+    ex('triceps-testa', 'Tríceps testa na polia', 'B', 4, 10, 12, 2.5, {
+      example: [50, 55, 60, 60].map(load => ({load, reps:'', rir:'', warmup:false})),
+    }),
     ex('triceps-corda', 'Tríceps corda', 'B', 3, 10, 15, 2.5),
     ex('triceps-maquina', 'Tríceps na máquina', 'B', 3, 10, 12, 5, { active: false }),
     ex('remada-alta', 'Remada alta', 'B', 3, 10, 12, 2.5, { active: false }),

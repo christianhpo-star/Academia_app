@@ -22,6 +22,7 @@
   function initial() {
     return {
       version: 1,
+      referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
       sessions: [], exercises: copy(DATA.exercises),
@@ -32,6 +33,10 @@
       const raw = localStorage.getItem(KEY); if (!raw) return initial();
       const parsed = JSON.parse(raw);
       if (!validState(parsed)) throw new Error('Backup incompatível');
+      if (migrateReferences(parsed)) {
+        try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
+        catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
+      }
       return parsed;
     } catch (err) { console.warn('Não foi possível ler os registros',err); return initial(); }
   }
@@ -48,6 +53,31 @@
       value.exercises.every(x => typeof x.id === 'string' && typeof x.name === 'string' && x.name.length < 120 &&
         ['A','B','C','D'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
         Number(x.high)>=Number(x.low) && Number(x.high)<=50 && Number(x.step)>0);
+  }
+  // Atualiza somente exercícios que ainda conservam a configuração original.
+  // Histórico real, exercícios personalizados e rascunhos em andamento são preservados.
+  function migrateReferences(value) {
+    if (value.referenceDefaultsVersion >= 1) return false;
+    const previous = {
+      'supino-inclinado': {name:'Supino inclinado', sets:3, unit:'kg'},
+      'voador': {name:'Voador (peck deck)', sets:3, unit:'kg'},
+      'triceps-testa': {name:'Tríceps testa', sets:3, unit:'kg'},
+    };
+    for (const [id, old] of Object.entries(previous)) {
+      const current = value.exercises.find(ex => ex.id === id);
+      const template = DATA.exercises.find(ex => ex.id === id);
+      if (!current || !template || !Array.isArray(template.example)) continue;
+      const unchanged = current.name === old.name &&
+        Number(current.sets) === old.sets && current.unit === old.unit;
+      if (!unchanged) continue;
+      current.name = template.name;
+      current.sets = template.sets;
+      current.unit = template.unit;
+      if (!Array.isArray(current.example) || current.example.length === 0)
+        current.example = copy(template.example);
+    }
+    value.referenceDefaultsVersion = 1;
+    return true;
   }
   function loadDraft(exercises) {
     try {

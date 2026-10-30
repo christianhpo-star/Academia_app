@@ -59,3 +59,14 @@ Não inclua dados pessoais sensíveis no código-fonte ou em issues públicos. O
 - Cronômetro de descanso opcional.
 - Sincronização privada opcional entre dispositivos, com autenticação e consentimento.
 - Opção para períodos de deload e marcação de semanas com Muay Thai mais intenso.
+
+### Referências iniciais de carga (não são histórico real)
+
+Cargas aproximadas informadas para o bloco B, sem repetições nem RIR:
+
+- Supino reto com halteres: 20 (aquecimento), 22,5, 25, 25 kg por halter (quarta série provisória).
+- Supino inclinado com halteres: 20, 22,5, 22,5, 22,5 kg por halter; tipo de série não presumido.
+- Voador (peck deck): 55 kg nas quatro séries.
+- Tríceps testa **na polia**: 50, 55, 60, 60 kg.
+
+As referências são mostradas apenas ao iniciar o exercício **sem histórico anterior**, com campos de repetições e RIR em branco. O histórico real existente tem prioridade. Dados salvos em navegadores que já usavam o FORJA recebem a migração conservadora das configurações ainda originais sem criar sessões ou substituir exercícios personalizados. Os demais exercícios permanecem para preenchimento na academia.

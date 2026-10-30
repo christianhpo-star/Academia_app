@@ -198,3 +198,27 @@ test('exercicio desativado nao influencia radar mas pode manter historico detalh
   assert.equal(groups.find(item=>item.group==='B').tracked,0);
   assert.equal(Engine.strengthSeries(target,sessions,3650).length,2);
 });
+
+
+test('cargas aproximadas ficam somente como modelos sem repeticoes inventadas',()=>{
+  const expected={
+    'supino-halteres':[20,22.5,25,25],
+    'supino-inclinado':[20,22.5,22.5,22.5],
+    'voador':[55,55,55,55],
+    'triceps-testa':[50,55,60,60],
+  };
+  for (const [id, loads] of Object.entries(expected)) {
+    const item=ex(id);
+    assert.deepEqual(item.example.map(s=>s.load),loads);
+    assert.ok(item.example.every(s=>s.reps === '' && s.rir === ''));
+    assert.equal(item.sets,4);
+    assert.equal(Engine.historyOf([],id).length,0);
+    assert.equal(Engine.recommend(item,[]).level,'start');
+  }
+  assert.equal(ex('supino-inclinado').unit,'kg/halter');
+  assert.equal(ex('triceps-testa').name,'Tríceps testa na polia');
+});
+test('demais exercícios permanecem sem cargas presumidas',()=>{
+  assert.equal(ex('triceps-corda').example,undefined);
+  assert.equal(ex('elevacao-lateral').example,undefined);
+});
