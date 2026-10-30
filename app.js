@@ -76,6 +76,7 @@
     recovered: Boolean(recoveredDraft),
     draftSavedAt: recoveredDraft?.savedAt || null,
     draftSaveOk: Boolean(recoveredDraft),
+    strengthGroup: null, strengthExercise: null,
   };
   let toastTimeout;
   function draftStatusText() {
@@ -139,6 +140,153 @@
       dayGap(s.day,today()) >= 1 && Date.now()-new Date(s.timestamp).getTime()>=86400000);
   }
   const tag = (name, className='') => `<span class="pill ${className}">${esc(name)}</span>`;
+  const setSummary = (set, unit) => set ? `${fmt(set.load)} ${unit} × ${set.reps} rep.${set.rir == null || set.rir === '' ? '' : ` · RIR ${set.rir}`}` : '—';
+  const planShort = plan => plan.title.split('+')[0].trim();
+  const strengthTone = delta => delta >= 5 ? 'good' : delta < 0 ? 'warn' : 'neutral';
+  function strengthOverview(days = 90) {
+    const active = state.exercises.filter(ex => ex.active !== false);
+    return {
+      days,
+      groups: E.groupStrength(active, state.sessions, days)
+        .sort((a,b) => DATA.rotation.indexOf(a.group) - DATA.rotation.indexOf(b.group))
+        .map(item => ({ ...item, plan: planFor(item.group) })),
+      leaders: E.strengthLeaders(active, state.sessions, days, 6).map(item => ({ ...item, plan: planFor(item.group) })),
+    };
+  }
+  function radarChart(groups, days = 90) {
+    const tracked = groups.filter(group => group.tracked > 0);
+    const cx = 180, cy = 150, radius = 106;
+    const maxScore = Math.max(120, Math.ceil(Math.max(100, ...tracked.map(group => group.current)) / 10) * 10);
+    const count = groups.length;
+    const point = (score, index) => {
+      const angle = -Math.PI / 2 + index * Math.PI * 2 / count;
+      const r = radius * Math.max(0, Math.min(maxScore, score)) / maxScore;
+      return {x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r};
+    };
+    const coords = values => values.map((value, i) => {
+      const p = point(value, i);
+      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+    }).join(' ');
+    const selected = ui.strengthGroup;
+    return `<div class="strength-radar-plot mt-12">
+      <svg viewBox="0 0 360 300" aria-hidden="true" focusable="false">
+        ${[0.25,0.5,0.75,1].map(level =>
+          `<polygon points="${coords(groups.map(() => maxScore * level))}" fill="none" stroke="#334b5e" stroke-width="1"/>`).join('')}
+        ${groups.map((_, i) => {
+          const end = point(maxScore, i);
+          return `<line x1="${cx}" y1="${cy}" x2="${end.x}" y2="${end.y}" stroke="#334b5e" stroke-width="1"/>`;
+        }).join('')}
+        <polygon points="${coords(groups.map(() => 100))}" fill="#80beff" fill-opacity=".08" stroke="#80beff" stroke-width="2" stroke-dasharray="5 5"/>
+        ${tracked.length === groups.length
+          ? `<polygon points="${coords(groups.map(group => group.current))}" fill="#c5f56b" fill-opacity=".18" stroke="#c5f56b" stroke-width="3" stroke-linejoin="round"/>`
+          : groups.map((group, i) => {
+            const next = (i + 1) % groups.length, other = groups[next];
+            if (!group.tracked || !other.tracked) return '';
+            const a = point(group.current, i), b = point(other.current, next);
+            return `<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="#c5f56b" stroke-width="3"/>`;
+          }).join('')}
+        ${groups.map((group, i) => {
+          const base = point(100, i);
+          const dot = group.tracked ? point(group.current, i) : null;
+          return `<circle cx="${base.x}" cy="${base.y}" r="3" fill="#80beff"/>${dot ? `<circle cx="${dot.x}" cy="${dot.y}" r="5" fill="#c5f56b"/>` : ''}`;
+        }).join('')}
+      </svg>
+      ${groups.map((group, index) => `<button type="button" class="radar-axis-button radar-axis-button--${index} ${selected === group.group ? 'selected' : ''}"
+          data-action="strength-group" data-group="${esc(group.group)}" aria-pressed="${selected === group.group}"
+          aria-label="Ver gráficos de ${esc(group.plan.title)}">
+          <strong>${esc(planShort(group.plan))}</strong>
+          <span>${group.tracked ? `${fmt(group.current)}%` : 'sem dados'}</span>
+        </button>`).join('')}
+    </div>
+    <div class="strength-radar-legend" aria-label="Legenda do radar">
+      <span><i class="strength-key base" aria-hidden="true"></i>Base 100%</span>
+      <span><i class="strength-key current" aria-hidden="true"></i>Força estimada</span>
+    </div>
+    <p class="chart-caption">Toque no nome de um grupo para abrir seus exercícios. Sem registros suficientes, o eixo não recebe ponto verde. Janela: ${days} dias.</p>`;
+  }
+  function strengthLineChart(ex, days) {
+    const series = E.strengthSeries(ex, state.sessions, days);
+    const summary = E.exerciseStrength(ex, state.sessions, days);
+    if (!series.length) return `<div class="empty strength-empty">
+      <span class="empty-icon" aria-hidden="true">↗</span>
+      Ainda não há séries efetivas registradas para ${esc(ex.name)} nos últimos ${days} dias.
+    </div>`;
+    const shown = series.slice(-18);
+    const values = shown.map(row => row.strength);
+    const valueMin = Math.min(...values), valueMax = Math.max(...values);
+    const padding = Math.max(1, (valueMax - valueMin) * 0.18, valueMax * 0.045);
+    const low = Math.max(0, valueMin - padding), high = valueMax + padding;
+    const X = i => shown.length === 1 ? 190 : 44 + i * (310 / (shown.length - 1));
+    const Y = value => 170 - (value - low) / Math.max(1, high - low) * 128;
+    const line = shown.map((item,i) => `${X(i).toFixed(1)},${Y(item.strength).toFixed(1)}`).join(' ');
+    const label = `${ex.name}: ${shown.length} sessão(ões) exibida(s) com estimativas de força entre ${fmt(valueMin)} e ${fmt(valueMax)} ${ex.unit}.`;
+    return `<div class="strength-chart-wrap mt-12"><svg viewBox="0 0 380 222" role="img" aria-label="${esc(label)}">
+      ${[0,0.5,1].map(level => {
+        const val = low + (high - low) * level, y = Y(val);
+        return `<line x1="44" y1="${y}" x2="357" y2="${y}" stroke="#344c60" stroke-width="1" stroke-dasharray="3 5"/>
+          <text x="37" y="${y+4}" font-size="10" text-anchor="end" fill="#a1b4c6">${fmt(val)}</text>`;
+      }).join('')}
+      ${shown.length > 1 ? `<polyline points="${line}" fill="none" stroke="#c5f56b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>` : ''}
+      ${shown.map((row,i) => `<circle cx="${X(i)}" cy="${Y(row.strength)}" r="4.6" fill="#c5f56b" stroke="#12202c" stroke-width="1.5">
+        <title>${esc(`${dateBR(row.day)}: ${fmt(row.strength)} ${ex.unit} (estimado) · ${setSummary(row.top, ex.unit)}`)}</title>
+      </circle>`).join('')}
+      <text x="44" y="205" fill="#9eb2c4" font-size="10">${dateBR(shown[0].day)}</text>
+      <text x="355" y="205" fill="#9eb2c4" font-size="10" text-anchor="end">${dateBR(shown[shown.length-1].day)}</text>
+    </svg></div>
+    <div class="strength-metrics">
+      <div><span>Primeira estimativa</span><strong>${fmt(summary.baseline)} ${esc(ex.unit)}</strong></div>
+      <div><span>Última estimativa</span><strong>${fmt(summary.current)} ${esc(ex.unit)}</strong></div>
+      <div><span>Variação</span><strong class="strength-delta ${strengthTone(summary.percent)}">${summary.count >= 2 ? `${summary.percent >= 0 ? '+' : ''}${fmt(summary.percent)}%` : 'Aguardando base'}</strong></div>
+    </div>
+    ${series.length < 2 ? '<p class="small muted mt-12">Registre outra sessão para comparar a evolução. Uma sessão isolada não demonstra ganho de força.</p>' : ''}
+    <details class="strength-records mt-12"><summary>Ver séries usadas no gráfico (${series.length})</summary>
+      <ol>${series.slice().reverse().map(row => `<li><span>${dateBR(row.day)}</span><span>${esc(setSummary(row.top, ex.unit))}</span><strong>${fmt(row.strength)} ${esc(ex.unit)}*</strong></li>`).join('')}</ol>
+    </details>
+    <p class="chart-caption">*Estimativa pela fórmula de Epley, não teste de 1RM. Máquinas, amplitude, técnica e fadiga podem alterar a comparação.</p>`;
+  }
+  function strengthGroupDetails(days = 90) {
+    const groupId = ui.strengthGroup;
+    if (!groupId || !DATA.rotation.includes(groupId)) {
+      return `<div class="strength-hint" role="status">Selecione um dos grupos do radar para visualizar os exercícios e sua evolução em cada sessão.</div>`;
+    }
+    const group = planFor(groupId);
+    const exercises = state.exercises.filter(ex => ex.group === groupId && (ex.active !== false || history(ex.id).length > 0));
+    const scored = exercises.map(ex => ({ex, stat: E.exerciseStrength(ex, state.sessions, days)}))
+      .sort((a,b) => b.stat.count - a.stat.count || a.ex.name.localeCompare(b.ex.name));
+    const selected = scored.find(item => item.ex.id === ui.strengthExercise) || scored[0];
+    return `<section class="card strength-detail-card mt-12" id="strength-group-details" aria-labelledby="strength-group-heading">
+      <div class="row-between strength-detail-head"><div>
+        <p class="eyebrow">DETALHAMENTO DO GRUPO ${esc(groupId)}</p>
+        <h2 class="section-title" id="strength-group-heading">${esc(group.title)}</h2>
+      </div><button type="button" class="ghost small-button" data-action="strength-close" aria-label="Fechar detalhamento">Fechar</button></div>
+      ${scored.length ? `<p class="small muted mt-8">Escolha um exercício para acompanhar a força estimada nas sessões registradas.</p>
+        <div class="strength-exercise-choices" role="group" aria-label="Exercícios do grupo ${esc(group.title)}">
+          ${scored.map(item => `<button type="button" class="strength-exercise-choice ${item.ex.id === selected.ex.id ? 'selected' : ''}"
+              data-action="strength-exercise" data-ex="${esc(item.ex.id)}" aria-pressed="${item.ex.id === selected.ex.id}">
+              <strong>${esc(item.ex.name)}</strong><span>${item.stat.count >= 2 ? `${item.stat.percent >= 0 ? '+' : ''}${fmt(item.stat.percent)}%` : item.stat.count ? '1 sessão' : 'sem registros'}</span>
+            </button>`).join('')}
+        </div>
+        <div class="strength-exercise-panel" id="strength-exercise-panel">
+          <div class="row-between"><h3>${esc(selected.ex.name)}</h3>${tag(`${E.strengthSeries(selected.ex,state.sessions,days).length} sessão(ões)`,'green')}</div>
+          ${strengthLineChart(selected.ex,days)}
+        </div>` : `<div class="empty">Nenhum exercício ativo neste bloco. Ative um exercício na aba Treinos para começar a acompanhar a evolução.</div>`}
+    </section>`;
+  }
+  function strengthSection(days = 90) {
+    const overview = strengthOverview(days);
+    const trackedGroups = overview.groups.filter(group => group.tracked > 0);
+    return `<section class="card mt-16" aria-labelledby="strength-radar-title">
+      <div class="row-between"><h2 class="section-title" id="strength-radar-title">Mapa de força</h2>${tag(`${days} dias`,'green')}</div>
+      <p class="small muted mb-0">Compare a força estimada por grupo muscular. Cada exercício é normalizado por sua própria primeira sessão na janela; carga de máquinas diferentes não é somada.</p>
+      ${radarChart(overview.groups, days)}
+      ${trackedGroups.length ? `<ul class="mini-list strength-summary-list">${overview.groups.map(group => `<li><div class="strength-group-block"><strong>${esc(group.plan.title)}</strong><span>${group.tracked ? `${group.tracked} exercício(s) comparável(is)` : 'Registros insuficientes'}</span>${group.best ? `<small>Maior avanço: ${esc(group.best.name)} · ${fmt(group.best.percent)}%</small>` : ''}</div><div class="text-right"><strong>${group.tracked ? `${fmt(group.current)}%` : '—'}</strong><br><span class="strength-delta ${strengthTone(group.delta ?? 0)}">${group.tracked ? `${group.delta >= 0 ? '+' : ''}${fmt(group.delta)}%` : 'sem base'}</span></div></li>`).join('')}</ul>` : `<p class="small muted mt-12">O radar começará a mostrar evolução depois que você registrar pelo menos duas sessões do mesmo exercício. É possível explorar os grupos antes disso.</p>`}
+    </section>
+    ${strengthGroupDetails(days)}
+    ${overview.leaders.length ? `<section class="card mt-12" aria-labelledby="strength-leaders-title">
+      <div class="row-between"><h2 class="section-title" id="strength-leaders-title">Evolução por exercício</h2>${tag(`${overview.leaders.length} exercícios`,'green')}</div>
+      <ul class="mini-list">${overview.leaders.map(item => `<li><div class="history-exercise"><strong>${esc(item.name)}</strong><br><span>${esc(item.plan.title)} · ${dateBR(item.firstDate)} → ${dateBR(item.lastDate)}</span><br><small class="leader-detail">${esc(setSummary(item.firstTop, item.unit))} → ${esc(setSummary(item.latestTop, item.unit))}</small></div><div class="text-right"><strong>${fmt(item.current)}%</strong><br><span class="strength-delta ${strengthTone(item.percent)}">${item.percent >= 0 ? '+' : ''}${fmt(item.percent)}%</span></div></li>`).join('')}</ul>
+    </section>` : ''}`;
+  }
   function render() {
     const main = document.getElementById('screen');
     main.innerHTML = ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
@@ -319,6 +467,7 @@
       ${items.length?`<text x="24" y="148" fill="#a7b7c7" font-size="10">${dateBR(items[0].date)}</text><text x="299" y="148" fill="#a7b7c7" font-size="10" text-anchor="end">${dateBR(items[items.length-1].date)}</text>`:''}
       </svg></div><p class="chart-caption">Linha pontilhada: meta de peso. Oscilações diárias são normais.</p>
       ${pace>0?`<div class="callout ${pace>.9?'warn':''}">Ritmo matemático até ${dateBR(state.settings.goalDate)}: <strong>${fmt(pace)} kg/semana</strong>. Não é uma recomendação automática de déficit; preserve o rendimento e sua saúde.</div>`:''}</div>
+      ${strengthSection(90)}
       ${weightForm()}
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
   }
@@ -503,6 +652,26 @@
       }
     }
     else if(action==='finish')finishWorkout();
+    else if(action==='strength-group') {
+      const group = btn.dataset.group;
+      if (!DATA.rotation.includes(group)) return;
+      ui.strengthGroup = ui.strengthGroup === group ? null : group;
+      ui.strengthExercise = null;
+      render();
+      if (ui.strengthGroup) document.getElementById('strength-group-details')?.scrollIntoView({behavior:'smooth', block:'start'});
+    }
+    else if(action==='strength-exercise') {
+      const ex = exerciseFor(btn.dataset.ex);
+      if (!ex || ex.group !== ui.strengthGroup) return;
+      ui.strengthExercise = ex.id;
+      render();
+      document.getElementById('strength-exercise-panel')?.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+    else if(action==='strength-close') {
+      ui.strengthGroup = null; ui.strengthExercise = null;
+      render();
+      document.getElementById('strength-radar-title')?.scrollIntoView({behavior:'smooth',block:'start'});
+    }
     else if(action==='resume'){if(ui.draft){ui.tab='plans';ui.plan=ui.draft.planId;render();window.scrollTo(0,0);}}
     else if(action==='cancel'){if(confirm('Descartar o treino em andamento e apagar seu rascunho salvo neste aparelho?')){clearDraft();render();}}
     else if(action==='edit-ex'){ui.editor={id:btn.dataset.ex};render();window.scrollTo(0,0);}

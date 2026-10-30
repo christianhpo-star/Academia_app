@@ -2,7 +2,7 @@
 
 Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de força, acompanhar a evolução das cargas e sugerir quando **manter, repetir ou aumentar** com cautela. Feito sob medida para uma rotina com musculação 5–6 vezes por semana, Muay Thai às segundas, quartas e sextas e meta inicial de 88,3 para 82 kg até 14/01/2027.
 
-## Funcionalidades da versão 1.1
+## Funcionalidades da versão 1.3
 
 - Histórico real por exercício, com carga (kg ou kg/halter), repetições e RIR (repetições em reserva) **por série**.
 - Separa séries de **aquecimento** das séries efetivas; inclui o **supino com halteres** como exemplo editável: aquecimento 20 kg, depois 22,5 / 25 / 25 kg por halter. **Não apresenta essas cargas como treino concluído**.
@@ -12,6 +12,9 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 - **Comparação série a série** na tela do treino: mostra a carga, as repetições, o tipo de série (aquecimento ou efetiva) e o RIR da sessão anterior. Destaca melhora de repetições com a mesma carga e aumento de carga com desempenho mantido.
 - **Salvamento automático de rascunho** no armazenamento local do aparelho: escreve após cada edição de carga, repetições, RIR, observações, dor, adição/remoção ou alteração do tipo de série. Se a página for atualizada ou o navegador encerrar, a sessão em andamento é recuperada. Navegar entre telas não a descarta; só o botão Cancelar, com confirmação, elimina o rascunho.
 - Edição de exercícios, séries, metas de repetições, incremento de carga, unidade e método de progressão; ativação/desativação de variações.
+- **Mapa de força interativo na aba Evolução**: radar de índices relativos por grupo muscular na janela de 90 dias, com cada exercício comparado ao próprio primeiro registro da janela (100%). Grupos sem base suficiente não são apresentados como evolução.
+- **Detalhamento ao tocar em um grupo do radar**: lista exercícios do bloco, permite selecionar cada movimento e mostra gráfico de força estimada por sessão, datas, série efetiva usada no cálculo e comparação percentual. Também oferece acesso textual aos registros e estados vazios sem criar resultados fictícios.
+- A força estimada usa a fórmula de Epley sobre a melhor série efetiva de cada sessão (até 30 repetições). **Não equivale a 1RM medido**, nem indica autorização para aumentar a carga. A comparação pode variar com máquina, amplitude, técnica e fadiga.
 - Peso corporal e gráfico de tendência rumo à data-alvo.
 - **Local-first**: histórico e rascunho armazenados via `localStorage` no navegador, sem servidor ou conta; exportação/importação JSON do histórico e exportação de séries CSV. O backup JSON atual **não inclui** o rascunho não finalizado.
 - **PWA offline** após primeiro acesso HTTPS (incluindo GitHub Pages).
@@ -32,6 +35,7 @@ python3 tests/check_assets.py
 
 # Opcional: teste automatizado de interface (Playwright + Chromium)
 python3 tests/smoke_persistence.py
+python3 tests/smoke_strength.py
 ```
 
 ## Publicação no GitHub Pages
@@ -51,7 +55,7 @@ Não inclua dados pessoais sensíveis no código-fonte ou em issues públicos. O
 
 ## Melhorias previstas
 
-- Histórico de evolução de força por exercício com gráficos.
+- Filtro configurável de períodos e visualização de recordes pessoais por exercício.
 - Cronômetro de descanso opcional.
 - Sincronização privada opcional entre dispositivos, com autenticação e consentimento.
 - Opção para períodos de deload e marcação de semanas com Muay Thai mais intenso.

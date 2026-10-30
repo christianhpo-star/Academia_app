@@ -26,3 +26,62 @@
 .history-details ol{margin:5px 0 0;padding-left:17px}
 .history-details ol li{display:list-item;border:0;padding:3px 0;font-size:11px;line-height:1.35}
 @media(max-width:355px){.set-grid{grid-template-columns:25px 54px minmax(60px,1fr) minmax(48px,.85fr) minmax(47px,.8fr);gap:4px}.set-grid input{font-size:12px;padding:9px 2px}}
+
+
+/* FORJA 1.2: mapa de forca */
+.strength-radar{padding-top:12px;min-height:260px}
+.strength-summary-list .mini-list{margin-top:0}
+.strength-group-block{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1}
+.strength-group-block span{display:block;color:var(--muted);font-size:11px;line-height:1.4}
+.strength-group-block small{display:block;color:#c1d6e8;font-size:10px;line-height:1.35}
+.strength-delta{font-size:11px;font-weight:800}
+.strength-delta.good{color:var(--lime)}
+.strength-delta.warn{color:#ffb393}
+.strength-delta.neutral{color:#c6d5e2}
+.leader-detail{display:block;color:#c1d6e8;font-size:10px;line-height:1.4;margin-top:2px}
+
+/* FORJA 1.3: radar navegavel e grafico de forca por exercicio. */
+.strength-radar-plot{position:relative;min-height:295px;max-width:430px;margin:0 auto;width:100%;}
+.strength-radar-plot svg{display:block;width:100%;height:auto;max-height:310px;overflow:visible}
+.radar-axis-button{position:absolute;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-width:86px;min-height:52px;padding:5px 7px;border:1px solid #476476;border-radius:11px;background:#152434ee;color:#dbe7f0;cursor:pointer;font:inherit;box-shadow:0 3px 12px #0003;transition:background .18s,border-color .18s,transform .18s}
+.radar-axis-button strong{font-size:11px;font-weight:800;line-height:1.15;text-align:center}
+.radar-axis-button span{font-size:10px;color:#a3c0d4}
+.radar-axis-button.selected{background:#254331;border-color:#c5f56b;color:#eaffd2}
+.radar-axis-button.selected span{color:#c5f56b}
+.radar-axis-button:focus-visible,.strength-exercise-choice:focus-visible{outline:3px solid #80beff;outline-offset:3px}
+.radar-axis-button--0{top:0;left:50%;transform:translateX(-50%)}
+.radar-axis-button--1{top:50%;right:0;transform:translateY(-50%)}
+.radar-axis-button--2{bottom:0;left:50%;transform:translateX(-50%)}
+.radar-axis-button--3{top:50%;left:0;transform:translateY(-50%)}
+.strength-radar-legend{display:flex;justify-content:center;align-items:center;gap:16px;margin-top:7px;flex-wrap:wrap}
+.strength-radar-legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted);font-size:11px}
+.strength-key{display:inline-block;width:12px;height:12px;border-radius:3px}
+.strength-key.base{background:#80beff}.strength-key.current{background:#c5f56b}
+.strength-hint{margin:12px 0;padding:14px;border:1px dashed #496374;border-radius:12px;background:#142330;color:#b7cddd;font-size:12px;line-height:1.55}
+.strength-detail-card{border-color:#456850;scroll-margin-top:10px}
+.strength-detail-head{align-items:flex-start;gap:8px}
+.strength-detail-head .eyebrow{margin:0 0 5px}
+.strength-exercise-choices{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;max-height:180px;overflow-y:auto;scrollbar-width:thin}
+.strength-exercise-choice{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;text-align:left;min-height:46px;max-width:100%;border:1px solid #3b5567;border-radius:11px;background:#1a2c3b;color:#d5e4ed;padding:9px 11px;cursor:pointer;font:inherit}
+.strength-exercise-choice strong{font-size:11px;line-height:1.3;font-weight:700}
+.strength-exercise-choice span{font-size:10px;color:#9bb4c7}
+.strength-exercise-choice.selected{border-color:#c5f56b;background:#254031}
+.strength-exercise-choice.selected strong,.strength-exercise-choice.selected span{color:#e5ffcf}
+.strength-exercise-panel{border-top:1px solid #35495a;margin-top:17px;padding-top:14px;scroll-margin-top:12px}
+.strength-exercise-panel h3{font-size:15px;margin:0;line-height:1.3}
+.strength-chart-wrap{border:1px solid #314a5d;border-radius:14px;background:#101f2d;padding:8px 7px 5px}
+.strength-chart-wrap svg{display:block;width:100%;height:auto}
+.strength-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px}
+.strength-metrics>div{display:flex;flex-direction:column;gap:6px;border:1px solid #344c5f;border-radius:10px;background:#172635;padding:9px;min-width:0}
+.strength-metrics span{color:#a7bdce;font-size:10px;line-height:1.3}
+.strength-metrics strong{color:#eff7fc;font-size:12px;line-height:1.3;overflow-wrap:anywhere}
+.strength-metrics strong.strength-delta.good{color:#c5f56b}
+.strength-metrics strong.strength-delta.warn{color:#ffb393}
+.strength-records{border:1px solid #364f62;background:#172938;border-radius:11px;padding:11px}
+.strength-records summary{cursor:pointer;font-size:11px;font-weight:750;color:#c5f56b}
+.strength-records ol{margin:10px 0 0;padding:0;list-style:none}
+.strength-records li{padding:8px 0;border-top:1px solid #34485a;display:grid;grid-template-columns:65px minmax(0,1fr) auto;gap:7px;font-size:10px;line-height:1.5;align-items:center}
+.strength-records li span{color:#c2d2e0}
+.strength-records li strong{font-weight:700;color:#e5f4fe;text-align:right}
+.strength-empty{margin-top:12px}
+@media(max-width:370px){.strength-radar-plot{min-height:260px}.radar-axis-button{min-width:72px;min-height:46px;padding:4px 5px}.radar-axis-button strong{font-size:10px}.radar-axis-button span{font-size:9px}.strength-metrics{gap:4px}.strength-metrics>div{padding:7px}.strength-metrics strong{font-size:11px}.strength-records li{grid-template-columns:55px minmax(0,1fr);gap:4px}.strength-records li strong{grid-column:2;text-align:left}}
