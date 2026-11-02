@@ -32,3 +32,4 @@ jobs:
           python3 tests/smoke_browser.py
           python3 tests/smoke_persistence.py
           python3 tests/smoke_strength.py
+          python3 tests/smoke_muay.py
