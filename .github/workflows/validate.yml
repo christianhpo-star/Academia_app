@@ -23,3 +23,12 @@ jobs:
         run: python3 tests/check_assets.py
       - name: Test progression rules
         run: node --test tests/engine.test.cjs tests/muay.test.cjs
+      - name: Install browser smoke dependencies
+        run: |
+          python3 -m pip install --user playwright
+          python3 -m playwright install --with-deps chromium
+      - name: Browser smoke: strength, persistence and radar
+        run: |
+          python3 tests/smoke_browser.py
+          python3 tests/smoke_persistence.py
+          python3 tests/smoke_strength.py
