@@ -102,10 +102,12 @@
     }
   }
   let state = load();
-  let muayMode = false;
   const recoveredDraft = loadDraft(state.exercises);
+  // Return directly to the in-progress Muay form after closing the browser.
+  // Prefer a separately recovered strength draft when both exist.
+  let muayMode = !recoveredDraft && Boolean(state.muay.draft);
   const ui = {
-    tab: recoveredDraft ? 'plans' : 'home',
+    tab: (recoveredDraft || state.muay.draft) ? 'plans' : 'home',
     plan: recoveredDraft?.draft.planId || 'A', editor:null,
     draft: recoveredDraft?.draft || null,
     recovered: Boolean(recoveredDraft),
