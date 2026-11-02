@@ -391,6 +391,8 @@
       </section>
       ${last?`<div class="section-row"><h2 class="section-title">Última atividade</h2><span class="tiny muted">${dateBR(last.day)}</span></div><div class="card"><strong>${esc(planFor(last.planId).title)}</strong><p class="small muted mt-8">${last.entries.length} exercícios registrados · ${esc(last.energy||'Esforço não informado')}</p></div>`:''}
       ${lastTop?`<div class="section-row"><h2 class="section-title">Seu último peso de treino</h2></div><div class="card"><div class="card-row"><div><strong>${esc(lastTop.x.name)}</strong><p class="last">${esc(lastTop.r.last)}</p></div>${tag(lastTop.r.level==='increase'?'Pode subir':'Em evolução',lastTop.r.level==='increase'?'green':'')}</div><p class="small muted mt-12">${esc(lastTop.r.title)}. ${esc(lastTop.r.explanation)}</p></div>`:''}
+      <div class="section-row"><h2 class="section-title">Muay Thai</h2></div>
+      <section class="card"><p class="small muted">Aulas e treinos em casa também entram no seu diário, sem concluir blocos de musculação.</p><button class="secondary full" data-action="open-muay">Registrar Muay Thai</button></section>
       ${weightForm()}
       <p class="small muted">As recomendações são regras de acompanhamento, não substituem orientação de um profissional. Dor no joelho ou piora após treino bloqueiam sugestões automáticas de aumento.</p>`;
   }
@@ -529,7 +531,7 @@
           `<p class="small muted mt-12">Amanhã, informe se houve dor ou rigidez no joelho antes de progredir cargas de pernas.</p>`):
           session.kneeNextDay!=null?`<p class="small muted mt-12">Joelho no dia seguinte: ${session.kneeNextDay}/5+</p>`:''}
         </article>`;
-      }).join(''):`<div class="empty"><span class="empty-icon" aria-hidden="true">↗</span>Nenhum treino registrado ainda.<br>Inicie um bloco para criar seu primeiro histórico.</div>`}
+      }).join(''):`<div class="empty"><span class="empty-icon" aria-hidden="true">↗</span>Nenhum treino de musculação registrado ainda.<br>Inicie um bloco para criar seu primeiro histórico.</div>`}
       ${muayHistory}
       <button class="secondary full" data-action="export-json">Exportar backup do histórico</button>`;
   }
@@ -680,6 +682,7 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='open-muay'){muayMode=true;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;}
     if(action==='mode-muay'){muayMode=true;ui.editor=null;render();return;}
     if(action==='mode-strength'){muayMode=false;render();return;}
     if(action==='muay-start'){state.muay.draft=M.draft(today(),btn.dataset.place);save();render();return;}
