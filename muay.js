@@ -140,7 +140,7 @@
       '<div class="field-row mt-12"><div class="field"><label for="muay-kind">Tipo</label><select id="muay-kind" data-muay-field="kind">' +
       select(kinds, d.kind) + '</select></div><div class="field"><label for="muay-duration">Duração (min, opcional)</label>' +
       '<input id="muay-duration" type="number" min="1" max="360" step="1" inputmode="numeric" placeholder="Ex.: 50" data-muay-field="duration" value="' + esc(d.duration) + '" /></div></div>' +
-      '<div class="field-row mt-12"><div class="field"><label for="muay-intensity">Esforço percebido (0–10)</label>' +
+      '<div class="field-row mt-12"><div class="field"><label for="muay-intensity">Esforço percebido (1–10)</label>' +
       '<select id="muay-intensity" data-muay-field="intensity">' +
       select({ '': 'Não informado', 1:'1 · Muito leve', 2:'2', 3:'3', 4:'4', 5:'5 · Moderado', 6:'6', 7:'7', 8:'8', 9:'9', 10:'10 · Máximo' }, d.intensity) +
       '</select></div><div class="field"><label for="muay-fatigue">Fadiga das pernas</label>' +
