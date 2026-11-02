@@ -697,10 +697,11 @@
     if(action==='muay-finish'){
       const d=state.muay.draft;if(!d)return;
       const result=M.finishDraft(d,today());if(result.error)return notify(result.error);
+      let original=null;
       if(d.editingId){
         const index=state.muay.sessions.findIndex(x=>x.id===d.editingId);
         if(index<0)return notify('Registro original não encontrado.');
-        const original=state.muay.sessions[index];
+        original=state.muay.sessions[index];
         result.session.timestamp=original.timestamp;
         state.muay.sessions[index]=result.session;
       }else state.muay.sessions.push(result.session);
@@ -769,7 +770,7 @@
     else if(action==='import-json')document.getElementById('import-file').click();
     else if(action==='reset'){
       if(confirm('Apagar permanentemente todos os registros deste aparelho? Exporte um backup antes de continuar.')){
-        state=initial();clearDraft();ui.editor=null;ui.tab='home';save();render();notify('Registros locais redefinidos.');
+        state=initial();clearDraft();muayMode=false;ui.editor=null;ui.tab='home';save();render();notify('Registros locais redefinidos.');
       }
     }
   }
