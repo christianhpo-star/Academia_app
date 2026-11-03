@@ -40,6 +40,13 @@ with sync_playwright() as p:
     page.locator('[data-muay-prop="quantity"]').first.fill('20')
     page.locator('[data-muay-field="duration"]').fill('35')
     page.locator('[data-muay-field="intensity"]').select_option('7')
+    shots=ROOT/'screenshots'
+    shots.mkdir(exist_ok=True)
+    page.screenshot(path=str(shots/'muay-editor-390.png'),full_page=True)
+    page.set_viewport_size({'width':320,'height':740})
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'), 'editor overflow at 320px'
+    page.screenshot(path=str(shots/'muay-editor-320.png'),full_page=True)
+    page.set_viewport_size({'width':390,'height':844})
     snap=page.evaluate('structuredClone(window.__testStorage)')
     page.close()
     page=open_app(ctx,snap)
@@ -50,14 +57,15 @@ with sync_playwright() as p:
     snap=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
     assert len(snap['muay']['sessions'])==1 and snap['sessions']==[]
     assert snap['muay']['sessions'][0]['place']=='casa'
-    page.screenshot(path=str(ROOT/'muay-mobile.png'),full_page=True)
+    page.screenshot(path=str(shots/'muay-history-390.png'),full_page=True)
     page.locator('[data-action="muay-edit"]').click()
     assert page.locator('[data-muay-prop="quantity"]').first.input_value()=='20'
     page.locator('[data-muay-prop="quantity"]').first.fill('25')
     page.get_by_role('button',name='Salvar treino').click()
     assert len(page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"]).muay.sessions'))==1
     page.set_viewport_size({'width':320,'height':740})
-    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'overflow at 320px'
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),'history overflow at 320px'
+    page.screenshot(path=str(shots/'muay-history-320.png'),full_page=True)
     assert not errors,errors
     print('PASS Muay home draft, reload, save, edit, isolation from strength, mobile 320px')
     browser.close()
