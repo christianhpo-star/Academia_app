@@ -2,6 +2,16 @@
 
 Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de força, acompanhar a evolução das cargas e sugerir quando **manter, repetir ou aumentar** com cautela. Feito sob medida para uma rotina com musculação 5–6 vezes por semana, Muay Thai às segundas, quartas e sextas e meta inicial de 88,3 para 82 kg até 14/01/2027.
 
+## Muay Thai — diário complementar (branch em revisão)
+
+- Registro independente de aulas na academia, treinos em casa e outros locais, inclusive nos dias sem musculação.
+- Lista de exercícios realizados (polichinelos, agachamentos com salto, afundos, sombra, manoplas etc.), com séries e quantidades opcionais. Nenhum exercício é presumido como concluído.
+- Duração total, esforço percebido, fadiga, desconforto no joelho e observações opcionais.
+- Rascunho salvo automaticamente, histórico separado dentro da aba Histórico, edição e exclusão confirmada.
+- Backup JSON inclui o diário e seu rascunho, preservando a importação de backups anteriores.
+- Muay Thai não conclui blocos A/B/C/D, não entra automaticamente no radar de força e não autoriza progressão de carga.
+- Dados continuam locais; ainda não há sincronização entre dispositivos.
+
 ## Funcionalidades da versão 1.3
 
 - Histórico real por exercício, com carga (kg ou kg/halter), repetições e RIR (repetições em reserva) **por série**.

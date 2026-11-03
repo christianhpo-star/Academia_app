@@ -85,3 +85,15 @@
 .strength-records li strong{font-weight:700;color:#e5f4fe;text-align:right}
 .strength-empty{margin-top:12px}
 @media(max-width:370px){.strength-radar-plot{min-height:260px}.radar-axis-button{min-width:72px;min-height:46px;padding:4px 5px}.radar-axis-button strong{font-size:10px}.radar-axis-button span{font-size:9px}.strength-metrics{gap:4px}.strength-metrics>div{padding:7px}.strength-metrics strong{font-size:11px}.strength-records li{grid-template-columns:55px minmax(0,1fr);gap:4px}.strength-records li strong{grid-column:2;text-align:left}}
+
+/* Muay Thai diary: mobile-first selectable exercise log. */
+.muay-mode-tabs{margin:0 0 14px;overflow:visible}
+.muay-mode-tabs .tab-chip{flex:1}
+.muay-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px}
+.muay-presets{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+.muay-presets .secondary{white-space:normal}
+.muay-volume{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.muay-record-list li{align-items:flex-start;gap:10px}
+.muay-record-list li span{min-width:0;overflow-wrap:anywhere;color:var(--text)}
+.muay-record-list li small{flex-shrink:0;max-width:45%;color:var(--muted);text-align:right}
+@media(max-width:390px){.muay-volume{grid-template-columns:repeat(2,minmax(0,1fr))}.muay-volume .field:last-child{grid-column:1/-1}}

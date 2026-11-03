@@ -2,6 +2,7 @@
   'use strict';
   const DATA = window.AcademiaData;
   const E = window.AcademiaEngine;
+  const M = window.AcademiaMuay;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -25,7 +26,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(),
     };
   }
   function load() {
@@ -33,7 +34,10 @@
       const raw = localStorage.getItem(KEY); if (!raw) return initial();
       const parsed = JSON.parse(raw);
       if (!validState(parsed)) throw new Error('Backup incompatível');
-      if (migrateReferences(parsed)) {
+      const upgradedMuay = M.ensureArchive(parsed);
+      if (!M.validArchive(parsed.muay)) throw new Error('Dados Muay Thai incompatíveis');
+      const upgradedReferences = migrateReferences(parsed);
+      if (upgradedMuay || upgradedReferences) {
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
       }
@@ -99,8 +103,11 @@
   }
   let state = load();
   const recoveredDraft = loadDraft(state.exercises);
+  // Return directly to the in-progress Muay form after closing the browser.
+  // Prefer a separately recovered strength draft when both exist.
+  let muayMode = !recoveredDraft && Boolean(state.muay.draft);
   const ui = {
-    tab: recoveredDraft ? 'plans' : 'home',
+    tab: (recoveredDraft || state.muay.draft) ? 'plans' : 'home',
     plan: recoveredDraft?.draft.planId || 'A', editor:null,
     draft: recoveredDraft?.draft || null,
     recovered: Boolean(recoveredDraft),
@@ -319,7 +326,7 @@
   }
   function render() {
     const main = document.getElementById('screen');
-    main.innerHTML = ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
+    main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() :
       ui.tab === 'progress' ? renderProgress() : ui.tab === 'history' ? renderHistory() : renderSettings();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
@@ -386,6 +393,8 @@
       </section>
       ${last?`<div class="section-row"><h2 class="section-title">Última atividade</h2><span class="tiny muted">${dateBR(last.day)}</span></div><div class="card"><strong>${esc(planFor(last.planId).title)}</strong><p class="small muted mt-8">${last.entries.length} exercícios registrados · ${esc(last.energy||'Esforço não informado')}</p></div>`:''}
       ${lastTop?`<div class="section-row"><h2 class="section-title">Seu último peso de treino</h2></div><div class="card"><div class="card-row"><div><strong>${esc(lastTop.x.name)}</strong><p class="last">${esc(lastTop.r.last)}</p></div>${tag(lastTop.r.level==='increase'?'Pode subir':'Em evolução',lastTop.r.level==='increase'?'green':'')}</div><p class="small muted mt-12">${esc(lastTop.r.title)}. ${esc(lastTop.r.explanation)}</p></div>`:''}
+      <div class="section-row"><h2 class="section-title">Muay Thai</h2></div>
+      <section class="card"><p class="small muted">Aulas e treinos em casa também entram no seu diário, sem concluir blocos de musculação.</p><button class="secondary full" data-action="open-muay">Registrar Muay Thai</button></section>
       ${weightForm()}
       <p class="small muted">As recomendações são regras de acompanhamento, não substituem orientação de um profissional. Dor no joelho ou piora após treino bloqueiam sugestões automáticas de aumento.</p>`;
   }
@@ -393,10 +402,13 @@
     return [['','Não informado'],['0','0 · Sem dor'],['1','1 · Mínima'],['2','2 · Leve'],['3','3 · Moderada'],['4','4 · Importante'],['5','5+ · Forte']]
       .map(([v,label])=>`<option value="${v}" ${String(current??'')===v?'selected':''}>${label}</option>`).join('');
   }
+  function renderMuay() {
+    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today());
+  }
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
     const all=state.exercises.filter(x=>x.group===ui.plan);
-    return `${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D. Cada bloco realizado sai da fila; os outros continuam pendentes.')}
+    return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D. Cada bloco realizado sai da fila; os outros continuam pendentes.')}
       ${resumeBanner()}
       ${renderQueue(next)}
       <div class="tabs" role="group" aria-label="Escolher grupo de treino">${DATA.plans.map(plan=>`<button class="tab-chip ${ui.plan===plan.id?'selected':''}" data-action="select-plan" data-plan="${plan.id}">${plan.id} · ${esc(plan.title.split(' ')[0])}</button>`).join('')}</div>
@@ -503,6 +515,7 @@
   }
   function renderHistory() {
     const sessions=latestSessions();
+    const muayHistory=M.historySection(state.muay.sessions);
     return `${headline('Diário','Seu histórico.','Veja cargas e repetições reais. Treinos registrados neste aparelho ficam disponíveis mesmo sem internet.')}
       ${sessions.length ? sessions.map(session=>{
         const needsDay= session.entries.some(en=>exerciseFor(en.id)?.knee && E.workSets(en).length) && session.kneeNextDay == null;
@@ -520,7 +533,8 @@
           `<p class="small muted mt-12">Amanhã, informe se houve dor ou rigidez no joelho antes de progredir cargas de pernas.</p>`):
           session.kneeNextDay!=null?`<p class="small muted mt-12">Joelho no dia seguinte: ${session.kneeNextDay}/5+</p>`:''}
         </article>`;
-      }).join(''):`<div class="empty"><span class="empty-icon" aria-hidden="true">↗</span>Nenhum treino registrado ainda.<br>Inicie um bloco para criar seu primeiro histórico.</div>`}
+      }).join(''):`<div class="empty"><span class="empty-icon" aria-hidden="true">↗</span>Nenhum treino de musculação registrado ainda.<br>Inicie um bloco para criar seu primeiro histórico.</div>`}
+      ${muayHistory}
       <button class="secondary full" data-action="export-json">Exportar backup do histórico</button>`;
   }
   function renderEditor() {
@@ -658,16 +672,64 @@
     try{
       const parsed=JSON.parse(await file.text());
       if(!validState(parsed))throw new Error('Estrutura incompatível');
+      M.ensureArchive(parsed);
+      if(!M.validArchive(parsed.muay))throw new Error('Histórico de Muay Thai inválido');
       if(!confirm('Importar este backup substitui os registros salvos neste aparelho. Continuar?')) return;
       const oldState=state;
       state=parsed;
       if (!save()) {state=oldState;return notify('Importação não concluída: falha ao salvar o histórico.');}
-      clearDraft();ui.editor=null;ui.tab='home';render();notify('Backup importado com sucesso.');
+      clearDraft();muayMode=false;ui.editor=null;ui.tab='home';render();notify('Backup importado com sucesso.');
     }catch(err){notify('Não foi possível importar: verifique se é um backup FORJA válido.');}
     document.getElementById('import-file').value='';
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='open-muay'){muayMode=true;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;}
+    if(action==='mode-muay'){muayMode=true;ui.editor=null;render();return;}
+    if(action==='mode-strength'){muayMode=false;render();return;}
+    if(action==='muay-start'){state.muay.draft=M.draft(today(),btn.dataset.place);save();render();return;}
+    if(action==='muay-preset' || action==='muay-custom'){
+      const d=state.muay.draft;
+      if(!d||d.activities.length>=30)return notify('Limite de 30 exercícios por sessão.');
+      const preset=action==='muay-preset'?M.PRESETS[Number(btn.dataset.preset)]:null;
+      if(action==='muay-preset'&&!preset)return;
+      d.activities.push(M.activity(preset?.name||'',preset?.unit||'reps'));save();render();return;
+    }
+    if(action==='muay-remove'){
+      const d=state.muay.draft;if(!d)return;
+      d.activities=d.activities.filter(a=>a.id!==btn.dataset.id);save();render();return;
+    }
+    if(action==='muay-finish'){
+      const d=state.muay.draft;if(!d)return;
+      const result=M.finishDraft(d,today());if(result.error)return notify(result.error);
+      let original=null;
+      if(d.editingId){
+        const index=state.muay.sessions.findIndex(x=>x.id===d.editingId);
+        if(index<0)return notify('Registro original não encontrado.');
+        original=state.muay.sessions[index];
+        result.session.timestamp=original.timestamp;
+        state.muay.sessions[index]=result.session;
+      }else state.muay.sessions.push(result.session);
+      state.muay.draft=null;
+      if(!save()){state.muay.draft=d;if(d.editingId){state.muay.sessions=state.muay.sessions.map(s=>s.id===d.editingId?original:s);}else state.muay.sessions.pop();return;}
+      ui.tab='history';render();notify('Treino de Muay Thai salvo.');return;
+    }
+    if(action==='muay-cancel'){
+      if(confirm('Descartar o rascunho de Muay Thai?')){state.muay.draft=null;save();render();}
+      return;
+    }
+    if(action==='muay-edit'){
+      const record=state.muay.sessions.find(x=>x.id===btn.dataset.id);
+      if(!record)return;
+      if(state.muay.draft && !confirm('Substituir o rascunho atual?'))return;
+      state.muay.draft=M.draftFromSession(record);muayMode=true;ui.tab='plans';save();render();return;
+    }
+    if(action==='muay-delete'){
+      if(!confirm('Excluir permanentemente este registro de Muay Thai?'))return;
+      const backup=state.muay.sessions;
+      state.muay.sessions=backup.filter(x=>x.id!==btn.dataset.id);
+      if(!save()){state.muay.sessions=backup;return;}render();notify('Registro excluído.');return;
+    }
     if(action==='navigate') {ui.tab=btn.dataset.to;ui.editor=null;render();window.scrollTo(0,0);}
     else if(action==='select-plan') {ui.plan=btn.dataset.plan;render();}
     else if(action==='start') startWorkout(btn.dataset.plan);
@@ -713,7 +775,7 @@
     else if(action==='import-json')document.getElementById('import-file').click();
     else if(action==='reset'){
       if(confirm('Apagar permanentemente todos os registros deste aparelho? Exporte um backup antes de continuar.')){
-        state=initial();clearDraft();ui.editor=null;ui.tab='home';save();render();notify('Registros locais redefinidos.');
+        state=initial();clearDraft();muayMode=false;ui.editor=null;ui.tab='home';save();render();notify('Registros locais redefinidos.');
       }
     }
   }
@@ -725,10 +787,25 @@
   screen.addEventListener('click',event=>{
     const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
   });
-  screen.addEventListener('input',collectDraft);
+  function updateMuayField(event) {
+    const el=event.target,d=state.muay.draft;
+    if(!d)return;
+    if(el.dataset.muayField){
+      const field=el.dataset.muayField;
+      if(!['day','place','kind','duration','intensity','fatigue','kneePain','notes'].includes(field))return;
+      d[field]=el.value;
+    }else if(el.dataset.muayId && el.dataset.muayProp){
+      const row=d.activities.find(a=>a.id===el.dataset.muayId);
+      if(!row || !['name','sets','quantity','unit'].includes(el.dataset.muayProp))return;
+      row[el.dataset.muayProp]=el.value;
+    }else return;
+    if(!save())notify('Rascunho não salvo. Exporte seus dados.');
+  }
+  screen.addEventListener('input',event=>{collectDraft(event);updateMuayField(event);});
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
     collectDraft(event);
+    updateMuayField(event);
     const el=event.target;
     if(el.dataset.setting){state.settings[el.dataset.setting]=el.value;save();render();}
     else if(el.dataset.exActive){const ex=exerciseFor(el.dataset.exActive);if(ex){ex.active=el.checked;save();render();}}
