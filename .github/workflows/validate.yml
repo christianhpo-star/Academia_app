@@ -21,10 +21,11 @@ jobs:
           node --check muay.js
           node --check calendar.js
           node --check flex.js
+          node --check dose.js
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs
+        run: node --test tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
