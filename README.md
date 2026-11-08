@@ -12,6 +12,15 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 - Muay Thai não conclui blocos A/B/C/D, não entra automaticamente no radar de força e não autoriza progressão de carga.
 - Dados continuam locais; ainda não há sincronização entre dispositivos.
 
+## Calendário mensal de treinos (branch em revisão)
+
+- Calendário na aba Histórico com navegação mês a mês, usando exclusivamente as datas das sessões concluídas e salvas.
+- Indicadores visuais separados para musculação e Muay Thai, inclusive ambos no mesmo dia.
+- Resumo do mês: dias ativos distintos, sessões de musculação e sessões de Muay Thai.
+- Seleção de qualquer dia para consultar as sessões e exercícios realizados, com suporte a teclado e telas pequenas.
+- Dias sem registro não são marcados como descanso e rascunhos não são contados.
+- Calendário derivado do histórico existente, sem persistência adicional ou migração de registros.
+
 ## Funcionalidades da versão 1.3
 
 - Histórico real por exercício, com carga (kg ou kg/halter), repetições e RIR (repetições em reserva) **por série**.
