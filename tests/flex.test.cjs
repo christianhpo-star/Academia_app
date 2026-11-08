@@ -46,7 +46,7 @@ test('dias sem registro não são interpretados como falta nem exercício omitid
   assert.equal(result.summary.strengthDays7,1);
 });
 test('queda de frequência exige linha de base e é descrita sem culpabilização',()=>{
-  const sessions=[1,2,3,4,16,17,18,19].map(n=>sess(n));
+  const sessions=[4,6,8,10,23].map(n=>sess(n));
   const a=F.insights({today:day(30),strengthSessions:sessions});
   assert.equal(a.signals.some(x=>x.kind==='frequency'),true);
   assert.equal(a.objective,'recomposition');
