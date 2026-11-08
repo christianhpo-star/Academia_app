@@ -39,6 +39,20 @@ jobs:
           python3 tests/smoke_calendar.py
           python3 tests/smoke_flex.py
           python3 tests/smoke_dose.py
+      - name: Upload isolated PR source for diagnostics
+        if: github.event_name == 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: forja-source-debug
+          path: |
+            *.html
+            *.js
+            *.css
+            *.webmanifest
+            tests/*.py
+            tests/*.cjs
+            icons/*.png
+          retention-days: 1
       - name: Upload Muay screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
