@@ -4,7 +4,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css" />','')
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
 with sync_playwright() as p:
     executable=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or shutil.which('google-chrome')
     options={'headless':True,'args':['--no-sandbox']}
