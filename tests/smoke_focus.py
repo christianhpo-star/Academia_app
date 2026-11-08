@@ -3,7 +3,7 @@ import re,os,shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css" />','')
+HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
 FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','app.js']
 def app(ctx,storage,errors):
     page=ctx.new_page()
