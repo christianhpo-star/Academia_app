@@ -4,6 +4,7 @@
   const E = window.AcademiaEngine;
   const M = window.AcademiaMuay;
   const CAL = window.ForjaCalendar;
+  const F = window.ForjaFlex;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -90,6 +91,7 @@
       if (!raw) return null;
       const record = JSON.parse(raw);
       const draft = record?.draft;
+    F.ensureDraft(draft);
       if (record.version !== 1 || !draft || !DATA.rotation.includes(draft.planId) ||
           !draft.entries || typeof draft.entries !== 'object' || Array.isArray(draft.entries) ||
           !Object.entries(draft.entries).every(([key, en]) => en && en.id === key &&
@@ -115,6 +117,7 @@
     draftSavedAt: recoveredDraft?.savedAt || null,
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
+    catalogOpen: false,
     calendarMonth: today().slice(0,7), calendarDay: today(),
   };
   let toastTimeout;
@@ -383,6 +386,7 @@
       </section>
       <div class="kpi-row"><div class="kpi"><strong>${state.sessions.length}</strong><span>treinos salvos</span></div><div class="kpi"><strong>${goal.lost>0?'−':''}${fmt(Math.abs(goal.lost))}</strong><span>kg desde o início</span></div><div class="kpi"><strong>14/01</strong><span>meta de 2027</span></div></div>
       ${resumeBanner()}
+      ${renderAdherencePanel()}
       ${pending.length?`<div class="callout warn"><strong>Cheque o joelho no dia seguinte.</strong> Há ${pending.length} treino(s) de pernas aguardando registro. <button class="button-inline" data-action="navigate" data-to="history">Registrar agora</button></div>`:''}
       <div class="section-row"><h2 class="section-title">Seu próximo treino</h2>${tag(next.rest?'Recuperação':`Bloco ${next.id}`,'green')}</div>
       <section class="card"><div class="card-row"><div><h3>${plan?esc(plan.title):'Recuperação antes do próximo bloco'}</h3><p>${plan?esc(plan.subtitle):'Não há bloco de superiores pendente e liberado pela recuperação atual.'}</p></div><span class="rounded-emoji" aria-hidden="true">${plan?.type==='upper'?'↗':'⌁'}</span></div>
@@ -435,12 +439,13 @@
     if (ui.draft) clearDraft();
     ui.plan=id;
     ui.tab='plans';ui.editor=null;
-    ui.draft={planId:id,energy:'normal',notes:'',entries:{}};
-    currentExercises(id).forEach(ex => {ui.draft.entries[ex.id]={id:ex.id,sets:seedSets(ex),pain:''};});
+    ui.draft={planId:id,energy:'normal',notes:'',entries:{},plannedIds:[],skipped:[],addedIds:[]};
+    currentExercises(id).forEach(ex => {ui.draft.entries[ex.id]={id:ex.id,sets:seedSets(ex),pain:''};ui.draft.plannedIds.push(ex.id);});
     persistDraft();
     render();window.scrollTo(0,0);
   }
   function renderTraining() {
+    F.ensureDraft(ui.draft);
     const p=planFor(ui.draft.planId);
     const entries=ui.draft.entries;
     return `${headline('Sessão em andamento',p.title,'As cargas preenchidas são referência; registre repetições e RIR após cada série.')}
@@ -449,10 +454,44 @@
         <p class="small mb-0">Cada edição é salva neste navegador. Você pode sair desta tela e retomar o treino.</p></div>
       <div class="callout">${p.type==='lower'?'Treino de pernas: registre dor no joelho durante os exercícios e no dia seguinte. Se doer, não aumente a carga.':'Carga por halter significa o peso de cada halter, não a soma do par.'}</div>
       ${Object.values(entries).map(en=>renderExercise(en)).join('')}
+      <section class="card"><div class="row-between"><h2 class="section-title">Ajustar este treino</h2>${tag('Só hoje','green')}</div>
+        <p class="small muted">Retirar ou adicionar exercícios aqui não altera sua ficha. Exercícios retirados não contam como realizados.</p>
+        ${F.ensureDraft(ui.draft) && ui.draft.skipped.length ? '<div class="flex-skipped"><strong>Retirados nesta sessão</strong>' +
+          ui.draft.skipped.map(item=>'<div class="flex-skip-item"><span>' + esc(exerciseFor(item.id)?.name||item.id) + '</span><select aria-label="Motivo de retirar ' + esc(exerciseFor(item.id)?.name||item.id) + '" data-skip-reason="' + esc(item.id) + '">' +
+          Object.entries(F.reasons).map(([value,label])=>'<option value="' + esc(value) + '"' + (item.reason===value?' selected':'') + '>' + esc(label) + '</option>').join('') +
+          '</select><button class="secondary small-button" data-action="flex-restore" data-ex="' + esc(item.id) + '">Restaurar</button></div>').join('') + '</div>' : ''}
+        <button class="secondary full mt-12" data-action="flex-catalog-toggle" aria-expanded="${ui.catalogOpen}">${ui.catalogOpen?'Ocultar catálogo':'+ Adicionar exercício do catálogo'}</button>
+        ${ui.catalogOpen ? renderFlexCatalog() : ''}
+      </section>
+      ${renderAdherencePanel(true)}
       <section class="card"><h2 class="section-title">Finalizar sessão</h2><div class="field mt-12"><label for="session-energy">Como foi a sessão?</label>
       <select id="session-energy" data-draft-meta="energy"><option value="leve" ${ui.draft.energy==='leve'?'selected':''}>Leve / sobrou energia</option><option value="normal" ${ui.draft.energy==='normal'?'selected':''}>Normal / esforço esperado</option><option value="intenso" ${ui.draft.energy==='intenso'?'selected':''}>Intensa / muita fadiga</option></select></div>
       <div class="field mt-12"><label for="session-notes">Observações (opcional)</label><textarea id="session-notes" data-draft-meta="notes" placeholder="Ex.: sono, dor, execução, Muay Thai no mesmo dia">${esc(ui.draft.notes)}</textarea></div></section>
       <div class="training-controls"><div class="btnrow"><button class="primary" style="flex:2" data-action="finish">Salvar treino</button><button class="ghost" style="flex:1" data-action="cancel">Cancelar</button></div></div>`;
+  }
+  function renderFlexCatalog() {
+    const choices=F.options(state.exercises,ui.draft);
+    return '<div class="flex-catalog mt-12"><label for="flex-catalog-search">Filtrar por nome ou equipamento</label><input id="flex-catalog-search" type="search" placeholder="Buscar exercício..." aria-controls="flex-catalog-list" />' +
+      '<p class="small muted">Exercícios de outras fichas também estão disponíveis; o catálogo não altera o bloco salvo.</p>' +
+      '<div class="flex-catalog-list" id="flex-catalog-list">' + choices.map(ex=>
+        '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
+        '<div><strong>' + esc(ex.name) + '</strong><small>' + esc(ex.muscle) + ' · ' + esc(ex.equipment) + '</small></div>' +
+        '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
+      ).join('') + '</div></div>';
+  }
+  function renderAdherencePanel(inSession=false) {
+    const insight=F.insights({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      exercises:state.exercises,today:today(),draft:inSession?ui.draft:null,settings:state.settings});
+    return '<section class="card flex-insights"><div class="row-between"><h2 class="section-title">Constância e recomposição</h2>' + tag('Análise dos registros','green') + '</div>' +
+      '<p class="small muted">Um dia sem registro não significa que você faltou. O FORJA não exige justificativa para treinar menos.</p>' +
+      '<div class="flex-metrics"><span><strong>' + insight.summary.strengthDays7 + '</strong> dias de musculação em 7 dias</span>' +
+      '<span><strong>' + insight.summary.muaySessions7 + '</strong> sessões de Muay Thai em 7 dias</span>' +
+      (inSession?'<span><strong>'+insight.summary.completedSetsToday+'</strong> séries efetivas preenchidas hoje</span>':'') + '</div>' +
+      insight.signals.map(signal=>'<div class="flex-signal"><strong>' + esc(signal.title) + '</strong><p>' + esc(signal.detail) +
+        '</p><p>' + esc(signal.suggestion) + '</p></div>').join('') +
+      (!insight.signals.length?'<p class="small muted">Ainda não há padrão consistente de interrupção ou omissão explícita a destacar. Continue registrando somente o que realizar.</p>':'') +
+      '<p class="small muted">' + esc(insight.note) + '</p>' +
+      '<p class="tiny muted">Regras indicativas, não um diagnóstico nem uma garantia de resultados. Não mudam automaticamente sua ficha ou suas cargas.</p></section>';
   }
   function setComparisonText(previous, current, ex) {
     if (!previous) return `<span class="previous-set">Sem registro anterior desta série.</span>`;
@@ -484,7 +523,7 @@
       <input aria-label="Série ${i+1}, repetições em ${esc(ex.name)}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
       <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />
       <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex)}</div>`).join('')}</div>
-      <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button></div>
+      <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button><button class="button-inline" data-action="flex-withdraw" data-ex="${esc(ex.id)}">Retirar só hoje</button></div>
       ${ex.knee?`<div class="field mt-12"><label for="pain-${esc(ex.id)}">Dor no joelho durante o exercício (0–5+)</label><select id="pain-${esc(ex.id)}" data-ex-pain="${esc(ex.id)}" required>${painOptions(en.pain)}</select><span class="field-help">Informe 0 quando não sentiu dor. Este registro é necessário para salvar uma série efetiva deste exercício.</span></div>`:''}
     </section>`;
   }
@@ -638,6 +677,7 @@
     const now=new Date();
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
       timestamp:now.toISOString(),day:today(),entries:result,kneeNextDay:null,
+      plannedIds:[...ui.draft.plannedIds],skipped:F.skippedForSave(ui.draft),
       energy:ui.draft.energy,notes:ui.draft.notes.trim().slice(0,1000)});
     if (!save()) {
       state.sessions.pop();
@@ -689,6 +729,32 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;render();return;}
+    if(action==='flex-add'){
+      const draft=ui.draft,id=btn.dataset.ex;if(!draft)return;
+      const found=F.prepareCatalog(id,state.exercises);
+      if(!found)return notify('Exercício não encontrado no catálogo.');
+      if(found.isNew && state.exercises.length>=200)return notify('Limite de exercícios atingido.');
+      if(!F.addToDraft(draft,id,found.exercise,{id,sets:found.exercise.example?copy(found.exercise.example):
+        Array.from({length:found.exercise.sets},()=>({load:'',reps:'',rir:'',warmup:false})),pain:''}))return notify('Exercício já incluído ou limite alcançado.');
+      if(found.isNew){
+        state.exercises.push(found.exercise);
+        if(!save()){state.exercises.pop();delete draft.entries[id];draft.addedIds=draft.addedIds.filter(v=>v!==id);return;}
+      }
+      if(!persistDraft())return notify('Não foi possível salvar o rascunho. Não feche a página.');
+      ui.catalogOpen=false;render();notify('Exercício adicionado apenas ao treino do dia.');return;
+    }
+    if(action==='flex-withdraw'){
+      const result=F.withdraw(ui.draft,btn.dataset.ex);
+      if(result.error)return notify(result.error);
+      if(!persistDraft())return notify('Não foi possível salvar a alteração.');
+      render();return;
+    }
+    if(action==='flex-restore'){
+      if(!F.restore(ui.draft,btn.dataset.ex))return;
+      if(!persistDraft())return notify('Não foi possível salvar a alteração.');
+      render();return;
+    }
     if(action==='calendar-shift'){
       const shift=Number(btn.dataset.delta);
       if(![-1,1].includes(shift))return;
@@ -825,12 +891,24 @@
     }else return;
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
-  screen.addEventListener('input',event=>{collectDraft(event);updateMuayField(event);});
+  screen.addEventListener('input',event=>{
+    collectDraft(event);updateMuayField(event);
+    if(event.target.id==='flex-catalog-search'){
+      const query=event.target.value.toLocaleLowerCase('pt-BR').trim();
+      document.querySelectorAll('[data-flex-name]').forEach(row=>{
+        row.hidden=!row.dataset.flexName.includes(query);
+      });
+    }
+  });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
     collectDraft(event);
     updateMuayField(event);
     const el=event.target;
+    if(el.dataset.skipReason && ui.draft){
+      if(F.setReason(ui.draft,el.dataset.skipReason,el.value))persistDraft();
+      return;
+    }
     if(el.dataset.setting){state.settings[el.dataset.setting]=el.value;save();render();}
     else if(el.dataset.exActive){const ex=exerciseFor(el.dataset.exActive);if(ex){ex.active=el.checked;save();render();}}
   });
