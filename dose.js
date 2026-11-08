@@ -173,6 +173,11 @@
     const work=workSets(entry);
     if(!work.length)return {eligible:false,reason:'Ainda não há séries efetivas realizadas neste exercício.'};
     if(work.length>=12)return {eligible:false,reason:'Limite de séries por exercício atingido.'};
+    // A bonus series is considered only after planned work has actually been
+    // completed, never while empty rows are still awaiting execution.
+    if(work.length<Number(exercise.sets) || (entry.sets||[]).some(row=>
+        !row?.warmup && (number(row?.reps)===null || number(row?.reps)<=0)))
+      return {eligible:false,reason:'Conclua primeiro as séries planejadas antes de considerar volume adicional.'};
     if(work.some(s=>number(s.rir)===null || number(s.rir)<2))
       return {eligible:false,reason:'Faltam RIR válidos ou há esforço elevado nas séries registradas.'};
     const history=recentExercise(exercise.id,sessionRows,today)
