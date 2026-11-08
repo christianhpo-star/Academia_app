@@ -259,7 +259,7 @@
       <p class="tiny muted">Uma semana não define se você está ganhando ou perdendo massa muscular. A média de 28 dias é descritiva; não é uma meta mínima nem um limite máximo.</p>
       ${duringWorkout?`<div class="dose-recommendations" aria-live="polite">
         <strong>O que ajustar hoje?</strong>
-        ${data.suggestions.map(s=>`<div class="dose-suggestion dose-${escape(s.level)}"><strong>${escape(s.title)}</strong><p>${escape(s.reason)}</p></div>`).join('')}
+        ${data.suggestions.map(s=>`<div class="dose-suggestion dose-${escape(s.level)}"><strong>${escape(s.title)}</strong><p>${escape(s.reason)}</p>${s.level==='consider' && s.exerciseId?`<button type="button" class="secondary small-button mt-12" data-action="dose-add-one" data-ex="${escape(s.exerciseId)}">Adicionar 1 série opcional</button>`:''}</div>`).join('')}
       </div>`:''}
       ${data.summary.unknown && !duringWorkout ? `<p class="small muted">${data.summary.unknown} exercício(s) sem classificação não entraram nesta estimativa.</p>`:''}
       <p class="tiny muted">${escape(data.disclaimer)}</p>
