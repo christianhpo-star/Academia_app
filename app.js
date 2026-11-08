@@ -6,6 +6,7 @@
   const CAL = window.ForjaCalendar;
   const F = window.ForjaFlex;
   const DOSE = window.ForjaDose;
+  const FOCUS = window.ForjaFocus;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -119,6 +120,7 @@
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
     catalogOpen: false,
+    focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
   };
   let toastTimeout;
@@ -445,6 +447,7 @@
     if (ui.draft) clearDraft();
     ui.plan=id;
     ui.tab='plans';ui.editor=null;
+    ui.focusedExercise=null;ui.focusedMode=false;
     ui.draft={planId:id,energy:'normal',notes:'',entries:{},plannedIds:[],skipped:[],addedIds:[]};
     currentExercises(id).forEach(ex => {ui.draft.entries[ex.id]={id:ex.id,sets:seedSets(ex),pain:''};ui.draft.plannedIds.push(ex.id);});
     persistDraft();
@@ -454,12 +457,32 @@
     F.ensureDraft(ui.draft);
     const p=planFor(ui.draft.planId);
     const entries=ui.draft.entries;
+    const focus=FOCUS.summary(entries);
+    const selected=FOCUS.selectedId(entries,ui.focusedExercise);
+    ui.focusedExercise=selected;
+    const ids=Object.keys(entries);
+    const focusIndex=Math.max(0,ids.indexOf(selected));
     return `${headline('Sessão em andamento',p.title,'As cargas preenchidas são referência; registre repetições e RIR após cada série.')}
       <div class="callout ${ui.draftSaveOk?'good':'warn'}"><strong>${ui.recovered?'Treino recuperado após interrupção.':'Salvamento automático ativo.'}</strong>
         <span class="draft-status ${ui.draftSaveOk?'':'save-error'}" id="draft-status" role="status">${esc(draftStatusText())}</span>
         <p class="small mb-0">Cada edição é salva neste navegador. Você pode sair desta tela e retomar o treino.</p></div>
       <div class="callout">${p.type==='lower'?'Treino de pernas: registre dor no joelho durante os exercícios e no dia seguinte. Se doer, não aumente a carga.':'Carga por halter significa o peso de cada halter, não a soma do par.'}</div>
-      ${Object.values(entries).map(en=>renderExercise(en)).join('')}
+      <section class="workout-focus-bar card" aria-label="Modo de visualização e andamento">
+        <div class="row-between focus-mode-row"><div><strong>Seu treino, no seu ritmo</strong><p class="small muted">Séries preenchidas: só contam após registrar carga e repetições.</p></div>
+          <button type="button" class="secondary small-button" data-action="focus-toggle" aria-pressed="${ui.focusedMode}">${ui.focusedMode?'Ver ficha completa':'Ativar modo focado'}</button>
+        </div>
+        <div class="focus-progress" aria-label="${focus.completed} de ${focus.total} exercícios com séries efetivas concluídas"><span style="width:${focus.total?Math.round(focus.completed/focus.total*100):0}%"></span></div>
+        <p class="small muted focus-progress-label" role="status">${focus.completed} de ${focus.total} exercícios concluídos · ${focus.effectiveSets} ${focus.effectiveSets===1?'série efetiva registrada':'séries efetivas registradas'}</p>
+        ${ui.focusedMode && selected ? `<div class="focus-step"><strong>Exercício ${focusIndex+1} de ${ids.length}</strong>
+          <div class="focus-navigation">
+            <button type="button" class="secondary small-button" data-action="focus-prev" ${focusIndex===0?'disabled':''}>Anterior</button>
+            <button type="button" class="secondary small-button" data-action="focus-next" ${focusIndex===ids.length-1?'disabled':''}>Próximo</button>
+          </div></div>
+          <div class="focus-exercise-pills" aria-label="Escolher exercício da sessão">
+            ${ids.map((id,i)=>`<button type="button" class="focus-exercise-pill ${selected===id?'selected':''}" data-action="focus-select" data-ex="${esc(id)}" aria-pressed="${selected===id}">${i+1}. ${esc(exerciseFor(id)?.name||id)} ${focus.byExercise[id]?.finished?'✓':''}</button>`).join('')}
+          </div>` : ''}
+      </section>
+      ${ui.focusedMode ? (selected?renderExercise(entries[selected]):'<p class="empty">Adicione um exercício para começar.</p>') : Object.values(entries).map(en=>renderExercise(en)).join('')}
       <section class="card"><div class="row-between"><h2 class="section-title">Ajustar este treino</h2>${tag('Só hoje','green')}</div>
         <p class="small muted">Retirar ou adicionar exercícios aqui não altera sua ficha. Exercícios retirados não contam como realizados.</p>
         ${F.ensureDraft(ui.draft) && ui.draft.skipped.length ? '<div class="flex-skipped"><strong>Retirados nesta sessão</strong>' +
@@ -549,6 +572,9 @@
       <input aria-label="Série ${i+1}, repetições em ${esc(ex.name)}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
       <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />
       <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex,previousSession?.session.day)}</div>`).join('')}</div>
+      <div class="quick-log-tools"><span class="small muted">Preparo rápido · confirme as repetições depois de executar</span>
+      <div class="quick-log-buttons"><button type="button" class="secondary small-button" data-action="quick-previous" data-ex="${esc(ex.id)}">Repetir cargas da última sessão</button>
+      <button type="button" class="secondary small-button" data-action="quick-current" data-ex="${esc(ex.id)}">Repetir carga da série anterior</button></div></div>
       <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button><button class="button-inline" data-action="flex-withdraw" data-ex="${esc(ex.id)}">Retirar só hoje</button></div>
       ${ex.knee?`<div class="field mt-12"><label for="pain-${esc(ex.id)}">Dor no joelho durante o exercício (0–5+)</label><select id="pain-${esc(ex.id)}" data-ex-pain="${esc(ex.id)}" required>${painOptions(en.pain)}</select><span class="field-help">Informe 0 quando não sentiu dor. Este registro é necessário para salvar uma série efetiva deste exercício.</span></div>`:''}
     </section>`;
@@ -653,6 +679,11 @@
         row[el.dataset.field]=el.value;
         persistDraft();
         updateSetComparison(el.dataset.ex, Number(el.dataset.index));
+        const progress=FOCUS.summary(ui.draft.entries);
+        const status=document.querySelector('.focus-progress-label');
+        if(status)status.textContent=progress.completed+' de '+progress.total+' exercícios concluídos · '+progress.effectiveSets+(progress.effectiveSets===1?' série efetiva registrada':' séries efetivas registradas');
+        const bar=document.querySelector('.focus-progress span');
+        if(bar)bar.style.width=(progress.total?Math.round(progress.completed/progress.total*100):0)+'%';
         // Editing a number fires input and later change on blur.
         // Replacing a recommendation button during the blur change would
         // detach it between pointerdown and pointerup, cancelling the click.
@@ -763,6 +794,30 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='focus-toggle'){if(!ui.draft)return;ui.focusedMode=!ui.focusedMode;render();return;}
+    if(action==='focus-select' || action==='focus-next' || action==='focus-prev'){
+      if(!ui.draft)return;
+      const ids=Object.keys(ui.draft.entries);
+      const current=FOCUS.selectedId(ui.draft.entries,ui.focusedExercise);
+      const i=ids.indexOf(current);
+      const id=action==='focus-select'?btn.dataset.ex:ids[i+(action==='focus-next'?1:-1)];
+      if(!id||!ui.draft.entries[id])return;
+      ui.focusedExercise=id;render();document.querySelector('.workout-focus-bar')?.scrollIntoView({block:'start'});return;
+    }
+    if(action==='quick-previous' || action==='quick-current'){
+      if(!ui.draft)return;
+      const en=ui.draft.entries[btn.dataset.ex];if(!en)return;
+      const prev=history(en.id)[0]?.entry?.sets||[];
+      let copied=0;
+      const original=copy(en.sets);
+      en.sets.forEach((set,index)=>{
+        const v=FOCUS.quickLoad(en,index,action==='quick-previous'?'previous-session':'last-set',prev);
+        if(!v.error && (set.load==='' || set.load===null || set.load===undefined)){set.load=v.load;copied++;}
+      });
+      if(!copied)return notify('Nenhuma carga pendente disponível para copiar.');
+      if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
+      render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
+    }
     if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;render();return;}
     if(action==='flex-add'){
       const draft=ui.draft,id=btn.dataset.ex;if(!draft)return;
