@@ -172,3 +172,22 @@
 .flex-signal strong{display:block;font-size:13px}
 .flex-signal p{font-size:12px;line-height:1.5;color:#cbd9e5;margin:6px 0 0}
 @media(max-width:360px){.flex-metrics{grid-template-columns:1fr}.flex-skipped{padding:9px}}
+
+
+/* Training-dose analysis: completed sets only, estimates rather than prescriptions. */
+.dose-card{scroll-margin-top:16px}
+.dose-card .section-title{font-size:16px}
+.dose-table{display:grid;gap:3px;margin:13px 0}
+.dose-header,.dose-row{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,.65fr) minmax(0,1fr);gap:6px;align-items:center;padding:9px 8px;border-bottom:1px solid #354d60}
+.dose-header{background:#1b3442;border-radius:9px 9px 0 0;color:#b7cde0;font-size:10px;font-weight:700}
+.dose-header span:not(:first-child),.dose-row span{text-align:right}
+.dose-row{font-size:12px}
+.dose-row strong{font-weight:650;overflow-wrap:anywhere}
+.dose-recommendations{display:grid;gap:9px;margin:14px 0}
+.dose-recommendations>strong{font-size:13px}
+.dose-suggestion{border:1px solid #45617b;border-left:3px solid #80beff;background:#1b2b3b;padding:12px;border-radius:9px}
+.dose-suggestion.dose-recover{border-left-color:#ffb393}
+.dose-suggestion.dose-consider{border-left-color:#c5f56b}
+.dose-suggestion strong{font-size:12px;line-height:1.5;display:block}
+.dose-suggestion p{font-size:12px;color:#d2dfe7;margin:6px 0 0;line-height:1.55}
+@media(max-width:370px){.dose-header,.dose-row{grid-template-columns:minmax(0,1.25fr) minmax(0,.55fr) minmax(0,.9fr);gap:4px;padding:8px 3px}.dose-header{font-size:9px}.dose-row{font-size:11px}}
