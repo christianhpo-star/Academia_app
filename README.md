@@ -31,6 +31,17 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 - As mensagens sugerem sessões mais simples, redistribuição de movimentos ou alternativas; nunca aumentam carga/volume automaticamente.
 - Regras do produto são hipóteses operacionais conservadoras, não limiares científicos individualmente validados; dias de Muay Thai são contabilizados sem converter rounds em séries de força.
 
+## Volume por músculo e recomendações conservadoras — PR #3 (em revisão)
+
+- Novo motor `dose.js` calcula séries efetivas concluídas por grupo muscular nos últimos 7 e 28 dias; séries de aquecimento, cargas de exemplo e exercícios não realizados não entram na conta.
+- O mapeamento de exercícios distingue musculatura primária (1 unidade por série) e envolvimento auxiliar (0,5 unidade estimada), como convenção de pesquisa, **não equivalência fisiológica exata**. Exercícios personalizados sem classificação são sinalizados e não geram números inventados.
+- A aba **Evolução** mostra volume semanal observado e média simples dos 28 dias; a tela de **treino em andamento** atualiza a visão conforme as séries são realmente registradas.
+- Considerar **uma série extra opcional** é uma hipótese condicionada: energia explicitamente sobrando (`leve`), ao menos duas sessões anteriores comparáveis, RIR informado ≥2, desempenho estável, volume atual próximo do próprio histórico e ausência de fatores de cautela relevantes. Nenhuma série ou carga é acrescentada automaticamente.
+- Em caso de dados insuficientes, fadiga alta, dor pertinente ou Muay Thai recente, o painel deve indicar manutenção/recuperação em vez de sugerir aumento. Essas regras são **heurísticas de produto a validar**, não limiares cientificamente determinados para o usuário.
+- Não usar o peso isolado para afirmar recomposição corporal. A literatura embasa princípios gerais, mas o motor não mede hipertrofia nem estima causalmente os efeitos de uma série adicional.
+
+Fontes de projeto: ACSM 2026 DOI `10.1249/MSS.0000000000003897`; Pelland e colaboradores 2026 DOI `10.1007/s40279-025-02344-w`; Robinson e colaboradores 2024 PMID `38970765`.
+
 ## Funcionalidades da versão 1.3
 
 - Histórico real por exercício, com carga (kg ou kg/halter), repetições e RIR (repetições em reserva) **por série**.
