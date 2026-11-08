@@ -71,6 +71,12 @@ with sync_playwright() as p:
     (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots'/'dose-qualified-390.png'),full_page=True)
     button.click()
+    print('AFTER CLICK:',page.evaluate("""() => ({
+      alert:document.getElementById('toast')?.textContent,
+      visible:!document.getElementById('toast')?.hidden,
+      series:document.querySelectorAll('[data-exercise="supino-inclinado"] [data-field="reps"]').length,
+      draft:JSON.parse(localStorage.getItem('forja.academia.draft.v1'))?.draft?.entries?.['supino-inclinado']?.sets?.length
+    })"""),flush=True)
     entry=page.locator('[data-exercise="supino-inclinado"]')
     assert entry.locator('[data-field="reps"]').count()==5
     assert entry.locator('[data-field="reps"]').nth(4).input_value()==''
