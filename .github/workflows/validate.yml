@@ -38,6 +38,7 @@ jobs:
           python3 tests/smoke_muay.py
           python3 tests/smoke_calendar.py
           python3 tests/smoke_flex.py
+          python3 tests/smoke_dose.py
       - name: Upload Muay screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
@@ -47,5 +48,6 @@ jobs:
             screenshots/muay-*.png
             screenshots/calendar-*.png
             screenshots/flex-*.png
+            screenshots/dose-*.png
           if-no-files-found: warn
           retention-days: 3
