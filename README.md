@@ -44,6 +44,10 @@ Fontes de projeto: ACSM 2026 DOI `10.1249/MSS.0000000000003897`; Pelland e colab
 
 ## Modo focado e preparo rápido de séries (PR em revisão)
 
+> Integração preparada com a correção de atualização do cache do PR #5: arquivos JavaScript/CSS versionados, `focus.js` incluído no cache offline e recuperação do histórico local sem alteração de chaves. Validar cache e fluxos juntos antes da publicação.
+
+
+
 - Na tela de sessão de musculação, botão **Ativar modo focado** exibe um único exercício por vez, com navegação Anterior/Próximo e lista compacta para pular diretamente para qualquer exercício.
 - O modo completo continua padrão e pode ser recuperado com **Ver ficha completa**, mantendo a ordem e o rascunho.
 - Indicadores mostram exercícios com todas as séries efetivas registradas e total de séries efetivas preenchidas (aquecimentos não entram na contagem).
