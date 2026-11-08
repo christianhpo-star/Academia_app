@@ -32,4 +32,19 @@ for icon in manifest['icons']:
     width, height = struct.unpack('>II', data[16:24])
     assert width == height and width in {192, 512}, f'{file} has invalid dimensions'
 
+# Cache busting is part of the release contract: every CSS/JS resource
+# must share the same release URL marker, and the worker must install a new shell.
+version='20261108-ui-cache-11'
+for asset in ['styles.css','data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','app.js']:
+    assert f'./{asset}?v={version}' in index, f'{asset} is not versioned'
+sw = (root / 'sw.js').read_text(encoding='utf-8')
+app = (root / 'app.js').read_text(encoding='utf-8')
+assert "const CACHE = 'forja-shell-v11-ui-cache';" in sw
+assert f'./styles.css?v={version}' in sw
+assert f'./app.js?v={version}' in sw
+assert "fetch(event.request, {cache: 'no-cache'})" in sw
+assert f"./sw.js?v={version}" in app
+assert "updateViaCache:'none'" in app
+assert 'FORJA · 11/2026' in index
+
 print('All deployment assets are valid.')
