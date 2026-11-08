@@ -31,7 +31,7 @@ def open_app(context, storage, errors):
       });
     }""", storage)
     page.add_style_tag(path=str(ROOT / 'styles.css'))
-    for script in ['data.js', 'engine.js', 'app.js']:
+    for script in ['data.js', 'engine.js', 'muay.js', 'calendar.js', 'app.js']:
         page.add_script_tag(path=str(ROOT / script))
     page.wait_for_selector('#screen h1')
     return page
