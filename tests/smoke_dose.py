@@ -70,9 +70,18 @@ with sync_playwright() as p:
     assert len(baseline['draft']['entries']['supino-inclinado']['sets'])==4
     (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots'/'dose-qualified-390.png'),full_page=True)
+    print('BEFORE CLICK:',button.evaluate("""el=>({
+      html:el.outerHTML,insideScreen:document.getElementById('screen').contains(el),
+      ancestors:[...function*(p){for(let i=0;p&&i<6;i++,p=p.parentElement)yield p.tagName+'#'+p.id+'.'+p.className}(el)]
+    })"""),flush=True)
+    page.evaluate("""() => document.addEventListener('click', event=>{
+      window.__lastClick={target:event.target.outerHTML.slice(0,300),
+        action:event.target.closest('[data-action]')?.dataset.action,
+        insideScreen:document.getElementById('screen').contains(event.target)}
+    },true)""")
     button.click()
     print('AFTER CLICK:',page.evaluate("""() => ({
-      alert:document.getElementById('toast')?.textContent,
+      click:window.__lastClick,alert:document.getElementById('toast')?.textContent,
       visible:!document.getElementById('toast')?.hidden,
       series:document.querySelectorAll('[data-exercise="supino-inclinado"] [data-field="reps"]').length,
       draft:JSON.parse(localStorage.getItem('forja.academia.draft.v1'))?.draft?.entries?.['supino-inclinado']?.sets?.length
