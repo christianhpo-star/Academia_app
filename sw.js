@@ -1,8 +1,8 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v7';
+const CACHE = 'forja-shell-v8';
 const APP_FILES = [
   './', './index.html', './styles.css', './app.js', './data.js',
-  './engine.js', './muay.js', './manifest.webmanifest',
+  './engine.js', './muay.js', './calendar.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
