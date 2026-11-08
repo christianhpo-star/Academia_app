@@ -418,7 +418,12 @@
     return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D. Cada bloco realizado sai da fila; os outros continuam pendentes.')}
       ${resumeBanner()}
       ${renderQueue(next)}
-      <div class="tabs" role="group" aria-label="Escolher grupo de treino">${DATA.plans.map(plan=>`<button class="tab-chip ${ui.plan===plan.id?'selected':''}" data-action="select-plan" data-plan="${plan.id}">${plan.id} · ${esc(plan.title.split(' ')[0])}</button>`).join('')}</div>
+      <div class="tabs plan-block-selector" role="group" aria-label="Escolher grupo de treino">
+      ${DATA.plans.map(plan => {
+        const label=plan.title.split(" ")[0];
+        return `<button type="button" class="tab-chip plan-block-choice ${ui.plan===plan.id?'selected':''}" data-action="select-plan" data-plan="${plan.id}" aria-pressed="${ui.plan===plan.id}" aria-label="Bloco ${plan.id}: ${esc(label)}">
+          <span class="plan-choice-code">BLOCO ${plan.id}</span><span class="plan-choice-name">${esc(label)}</span></button>`;
+      }).join('')}</div>
       <section class="workout-banner"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><p>${esc(p.subtitle)}</p><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button></section>
       <div class="section-row"><h2 class="section-title">Exercícios do bloco</h2><small>${all.filter(x=>x.active).length} ativos</small></div>
       <div class="list-settings">${all.map(ex=>`<div class="setting-item"><div><strong>${esc(ex.name)}</strong><span>${ex.sets} × ${ex.low}–${ex.high} · +${fmt(ex.step)} ${esc(ex.unit)} ${ex.knee?'· atenção ao joelho':''}</span><button class="button-inline" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>`).join('')}</div>
@@ -500,28 +505,42 @@
       exercises:state.exercises,draft:duringWorkout?ui.draft:null,settings:state.settings,today:today()});
     return DOSE.renderPanel(result,{duringWorkout});
   }
-  function setComparisonText(previous, current, ex) {
-    if (!previous) return `<span class="previous-set">Sem registro anterior desta série.</span>`;
-    const previousText = `${fmt(previous.load)} ${ex.unit} × ${previous.reps} rep. · ${previous.warmup?'aquecimento':'efetiva'}${previous.rir == null?'':` · RIR ${previous.rir}`}`;
-    const delta = E.compareSet(previous, current);
-    return `<span class="previous-set">Anterior: <strong>${esc(previousText)}</strong></span>
-      <span class="set-delta ${esc(delta.kind)}">${esc(delta.label)}</span>`;
+  // Readable reference metrics, separate from the progression / safety guidance.
+  function setComparisonText(previous, current, ex, previousDate) {
+    const recorded=previous && previous.load !== '' && previous.load != null &&
+      previous.reps !== '' && previous.reps != null && Number(previous.reps)>0;
+    if(!recorded) return '<span class="set-history-empty">Sem registro anterior desta série.</span>';
+    const hasCurrent=current && current.load !== '' && current.load != null &&
+      current.reps !== '' && current.reps != null && Number(current.load)>0 && Number(current.reps)>0;
+    const delta=hasCurrent ? E.compareSet(previous,current) : null;
+    const rir=previous.rir === '' || previous.rir == null ? '—' : String(previous.rir);
+    return `<div class="previous-workout-reference">
+      <div class="reference-heading"><span>REFERÊNCIA ANTERIOR</span>
+        <span>${previousDate?dateBR(previousDate):'Última sessão'} · ${previous.warmup?'Aquecimento':'Efetiva'}</span></div>
+      <dl class="previous-workout-metrics">
+        <div class="history-metric"><dt>Carga</dt><dd>${esc(fmt(previous.load))}<small>${esc(ex.unit)}</small></dd></div>
+        <div class="history-metric"><dt>Repetições</dt><dd>${esc(previous.reps)}<small>reps</small></dd></div>
+        <div class="history-metric"><dt>RIR</dt><dd>${esc(rir)}</dd></div>
+      </dl>
+      ${delta && delta.label?`<span class="set-delta ${esc(delta.kind)}">${esc(delta.label)}</span>`:''}
+    </div>`;
   }
   function updateSetComparison(exId, index) {
-    const en = ui.draft?.entries[exId], ex = exerciseFor(exId);
+    const en=ui.draft?.entries[exId], ex=exerciseFor(exId);
     if (!en || !ex) return;
-    const cell = [...document.querySelectorAll('.set-history')]
-      .find(node => node.dataset.ex === exId && Number(node.dataset.index) === index);
+    const cell=[...document.querySelectorAll('.set-history')]
+      .find(node=>node.dataset.ex===exId && Number(node.dataset.index)===index);
     if (!cell) return;
-    const previous = history(exId)[0]?.entry.sets[index];
-    cell.innerHTML = setComparisonText(previous, en.sets[index], ex);
+    const previous=history(exId)[0];
+    cell.innerHTML=setComparisonText(previous?.entry.sets[index],en.sets[index],ex,previous?.session.day);
   }
   function renderExercise(en) {
-    const ex=exerciseFor(en.id), reco=E.recommend(ex,state.sessions), previousEntry=history(ex.id)[0]?.entry, hasData=!!previousEntry;
+    const ex=exerciseFor(en.id), reco=E.recommend(ex,state.sessions), previousSession=history(ex.id)[0], previousEntry=previousSession?.entry, hasData=!!previousEntry;
     const cls=reco.level==='protect'?'protect':['hold','confirm'].includes(reco.level)?'warn':'';
     return `<section class="exercise-card" data-exercise="${esc(ex.id)}">
       <div class="card-row"><div><h3>${esc(ex.name)}</h3><p class="small muted mt-8">Meta: ${ex.low}–${ex.high} rep. · ajuste de ${fmt(ex.step)} ${esc(ex.unit)}</p></div>${tag(ex.mode==='pyramid'?'Pirâmide':'Séries','')}</div>
-      <div class="recommend ${cls}"><strong>${esc(reco.title)}</strong><p>${esc(reco.explanation)}</p>${hasData?`<p>Último: ${esc(reco.last)} (${dateBR(reco.lastDate)})</p>`:''}
+      ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
+      <div class="recommend ${cls}"><strong>${esc(reco.title)}</strong><p>${esc(reco.explanation)}</p>
       ${reco.level==='increase'?`<button class="button-inline mt-8" data-action="apply-reco" data-ex="${esc(ex.id)}">Usar ${fmt(reco.next)} ${esc(ex.unit)} na série mais pesada</button>`:''}</div>
       ${!hasData&&ex.example?'<p class="small muted">Modelo do seu supino: 20 → 22,5 → 25 → 25 kg por halter. Não é histórico registrado.</p>':''}
       <div class="set-grid"><div class="caption">Nº</div><div class="caption">Tipo</div><div class="caption">Carga<br>(${esc(ex.unit)})</div><div class="caption">Reps</div><div class="caption">RIR</div>
@@ -529,7 +548,7 @@
       <input aria-label="Série ${i+1}, carga ${esc(ex.unit)} em ${esc(ex.name)}" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="load" value="${esc(set.load)}" />
       <input aria-label="Série ${i+1}, repetições em ${esc(ex.name)}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
       <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />
-      <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex)}</div>`).join('')}</div>
+      <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex,previousSession?.session.day)}</div>`).join('')}</div>
       <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button><button class="button-inline" data-action="flex-withdraw" data-ex="${esc(ex.id)}">Retirar só hoje</button></div>
       ${ex.knee?`<div class="field mt-12"><label for="pain-${esc(ex.id)}">Dor no joelho durante o exercício (0–5+)</label><select id="pain-${esc(ex.id)}" data-ex-pain="${esc(ex.id)}" required>${painOptions(en.pain)}</select><span class="field-help">Informe 0 quando não sentiu dor. Este registro é necessário para salvar uma série efetiva deste exercício.</span></div>`:''}
     </section>`;

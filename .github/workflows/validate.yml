@@ -39,6 +39,7 @@ jobs:
           python3 tests/smoke_calendar.py
           python3 tests/smoke_flex.py
           python3 tests/smoke_dose.py
+          python3 tests/smoke_ui.py
       - name: Upload isolated PR source for diagnostics
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -63,5 +64,7 @@ jobs:
             screenshots/calendar-*.png
             screenshots/flex-*.png
             screenshots/dose-*.png
+            screenshots/blocks-*.png
+            screenshots/previous-series-*.png
           if-no-files-found: warn
           retention-days: 3

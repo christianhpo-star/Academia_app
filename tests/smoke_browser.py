@@ -28,7 +28,7 @@ with sync_playwright() as p:
     screenshots=root/'screenshots';screenshots.mkdir(exist_ok=True)
     page.screenshot(path=str(screenshots/'home.png'),full_page=True)
     page.get_by_role('button',name='Treinos',exact=True).click()
-    page.get_by_role('button',name='B · Peito').click()
+    page.locator('[data-action="select-plan"][data-plan="B"]').click()
     page.get_by_role('button',name='Iniciar treino B').click()
     page.wait_for_selector('text=Sessão em andamento')
     cards=page.locator('.exercise-card')

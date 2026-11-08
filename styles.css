@@ -191,3 +191,71 @@
 .dose-suggestion strong{font-size:12px;line-height:1.5;display:block}
 .dose-suggestion p{font-size:12px;color:#d2dfe7;margin:6px 0 0;line-height:1.55}
 @media(max-width:370px){.dose-header,.dose-row{grid-template-columns:minmax(0,1.25fr) minmax(0,.55fr) minmax(0,.9fr);gap:4px;padding:8px 3px}.dose-header{font-size:9px}.dose-row{font-size:11px}}
+
+
+/* FORJA UX refresh: scoped to workout-block picker; Muay Thai tabs keep their behavior. */
+.plan-block-selector{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:9px;
+  overflow:visible;
+  padding:2px 0 10px;
+}
+.plan-block-selector .plan-block-choice{
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+  gap:5px;min-width:0;width:100%;min-height:70px;padding:11px 12px;
+  text-align:left;white-space:normal;overflow-wrap:anywhere;
+  line-height:1.3;
+}
+.plan-choice-code{
+  font-size:10px;line-height:1.3;letter-spacing:.055em;
+  font-weight:850;opacity:.86;
+}
+.plan-choice-name{
+  display:block;max-width:100%;font-size:clamp(13px,3.8vw,16px);
+  line-height:1.3;font-weight:850;overflow-wrap:anywhere;
+}
+.plan-block-choice:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+@media(min-width:720px){
+  .plan-block-selector{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .plan-choice-name{font-size:16px}
+}
+
+/* Structured, per-set comparison. Values from recorded history, not suggested loads. */
+.set-history{
+  padding:7px 0 12px;
+  border-bottom:1px solid #28394b;
+  min-height:0;
+}
+.previous-workout-reference{
+  border:1px solid #354c5f;background:#1a2a39;
+  border-radius:12px;padding:10px;min-width:0;width:100%;
+}
+.reference-heading{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 9px;margin-bottom:9px}
+.reference-heading span:first-child{font-size:10px;letter-spacing:.04em;color:#d0dfeb;font-weight:850}
+.reference-heading span:last-child{font-size:10px;color:#b7c9d9}
+.previous-workout-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0}
+.history-metric{display:flex;flex-direction:column;justify-content:center;min-width:0;gap:5px;background:#122230;border:1px solid #33495d;border-radius:9px;padding:9px 5px;text-align:center}
+.history-metric dt{font-size:10px;color:#b5c9da;line-height:1.2;order:2}
+.history-metric dd{margin:0;color:#f2f7fc;font-size:clamp(15px,4.5vw,20px);font-weight:850;line-height:1.2;font-variant-numeric:tabular-nums;overflow-wrap:anywhere;order:1}
+.history-metric dd small{display:block;font-size:10px;font-weight:550;color:#b7cada;margin-top:4px;overflow-wrap:anywhere}
+.previous-workout-reference .set-delta{display:block;margin-top:10px;font-size:11px;line-height:1.5}
+.set-history-empty{display:block;font-size:11px;color:#9fb4c6;line-height:1.5;padding:5px 3px}
+.exercise-last-session{display:grid;gap:4px;margin:10px 0 0;padding:10px 12px;background:#192b39;border:1px solid #344f62;border-radius:11px}
+.exercise-last-session span{color:#b6c8d7;font-size:10px;font-weight:750;letter-spacing:.03em}
+.exercise-last-session strong{font-size:13px;line-height:1.45;color:#eff7fc;overflow-wrap:anywhere}
+
+/* Reserve focus and scroll space while the fixed navigation/save bar is shown. */
+html:has(.training-controls){scroll-padding-bottom:220px}
+#screen:has(.training-controls){padding-bottom:160px}
+.training-controls{scroll-margin-bottom:180px}
+.exercise-card input,.exercise-card select,#session-energy,#session-notes{scroll-margin-bottom:190px}
+@media(max-width:360px){
+  .plan-block-selector{gap:7px}
+  .plan-block-selector .plan-block-choice{min-height:74px;padding:10px}
+  .plan-choice-name{font-size:13px}
+  .previous-workout-reference{padding:8px}
+  .previous-workout-metrics{gap:4px}
+  .history-metric{padding:8px 2px}
+  .history-metric dd{font-size:15px}
+}
