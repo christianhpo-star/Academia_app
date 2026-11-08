@@ -62,6 +62,7 @@ test('sugere somente uma série opcional com duas sessões comparáveis, RIR e s
   output=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,settings:{fatigue:'normal',kneePain:''}});
   assert.equal(output.candidates.length,1);
   assert.equal(output.suggestions[0].level,'consider');
+  assert.match(DOSE.renderPanel(output,{duringWorkout:true}),/data-action="dose-add-one"/);
   assert.match(output.suggestions[0].reason,/opcional/);
   assert.match(output.disclaimer,/heurísticas/);
 });
