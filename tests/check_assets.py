@@ -6,7 +6,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 text_assets = [
     'index.html', 'styles.css', 'app.js', 'data.js', 'engine.js',
-    'muay.js', 'calendar.js', 'sw.js', 'manifest.webmanifest', 'README.md',
+    'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'sw.js', 'manifest.webmanifest', 'README.md',
     'tests/engine.test.cjs', 'tests/smoke_browser.py'
 ]
 for path in text_assets:
@@ -16,7 +16,7 @@ for path in text_assets:
     assert '\x00' not in content, f'{path} contains binary or null data'
 
 index = (root / 'index.html').read_text(encoding='utf-8')
-for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './app.js', './styles.css', './manifest.webmanifest']:
+for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './app.js', './styles.css', './manifest.webmanifest']:
     assert path in index, f'index.html must reference {path}'
 
 manifest = json.loads((root / 'manifest.webmanifest').read_text(encoding='utf-8'))
