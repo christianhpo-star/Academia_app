@@ -173,6 +173,10 @@
     const work=workSets(entry);
     if(!work.length)return {eligible:false,reason:'Ainda não há séries efetivas realizadas neste exercício.'};
     if(work.length>=12)return {eligible:false,reason:'Limite de séries por exercício atingido.'};
+    // Never offer a second bonus after the user has already added a fifth row.
+    // Allow at most one extra row relative to the configured workout template.
+    if((entry.sets||[]).length!==Number(exercise.sets))
+      return {eligible:false,reason:'A quantidade de séries já foi ajustada nesta sessão; não sugerir aumentos adicionais.'};
     // A bonus series is considered only after planned work has actually been
     // completed, never while empty rows are still awaiting execution.
     if(work.length<Number(exercise.sets) || (entry.sets||[]).some(row=>
