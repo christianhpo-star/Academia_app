@@ -24,7 +24,7 @@ with sync_playwright() as p:
       }});
     }""")
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','app.js']:
+    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','app.js']:
         page.add_script_tag(path=str(ROOT/script))
     page.locator('#screen h1').wait_for()
     # Seed only synthetic completed records, preserving valid app defaults.
