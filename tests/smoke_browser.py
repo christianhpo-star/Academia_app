@@ -16,7 +16,7 @@ with sync_playwright() as p:
     root=Path(__file__).resolve().parents[1]
     html=(root/'index.html').read_text()
     html=re.sub(r'<script defer src="\./[^"]+"></script>','',html)
-    html=html.replace('<link rel="stylesheet" href="./styles.css" />','')
+    html=html.replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
     page.set_content(html)
     page.evaluate("Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem(){return null},setItem(){}}})")
     page.add_style_tag(path=str(root/'styles.css'))
