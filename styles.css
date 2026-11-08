@@ -245,9 +245,11 @@
 .exercise-last-session span{color:#b6c8d7;font-size:10px;font-weight:750;letter-spacing:.03em}
 .exercise-last-session strong{font-size:13px;line-height:1.45;color:#eff7fc;overflow-wrap:anywhere}
 
-/* Keep final fields above the fixed navigation while using the save controls. */
+/* Reserve focus and scroll space while the fixed navigation/save bar is shown. */
+html:has(.training-controls){scroll-padding-bottom:220px}
+#screen:has(.training-controls){padding-bottom:160px}
 .training-controls{scroll-margin-bottom:180px}
-.exercise-card .field:last-child{scroll-margin-bottom:165px}
+.exercise-card input,.exercise-card select,#session-energy,#session-notes{scroll-margin-bottom:190px}
 @media(max-width:360px){
   .plan-block-selector{gap:7px}
   .plan-block-selector .plan-block-choice{min-height:74px;padding:10px}
