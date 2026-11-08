@@ -53,7 +53,7 @@ with sync_playwright() as p:
     assert 'Evolua com método.' in page.locator('#screen').inner_text()
     assert 'Bloco A' in page.locator('#screen').inner_text()
     page.get_by_role('button', name='Escolher outro bloco').click()
-    page.get_by_role('button', name='B · Peito').click()
+    page.locator('[data-action="select-plan"][data-plan="B"]').click()
     page.get_by_role('button', name='Iniciar treino B').click()
     assert 'Salvamento automático ativo' in page.locator('#screen').inner_text()
     supino = page.locator('[data-exercise="supino-halteres"]')
@@ -92,10 +92,14 @@ with sync_playwright() as p:
     assert 'Bloco A' in home
     assert '1 de 4 blocos concluídos' in home
     page.get_by_role('button', name='Treinos', exact=True).click()
-    page.get_by_role('button', name='B · Peito').click()
+    page.locator('[data-action="select-plan"][data-plan="B"]').click()
     page.get_by_role('button', name='Iniciar treino B').click()
     supino = page.locator('[data-exercise="supino-halteres"]')
-    assert 'Anterior: 25 kg/halter × 10 rep.' in supino.inner_text()
+    prior=supino.locator('.previous-workout-reference').last
+    assert prior.locator('.history-metric').count()==3
+    assert '25' in prior.locator('.history-metric').first.inner_text()
+    assert '10' in prior.locator('.history-metric').nth(1).inner_text()
+    assert 'REFERÊNCIA ANTERIOR' in prior.inner_text()
     supino.locator('[data-field="reps"]').nth(3).fill('12')
     assert '+2 repetição(ões) com a mesma carga!' in supino.inner_text()
     out = ROOT / 'screenshots'
@@ -124,7 +128,7 @@ with sync_playwright() as p:
     # Saving the history can fail while the in-progress draft remains recoverable.
     failed = open_app(context, {}, errors)
     failed.get_by_role('button', name='Escolher outro bloco').click()
-    failed.get_by_role('button', name='B · Peito').click()
+    failed.locator('[data-action="select-plan"][data-plan="B"]').click()
     failed.get_by_role('button', name='Iniciar treino B').click()
     failed_supino = failed.locator('[data-exercise="supino-halteres"]')
     failed_supino.locator('[data-field="reps"]').nth(1).fill('10')
