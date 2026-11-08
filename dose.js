@@ -179,8 +179,9 @@
       return {eligible:false,reason:'A quantidade de séries já foi ajustada nesta sessão; não sugerir aumentos adicionais.'};
     // A bonus series is considered only after planned work has actually been
     // completed, never while empty rows are still awaiting execution.
-    if(work.length<Number(exercise.sets) || (entry.sets||[]).some(row=>
-        !row?.warmup && (number(row?.reps)===null || number(row?.reps)<=0)))
+    const plannedWorkRows=(entry.sets||[]).filter(row=>!row?.warmup);
+    if(!plannedWorkRows.length || work.length<plannedWorkRows.length ||
+        plannedWorkRows.some(row=>number(row?.reps)===null || number(row?.reps)<=0))
       return {eligible:false,reason:'Conclua primeiro as séries planejadas antes de considerar volume adicional.'};
     if(work.some(s=>number(s.rir)===null || number(s.rir)<2))
       return {eligible:false,reason:'Faltam RIR válidos ou há esforço elevado nas séries registradas.'};
