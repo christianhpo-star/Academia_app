@@ -259,3 +259,40 @@ html:has(.training-controls){scroll-padding-bottom:220px}
   .history-metric{padding:8px 2px}
   .history-metric dd{font-size:15px}
 }
+
+
+/* FORJA: optional one-exercise-focused workflow and safe quick load prep. */
+.workout-focus-bar{padding:14px;scroll-margin-top:12px}
+.focus-mode-row{align-items:flex-start}
+.focus-mode-row>div{min-width:0}
+.focus-mode-row strong{font-size:14px}
+.focus-mode-row p{margin:5px 0 0;max-width:36ch}
+.focus-mode-row button{flex-shrink:0}
+.focus-progress{margin-top:14px;background:#344652;border-radius:20px;height:7px;overflow:hidden}
+.focus-progress span{display:block;background:var(--lime);height:100%;transition:width .15s linear}
+.focus-progress-label{margin:7px 0 0}
+.focus-step{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:15px;flex-wrap:wrap}
+.focus-step>strong{font-size:13px}
+.focus-navigation{display:flex;gap:7px}
+.focus-navigation button{min-width:85px}
+.focus-exercise-pills{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin-top:12px}
+.focus-exercise-pill{display:block;min-height:42px;min-width:0;width:100%;border-radius:10px;
+ border:1px solid #456074;background:#192b3a;color:#d0e3ef;padding:9px;text-align:left;
+ overflow-wrap:anywhere;line-height:1.35;font-size:11px;font-weight:700}
+.focus-exercise-pill.selected{border-color:var(--lime);background:#2a4031;color:#eaffd6}
+.focus-exercise-pill:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.quick-log-tools{background:#192c3a;border:1px solid #354b60;border-radius:11px;padding:11px;margin-top:11px;display:grid;gap:9px}
+.quick-log-tools>span{line-height:1.45}
+.quick-log-buttons{display:flex;flex-wrap:wrap;gap:8px}
+.quick-log-buttons button{flex:1;min-width:125px;white-space:normal;text-align:center}
+@media(max-width:370px){
+  .focus-mode-row{flex-wrap:wrap}
+  .focus-mode-row button{flex:1}
+  .focus-exercise-pills{grid-template-columns:1fr}
+  .focus-navigation{width:100%}
+  .focus-navigation button{flex:1}
+  .quick-log-buttons{flex-direction:column}
+}
+@media(min-width:720px){
+  .focus-exercise-pills{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
