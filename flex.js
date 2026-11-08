@@ -11,7 +11,7 @@
     ['rosca-scott', 'Rosca Scott', 'A', 'Máquina / barra', 'Bíceps', 2, 10, 12, 2.5],
     ['crucifixo-cabo', 'Crucifixo no cabo', 'B', 'Polia', 'Peito', 3, 10, 15, 2.5],
     ['supino-maquina', 'Supino na máquina', 'B', 'Máquina', 'Peito', 3, 8, 12, 5],
-    ['flexao-solo', 'Flexão de braços (com lastro, se necessário)', 'B', 'Peso corporal', 'Peito', 2, 8, 15, 1, 'kg'],
+    ['crossover-polia', 'Crossover na polia alta', 'B', 'Polia', 'Peito', 3, 10, 15, 2.5],
     ['desenvolvimento-halter', 'Desenvolvimento com halteres', 'B', 'Halteres', 'Ombros', 3, 8, 12, 2.5, 'kg/halter'],
     ['triceps-frances', 'Tríceps francês na polia', 'B', 'Polia', 'Tríceps', 3, 10, 15, 2.5],
     ['agachamento-goblet', 'Agachamento goblet', 'C', 'Halter', 'Quadríceps', 2, 8, 12, 2.5, 'kg', true],
