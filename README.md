@@ -42,6 +42,16 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 
 Fontes de projeto: ACSM 2026 DOI `10.1249/MSS.0000000000003897`; Pelland e colaboradores 2026 DOI `10.1007/s40279-025-02344-w`; Robinson e colaboradores 2024 PMID `38970765`.
 
+## Modo focado e preparo rápido de séries (PR em revisão)
+
+- Na tela de sessão de musculação, botão **Ativar modo focado** exibe um único exercício por vez, com navegação Anterior/Próximo e lista compacta para pular diretamente para qualquer exercício.
+- O modo completo continua padrão e pode ser recuperado com **Ver ficha completa**, mantendo a ordem e o rascunho.
+- Indicadores mostram exercícios com todas as séries efetivas registradas e total de séries efetivas preenchidas (aquecimentos não entram na contagem).
+- Ações de preparo **Repetir cargas da última sessão** e **Repetir carga da série anterior** preenchem apenas cargas **em branco**, sem apagar dados já digitados, e **não** copiam repetições nem RIR. A execução precisa ser confirmada por seu próprio registro de repetições.
+- A interface de foco não muda o histórico, não altera a ordem da fila A/C/B/D e não transfere dados entre dispositivos.
+- O salvamento automático continua no mesmo armazenamento local. Caso o navegador reinicie, o treino é recuperado na visualização completa para máxima compatibilidade.
+- Testes incluídos para 320/390/768 px, alternância entre modos, cópia segura, rascunho e ausência de sessões fictícias.
+
 ## Funcionalidades da versão 1.3
 
 - Histórico real por exercício, com carga (kg ou kg/halter), repetições e RIR (repetições em reserva) **por série**.
