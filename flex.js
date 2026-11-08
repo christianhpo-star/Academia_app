@@ -164,6 +164,22 @@
         detail:`Você marcou que não fez este exercício em ${row.omissions} de ${row.opportunities} sessões com registro explícito nos últimos 28 dias.`,
         suggestion});
     }
+    // Detect longer between-session gaps only when there are enough actual
+    // completed days to compare; never infer a missed appointment from silence.
+    const days= [...new Set(actual.map(s=>s.day))]
+      .filter(day=>{const age=dayAge(today,day);return age>=0&&age<70;})
+      .sort();
+    if(days.length>=7 && !signals.some(s=>s.kind==='frequency')){
+      const gaps=days.slice(1).map((day,i)=>dayAge(day,days[i]));
+      const mean=rows=>rows.reduce((sum,v)=>sum+v,0)/rows.length;
+      const latest=mean(gaps.slice(-3));
+      const previous=mean(gaps.slice(-6,-3));
+      if(Number.isFinite(latest) && latest>=4 && latest>previous*1.5){
+        signals.push({kind:'spacing',tone:'notice',title:'Os intervalos entre sessões aumentaram',
+          detail:`A média dos últimos 3 intervalos registrados foi de ${latest.toFixed(1).replace('.',',')} dias, frente a ${previous.toFixed(1).replace('.',',')} dias nos 3 anteriores.`,
+          suggestion:'Se o espaçamento não foi planejado, considere uma programação de menos sessões e mais fácil de repetir. Não é necessário recuperar sessões antigas em um único treino.'});
+      }
+    }
     const recentGroups=new Set(recent28.map(s=>s.planId));
     if (recent28.length>=6) {
       for(const id of ['A','C','B','D']){
