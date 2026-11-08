@@ -81,7 +81,7 @@ with sync_playwright() as p:
     assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'),'calendar overflow at 320'
     page.screenshot(path=str(shots/'calendar-320.png'),full_page=True)
     page.locator('[data-action="calendar-today"]').click()
-    assert 'novembro de 2026' in page.locator('.calendar-month').inner_text()
+    assert 'novembro de 2026' in page.locator('.calendar-month').inner_text().lower()
     assert not errors,errors
     print('PASS calendar: mixed day, distinct active days, month navigation, empty month, 320px')
     browser.close()
