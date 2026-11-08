@@ -36,7 +36,7 @@ test('copy preceding set prepares current load; first series has no prior source
 test('cannot overwrite a recorded set by quick fill',()=>{
  const entry={id:'a',sets:[row(25,12),row('', '')]};
  assert.match(F.quickLoad(entry,0,'previous-session',[row(50,12)]).error,/repetições/);
- assert.match(F.quickLoad(entry,1,'previous-session',[row(50,12)]).error,/referência/);
+ assert.match(F.quickLoad(entry,1,'previous-session',[row('',12)]).error,/referência/);
 });
 test('work completion needs real positive load and integer reps',()=>{
  assert.equal(F.performed(row('',12)),false);
