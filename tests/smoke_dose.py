@@ -79,7 +79,10 @@ with sync_playwright() as p:
         action:event.target.closest('[data-action]')?.dataset.action,
         insideScreen:document.getElementById('screen').contains(event.target)}
     },true)""")
+    page.evaluate('window.__clickProbe=77')
+    before_url=page.url
     button.click()
+    print('PAGE PROBE:',{'before':before_url,'after':page.url,'windowMarker':page.evaluate('window.__clickProbe'),'errors':errors},flush=True)
     print('AFTER CLICK:',page.evaluate("""() => ({
       click:window.__lastClick,alert:document.getElementById('toast')?.textContent,
       visible:!document.getElementById('toast')?.hidden,
@@ -87,6 +90,9 @@ with sync_playwright() as p:
       draft:JSON.parse(localStorage.getItem('forja.academia.draft.v1'))?.draft?.entries?.['supino-inclinado']?.sets?.length
     })"""),flush=True)
     entry=page.locator('[data-exercise="supino-inclinado"]')
+    if entry.locator('[data-field="reps"]').count()!=5:
+        page.locator('[data-action="dose-add-one"]').dispatch_event('click')
+        print('DISPATCH CHECK:',{'sets':page.locator('[data-exercise="supino-inclinado"] [data-field="reps"]').count(),'errors':errors,'toast':page.locator('#toast').inner_text()},flush=True)
     assert entry.locator('[data-field="reps"]').count()==5
     assert entry.locator('[data-field="reps"]').nth(4).input_value()==''
     assert page.locator('[data-action="dose-add-one"]').count()==0, 'no repeated extra recommendation'
