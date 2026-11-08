@@ -95,3 +95,24 @@ test('escapa nomes registrados ao gerar painel HTML',()=>{
   assert.doesNotMatch(html,/<script>/);
   assert.match(html,/não entram no volume muscular estimado/);
 });
+
+
+test('pirâmide com aquecimento concluído é elegível; série em branco não reaparece',()=>{
+  const e=ex('supino-halteres');
+  const sessions=[2,4,6,8,11,13,18].map(day=>sess(day,[row(e.id,4,3,25)]));
+  const draft={energy:'leve',entries:{[e.id]:{
+    id:e.id,pain:null,sets:[
+      {load:20,reps:10,rir:4,warmup:true},
+      {load:22.5,reps:10,rir:3,warmup:false},
+      {load:25,reps:10,rir:3,warmup:false},
+      {load:25,reps:10,rir:3,warmup:false},
+    ],
+  }}};
+  let result=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,
+    settings:{fatigue:'normal',kneePain:''}});
+  assert.equal(result.candidates.length,1);
+  draft.entries[e.id].sets.push({load:'',reps:'',rir:'',warmup:false});
+  result=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,
+    settings:{fatigue:'normal',kneePain:''}});
+  assert.equal(result.candidates.length,0);
+});
