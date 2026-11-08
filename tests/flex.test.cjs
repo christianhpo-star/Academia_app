@@ -79,3 +79,13 @@ test('busca filtra por equipamento e resiste a IDs já usados',()=>{
   assert.ok(!filtered.some(x=>x.id==='puxada-neutra'));
   assert.equal(F.addToDraft(d,'puxada-neutra',{},{}),false);
 });
+
+test('intervalos crescentes exigem seis lacunas observadas e não inferem falta',()=>{
+  const sessions=[1,2,3,4,9,14,19,24].map(n=>sess(n));
+  const result=F.insights({today:day(25),strengthSessions:sessions});
+  const signal=result.signals.find(x=>x.kind==='spacing');
+  assert.ok(signal);
+  assert.match(signal.detail,/média/i);
+  const insufficient=F.insights({today:day(25),strengthSessions:sessions.slice(-4)});
+  assert.equal(insufficient.signals.some(s=>s.kind==='spacing'),false);
+});
