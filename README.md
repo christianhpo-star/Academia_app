@@ -21,6 +21,16 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 - Dias sem registro não são marcados como descanso e rascunhos não são contados.
 - Calendário derivado do histórico existente, sem persistência adicional ou migração de registros.
 
+## Sessão flexível e constância — experiência em revisão
+
+- Durante o treino, é possível retirar um exercício **somente hoje**, restaurá-lo, registrar um motivo opcional e adicionar movimentos existentes ou do catálogo offline; a ficha original permanece inalterada.
+- O catálogo inicial possui 20 movimentos adicionais com IDs estáveis, equipamento e região muscular. A seleção pela busca é local; qualquer exercício integrado ao histórico mantém seu identificador.
+- Exercícios com repetições já lançadas não podem ser retirados diretamente, evitando apagar séries efetivamente realizadas sem confirmação.
+- O histórico salva quais exercícios estavam previstos (`plannedIds`) e quais foram explicitamente retirados (`skipped`), sem inventar omissões em registros antigos.
+- O painel analisa últimos 7, 14 e 28 dias e destaca **mudanças de ritmo ou omissões explicitamente frequentes**. Nenhum dia sem registro é tratado como falta ou descanso obrigatório.
+- As mensagens sugerem sessões mais simples, redistribuição de movimentos ou alternativas; nunca aumentam carga/volume automaticamente.
+- Regras do produto são hipóteses operacionais conservadoras, não limiares científicos individualmente validados; dias de Muay Thai são contabilizados sem converter rounds em séries de força.
+
 ## Funcionalidades da versão 1.3
 
 - Histórico real por exercício, com carga (kg ou kg/halter), repetições e RIR (repetições em reserva) **por série**.
