@@ -62,7 +62,7 @@ with sync_playwright() as p:
       }});
     }""",snapshot)
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for script in ['data.js','engine.js','muay.js','calendar.js','app.js']:
+    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','app.js']:
         page.add_script_tag(path=str(ROOT/script))
     page.get_by_role('button',name='Histórico',exact=True).click()
     assert page.get_by_role('heading',name='Calendário de treinos').count()==1
