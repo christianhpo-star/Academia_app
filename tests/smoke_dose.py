@@ -68,6 +68,7 @@ with sync_playwright() as p:
     assert button.count()==1, 'qualified recommendation'
     baseline=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1"))')
     assert len(baseline['draft']['entries']['supino-inclinado']['sets'])==4
+    (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots'/'dose-qualified-390.png'),full_page=True)
     button.click()
     entry=page.locator('[data-exercise="supino-inclinado"]')
@@ -89,11 +90,13 @@ with sync_playwright() as p:
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.screenshot(path=str(ROOT/'screenshots'/'dose-after-add-320.png'),full_page=True)
     # Test fresh qualified draft with same-day Muay: do not offer +1.
-    storage[MAIN]=storage[MAIN].replace('"sessions":[],"draft":null}', '"sessions":[],"draft":null}')
     import json
     state=json.loads(storage[MAIN])
     age0=page.evaluate("new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0')")
-    state['muay']['sessions']=[{'day':age0,'intensity':7,'place':'casa','activities':[]}]
+    state['muay']['sessions']=[{'id':'muay-synthetic','timestamp':age0+'T15:00:00Z','day':age0,
+      'place':'casa','kind':'individual','duration':30,'intensity':7,'fatigue':'normal',
+      'kneePain':0,'notes':'','activities':[{'id':'shadow','name':'Sombra',
+      'unit':'rounds','quantity':3,'sets':1}]}]
     storage[MAIN]=json.dumps(state,ensure_ascii=False)
     from_copy=baseline
     from_copy['draft']['energy']='leve'
