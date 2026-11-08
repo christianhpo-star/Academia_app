@@ -57,8 +57,10 @@ test('sugere somente uma série opcional com duas sessões comparáveis, RIR e s
   const e=ex('supino-halteres');
   const sessions=[sess(4,[row(e.id,3,3,25)]),sess(11,[row(e.id,3,3,25)]),
     sess(18,[row(e.id,3,3,25)])];
-  const draft={entries:{[e.id]:row(e.id,2,3,25)},energy:'normal'};
-  const output=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,settings:{fatigue:'normal',kneePain:''}});
+  const draft={entries:{[e.id]:row(e.id,2,3,25)},energy:'leve'};
+  let output=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft:{...draft,energy:'normal'},settings:{fatigue:'normal',kneePain:''}});
+  assert.equal(output.candidates.length,0);
+  output=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,settings:{fatigue:'normal',kneePain:''}});
   assert.equal(output.candidates.length,1);
   assert.equal(output.suggestions[0].level,'consider');
   assert.match(output.suggestions[0].reason,/opcional/);
