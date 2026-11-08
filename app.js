@@ -634,6 +634,8 @@
         row[el.dataset.field]=el.value;
         persistDraft();
         updateSetComparison(el.dataset.ex, Number(el.dataset.index));
+        const box=document.querySelector('.dose-card');
+        if(box)box.outerHTML=renderDosePanel(true);
       }
     }
   }
@@ -913,6 +915,11 @@
     collectDraft(event);
     updateMuayField(event);
     const el=event.target;
+    if(ui.draft && (el.dataset.draftMeta==='energy' || el.dataset.exPain)){
+      const box=document.querySelector('.dose-card');
+      if(box)box.outerHTML=renderDosePanel(true);
+      return;
+    }
     if(el.dataset.skipReason && ui.draft){
       if(F.setReason(ui.draft,el.dataset.skipReason,el.value))persistDraft();
       return;
