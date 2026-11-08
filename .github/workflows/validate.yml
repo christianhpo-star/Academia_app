@@ -20,10 +20,11 @@ jobs:
           node --check sw.js
           node --check muay.js
           node --check calendar.js
+          node --check flex.js
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs
+        run: node --test tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
@@ -35,6 +36,7 @@ jobs:
           python3 tests/smoke_strength.py
           python3 tests/smoke_muay.py
           python3 tests/smoke_calendar.py
+          python3 tests/smoke_flex.py
       - name: Upload Muay screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
@@ -43,5 +45,6 @@ jobs:
           path: |
             screenshots/muay-*.png
             screenshots/calendar-*.png
+            screenshots/flex-*.png
           if-no-files-found: warn
           retention-days: 3
