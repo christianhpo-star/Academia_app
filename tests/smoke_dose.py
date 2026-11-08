@@ -70,29 +70,10 @@ with sync_playwright() as p:
     assert len(baseline['draft']['entries']['supino-inclinado']['sets'])==4
     (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots'/'dose-qualified-390.png'),full_page=True)
-    print('BEFORE CLICK:',button.evaluate("""el=>({
-      html:el.outerHTML,insideScreen:document.getElementById('screen').contains(el),
-      ancestors:[...function*(p){for(let i=0;p&&i<6;i++,p=p.parentElement)yield p.tagName+'#'+p.id+'.'+p.className}(el)]
-    })"""),flush=True)
-    page.evaluate("""() => document.addEventListener('click', event=>{
-      window.__lastClick={target:event.target.outerHTML.slice(0,300),
-        action:event.target.closest('[data-action]')?.dataset.action,
-        insideScreen:document.getElementById('screen').contains(event.target)}
-    },true)""")
-    page.evaluate('window.__clickProbe=77')
-    before_url=page.url
+    # Exercise an actual pointer click; a duplicate blur/change rerender
+    # used to detach this button between pointerdown and pointerup.
     button.click()
-    print('PAGE PROBE:',{'before':before_url,'after':page.url,'windowMarker':page.evaluate('window.__clickProbe'),'errors':errors},flush=True)
-    print('AFTER CLICK:',page.evaluate("""() => ({
-      click:window.__lastClick,alert:document.getElementById('toast')?.textContent,
-      visible:!document.getElementById('toast')?.hidden,
-      series:document.querySelectorAll('[data-exercise="supino-inclinado"] [data-field="reps"]').length,
-      draft:JSON.parse(localStorage.getItem('forja.academia.draft.v1'))?.draft?.entries?.['supino-inclinado']?.sets?.length
-    })"""),flush=True)
     entry=page.locator('[data-exercise="supino-inclinado"]')
-    if entry.locator('[data-field="reps"]').count()!=5:
-        page.locator('[data-action="dose-add-one"]').dispatch_event('click')
-        print('DISPATCH CHECK:',{'sets':page.locator('[data-exercise="supino-inclinado"] [data-field="reps"]').count(),'errors':errors,'toast':page.locator('#toast').inner_text()},flush=True)
     assert entry.locator('[data-field="reps"]').count()==5
     assert entry.locator('[data-field="reps"]').nth(4).input_value()==''
     assert page.locator('[data-action="dose-add-one"]').count()==0, 'no repeated extra recommendation'
