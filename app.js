@@ -971,6 +971,6 @@
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   render();
   if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(err=>console.warn('Offline indisponível',err)));
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261108-ui-cache-11', {updateViaCache:'none'}).catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
