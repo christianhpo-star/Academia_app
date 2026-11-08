@@ -3,6 +3,7 @@
   const DATA = window.AcademiaData;
   const E = window.AcademiaEngine;
   const M = window.AcademiaMuay;
+  const CAL = window.ForjaCalendar;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -114,6 +115,7 @@
     draftSavedAt: recoveredDraft?.savedAt || null,
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
+    calendarMonth: today().slice(0,7), calendarDay: today(),
   };
   let toastTimeout;
   function draftStatusText() {
@@ -515,8 +517,11 @@
   }
   function renderHistory() {
     const sessions=latestSessions();
+    const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
     const muayHistory=M.historySection(state.muay.sessions);
     return `${headline('Diário','Seu histórico.','Veja cargas e repetições reais. Treinos registrados neste aparelho ficam disponíveis mesmo sem internet.')}
+      ${calendar}
+      <div class="section-row"><h2 class="section-title">Histórico de musculação</h2></div>
       ${sessions.length ? sessions.map(session=>{
         const needsDay= session.entries.some(en=>exerciseFor(en.id)?.knee && E.workSets(en).length) && session.kneeNextDay == null;
         const canAssess=Date.now()-new Date(session.timestamp).getTime()>=86400000;
@@ -684,6 +689,25 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='calendar-shift'){
+      const shift=Number(btn.dataset.delta);
+      if(![-1,1].includes(shift))return;
+      ui.calendarMonth=CAL.shiftMonth(ui.calendarMonth,shift);
+      ui.calendarDay=null;render();
+      document.getElementById('training-calendar')?.scrollIntoView({block:'start'});
+      return;
+    }
+    if(action==='calendar-today'){
+      ui.calendarMonth=today().slice(0,7);ui.calendarDay=today();
+      render();document.getElementById('training-calendar')?.scrollIntoView({block:'start'});return;
+    }
+    if(action==='calendar-select'){
+      const date=btn.dataset.day;
+      if(!CAL.validDay(date)||date.slice(0,7)!==ui.calendarMonth)return;
+      ui.calendarDay=date;render();
+      document.getElementById('calendar-selected-heading')?.scrollIntoView({block:'nearest'});
+      return;
+    }
     if(action==='open-muay'){muayMode=true;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;}
     if(action==='mode-muay'){muayMode=true;ui.editor=null;render();return;}
     if(action==='mode-strength'){muayMode=false;render();return;}
