@@ -9,7 +9,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = re.sub(r'<script defer src="\./[^\"]+"></script>', '', (ROOT / 'index.html').read_text())
-INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css" />', '')
+INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261108-ui-cache-11" />', '')
 
 
 def open_app(context, storage, errors):
