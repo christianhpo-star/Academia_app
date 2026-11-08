@@ -1,8 +1,10 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v10';
+const CACHE = 'forja-shell-v11-ui-cache';
 const APP_FILES = [
-  './', './index.html', './styles.css', './app.js', './data.js',
-  './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './manifest.webmanifest',
+  './', './index.html',
+  './styles.css?v=20261108-ui-cache-11', './app.js?v=20261108-ui-cache-11', './data.js?v=20261108-ui-cache-11',
+  './engine.js?v=20261108-ui-cache-11', './muay.js?v=20261108-ui-cache-11', './calendar.js?v=20261108-ui-cache-11',
+  './flex.js?v=20261108-ui-cache-11', './dose.js?v=20261108-ui-cache-11', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
@@ -32,7 +34,9 @@ self.addEventListener('fetch', event => {
   if (url.origin !== scope.origin || !url.pathname.startsWith(scope.pathname)) return;
 
   event.respondWith(
-    fetch(event.request)
+    // Revalidate against the origin instead of trusting the browser HTTP cache.
+    // The Cache Storage shell remains available when the network is offline.
+    fetch(event.request, {cache: 'no-cache'})
       .then(async response => {
         if (!response.ok) {
           return (await caches.match(event.request)) || response;
