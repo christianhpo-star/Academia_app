@@ -44,13 +44,13 @@ with sync_playwright() as p:
     entry.locator('[data-field="load"]').first.fill('55')
     entry.locator('[data-field="reps"]').first.fill('10')
     entry.locator('[data-field="rir"]').first.fill('2')
-    assert '1 séries efetivas registradas' in page.locator('.focus-progress-label').inner_text()
+    assert '1 série efetiva registrada' in page.locator('.focus-progress-label').inner_text()
     entry.locator('[data-action="quick-current"]').click()
     entry=page.locator('[data-exercise="'+first+'"]')
     assert entry.locator('[data-field="load"]').nth(1).input_value()=='55'
     assert entry.locator('[data-field="reps"]').nth(1).input_value()==''
     assert entry.locator('[data-field="rir"]').nth(1).input_value()==''
-    assert '1 séries efetivas registradas' in page.locator('.focus-progress-label').inner_text()
+    assert '1 série efetiva registrada' in page.locator('.focus-progress-label').inner_text()
     data=page.evaluate('JSON.parse(window.__testStorage["forja.academia.draft.v1"]).draft')
     assert data['entries'][first]['sets'][1]['reps']==''
     page.get_by_role('button',name='Ver ficha completa').click()
