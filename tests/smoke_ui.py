@@ -7,7 +7,8 @@ HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read
 HTML=HTML.replace('<link rel="stylesheet" href="./styles.css" />','')
 SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','app.js']
 def open_app(ctx, storage, errors, width):
-    page=ctx.new_page(viewport={'width':width,'height':800})
+    page=ctx.new_page()
+    page.set_viewport_size({'width':width,'height':800})
     page.on('pageerror',lambda err:errors.append(str(err)))
     page.set_content(HTML)
     page.evaluate("""seed=>{
