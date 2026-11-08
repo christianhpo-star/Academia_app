@@ -120,7 +120,7 @@
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
     catalogOpen: false,
-    focusedMode: true, focusedExercise: null,
+    focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
   };
   let toastTimeout;
@@ -447,7 +447,7 @@
     if (ui.draft) clearDraft();
     ui.plan=id;
     ui.tab='plans';ui.editor=null;
-    ui.focusedExercise=null;ui.focusedMode=true;
+    ui.focusedExercise=null;ui.focusedMode=false;
     ui.draft={planId:id,energy:'normal',notes:'',entries:{},plannedIds:[],skipped:[],addedIds:[]};
     currentExercises(id).forEach(ex => {ui.draft.entries[ex.id]={id:ex.id,sets:seedSets(ex),pain:''};ui.draft.plannedIds.push(ex.id);});
     persistDraft();
@@ -812,7 +812,7 @@
       const original=copy(en.sets);
       en.sets.forEach((set,index)=>{
         const v=FOCUS.quickLoad(en,index,action==='quick-previous'?'previous-session':'last-set',prev);
-        if(!v.error && set.load!==v.load){set.load=v.load;copied++;}
+        if(!v.error && (set.load==='' || set.load===null || set.load===undefined)){set.load=v.load;copied++;}
       });
       if(!copied)return notify('Nenhuma carga pendente disponível para copiar.');
       if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
