@@ -55,8 +55,8 @@ test('não sugere +1 série sem histórico, RIR ou execução real',()=>{
 });
 test('sugere somente uma série opcional com duas sessões comparáveis, RIR e sem queda',()=>{
   const e=ex('supino-halteres');
-  const sessions=[2,4,7,11,13,18].map(day=>sess(day,[row(e.id,3,3,25)]));
-  const draft={entries:{[e.id]:row(e.id,2,3,25)},energy:'leve'};
+  const sessions=[2,4,6,8,11,13,18].map(day=>sess(day,[row(e.id,4,3,25)]));
+  const draft={entries:{[e.id]:row(e.id,4,3,25)},energy:'leve'};
   let output=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft:{...draft,energy:'normal'},settings:{fatigue:'normal',kneePain:''}});
   assert.equal(output.candidates.length,0);
   output=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,settings:{fatigue:'normal',kneePain:''}});
