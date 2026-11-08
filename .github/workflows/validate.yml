@@ -34,11 +34,14 @@ jobs:
           python3 tests/smoke_persistence.py
           python3 tests/smoke_strength.py
           python3 tests/smoke_muay.py
+          python3 tests/smoke_calendar.py
       - name: Upload Muay screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: muay-visual-qa
-          path: screenshots/muay-*.png
+          name: forja-visual-qa
+          path: |
+            screenshots/muay-*.png
+            screenshots/calendar-*.png
           if-no-files-found: warn
           retention-days: 3
