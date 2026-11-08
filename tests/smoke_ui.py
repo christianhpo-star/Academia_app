@@ -4,7 +4,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css" />','')
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
 SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','app.js']
 def open_app(ctx, storage, errors, width):
     page=ctx.new_page()
