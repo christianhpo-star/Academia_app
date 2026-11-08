@@ -5,6 +5,7 @@
   const M = window.AcademiaMuay;
   const CAL = window.ForjaCalendar;
   const F = window.ForjaFlex;
+  const DOSE = window.ForjaDose;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -464,6 +465,7 @@
         ${ui.catalogOpen ? renderFlexCatalog() : ''}
       </section>
       ${renderAdherencePanel(true)}
+      ${renderDosePanel(true)}
       <section class="card"><h2 class="section-title">Finalizar sessão</h2><div class="field mt-12"><label for="session-energy">Como foi a sessão?</label>
       <select id="session-energy" data-draft-meta="energy"><option value="leve" ${ui.draft.energy==='leve'?'selected':''}>Leve / sobrou energia</option><option value="normal" ${ui.draft.energy==='normal'?'selected':''}>Normal / esforço esperado</option><option value="intenso" ${ui.draft.energy==='intenso'?'selected':''}>Intensa / muita fadiga</option></select></div>
       <div class="field mt-12"><label for="session-notes">Observações (opcional)</label><textarea id="session-notes" data-draft-meta="notes" placeholder="Ex.: sono, dor, execução, Muay Thai no mesmo dia">${esc(ui.draft.notes)}</textarea></div></section>
@@ -492,6 +494,11 @@
       (!insight.signals.length?'<p class="small muted">Ainda não há padrão consistente de interrupção ou omissão explícita a destacar. Continue registrando somente o que realizar.</p>':'') +
       '<p class="small muted">' + esc(insight.note) + '</p>' +
       '<p class="tiny muted">Regras indicativas, não um diagnóstico nem uma garantia de resultados. Não mudam automaticamente sua ficha ou suas cargas.</p></section>';
+  }
+  function renderDosePanel(duringWorkout=false) {
+    const result=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      exercises:state.exercises,draft:duringWorkout?ui.draft:null,settings:state.settings,today:today()});
+    return DOSE.renderPanel(result,{duringWorkout});
   }
   function setComparisonText(previous, current, ex) {
     if (!previous) return `<span class="previous-set">Sem registro anterior desta série.</span>`;
@@ -551,6 +558,7 @@
       </svg></div><p class="chart-caption">Linha pontilhada: meta de peso. Oscilações diárias são normais.</p>
       ${pace>0?`<div class="callout ${pace>.9?'warn':''}">Ritmo matemático até ${dateBR(state.settings.goalDate)}: <strong>${fmt(pace)} kg/semana</strong>. Não é uma recomendação automática de déficit; preserve o rendimento e sua saúde.</div>`:''}</div>
       ${strengthSection(90)}
+      ${renderDosePanel()}
       ${weightForm()}
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
   }
