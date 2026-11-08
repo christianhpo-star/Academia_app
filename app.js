@@ -472,7 +472,7 @@
           <button type="button" class="secondary small-button" data-action="focus-toggle" aria-pressed="${ui.focusedMode}">${ui.focusedMode?'Ver ficha completa':'Ativar modo focado'}</button>
         </div>
         <div class="focus-progress" aria-label="${focus.completed} de ${focus.total} exercícios com séries efetivas concluídas"><span style="width:${focus.total?Math.round(focus.completed/focus.total*100):0}%"></span></div>
-        <p class="small muted focus-progress-label" role="status">${focus.completed} de ${focus.total} exercícios concluídos · ${focus.effectiveSets} séries efetivas registradas</p>
+        <p class="small muted focus-progress-label" role="status">${focus.completed} de ${focus.total} exercícios concluídos · ${focus.effectiveSets} ${focus.effectiveSets===1?'série efetiva registrada':'séries efetivas registradas'}</p>
         ${ui.focusedMode && selected ? `<div class="focus-step"><strong>Exercício ${focusIndex+1} de ${ids.length}</strong>
           <div class="focus-navigation">
             <button type="button" class="secondary small-button" data-action="focus-prev" ${focusIndex===0?'disabled':''}>Anterior</button>
@@ -681,7 +681,7 @@
         updateSetComparison(el.dataset.ex, Number(el.dataset.index));
         const progress=FOCUS.summary(ui.draft.entries);
         const status=document.querySelector('.focus-progress-label');
-        if(status)status.textContent=progress.completed+' de '+progress.total+' exercícios concluídos · '+progress.effectiveSets+' séries efetivas registradas';
+        if(status)status.textContent=progress.completed+' de '+progress.total+' exercícios concluídos · '+progress.effectiveSets+(progress.effectiveSets===1?' série efetiva registrada':' séries efetivas registradas');
         const bar=document.querySelector('.focus-progress span');
         if(bar)bar.style.width=(progress.total?Math.round(progress.completed/progress.total*100):0)+'%';
         // Editing a number fires input and later change on blur.
