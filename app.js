@@ -765,6 +765,18 @@
       if(!persistDraft())return notify('Não foi possível salvar a alteração.');
       render();return;
     }
+    if(action==='dose-add-one'){
+      if(!ui.draft)return;
+      const ex=exerciseFor(btn.dataset.ex),en=ui.draft.entries[btn.dataset.ex];
+      if(!ex||!en||en.sets.length>=12)return notify('Não é possível adicionar outra série neste exercício.');
+      const decision=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+        exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
+      if(!decision.candidates.some(candidate=>candidate.exerciseId===ex.id))
+        return notify('A sugestão já não se aplica aos dados atuais da sessão.');
+      en.sets.push({load:'',reps:'',rir:'',warmup:false});
+      if(!persistDraft()){en.sets.pop();return notify('Não foi possível salvar a nova série.');}
+      render();notify('Série opcional adicionada em branco. Só contará após ser realizada.');return;
+    }
     if(action==='calendar-shift'){
       const shift=Number(btn.dataset.delta);
       if(![-1,1].includes(shift))return;
