@@ -165,6 +165,7 @@
     const entry=draft?.entries?.[exercise.id];
     if(!entry || !MAP[exercise.id])return {eligible:false,reason:'Exercício não mapeado ou não presente no treino atual.'};
     const profile=MAP[exercise.id];
+    if(draft?.energy!=='leve')return {eligible:false,reason:'A sessão ainda não foi registrada como leve/com energia sobrando.'};
     if(exercise.knee && currentPain(draft,exercise.id)!==0)
       return {eligible:false,reason:'Joelho não avaliado como sem dor (0) neste exercício.'};
     const recovery=recoverySignal({settings,muaySessions,today,draft,profile});
