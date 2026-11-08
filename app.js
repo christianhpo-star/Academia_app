@@ -634,8 +634,13 @@
         row[el.dataset.field]=el.value;
         persistDraft();
         updateSetComparison(el.dataset.ex, Number(el.dataset.index));
-        const box=document.querySelector('.dose-card');
-        if(box)box.outerHTML=renderDosePanel(true);
+        // Editing a number fires input and later change on blur.
+        // Replacing a recommendation button during the blur change would
+        // detach it between pointerdown and pointerup, cancelling the click.
+        if(event.type==='input'){
+          const box=document.querySelector('.dose-card');
+          if(box)box.outerHTML=renderDosePanel(true);
+        }
       }
     }
   }
@@ -915,6 +920,10 @@
   }
   screen.addEventListener('input',event=>{
     collectDraft(event);updateMuayField(event);
+    if(ui.draft && (event.target.dataset.draftMeta==='energy' || event.target.dataset.exPain)){
+      const box=document.querySelector('.dose-card');
+      if(box)box.outerHTML=renderDosePanel(true);
+    }
     if(event.target.id==='flex-catalog-search'){
       const query=event.target.value.toLocaleLowerCase('pt-BR').trim();
       document.querySelectorAll('[data-flex-name]').forEach(row=>{
@@ -927,11 +936,6 @@
     collectDraft(event);
     updateMuayField(event);
     const el=event.target;
-    if(ui.draft && (el.dataset.draftMeta==='energy' || el.dataset.exPain)){
-      const box=document.querySelector('.dose-card');
-      if(box)box.outerHTML=renderDosePanel(true);
-      return;
-    }
     if(el.dataset.skipReason && ui.draft){
       if(F.setReason(ui.draft,el.dataset.skipReason,el.value))persistDraft();
       return;
