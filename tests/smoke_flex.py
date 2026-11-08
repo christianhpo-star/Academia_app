@@ -44,6 +44,10 @@ with sync_playwright() as p:
     target.locator('[data-field="load"]').first.fill('45')
     target.locator('[data-field="reps"]').first.fill('10')
     target.locator('[data-field="rir"]').first.fill('2')
+    assert page.get_by_role('heading',name='Volume por grupo muscular').count()==1
+    assert 'Costas' in page.locator('.dose-card').inner_text()
+    assert 'Mantenha o volume' in page.locator('.dose-card').inner_text()
+
     snapshot=page.evaluate('structuredClone(window.__testStorage)')
     page.close()
     page=open_app(context,snapshot,errors)
@@ -66,6 +70,10 @@ with sync_playwright() as p:
     assert any(e['id']=='puxada-neutra' for e in saved['entries'])
     assert not any(e['id']=='pulley-aberto' for e in saved['entries'])
     assert next(e for e in stored['exercises'] if e['id']=='puxada-neutra')['active'] is False
+    page.get_by_role('button',name='Evolução',exact=True).click()
+    assert page.get_by_role('heading',name='Volume por grupo muscular').count()==1
+    assert 'Costas' in page.locator('.dose-card').inner_text()
+
     assert not errors,errors
     print('PASS flexible workout: skip only today, optional reason, catalogue, reload, completed history and 320px')
     browser.close()
