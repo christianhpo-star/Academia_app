@@ -72,3 +72,11 @@ test('histórico real aparece como referência quando registrado, não altera fi
  assert.deepEqual(draft,before);
  assert.deepEqual(D.exercises,state);
 });
+
+
+test('omissão por fadiga não vira pedido para substituir o treino',()=>{
+ const draft={planId:'C',entries:{},skipped:[{id:'leg-press',reason:'fadiga'}]};
+ const result=run(draft);
+ assert.match(result.caution,/Fadiga/);
+ assert.equal(result.recommendations.length,0);
+});
