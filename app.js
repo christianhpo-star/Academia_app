@@ -5,6 +5,7 @@
   const M = window.AcademiaMuay;
   const CAL = window.ForjaCalendar;
   const F = window.ForjaFlex;
+  const ADVICE = window.ForjaCatalogAdvice;
   const DOSE = window.ForjaDose;
   const FOCUS = window.ForjaFocus;
   const KEY = 'forja.academia.v1';
@@ -119,7 +120,7 @@
     draftSavedAt: recoveredDraft?.savedAt || null,
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
-    catalogOpen: false,
+    catalogOpen: false, catalogAll: false,
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
   };
@@ -501,13 +502,45 @@
   }
   function renderFlexCatalog() {
     const choices=F.options(state.exercises,ui.draft);
-    return '<div class="flex-catalog mt-12"><label for="flex-catalog-search">Filtrar por nome ou equipamento</label><input id="flex-catalog-search" type="search" placeholder="Buscar exercício..." aria-controls="flex-catalog-list" />' +
-      '<p class="small muted">Exercícios de outras fichas também estão disponíveis; o catálogo não altera o bloco salvo.</p>' +
-      '<div class="flex-catalog-list" id="flex-catalog-list">' + choices.map(ex=>
-        '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
-        '<div><strong>' + esc(ex.name) + '</strong><small>' + esc(ex.muscle) + ' · ' + esc(ex.equipment) + '</small></div>' +
-        '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
-      ).join('') + '</div></div>';
+    const advice=ADVICE.suggest({options:choices,draft:ui.draft,exercises:state.exercises,
+      strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      settings:state.settings,today:today(),dose:DOSE});
+    const picks=advice.recommendations.map(ex=>`
+      <article class="catalog-suggestion">
+        <div class="catalog-recommend-heading">
+          <strong>${esc(ex.name)}</strong>
+          <span class="catalog-recommend-tag">${ex.kind==='replacement'?'Substituição':'Variação'}</span>
+        </div>
+        <p class="small muted">${esc(ex.muscle||'Grupo muscular')} · ${esc(ex.equipment||'Equipamento não informado')}</p>
+        <p class="small">${esc(ex.reason)}</p>
+        <button type="button" class="secondary small-button" data-action="flex-add" data-ex="${esc(ex.id)}">Adicionar à sessão</button>
+      </article>`).join('');
+    const full=choices.map(ex=>
+      '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
+      '<div><strong>' + esc(ex.name) + '</strong><small>' + esc(ex.muscle) + ' · ' + esc(ex.equipment) + '</small></div>' +
+      '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
+    ).join('');
+    return `<div class="flex-catalog mt-12">
+      <section class="catalog-contextual" aria-labelledby="catalog-recommended-heading">
+        <div class="row-between">
+          <h3 id="catalog-recommended-heading">Sugestões para este treino</h3>
+          <span class="catalog-recommend-tag">Recomposição</span>
+        </div>
+        <p class="small muted">${esc(advice.message)}</p>
+        ${advice.caution?'<p class="catalog-caution">'+esc(advice.caution)+'</p>':''}
+        ${picks||'<p class="catalog-empty">Nenhuma alternativa relacionada suficientemente confiável com os dados disponíveis.</p>'}
+        <p class="tiny muted">${esc(advice.basis)}</p>
+      </section>
+      <button type="button" class="secondary full catalog-all-toggle" data-action="catalog-show-all" aria-expanded="${ui.catalogAll}">
+        ${ui.catalogAll?'Ocultar catálogo completo':'Explorar todos os exercícios ('+choices.length+')'}
+      </button>
+      ${ui.catalogAll?`<div class="catalog-all">
+        <label for="flex-catalog-search">Buscar por nome ou equipamento</label>
+        <input id="flex-catalog-search" type="search" placeholder="Buscar exercício..." aria-controls="flex-catalog-list" />
+        <div class="flex-catalog-list" id="flex-catalog-list">${full||'<p class="small muted">Sem exercícios adicionais disponíveis.</p>'}</div>
+      </div>`:''}
+      <p class="tiny muted">Sugestões de substituição ou variação, não prescrição individual. Adicionar não remove o movimento original: retire-o caso deseje substituir.</p>
+    </div>`;
   }
   function renderAdherencePanel(inSession=false) {
     const insight=F.insights({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
@@ -818,7 +851,8 @@
       if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
       render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
     }
-    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;render();return;}
+    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;render();return;}
+    if(action==='catalog-show-all'){if(!ui.draft||!ui.catalogOpen)return;ui.catalogAll=!ui.catalogAll;render();return;}
     if(action==='flex-add'){
       const draft=ui.draft,id=btn.dataset.ex;if(!draft)return;
       const found=F.prepareCatalog(id,state.exercises);

@@ -4,7 +4,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','app.js']
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']
 def open_app(context,data,errors):
     page=context.new_page()
     page.on('pageerror',lambda err:errors.append(str(err)))
@@ -36,9 +36,11 @@ with sync_playwright() as p:
     assert page.locator('[data-exercise="pulley-aberto"]').count()==0
     page.locator('[data-skip-reason="pulley-aberto"]').select_option('tempo')
     page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
+    assert page.get_by_role('heading',name='Sugestões para este treino').count()==1
+    page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
     page.locator('#flex-catalog-search').fill('Puxada alta')
     assert page.locator('[data-flex-name]:visible').count()>0
-    page.locator('[data-action="flex-add"][data-ex="puxada-neutra"]').click()
+    page.locator('.catalog-all [data-action="flex-add"][data-ex="puxada-neutra"]').click()
     target=page.locator('[data-exercise="puxada-neutra"]')
     assert target.count()==1
     target.locator('[data-field="load"]').first.fill('45')
