@@ -42,6 +42,18 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 
 Fontes de projeto: ACSM 2026 DOI `10.1249/MSS.0000000000003897`; Pelland e colaboradores 2026 DOI `10.1007/s40279-025-02344-w`; Robinson e colaboradores 2024 PMID `38970765`.
 
+## Recomendações contextuais no catálogo (PR em revisão)
+
+Ao abrir **Adicionar exercício**, a sessão apresenta primeiro até três alternativas justificadas pela ficha em andamento, exercícios retirados e registros disponíveis. O catálogo completo permanece acessível em **Explorar todos os exercícios**, com busca por nome e equipamento.
+
+As sugestões utilizam o mapeamento de grupos musculares de `dose.js`, o histórico concluído e o volume descritivo em 7 dias; não simulam eficácia individual nem geram prescrições clínicas. A ordem das sugestões é uma heurística explícita do FORJA, **não** uma classificação científica de exercícios.
+
+- Priorizar substituição de movimento retirado explicitamente, ou variação de movimento já previsto, evitando recomendar inclusão de volume arbitrariamente.
+- Evitar recomendações de exercícios para grupos musculares de membros inferiores diante de dor atual informada no joelho. Exibir cautela com fadiga alta ou Muay Thai recente. A aplicação não pode inferir ausência de dor por falta de registro.
+- Nenhuma sugestão altera a ficha, cria histórico, substitui automaticamente exercícios ou conta séries como feitas. Apenas o toque no botão adiciona uma linha à sessão.
+- Sem amostra histórica, declarar limitação em vez de inventar uma evolução. Exercícios sem classificação ficam disponíveis no catálogo completo, mas não recebem pontuação pseudocientífica.
+- Testes unitários e browser cobrem ordenação e filtros, persistência, responsividade, cenário sem dados e advertências de recuperação.
+
 ## Modo focado e preparo rápido de séries (PR em revisão)
 
 > Integração preparada com a correção de atualização do cache do PR #5: arquivos JavaScript/CSS versionados, `focus.js` incluído no cache offline e recuperação do histórico local sem alteração de chaves. Validar cache e fluxos juntos antes da publicação.
