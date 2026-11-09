@@ -61,12 +61,14 @@ with sync_playwright() as p:
     page=start(ctx,snapshot,errors)
     assert page.locator('[data-exercise="'+candidate+'"]').count()==1
     # New session with knee concern: nothing should promote leg loading.
-    state=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
-    state['settings']['kneePain']=2
-    snapshot['forja.academia.v1']=__import__('json').dumps(state,ensure_ascii=False)
+    import json
+    draft=json.loads(snapshot['forja.academia.draft.v1'])
+    first_id=next(iter(draft['draft']['entries']))
+    draft['draft']['entries'][first_id]['pain']=2
+    snapshot['forja.academia.draft.v1']=json.dumps(draft,ensure_ascii=False)
     page.close()
     page=start(ctx,snapshot,errors)
-    # Load existing A session and check that caution is visible.
+    # Recover the existing A session with a recorded discomfort signal.
     page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
     assert 'joelho' in page.locator('.catalog-caution').inner_text()
     for width in [320,390,768]:
