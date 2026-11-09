@@ -40,7 +40,7 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
     page.locator('#flex-catalog-search').fill('Puxada alta')
     assert page.locator('[data-flex-name]:visible').count()>0
-    page.locator('[data-action="flex-add"][data-ex="puxada-neutra"]').click()
+    page.locator('.catalog-all [data-action="flex-add"][data-ex="puxada-neutra"]').click()
     target=page.locator('[data-exercise="puxada-neutra"]')
     assert target.count()==1
     target.locator('[data-field="load"]').first.fill('45')
