@@ -40,7 +40,7 @@
     })).filter(s=>s.ex&&s.profile);
     const kneePain=isPain(settings.kneePain)||Object.values(draft.entries).some(e=>isPain(e?.pain))||
       (draft.skipped||[]).some(s=>s.reason==='desconforto' && (lookup.get(s.id)?.knee||dose.MAP[s.id]?.direct?.includes('quadriceps')));
-    const fatigue=draft.energy==='intenso'||settings.fatigue==='alta';
+    const fatigue=draft.energy==='intenso'||settings.fatigue==='alta'||(draft.skipped||[]).some(s=>s.reason==='fadiga');
     const muayToday=(muaySessions||[]).some(s=>{
       const a=age(today,s?.day);return a>=0&&a<=1;
     });
@@ -55,7 +55,7 @@
       const profile=dose.MAP[option.id];
       if(!profile||!profile.direct?.length)continue;
       if(kneePain&&intersection(profile.direct,legs))continue;
-      let skippedFor=skipped.find(s=>s.profile.direct&&intersection(profile.direct,s.profile.direct) && s.reason!=='desconforto');
+      let skippedFor=skipped.find(s=>s.profile.direct&&intersection(profile.direct,s.profile.direct) && !['desconforto','fadiga'].includes(s.reason));
       let activeFor=active.find(s=>intersection(profile.direct,s.profile.direct));
       const relatedToPlan=intersection(profile.direct,plan);
       if(!skippedFor&&!activeFor&&!relatedToPlan)continue;
