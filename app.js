@@ -428,8 +428,18 @@
           <span class="plan-choice-code">BLOCO ${plan.id}</span><span class="plan-choice-name">${esc(label)}</span></button>`;
       }).join('')}</div>
       <section class="workout-banner"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><p>${esc(p.subtitle)}</p><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button></section>
-      <div class="section-row"><h2 class="section-title">Exercícios do bloco</h2><small>${all.filter(x=>x.active).length} ativos</small></div>
-      <div class="list-settings">${all.map(ex=>`<div class="setting-item"><div><strong>${esc(ex.name)}</strong><span>${ex.sets} × ${ex.low}–${ex.high} · +${fmt(ex.step)} ${esc(ex.unit)} ${ex.knee?'· atenção ao joelho':''}</span><button class="button-inline" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>`).join('')}</div>
+      <section class="plan-exercises" aria-labelledby="plan-exercises-title">
+        <div class="section-row plan-exercises-heading"><div><p class="section-eyebrow">SUA FICHA · BLOCO ${p.id}</p><h2 class="section-title" id="plan-exercises-title">Exercícios do bloco</h2>
+          <p class="small muted">Organizados na ordem da sessão. Ative ou edite cada movimento sem perder os registros anteriores.</p></div><span class="plan-exercises-count">${all.filter(x=>x.active).length} ativos</span></div>
+        <div class="plan-exercises-list">${all.map((ex,i)=>`<article class="plan-exercise-item ${ex.active?'':'is-inactive'}">
+          <div class="plan-exercise-index" aria-hidden="true">${String(i+1).padStart(2,'0')}</div>
+          <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
+            <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
+            <p class="plan-exercise-submeta">Progressão: +${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Atenção ao joelho':''}</p>
+            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div>
+          <div class="plan-exercise-state"><span>${ex.active?'Na ficha':'Inativo'}</span><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
+        </article>`).join('')}</div>
+      </section>
       <button class="secondary full mt-16" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button>
       <div class="callout mt-16">Aquecimentos não contam como séries efetivas. Você pode alterar exercícios, progressão e número de séries em qualquer momento.</div>`;
   }
@@ -483,7 +493,12 @@
             ${ids.map((id,i)=>`<button type="button" class="focus-exercise-pill ${selected===id?'selected':''}" data-action="focus-select" data-ex="${esc(id)}" aria-pressed="${selected===id}">${i+1}. ${esc(exerciseFor(id)?.name||id)} ${focus.byExercise[id]?.finished?'✓':''}</button>`).join('')}
           </div>` : ''}
       </section>
-      ${ui.focusedMode ? (selected?renderExercise(entries[selected]):'<p class="empty">Adicione um exercício para começar.</p>') : Object.values(entries).map(en=>renderExercise(en)).join('')}
+      <section class="session-exercises" aria-labelledby="session-exercises-title">
+        <div class="session-exercises-header"><p class="section-eyebrow">REGISTRO DE SÉRIES</p>
+          <h2 id="session-exercises-title">Exercícios da sessão</h2>
+          <p>${ui.focusedMode?'Visualização de um exercício por vez.':'Cada cartão corresponde a um exercício. Registre as séries antes de avançar.'}</p></div>
+        ${ui.focusedMode ? (selected?renderExercise(entries[selected],focusIndex,ids.length):'<p class="empty">Adicione um exercício para começar.</p>') : Object.values(entries).map((en,i)=>renderExercise(en,i,ids.length)).join('')}
+      </section>
       <section class="card"><div class="row-between"><h2 class="section-title">Ajustar este treino</h2>${tag('Só hoje','green')}</div>
         <p class="small muted">Retirar ou adicionar exercícios aqui não altera sua ficha. Exercícios retirados não contam como realizados.</p>
         ${F.ensureDraft(ui.draft) && ui.draft.skipped.length ? '<div class="flex-skipped"><strong>Retirados nesta sessão</strong>' +
@@ -590,11 +605,16 @@
     const previous=history(exId)[0];
     cell.innerHTML=setComparisonText(previous?.entry.sets[index],en.sets[index],ex,previous?.session.day);
   }
-  function renderExercise(en) {
+  function renderExercise(en,index=0,total=1) {
     const ex=exerciseFor(en.id), reco=E.recommend(ex,state.sessions), previousSession=history(ex.id)[0], previousEntry=previousSession?.entry, hasData=!!previousEntry;
     const cls=reco.level==='protect'?'protect':['hold','confirm'].includes(reco.level)?'warn':'';
-    return `<section class="exercise-card" data-exercise="${esc(ex.id)}">
-      <div class="card-row"><div><h3>${esc(ex.name)}</h3><p class="small muted mt-8">Meta: ${ex.low}–${ex.high} rep. · ajuste de ${fmt(ex.step)} ${esc(ex.unit)}</p></div>${tag(ex.mode==='pyramid'?'Pirâmide':'Séries','')}</div>
+    const completedSets=FOCUS.summary({[en.id]:en}).effectiveSets;
+    return `<section class="exercise-card workout-exercise-card" data-exercise="${esc(ex.id)}" aria-label="Exercício ${index+1} de ${total}: ${esc(ex.name)}">
+      <div class="workout-exercise-heading"><span class="workout-exercise-number">${String(index+1).padStart(2,'0')} <small>/ ${String(total).padStart(2,'0')}</small></span>
+        <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
+        <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p></div>
+        <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
+      <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
       <div class="recommend ${cls}"><strong>${esc(reco.title)}</strong><p>${esc(reco.explanation)}</p>
       ${reco.level==='increase'?`<button class="button-inline mt-8" data-action="apply-reco" data-ex="${esc(ex.id)}">Usar ${fmt(reco.next)} ${esc(ex.unit)} na série mais pesada</button>`:''}</div>
