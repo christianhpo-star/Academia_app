@@ -382,3 +382,12 @@ html:has(.training-controls){scroll-padding-bottom:220px}
  .workout-exercise-card{padding:21px 22px}
  .workout-exercise-title h3{font-size:19px}
 }
+
+/* Histórico de exercícios planejados, mas sem execução registrada. */
+.history-skipped{margin:14px 0 0;padding:12px 14px;border:1px solid #495868;border-radius:12px;background:#1a2936}
+.history-skipped>strong{display:block;color:#d9e5ee;font-size:12px;margin-bottom:8px}
+.history-skipped ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.history-skipped li{display:flex;justify-content:space-between;align-items:start;gap:10px;color:#d1dfe8;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.history-skipped li+li{border-top:1px solid #314453;padding-top:8px}
+.history-skipped li span{flex-shrink:0;color:#b1c2d1;font-size:11px;text-align:right;max-width:45%}
+@media(max-width:370px){.history-skipped li{flex-direction:column;gap:2px}.history-skipped li span{text-align:left;max-width:100%}}
