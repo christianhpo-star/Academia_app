@@ -39,6 +39,33 @@
       return {error:'A série de referência não possui carga registrada.'};
     return {load:String(source.load)};
   }
-  root.ForjaFocus={performed,workPerformed,summary,selectedId,quickLoad};
+  // Inspect what the user actually logged; never promote guesses to execution.
+  function review(entries) {
+    const list=Object.values(entries||{}).filter(Boolean);
+    const report={effectiveSets:0,exercisesLogged:0,skipped:0,missingRir:0,partialSets:0};
+    for(const entry of list){
+      let logged=false;
+      for(const set of (entry.sets||[])){
+        if(performed(set)){
+          logged=true;
+          if(!set.warmup)report.effectiveSets++;
+          if(set.rir==null||set.rir==='')report.missingRir++;
+        }else if(set.reps!==''&&set.reps!=null && Number(set.reps)>0)report.partialSets++;
+      }
+      if(logged)report.exercisesLogged++;else report.skipped++;
+    }
+    return report;
+  }
+  // Energy/fatigue settings from earlier days are not evidence of today's recovery.
+  function todayCheckin(settings, day) {
+    const raw=settings?.recoveryCheckin;
+    if(!raw||raw.day!==day)return null;
+    if(!['boa','normal','baixa'].includes(raw.energy) ||
+       !['normal','moderada','alta'].includes(raw.fatigue))return null;
+    const knee=raw.kneePain===null||raw.kneePain===undefined?'':String(raw.kneePain);
+    if(knee!=='' && (!Number.isInteger(Number(knee))||Number(knee)<0||Number(knee)>10))return null;
+    return {day,energy:raw.energy,fatigue:raw.fatigue,kneePain:knee};
+  }
+  root.ForjaFocus={performed,workPerformed,summary,selectedId,quickLoad,review,todayCheckin};
   if(typeof module!=='undefined' && module.exports)module.exports=root.ForjaFocus;
 })(typeof globalThis !== 'undefined'?globalThis:this);
