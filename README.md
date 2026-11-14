@@ -150,3 +150,10 @@ As referências são mostradas apenas ao iniciar o exercício **sem histórico a
 - Na aba Muay Thai e no início, um painel indica orientação de recuperação com base em esforço percebido, fadiga, dor no joelho, treino recente e tipo dos exercícios realizados.
 - Quando há sinal de alerta, a FORJA sugere descanso ou trabalho leve em vez de progredir intensidade; a indicação de musculação também respeita essas cautelas, sem remover blocos pendentes.
 - A orientação não estima desgaste fisiológico a partir de um número de golpes e deve ser conferida com o relato de recuperação do próprio dia.
+
+## Registro rápido e check-in diário (UX7)
+- RIR 0/1/2/3 por toque durante o exercício: o aplicativo salva somente o esforço informado, sem completar repetições ou cargas por conta própria.
+- Botão de conferência da série exige carga e repetições válidas. Conferência final mostra séries parciais e RIR ausentes sem bloquear uma sessão válida.
+- Check-in **do dia**, com energia, fadiga e joelho. Relato de dias anteriores não se torna automaticamente avaliação de recuperação atual; a fila e a orientação do Muay Thai respeitam os dados de hoje.
+- Histórico antigo do Muay Thai permanece intacto. Entradas com unidades possivelmente ambíguas ou sem categoria exibem aviso contextual, sem correção automática nem penalização da pessoa que usou uma interface anterior.
+- Mantidas as chaves persistentes do armazenamento; nenhum histórico, rascunho ou backup foi apagado.
