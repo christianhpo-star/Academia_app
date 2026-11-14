@@ -15,6 +15,24 @@ test('catálogo curado tem IDs exclusivos, grupos e metadados legíveis',()=>{
   assert.equal(F.prepareCatalog('remada-unilateral-halter',D.exercises).isNew,true);
   assert.equal(F.prepareCatalog('remada-baixa',D.exercises).isNew,false);
 });
+test('supino canadense está no catálogo como alternativa de peito, sem ativação automática',()=>{
+  const before=structuredClone(D.exercises);
+  const choices=F.options(D.exercises,null,'canadense','B');
+  assert.equal(choices.length,1);
+  const ex=choices[0];
+  assert.equal(ex.id,'supino-canadense');
+  assert.equal(ex.group,'B');
+  assert.equal(ex.muscle,'Peito');
+  assert.match(ex.name,/declinado/);
+  assert.equal(ex.active,false);
+  assert.equal(ex.sets,3);
+  assert.equal(ex.low,8);
+  assert.equal(ex.high,12);
+  assert.equal(ex.step,2.5);
+  assert.ok(F.options(D.exercises,null,'declinado','B').some(x=>x.id===ex.id));
+  assert.equal(F.prepareCatalog(ex.id,D.exercises).isNew,true);
+  assert.deepEqual(D.exercises,before);
+});
 test('omitir só hoje preserva modelo e pode restaurar',()=>{
   const original=structuredClone(D.exercises);
   const draft={planId:'A',entries:{'remada-baixa':{id:'remada-baixa',sets:[{load:40,reps:'',rir:'',warmup:false}]}}};
