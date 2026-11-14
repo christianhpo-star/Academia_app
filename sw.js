@@ -1,8 +1,8 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v17-20261114-quick-checkin4-catalog';
+const CACHE = 'forja-shell-v18-20261114-safe-import5-catalog';
 const APP_FILES = [
-  './', './index.html', './styles.css?v=20261114-quick-checkin4', './app.js?v=20261114-quick-checkin4', './data.js?v=20261114-quick-checkin4',
-  './engine.js?v=20261114-quick-checkin4', './muay.js?v=20261114-quick-checkin4', './calendar.js?v=20261114-quick-checkin4', './flex.js?v=20261114-quick-checkin4', './dose.js?v=20261114-quick-checkin4', './focus.js?v=20261114-quick-checkin4', './catalog-advice.js?v=20261114-quick-checkin4', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=20261114-safe-import5', './app.js?v=20261114-safe-import5', './data.js?v=20261114-safe-import5',
+  './engine.js?v=20261114-safe-import5', './muay.js?v=20261114-safe-import5', './calendar.js?v=20261114-safe-import5', './flex.js?v=20261114-safe-import5', './dose.js?v=20261114-safe-import5', './focus.js?v=20261114-safe-import5', './catalog-advice.js?v=20261114-safe-import5', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
