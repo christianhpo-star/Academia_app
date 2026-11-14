@@ -120,7 +120,7 @@
     draftSavedAt: recoveredDraft?.savedAt || null,
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
-    catalogOpen: false, catalogAll: false,
+    catalogOpen: false, catalogAll: false, catalogMode:'replacement',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
   };
@@ -517,18 +517,20 @@
   }
   function renderFlexCatalog() {
     const choices=F.options(state.exercises,ui.draft);
+    const analysis=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
     const advice=ADVICE.suggest({options:choices,draft:ui.draft,exercises:state.exercises,
       strengthSessions:state.sessions,muaySessions:state.muay.sessions,
-      settings:state.settings,today:today(),dose:DOSE});
+      settings:state.settings,today:today(),dose:DOSE,mode:ui.catalogMode,analysis});
     const picks=advice.recommendations.map(ex=>`
       <article class="catalog-suggestion">
         <div class="catalog-recommend-heading">
           <strong>${esc(ex.name)}</strong>
-          <span class="catalog-recommend-tag">${ex.kind==='replacement'?'Substituição':'Variação'}</span>
+          <span class="catalog-recommend-tag">${ex.kind==='extra-set'?'Série extra':ex.kind==='extra-exercise'?'Outro equipamento':ex.kind==='replacement'?'Substituição':'Variação para substituir'}</span>
         </div>
         <p class="small muted">${esc(ex.muscle||'Grupo muscular')} · ${esc(ex.equipment||'Equipamento não informado')}</p>
         <p class="small">${esc(ex.reason)}</p>
-        <button type="button" class="secondary small-button" data-action="flex-add" data-ex="${esc(ex.id)}">Adicionar à sessão</button>
+        <button type="button" class="secondary small-button" data-action="${ex.kind==='extra-set'?'dose-add-one':ex.kind==='extra-exercise'?'catalog-extra-add':'flex-add'}" data-ex="${esc(ex.id)}" ${ex.sourceId?'data-source="'+esc(ex.sourceId)+'"':''}>${ex.kind==='extra-set'?'Acrescentar uma série':ex.kind==='extra-exercise'?'Adicionar exercício opcional':'Adicionar para substituir'}</button>
       </article>`).join('');
     const full=choices.map(ex=>
       '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
@@ -536,25 +538,32 @@
       '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
     ).join('');
     return `<div class="flex-catalog mt-12">
+      <div class="catalog-mode-switch" role="group" aria-label="Tipo de recomendação">
+        <button type="button" class="secondary ${ui.catalogMode==='replacement'?'selected':''}" data-action="catalog-mode" data-mode="replacement" aria-pressed="${ui.catalogMode==='replacement'}">Substituir exercício</button>
+        <button type="button" class="secondary ${ui.catalogMode==='extra'?'selected':''}" data-action="catalog-mode" data-mode="extra" aria-pressed="${ui.catalogMode==='extra'}">Tenho energia para mais</button>
+      </div>
+      ${ui.catalogMode==='extra'?`<div class="catalog-energy"><strong>Como está sua energia agora?</strong>
+        <button type="button" class="secondary" data-action="catalog-energy" aria-pressed="${ui.draft.energy==='leve'}">${ui.draft.energy==='leve'?'Energia sobrando ✓ · alterar':'Estou com energia sobrando'}</button>
+        <p class="small muted">Energia sobrando não é autorização para volume extra. Consideramos séries, RIR e recuperação.</p></div>`:''}
       <section class="catalog-contextual" aria-labelledby="catalog-recommended-heading">
         <div class="row-between">
-          <h3 id="catalog-recommended-heading">Sugestões para este treino</h3>
-          <span class="catalog-recommend-tag">Recomposição</span>
+          <h3 id="catalog-recommended-heading">${ui.catalogMode==='extra'?'Opções para acrescentar':'Sugestões para este treino'}</h3>
+          <span class="catalog-recommend-tag">${ui.catalogMode==='extra'?'Acréscimo opcional':'Substituição'}</span>
         </div>
         <p class="small muted">${esc(advice.message)}</p>
         ${advice.caution?'<p class="catalog-caution">'+esc(advice.caution)+'</p>':''}
-        ${picks||'<p class="catalog-empty">Nenhuma alternativa relacionada suficientemente confiável com os dados disponíveis.</p>'}
+        ${picks||'<p class="catalog-empty">Sem recomendações elegíveis com os dados disponíveis.</p>'}
         <p class="tiny muted">${esc(advice.basis)}</p>
       </section>
-      <button type="button" class="secondary full catalog-all-toggle" data-action="catalog-show-all" aria-expanded="${ui.catalogAll}">
+      ${ui.catalogMode==='replacement'?`<button type="button" class="secondary full catalog-all-toggle" data-action="catalog-show-all" aria-expanded="${ui.catalogAll}">
         ${ui.catalogAll?'Ocultar catálogo completo':'Explorar todos os exercícios ('+choices.length+')'}
       </button>
       ${ui.catalogAll?`<div class="catalog-all">
         <label for="flex-catalog-search">Buscar por nome ou equipamento</label>
         <input id="flex-catalog-search" type="search" placeholder="Buscar exercício..." aria-controls="flex-catalog-list" />
         <div class="flex-catalog-list" id="flex-catalog-list">${full||'<p class="small muted">Sem exercícios adicionais disponíveis.</p>'}</div>
-      </div>`:''}
-      <p class="tiny muted">Sugestões de substituição ou variação, não prescrição individual. Adicionar não remove o movimento original: retire-o caso deseje substituir.</p>
+      </div>`:''}`:''}
+      <p class="tiny muted">${ui.catalogMode==='extra'?'Escolha uma série OU outro equipamento. Sem registro de execução, a opção não entra no volume realizado.':'Para substituir, retire o movimento original que ainda não foi realizado. Não é aumento de volume.'}</p>
     </div>`;
   }
   function renderAdherencePanel(inSession=false) {
