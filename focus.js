@@ -48,8 +48,10 @@
       for(const set of (entry.sets||[])){
         if(performed(set)){
           logged=true;
-          if(!set.warmup)report.effectiveSets++;
-          if(set.rir==null||set.rir==='')report.missingRir++;
+          if(!set.warmup) {
+            report.effectiveSets++;
+            if(set.rir==null||set.rir==='')report.missingRir++;
+          }
         }else if(set.reps!==''&&set.reps!=null && Number(set.reps)>0)report.partialSets++;
       }
       if(logged)report.exercisesLogged++;else report.skipped++;
