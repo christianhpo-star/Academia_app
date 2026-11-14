@@ -136,3 +136,9 @@ Cargas aproximadas informadas para o bloco B, sem repetições nem RIR:
 - Tríceps testa **na polia**: 50, 55, 60, 60 kg.
 
 As referências são mostradas apenas ao iniciar o exercício **sem histórico anterior**, com campos de repetições e RIR em branco. O histórico real existente tem prioridade. Dados salvos em navegadores que já usavam o FORJA recebem a migração conservadora das configurações ainda originais sem criar sessões ou substituir exercícios personalizados. Os demais exercícios permanecem para preenchimento na academia.
+
+## Recomendações de substituição e energia extra
+- O catálogo distingue a **substituição** de um exercício ainda não realizado do **acréscimo opcional de volume**. A substituição não conta séries extras.
+- Em **Tenho energia para mais**, a sinalização explícita de energia é apenas uma condição inicial: o motor exige séries realizadas na sessão atual, RIR, histórico comparável, volume e recuperação adequados. Muay Thai recente, dor relevante ou fadiga impedem aumentos automáticos.
+- Quando elegível, o usuário escolhe **uma única opção**: acrescentar uma série ao movimento concluído ou incluir uma variação com outra máquina/equipamento (inicialmente com uma série vazia). Não há registro de treino realizado sem carga e repetições reais.
+- O rascunho persiste a escolha opcional (`extraChoice`) sem alterar dados anteriores, e recomendações são reavaliadas ao confirmar a ação.
