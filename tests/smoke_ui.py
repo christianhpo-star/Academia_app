@@ -33,6 +33,14 @@ with sync_playwright() as p:
     shots=ROOT/'screenshots'
     shots.mkdir(exist_ok=True)
     page=open_app(ctx,{},errors,390)
+    assert page.locator('.home-primary').count()==1
+    assert page.locator('.home-primary [data-action="start"]').count()==1
+    assert page.locator('.hero').count()==0
+    assert page.locator('.kpi-row').count()==0
+    assert page.locator('#nav [data-tab="catalog"]').count()==1
+    assert page.locator('#nav [data-tab="settings"]').count()==0
+    assert page.locator('.home-recovery').count()==1
+    page.locator('.home-recovery > summary').click()
     assert page.locator('.recovery-checkin').count()==1
     page.locator('[data-action="recovery-energy"][data-value="boa"]').click()
     check=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.v1")).settings.recoveryCheckin')
