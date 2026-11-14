@@ -3,7 +3,7 @@ import os,re,shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
+HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261114-safe-import5" />','')
 SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']
 def open_app(context,data,errors):
     page=context.new_page()
@@ -68,7 +68,13 @@ with sync_playwright() as p:
     assert len(stored['sessions'])==1
     saved=stored['sessions'][0]
     assert 'pulley-aberto' in saved['plannedIds']
-    assert saved['skipped']==[{'id':'pulley-aberto','reason':'tempo'}]
+    assert {'id':'pulley-aberto','reason':'tempo'} in saved['skipped']
+    auto=[x for x in saved['skipped'] if x['reason']=='sem-registro']
+    assert len(auto)>0, 'exercícios não realizados devem ser pulados automaticamente'
+    assert all(x['automatic'] is True for x in auto)
+    assert all(x['id'] not in [e['id'] for e in saved['entries']] for x in auto)
+    assert 'Pulados nesta sessão' in page.locator('.history-skipped').inner_text()
+    assert 'Sem registro' in page.locator('.history-skipped').inner_text()
     assert any(e['id']=='puxada-neutra' for e in saved['entries'])
     assert not any(e['id']=='pulley-aberto' for e in saved['entries'])
     assert next(e for e in stored['exercises'] if e['id']=='puxada-neutra')['active'] is False

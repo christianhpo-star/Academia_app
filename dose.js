@@ -24,7 +24,7 @@
   map('pullover-polia', ['costas']);
   map('face-pull', ['ombros'], ['costas']);
   map('rosca-w rosca-martelo rosca-inversa rosca-scott', ['biceps']);
-  map('supino-halteres supino-barra supino-inclinado supino-maquina', ['peito'], ['triceps','ombros']);
+  map('supino-halteres supino-barra supino-inclinado supino-maquina supino-canadense', ['peito'], ['triceps','ombros']);
   map('voador crucifixo-cabo crossover-polia', ['peito']);
   map('elevacao-lateral desenvolvimento-halter remada-alta', ['ombros'], ['triceps']);
   map('triceps-testa triceps-corda triceps-maquina triceps-frances', ['triceps']);
@@ -164,6 +164,7 @@
   function candidateFor(exercise,sessionRows,draft,summary,settings,muaySessions,today) {
     const entry=draft?.entries?.[exercise.id];
     if(!entry || !MAP[exercise.id])return {eligible:false,reason:'Exercício não mapeado ou não presente no treino atual.'};
+    if(draft?.extraChoice)return {eligible:false,reason:'Já existe um acréscimo opcional escolhido nesta sessão.'};
     const profile=MAP[exercise.id];
     if(draft?.energy!=='leve')return {eligible:false,reason:'A sessão ainda não foi registrada como leve/com energia sobrando.'};
     if(exercise.knee && currentPain(draft,exercise.id)!==0)
@@ -228,6 +229,10 @@
     const suggestions=[];
     if(anyRecovery)suggestions.push({
       level:'recover',title:'Priorize recuperação antes de acrescentar volume',reason:anyRecovery,
+    });
+    else if(draft?.extraChoice)suggestions.push({
+      level:'maintain',title:'Acréscimo opcional já escolhido nesta sessão',
+      reason:'Registre ou retire o acréscimo escolhido antes de considerar outra opção. Não some automaticamente séries e novos equipamentos.',
     });
     else if(draft && options.length){
       const choice=options.sort((a,b)=>a.muscle.localeCompare(b.muscle,'pt-BR'))[0];

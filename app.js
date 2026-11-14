@@ -120,7 +120,7 @@
     draftSavedAt: recoveredDraft?.savedAt || null,
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
-    catalogOpen: false, catalogAll: false,
+    catalogOpen: false, catalogAll: false, catalogMode:'replacement',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
   };
@@ -177,8 +177,63 @@
   const exerciseFor = id => state.exercises.find(x => x.id === id);
   const currentExercises = id => state.exercises.filter(x=>x.group===id && x.active);
   const history = id => E.historyOf(state.sessions,id);
-  const maxKneePain = () => state.settings.kneePain === '' ? null : Number(state.settings.kneePain);
-  const getNext = () => E.nextWorkout(state.sessions,state.settings.fatigue,maxKneePain(),DATA.rotation);
+  const checkin=()=>FOCUS.todayCheckin(state.settings,today());
+  const recoverySettings=()=>{
+    const c=checkin();
+    return {...state.settings,
+      fatigue:c?.fatigue||'normal',
+      kneePain:c?.kneePain??''};
+  };
+  const maxKneePain = () => {
+    const knee=checkin()?.kneePain;
+    return knee==null||knee===''?null:Number(knee);
+  };
+  function reviewWarning(draft) {
+    const review=FOCUS.review(draft?.entries);
+    const issues=[];
+    if(review.partialSets)issues.push(review.partialSets+' série(s) com repetições, mas sem carga válida; revise antes de salvar');
+    if(review.missingRir)issues.push(review.missingRir+' série(s) sem RIR; serão salvas, mas reduzem a precisão das recomendações');
+    if(review.skipped)issues.push(review.skipped+' exercício(s) ainda sem execução: serão marcados como pulados');
+    return {review,issues};
+  }
+  function renderRecoveryCheckin() {
+    const c=checkin(),energy=c?.energy||'';
+    return `<section class="card recovery-checkin" aria-labelledby="recovery-checkin-heading">
+      <div class="row-between"><h2 id="recovery-checkin-heading" class="section-title">Como você está hoje?</h2>
+        <span class="pill">${c?'Registrado hoje':'Ainda não registrado'}</span></div>
+      <p class="small muted">Check-in de hoje, não herdado de outro dia. Ajuda a decidir entre treino e recuperação; você pode deixar campos sem informar.</p>
+      <div class="recovery-energy" role="group" aria-label="Energia de hoje">
+        ${[['boa','Bem recuperado'],['normal','Energia normal'],['baixa','Pouca energia']].map(([value,label])=>`
+          <button type="button" class="secondary ${energy===value?'selected':''}" data-action="recovery-energy" data-value="${value}" aria-pressed="${energy===value}">${label}</button>`).join('')}
+      </div>
+      <div class="field-row mt-12"><div class="field"><label for="recovery-fatigue">Fadiga das pernas hoje</label>
+        <select id="recovery-fatigue" data-recovery-field="fatigue">
+        ${[['normal','Normal'],['moderada','Moderada'],['alta','Alta']].map(([value,label])=>`<option value="${value}" ${c?.fatigue===value?'selected':''}>${label}</option>`).join('')}</select></div>
+        <div class="field"><label for="recovery-knee">Dor no joelho hoje</label>
+        <select id="recovery-knee" data-recovery-field="kneePain">${painOptions(c?.kneePain??'')}</select></div></div>
+      <p class="small muted mt-8">Sem check-in novo, o histórico anterior não é interpretado como recuperação atual.</p>
+    </section>`;
+  }
+  const getNext = () => {
+    const suggested=E.nextWorkout(state.sessions,recoverySettings().fatigue,maxKneePain(),DATA.rotation);
+    const muay=M.readiness(state.muay.sessions,today(),recoverySettings());
+    const current=checkin();
+    if(current && (current.energy==='baixa'||current.fatigue==='alta'))
+      return {...suggested,id:null,rest:true,modified:true,
+        reason:'O check-in de hoje indica energia baixa ou fadiga alta. Considere descanso ou recuperação leve antes de decidir por outro treino; os blocos continuam pendentes.'};
+    if(muay.activities && muay.days<=1 && muay.level==='rest' && !suggested.rest)
+      return {...suggested,id:null,rest:true,modified:true,
+        reason:'Recuperação recomendada após Muay Thai recente: '+muay.note};
+    if(muay.activities && muay.days<=1 && muay.level==='light' &&
+       suggested.id && ['C','D'].includes(suggested.id)){
+      const upper=suggested.pending.find(id=>['A','B'].includes(id));
+      if(upper)return {...suggested,id:upper,rest:false,modified:true,
+        reason:'Muay Thai recente com esforço significativo: priorize superiores se estiver recuperado. '+muay.note};
+      return {...suggested,id:null,rest:true,modified:true,
+        reason:'Pernas foram exigidas recentemente no Muay Thai: '+muay.note};
+    }
+    return suggested;
+  };
   const latestSessions = () => [...state.sessions].sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
   function dueKnee() {
     return latestSessions().filter(s => s.kneeNextDay == null &&
@@ -390,20 +445,21 @@
       </section>
       <div class="kpi-row"><div class="kpi"><strong>${state.sessions.length}</strong><span>treinos salvos</span></div><div class="kpi"><strong>${goal.lost>0?'−':''}${fmt(Math.abs(goal.lost))}</strong><span>kg desde o início</span></div><div class="kpi"><strong>14/01</strong><span>meta de 2027</span></div></div>
       ${resumeBanner()}
+      ${renderRecoveryCheckin()}
       ${renderAdherencePanel()}
       ${pending.length?`<div class="callout warn"><strong>Cheque o joelho no dia seguinte.</strong> Há ${pending.length} treino(s) de pernas aguardando registro. <button class="button-inline" data-action="navigate" data-to="history">Registrar agora</button></div>`:''}
       <div class="section-row"><h2 class="section-title">Seu próximo treino</h2>${tag(next.rest?'Recuperação':`Bloco ${next.id}`,'green')}</div>
       <section class="card"><div class="card-row"><div><h3>${plan?esc(plan.title):'Recuperação antes do próximo bloco'}</h3><p>${plan?esc(plan.subtitle):'Não há bloco de superiores pendente e liberado pela recuperação atual.'}</p></div><span class="rounded-emoji" aria-hidden="true">${plan?.type==='upper'?'↗':'⌁'}</span></div>
         <p class="bodycopy mt-12">${esc(next.reason)}</p>
         ${renderQueue(next)}
-        <div class="field-row mt-12"><div class="field"><label for="fatigue-home">Fadiga das pernas</label><select id="fatigue-home" data-setting="fatigue"><option value="normal" ${state.settings.fatigue==='normal'?'selected':''}>Normal</option><option value="moderada" ${state.settings.fatigue==='moderada'?'selected':''}>Moderada</option><option value="alta" ${state.settings.fatigue==='alta'?'selected':''}>Alta</option></select></div>
-        <div class="field"><label for="knee-home">Dor no joelho agora</label><select id="knee-home" data-setting="kneePain">${painOptions(state.settings.kneePain)}</select></div></div>
+        <p class="small muted mt-12">A recomendação considera o check-in de hoje. Atualize acima se sua recuperação mudou.</p>
         ${plan?`<button class="primary full mt-12" data-action="start" data-plan="${next.id}">Iniciar ${esc(plan.title)}</button>`:''}
         <button class="button-inline mt-8" data-action="navigate" data-to="plans">Escolher outro bloco</button>
       </section>
       ${last?`<div class="section-row"><h2 class="section-title">Última atividade</h2><span class="tiny muted">${dateBR(last.day)}</span></div><div class="card"><strong>${esc(planFor(last.planId).title)}</strong><p class="small muted mt-8">${last.entries.length} exercícios registrados · ${esc(last.energy||'Esforço não informado')}</p></div>`:''}
       ${lastTop?`<div class="section-row"><h2 class="section-title">Seu último peso de treino</h2></div><div class="card"><div class="card-row"><div><strong>${esc(lastTop.x.name)}</strong><p class="last">${esc(lastTop.r.last)}</p></div>${tag(lastTop.r.level==='increase'?'Pode subir':'Em evolução',lastTop.r.level==='increase'?'green':'')}</div><p class="small muted mt-12">${esc(lastTop.r.title)}. ${esc(lastTop.r.explanation)}</p></div>`:''}
       <div class="section-row"><h2 class="section-title">Muay Thai</h2></div>
+      ${M.readinessCard(M.readiness(state.muay.sessions,today(),recoverySettings()))}
       <section class="card"><p class="small muted">Aulas e treinos em casa também entram no seu diário, sem concluir blocos de musculação.</p><button class="secondary full" data-action="open-muay">Registrar Muay Thai</button></section>
       ${weightForm()}
       <p class="small muted">As recomendações são regras de acompanhamento, não substituem orientação de um profissional. Dor no joelho ou piora após treino bloqueiam sugestões automáticas de aumento.</p>`;
@@ -413,7 +469,7 @@
       .map(([v,label])=>`<option value="${v}" ${String(current??'')===v?'selected':''}>${label}</option>`).join('');
   }
   function renderMuay() {
-    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today());
+    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today(),recoverySettings());
   }
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
@@ -428,8 +484,18 @@
           <span class="plan-choice-code">BLOCO ${plan.id}</span><span class="plan-choice-name">${esc(label)}</span></button>`;
       }).join('')}</div>
       <section class="workout-banner"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><p>${esc(p.subtitle)}</p><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button></section>
-      <div class="section-row"><h2 class="section-title">Exercícios do bloco</h2><small>${all.filter(x=>x.active).length} ativos</small></div>
-      <div class="list-settings">${all.map(ex=>`<div class="setting-item"><div><strong>${esc(ex.name)}</strong><span>${ex.sets} × ${ex.low}–${ex.high} · +${fmt(ex.step)} ${esc(ex.unit)} ${ex.knee?'· atenção ao joelho':''}</span><button class="button-inline" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>`).join('')}</div>
+      <section class="plan-exercises" aria-labelledby="plan-exercises-title">
+        <div class="section-row plan-exercises-heading"><div><p class="section-eyebrow">SUA FICHA · BLOCO ${p.id}</p><h2 class="section-title" id="plan-exercises-title">Exercícios do bloco</h2>
+          <p class="small muted">Organizados na ordem da sessão. Ative ou edite cada movimento sem perder os registros anteriores.</p></div><span class="plan-exercises-count">${all.filter(x=>x.active).length} ativos</span></div>
+        <div class="plan-exercises-list">${all.map((ex,i)=>`<article class="plan-exercise-item ${ex.active?'':'is-inactive'}">
+          <div class="plan-exercise-index" aria-hidden="true">${String(i+1).padStart(2,'0')}</div>
+          <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
+            <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
+            <p class="plan-exercise-submeta">Progressão: +${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Atenção ao joelho':''}</p>
+            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div>
+          <div class="plan-exercise-state"><span>${ex.active?'Na ficha':'Inativo'}</span><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
+        </article>`).join('')}</div>
+      </section>
       <button class="secondary full mt-16" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button>
       <div class="callout mt-16">Aquecimentos não contam como séries efetivas. Você pode alterar exercícios, progressão e número de séries em qualquer momento.</div>`;
   }
@@ -483,7 +549,12 @@
             ${ids.map((id,i)=>`<button type="button" class="focus-exercise-pill ${selected===id?'selected':''}" data-action="focus-select" data-ex="${esc(id)}" aria-pressed="${selected===id}">${i+1}. ${esc(exerciseFor(id)?.name||id)} ${focus.byExercise[id]?.finished?'✓':''}</button>`).join('')}
           </div>` : ''}
       </section>
-      ${ui.focusedMode ? (selected?renderExercise(entries[selected]):'<p class="empty">Adicione um exercício para começar.</p>') : Object.values(entries).map(en=>renderExercise(en)).join('')}
+      <section class="session-exercises" aria-labelledby="session-exercises-title">
+        <div class="session-exercises-header"><p class="section-eyebrow">REGISTRO DE SÉRIES</p>
+          <h2 id="session-exercises-title">Exercícios da sessão</h2>
+          <p>${ui.focusedMode?'Visualização de um exercício por vez.':'Cada cartão corresponde a um exercício. Registre as séries antes de avançar.'}</p></div>
+        ${ui.focusedMode ? (selected?renderExercise(entries[selected],focusIndex,ids.length):'<p class="empty">Adicione um exercício para começar.</p>') : Object.values(entries).map((en,i)=>renderExercise(en,i,ids.length)).join('')}
+      </section>
       <section class="card"><div class="row-between"><h2 class="section-title">Ajustar este treino</h2>${tag('Só hoje','green')}</div>
         <p class="small muted">Retirar ou adicionar exercícios aqui não altera sua ficha. Exercícios retirados não contam como realizados.</p>
         ${F.ensureDraft(ui.draft) && ui.draft.skipped.length ? '<div class="flex-skipped"><strong>Retirados nesta sessão</strong>' +
@@ -495,25 +566,41 @@
       </section>
       ${renderAdherencePanel(true)}
       ${renderDosePanel(true)}
+      <section class="card session-review"><h2 class="section-title">Conferência antes de salvar</h2>
+        <div id="workout-review" aria-live="polite">${renderReviewContent()}</div>
+        <p class="tiny muted">As observações não são convertidas em séries reais; os registros incompletos do Muay Thai antigo permanecem intactos.</p>
+      </section>
       <section class="card"><h2 class="section-title">Finalizar sessão</h2><div class="field mt-12"><label for="session-energy">Como foi a sessão?</label>
       <select id="session-energy" data-draft-meta="energy"><option value="leve" ${ui.draft.energy==='leve'?'selected':''}>Leve / sobrou energia</option><option value="normal" ${ui.draft.energy==='normal'?'selected':''}>Normal / esforço esperado</option><option value="intenso" ${ui.draft.energy==='intenso'?'selected':''}>Intensa / muita fadiga</option></select></div>
       <div class="field mt-12"><label for="session-notes">Observações (opcional)</label><textarea id="session-notes" data-draft-meta="notes" placeholder="Ex.: sono, dor, execução, Muay Thai no mesmo dia">${esc(ui.draft.notes)}</textarea></div></section>
       <div class="training-controls"><div class="btnrow"><button class="primary" style="flex:2" data-action="finish">Salvar treino</button><button class="ghost" style="flex:1" data-action="cancel">Cancelar</button></div></div>`;
   }
+  function renderReviewContent(){
+    const {review,issues}=reviewWarning(ui.draft);
+    return `<p class="small muted">${review.exercisesLogged} exercício(s) com séries · ${review.effectiveSets} série(s) efetiva(s)</p>
+    ${issues.length?`<ul class="review-issues">${issues.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>`:
+    '<p class="small">Sem pendências de preenchimento identificadas.</p>'}`;
+  }
+  function refreshReview() {
+    const node=document.querySelector('#workout-review');
+    if(node)node.innerHTML=renderReviewContent();
+  }
   function renderFlexCatalog() {
     const choices=F.options(state.exercises,ui.draft);
+    const analysis=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
     const advice=ADVICE.suggest({options:choices,draft:ui.draft,exercises:state.exercises,
       strengthSessions:state.sessions,muaySessions:state.muay.sessions,
-      settings:state.settings,today:today(),dose:DOSE});
+      settings:state.settings,today:today(),dose:DOSE,mode:ui.catalogMode,analysis});
     const picks=advice.recommendations.map(ex=>`
       <article class="catalog-suggestion">
         <div class="catalog-recommend-heading">
           <strong>${esc(ex.name)}</strong>
-          <span class="catalog-recommend-tag">${ex.kind==='replacement'?'Substituição':'Variação'}</span>
+          <span class="catalog-recommend-tag">${ex.kind==='extra-set'?'Série extra':ex.kind==='extra-exercise'?'Outro equipamento':ex.kind==='replacement'?'Substituição':'Variação para substituir'}</span>
         </div>
         <p class="small muted">${esc(ex.muscle||'Grupo muscular')} · ${esc(ex.equipment||'Equipamento não informado')}</p>
         <p class="small">${esc(ex.reason)}</p>
-        <button type="button" class="secondary small-button" data-action="flex-add" data-ex="${esc(ex.id)}">Adicionar à sessão</button>
+        <button type="button" class="secondary small-button" data-action="${ex.kind==='extra-set'?'dose-add-one':ex.kind==='extra-exercise'?'catalog-extra-add':'flex-add'}" data-ex="${esc(ex.id)}" ${ex.sourceId?'data-source="'+esc(ex.sourceId)+'"':''}>${ex.kind==='extra-set'?'Acrescentar uma série':ex.kind==='extra-exercise'?'Adicionar exercício opcional':'Adicionar para substituir'}</button>
       </article>`).join('');
     const full=choices.map(ex=>
       '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
@@ -521,25 +608,32 @@
       '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
     ).join('');
     return `<div class="flex-catalog mt-12">
+      <div class="catalog-mode-switch" role="group" aria-label="Tipo de recomendação">
+        <button type="button" class="secondary ${ui.catalogMode==='replacement'?'selected':''}" data-action="catalog-mode" data-mode="replacement" aria-pressed="${ui.catalogMode==='replacement'}">Substituir exercício</button>
+        <button type="button" class="secondary ${ui.catalogMode==='extra'?'selected':''}" data-action="catalog-mode" data-mode="extra" aria-pressed="${ui.catalogMode==='extra'}">Tenho energia para mais</button>
+      </div>
+      ${ui.catalogMode==='extra'?`<div class="catalog-energy"><strong>Como está sua energia agora?</strong>
+        <button type="button" class="secondary" data-action="catalog-energy" aria-pressed="${ui.draft.energy==='leve'}">${ui.draft.energy==='leve'?'Energia sobrando ✓ · alterar':'Estou com energia sobrando'}</button>
+        <p class="small muted">Energia sobrando não é autorização para volume extra. Consideramos séries, RIR e recuperação.</p></div>`:''}
       <section class="catalog-contextual" aria-labelledby="catalog-recommended-heading">
         <div class="row-between">
-          <h3 id="catalog-recommended-heading">Sugestões para este treino</h3>
-          <span class="catalog-recommend-tag">Recomposição</span>
+          <h3 id="catalog-recommended-heading">${ui.catalogMode==='extra'?'Opções para acrescentar':'Sugestões para este treino'}</h3>
+          <span class="catalog-recommend-tag">${ui.catalogMode==='extra'?'Acréscimo opcional':'Substituição'}</span>
         </div>
         <p class="small muted">${esc(advice.message)}</p>
         ${advice.caution?'<p class="catalog-caution">'+esc(advice.caution)+'</p>':''}
-        ${picks||'<p class="catalog-empty">Nenhuma alternativa relacionada suficientemente confiável com os dados disponíveis.</p>'}
+        ${picks||'<p class="catalog-empty">Sem recomendações elegíveis com os dados disponíveis.</p>'}
         <p class="tiny muted">${esc(advice.basis)}</p>
       </section>
-      <button type="button" class="secondary full catalog-all-toggle" data-action="catalog-show-all" aria-expanded="${ui.catalogAll}">
+      ${ui.catalogMode==='replacement'?`<button type="button" class="secondary full catalog-all-toggle" data-action="catalog-show-all" aria-expanded="${ui.catalogAll}">
         ${ui.catalogAll?'Ocultar catálogo completo':'Explorar todos os exercícios ('+choices.length+')'}
       </button>
       ${ui.catalogAll?`<div class="catalog-all">
         <label for="flex-catalog-search">Buscar por nome ou equipamento</label>
         <input id="flex-catalog-search" type="search" placeholder="Buscar exercício..." aria-controls="flex-catalog-list" />
         <div class="flex-catalog-list" id="flex-catalog-list">${full||'<p class="small muted">Sem exercícios adicionais disponíveis.</p>'}</div>
-      </div>`:''}
-      <p class="tiny muted">Sugestões de substituição ou variação, não prescrição individual. Adicionar não remove o movimento original: retire-o caso deseje substituir.</p>
+      </div>`:''}`:''}
+      <p class="tiny muted">${ui.catalogMode==='extra'?'Escolha uma série OU outro equipamento. Sem registro de execução, a opção não entra no volume realizado.':'Para substituir, retire o movimento original que ainda não foi realizado. Não é aumento de volume.'}</p>
     </div>`;
   }
   function renderAdherencePanel(inSession=false) {
@@ -590,11 +684,17 @@
     const previous=history(exId)[0];
     cell.innerHTML=setComparisonText(previous?.entry.sets[index],en.sets[index],ex,previous?.session.day);
   }
-  function renderExercise(en) {
+  function renderExercise(en,index=0,total=1) {
     const ex=exerciseFor(en.id), reco=E.recommend(ex,state.sessions), previousSession=history(ex.id)[0], previousEntry=previousSession?.entry, hasData=!!previousEntry;
     const cls=reco.level==='protect'?'protect':['hold','confirm'].includes(reco.level)?'warn':'';
-    return `<section class="exercise-card" data-exercise="${esc(ex.id)}">
-      <div class="card-row"><div><h3>${esc(ex.name)}</h3><p class="small muted mt-8">Meta: ${ex.low}–${ex.high} rep. · ajuste de ${fmt(ex.step)} ${esc(ex.unit)}</p></div>${tag(ex.mode==='pyramid'?'Pirâmide':'Séries','')}</div>
+    const completedSets=FOCUS.summary({[en.id]:en}).effectiveSets;
+    return `<section class="exercise-card workout-exercise-card" data-exercise="${esc(ex.id)}" aria-label="Exercício ${index+1} de ${total}: ${esc(ex.name)}">
+      <div class="workout-exercise-heading"><span class="workout-exercise-number">${String(index+1).padStart(2,'0')} <small>/ ${String(total).padStart(2,'0')}</small></span>
+        <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
+        <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p></div>
+        <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
+      <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
+      <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
       <div class="recommend ${cls}"><strong>${esc(reco.title)}</strong><p>${esc(reco.explanation)}</p>
       ${reco.level==='increase'?`<button class="button-inline mt-8" data-action="apply-reco" data-ex="${esc(ex.id)}">Usar ${fmt(reco.next)} ${esc(ex.unit)} na série mais pesada</button>`:''}</div>
@@ -604,7 +704,13 @@
       <input aria-label="Série ${i+1}, carga ${esc(ex.unit)} em ${esc(ex.name)}" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="load" value="${esc(set.load)}" />
       <input aria-label="Série ${i+1}, repetições em ${esc(ex.name)}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
       <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />
-      <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex,previousSession?.session.day)}</div>`).join('')}</div>
+      <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex,previousSession?.session.day)}</div>
+      <div class="quick-set-row">
+        <div class="quick-rir" role="group" aria-label="RIR rápido da série ${i+1} de ${esc(ex.name)}">
+          ${[0,1,2,3].map(n=>`<button type="button" class="secondary ${String(set.rir)===String(n)?'selected':''}" data-action="quick-rir" data-ex="${esc(ex.id)}" data-index="${i}" data-rir="${n}" aria-pressed="${String(set.rir)===String(n)}">RIR ${n}</button>`).join('')}
+        </div>
+        <button type="button" class="secondary quick-set-confirm ${FOCUS.performed(set)?'is-done':''}" data-action="quick-set-confirm" data-ex="${esc(ex.id)}" data-index="${i}">${FOCUS.performed(set)?'Série registrada ✓':'Conferir série'}</button>
+      </div>`).join('')}</div>
       <div class="quick-log-tools"><span class="small muted">Preparo rápido · confirme as repetições depois de executar</span>
       <div class="quick-log-buttons"><button type="button" class="secondary small-button" data-action="quick-previous" data-ex="${esc(ex.id)}">Repetir cargas da última sessão</button>
       <button type="button" class="secondary small-button" data-action="quick-current" data-ex="${esc(ex.id)}">Repetir carga da série anterior</button></div></div>
@@ -658,6 +764,8 @@
               `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${fmt(set.load)} ${esc(ex?.unit||'kg')} × ${set.reps} rep.${set.rir == null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
           </div><div class="text-right"><strong>${top?`${fmt(top.load)} ${esc(ex?.unit||'kg')}`:'—'}</strong><br><span>${top?`${top.reps} rep.`:''}</span></div></li>`;
         }).join('')}</ul>
+        ${session.skipped?.length?`<div class="history-skipped"><strong>Pulados nesta sessão · ${session.skipped.length}</strong><ul>${session.skipped.map(item=>
+          `<li>${esc(exerciseFor(item.id)?.name||item.id)}<span>${item.reason==='sem-registro'?'Sem registro':esc(F.reasons[item.reason]||'Motivo não informado')}</span></li>`).join('')}</ul></div>`:''}
         ${session.notes?`<p class="small muted">Observações: ${esc(session.notes)}</p>`:''}
         ${needsDay?(canAssess?`<div class="callout warn"><strong>Como ficou o joelho no dia seguinte?</strong><div class="field-row mt-8"><div class="field"><label for="after-${esc(session.id)}">Dor após 24 h</label><select id="after-${esc(session.id)}" data-after-day="${esc(session.id)}">${painOptions('')}</select></div><div style="display:flex;align-items:end"><button class="secondary full" data-action="save-knee" data-id="${esc(session.id)}">Salvar</button></div></div></div>`:
           `<p class="small muted mt-12">Amanhã, informe se houve dor ou rigidez no joelho antes de progredir cargas de pernas.</p>`):
@@ -693,7 +801,8 @@
       <div class="field mt-12"><label for="goal-date">Data-alvo</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
-      <div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar backup</button></div></section>
+      <div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
+        <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
       <section class="card"><h2 class="section-title">Sobre as sugestões</h2><p class="small muted">O app diferencia aquecimento e séries efetivas. Para sugerir aumento, exige duas sessões consistentes dentro da faixa de repetições e RIR informado. Em exercícios de joelho, também exige ausência de sintomas durante e no dia seguinte.</p>
       <div class="callout warn">Não é um diagnóstico. Dor recorrente abaixo da patela deve ser avaliada por profissional de saúde; uma joelheira não garante segurança para aumentar a carga.</div>
       <button class="danger-button full mt-12" data-action="reset">Apagar registros deste aparelho</button></section>
@@ -711,6 +820,7 @@
       if(row) {
         row[el.dataset.field]=el.value;
         persistDraft();
+        refreshReview();
         updateSetComparison(el.dataset.ex, Number(el.dataset.index));
         const progress=FOCUS.summary(ui.draft.entries);
         const status=document.querySelector('.focus-progress-label');
@@ -775,7 +885,7 @@
     const now=new Date();
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
       timestamp:now.toISOString(),day:today(),entries:result,kneeNextDay:null,
-      plannedIds:[...ui.draft.plannedIds],skipped:F.skippedForSave(ui.draft),
+      plannedIds:[...ui.draft.plannedIds],skipped:F.skippedForSave(ui.draft,result),
       energy:ui.draft.energy,notes:ui.draft.notes.trim().slice(0,1000)});
     if (!save()) {
       state.sessions.pop();
@@ -783,7 +893,10 @@
     }
     const discomfort=result.some(en=>en.pain!==null && en.pain>0);
     clearDraft();ui.tab='history';render();window.scrollTo(0,0);
-    notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':'Treino salvo. Histórico e treinos pendentes atualizados.');
+    const skippedCount=state.sessions[state.sessions.length-1].skipped.filter(item=>item.reason==='sem-registro').length;
+    notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':
+      skippedCount?`Treino salvo. ${skippedCount} exercício(s) sem registro marcado(s) como pulado(s).`:
+      'Treino salvo. Histórico e treinos pendentes atualizados.');
   }
   function saveKnee(id) {
     const session=state.sessions.find(s=>s.id===id);
@@ -809,20 +922,60 @@
     download(`forja-series-${today()}.csv`,'\ufeff'+rows.map(row=>row.map(csvSafe).join(';')).join('\r\n'),'text/csv;charset=utf-8');
     notify('Planilha CSV exportada.');
   }
+  // Safe migration of a backup into an already used phone. Same IDs in the
+  // phone take priority, so an older backup cannot overwrite later edits.
+  function mergeImportedHistory(current,incoming) {
+    const unionById=(left,right)=>{
+      const result=[...left], ids=new Set(left.map(item=>item.id));
+      for(const item of right)if(!ids.has(item.id)){result.push(item);ids.add(item.id);}
+      return result;
+    };
+    const existingDates=new Set(current.weights.map(item=>item.date));
+    const existingWeightIds=new Set(current.weights.map(item=>item.id));
+    const newWeights=incoming.weights.filter(item=>!existingDates.has(item.date)&&!existingWeightIds.has(item.id));
+    return {
+      ...incoming,...current,
+      settings:current.settings,
+      referenceDefaultsVersion:Math.max(current.referenceDefaultsVersion||0,incoming.referenceDefaultsVersion||0),
+      weights:[...current.weights,...newWeights],
+      exercises:unionById(current.exercises,incoming.exercises),
+      sessions:unionById(current.sessions,incoming.sessions),
+      muay:{...incoming.muay,...current.muay,
+        sessions:unionById(current.muay.sessions,incoming.muay.sessions),
+        draft:current.muay.draft||incoming.muay.draft||null},
+      migrationAudit:incoming.migrationAudit||current.migrationAudit,
+    };
+  }
   async function importJSON(file) {
-    if(!file) return;
+    if(!file)return;
     if(file.size>5*1024*1024)return notify('Arquivo muito grande (limite de 5 MB).');
     try{
       const parsed=JSON.parse(await file.text());
       if(!validState(parsed))throw new Error('Estrutura incompatível');
       M.ensureArchive(parsed);
       if(!M.validArchive(parsed.muay))throw new Error('Histórico de Muay Thai inválido');
-      if(!confirm('Importar este backup substitui os registros salvos neste aparelho. Continuar?')) return;
+      const importedIds=new Set(parsed.exercises.map(ex=>ex.id));
+      if(parsed.sessions.some(session=>session.entries.some(entry=>!importedIds.has(entry.id))))
+        throw new Error('Treinos importados referenciam exercícios ausentes.');
+      const existing=state.sessions.length+state.muay.sessions.length+
+        state.weights.filter(item=>!item.initial).length;
+      const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft);
+      const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
+        'carregados neste aparelho';
+      const counts=parsed.sessions.length+' musculação, '+parsed.muay.sessions.length+
+        ' Muay Thai e '+parsed.weights.length+' pesagem(ns)';
+      if(!confirm('Importar '+counts+'? Os registros serão '+action+'. '+
+        'A FORJA preserva as informações legadas sem completar dados antigos. '+
+        'Se houver treinos novos no aparelho, recomendamos exportar um backup antes.'))return;
       const oldState=state;
-      state=parsed;
-      if (!save()) {state=oldState;return notify('Importação não concluída: falha ao salvar o histórico.');}
-      clearDraft();muayMode=false;ui.editor=null;ui.tab='home';render();notify('Backup importado com sucesso.');
-    }catch(err){notify('Não foi possível importar: verifique se é um backup FORJA válido.');}
+      state=hasCurrent?mergeImportedHistory(state,parsed):parsed;
+      if(!validState(state)||!M.validArchive(state.muay)){state=oldState;throw new Error('Falha ao validar estado mesclado.');}
+      if(!save()){state=oldState;return notify('Importação não concluída. Seu histórico anterior foi mantido.');}
+      if(!hasCurrent)clearDraft();
+      muayMode=false;ui.editor=null;ui.tab='home';render();
+      notify(hasCurrent?'Backup mesclado. Dados anteriores preservados.':'Backup importado com sucesso.');
+    }catch(err){console.warn('Importação não concluída',err);
+      notify('Não foi possível importar: verifique o backup FORJA e os registros informados.');}
     document.getElementById('import-file').value='';
   }
   function handleAction(btn) {
@@ -836,6 +989,35 @@
       const id=action==='focus-select'?btn.dataset.ex:ids[i+(action==='focus-next'?1:-1)];
       if(!id||!ui.draft.entries[id])return;
       ui.focusedExercise=id;render();document.querySelector('.workout-focus-bar')?.scrollIntoView({block:'start'});return;
+    }
+    if(action==='quick-rir'){
+      const en=ui.draft?.entries[btn.dataset.ex],i=Number(btn.dataset.index),n=Number(btn.dataset.rir);
+      if(!en||!en.sets[i]||![0,1,2,3].includes(n))return;
+      const old=en.sets[i].rir;en.sets[i].rir=String(n);
+      if(!persistDraft()){en.sets[i].rir=old;return notify('Não foi possível salvar o RIR.');}
+      const input=document.querySelector('[data-field="rir"][data-ex="'+en.id+'"][data-index="'+i+'"]');
+      if(input)input.value=String(n);
+      const row=btn.closest('.quick-rir');
+      if(row)row.querySelectorAll('[data-action="quick-rir"]').forEach(el=>{
+        const active=el.dataset.rir===String(n);
+        el.classList.toggle('selected',active);el.setAttribute('aria-pressed',String(active));
+      });
+      refreshReview();return;
+    }
+    if(action==='quick-set-confirm'){
+      const en=ui.draft?.entries[btn.dataset.ex],i=Number(btn.dataset.index),row=en?.sets[i];
+      if(!row)return;
+      if(!FOCUS.performed(row))return notify('Informe a carga e as repetições realmente executadas nesta série.');
+      notify('Série registrada no rascunho automático.');return;
+    }
+    if(action==='recovery-energy'){
+      if(!['boa','normal','baixa'].includes(btn.dataset.value))return;
+      const existing=checkin();
+      state.settings.recoveryCheckin={
+        day:today(),energy:btn.dataset.value,fatigue:existing?.fatigue||'normal',
+        kneePain:existing?.kneePain??''};
+      if(!save())return;
+      render();notify('Check-in de hoje salvo.');return;
     }
     if(action==='quick-previous' || action==='quick-current'){
       if(!ui.draft)return;
@@ -851,8 +1033,46 @@
       if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
       render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
     }
-    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;render();return;}
+    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;ui.catalogMode='replacement';render();return;}
+    if(action==='catalog-mode'){
+      if(!ui.draft||!ui.catalogOpen||!['replacement','extra'].includes(btn.dataset.mode))return;
+      ui.catalogMode=btn.dataset.mode;ui.catalogAll=false;render();return;
+    }
+    if(action==='catalog-energy'){
+      if(!ui.draft||!ui.catalogOpen||ui.catalogMode!=='extra')return;
+      const previous=ui.draft.energy;
+      ui.draft.energy=previous==='leve'?'normal':'leve';
+      if(!persistDraft()){ui.draft.energy=previous;return notify('Não foi possível salvar a energia da sessão.');}
+      render();return;
+    }
     if(action==='catalog-show-all'){if(!ui.draft||!ui.catalogOpen)return;ui.catalogAll=!ui.catalogAll;render();return;}
+    if(action==='catalog-extra-add'){
+      if(!ui.draft||ui.catalogMode!=='extra'||ui.draft.extraChoice)return;
+      const analysis=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+        exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
+      const options=F.options(state.exercises,ui.draft);
+      const suggested=ADVICE.suggest({options,draft:ui.draft,exercises:state.exercises,
+        strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+        settings:state.settings,today:today(),dose:DOSE,mode:'extra',analysis});
+      if(!suggested.recommendations.some(item=>item.kind==='extra-exercise'&&
+          item.id===btn.dataset.ex&&item.sourceId===btn.dataset.source))
+        return notify('A recomendação mudou. Revise sua execução e recuperação.');
+      const id=btn.dataset.ex,found=F.prepareCatalog(id,state.exercises);
+      if(!found||found.isNew&&state.exercises.length>=200)return notify('Exercício indisponível no catálogo.');
+      if(!F.addToDraft(ui.draft,id,found.exercise,{
+        id,sets:[{load:'',reps:'',rir:'',warmup:false}],pain:''
+      }))return notify('Exercício já incluído ou limite alcançado.');
+      if(found.isNew){
+        state.exercises.push(found.exercise);
+        if(!save()){state.exercises.pop();delete ui.draft.entries[id];
+          ui.draft.addedIds=ui.draft.addedIds.filter(x=>x!==id);return;}
+      }
+      ui.draft.extraChoice={kind:'exercise',id,sourceId:btn.dataset.source};
+      if(!persistDraft()){delete ui.draft.extraChoice;delete ui.draft.entries[id];
+        ui.draft.addedIds=ui.draft.addedIds.filter(x=>x!==id);
+        return notify('Não foi possível salvar o rascunho.');}
+      ui.catalogOpen=false;render();notify('Exercício opcional adicionado com uma série em branco.');return;
+    }
     if(action==='flex-add'){
       const draft=ui.draft,id=btn.dataset.ex;if(!draft)return;
       const found=F.prepareCatalog(id,state.exercises);
@@ -868,8 +1088,10 @@
       ui.catalogOpen=false;render();notify('Exercício adicionado apenas ao treino do dia.');return;
     }
     if(action==='flex-withdraw'){
+      const choice=ui.draft?.extraChoice;
       const result=F.withdraw(ui.draft,btn.dataset.ex);
       if(result.error)return notify(result.error);
+      if(choice?.kind==='exercise'&&choice.id===btn.dataset.ex)delete ui.draft.extraChoice;
       if(!persistDraft())return notify('Não foi possível salvar a alteração.');
       render();return;
     }
@@ -879,7 +1101,7 @@
       render();return;
     }
     if(action==='dose-add-one'){
-      if(!ui.draft)return;
+      if(!ui.draft||ui.draft.extraChoice)return;
       const ex=exerciseFor(btn.dataset.ex),en=ui.draft.entries[btn.dataset.ex];
       if(!ex||!en||en.sets.length>=12)return notify('Não é possível adicionar outra série neste exercício.');
       const decision=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
@@ -887,7 +1109,8 @@
       if(!decision.candidates.some(candidate=>candidate.exerciseId===ex.id))
         return notify('A sugestão já não se aplica aos dados atuais da sessão.');
       en.sets.push({load:'',reps:'',rir:'',warmup:false});
-      if(!persistDraft()){en.sets.pop();return notify('Não foi possível salvar a nova série.');}
+      ui.draft.extraChoice={kind:'set',id:ex.id};
+      if(!persistDraft()){en.sets.pop();delete ui.draft.extraChoice;return notify('Não foi possível salvar a nova série.');}
       render();notify('Série opcional adicionada em branco. Só contará após ser realizada.');return;
     }
     if(action==='calendar-shift'){
@@ -918,7 +1141,7 @@
       if(!d||d.activities.length>=30)return notify('Limite de 30 exercícios por sessão.');
       const preset=action==='muay-preset'?M.PRESETS[Number(btn.dataset.preset)]:null;
       if(action==='muay-preset'&&!preset)return;
-      d.activities.push(M.activity(preset?.name||'',preset?.unit||'reps'));save();render();return;
+      d.activities.push(M.activity(preset?.name||'',preset?.unit||'reps',preset||{}));save();render();return;
     }
     if(action==='muay-remove'){
       const d=state.muay.draft;if(!d)return;
@@ -959,7 +1182,12 @@
     else if(action==='select-plan') {ui.plan=btn.dataset.plan;render();}
     else if(action==='start') startWorkout(btn.dataset.plan);
     else if(action==='add-set') {const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length<12){en.sets.push({load:'',reps:'',rir:'',warmup:false});persistDraft();render();}}
-    else if(action==='remove-set'){const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length>1){en.sets.pop();persistDraft();render();}}
+    else if(action==='remove-set'){const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length>1){
+      en.sets.pop();
+      if(ui.draft.extraChoice?.kind==='set'&&ui.draft.extraChoice.id===btn.dataset.ex &&
+        en.sets.length===Number(exerciseFor(btn.dataset.ex)?.sets))delete ui.draft.extraChoice;
+      persistDraft();render();
+    }}
     else if(action==='toggle-warmup'){const set=ui.draft?.entries[btn.dataset.ex]?.sets[Number(btn.dataset.index)];if(set){set.warmup=!set.warmup;persistDraft();render();}}
     else if(action==='apply-reco'){
       const ex=exerciseFor(btn.dataset.ex), en=ui.draft?.entries[btn.dataset.ex], rec=E.recommend(ex,state.sessions);
@@ -1021,8 +1249,13 @@
       d[field]=el.value;
     }else if(el.dataset.muayId && el.dataset.muayProp){
       const row=d.activities.find(a=>a.id===el.dataset.muayId);
-      if(!row || !['name','sets','quantity','unit'].includes(el.dataset.muayProp))return;
+      if(!row || !['name','sets','quantity','unit','category','side'].includes(el.dataset.muayProp))return;
       row[el.dataset.muayProp]=el.value;
+      if(el.dataset.muayProp==='unit'&&el.value!=='reps')row.side='total';
+      if(el.dataset.muayProp==='category'){
+        if(el.value==='combination'){row.unit='min';row.side='total';}
+        if(el.value==='exhaustion')row.unit='reps';
+      }
     }else return;
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
@@ -1044,6 +1277,24 @@
     collectDraft(event);
     updateMuayField(event);
     const el=event.target;
+    if(el.dataset.recoveryField){
+      const field=el.dataset.recoveryField;
+      if(!['fatigue','kneePain'].includes(field))return;
+      const value=el.value;
+      if(field==='fatigue'&&!['normal','moderada','alta'].includes(value))return;
+      if(field==='kneePain'&&value!==''&&(!Number.isInteger(Number(value))||Number(value)<0||Number(value)>10))return;
+      const current=checkin();
+      const previous=state.settings.recoveryCheckin;
+      state.settings.recoveryCheckin={
+        day:today(),energy:current?.energy||'normal',fatigue:current?.fatigue||'normal',
+        kneePain:current?.kneePain??'', [field]:value
+      };
+      if(!save()){state.settings.recoveryCheckin=previous;return;}
+      render();return;
+    }
+    if((el.dataset.muayProp==='unit'||el.dataset.muayProp==='category')&&state.muay.draft){
+      render();return;
+    }
     if(el.dataset.skipReason && ui.draft){
       if(F.setReason(ui.draft,el.dataset.skipReason,el.value))persistDraft();
       return;
@@ -1069,7 +1320,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261108-ux4-refresh1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-safe-import5',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

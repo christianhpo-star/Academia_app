@@ -318,3 +318,127 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-all{display:grid;gap:9px;margin-top:2px;min-width:0}
 .catalog-all input{width:100%}
 @media(max-width:360px){.catalog-recommend-heading{display:grid}.catalog-suggestion button{width:100%;justify-self:stretch}}
+
+
+/* Workout hierarchy v2: separated exercise rows, clear reading order and thumb-sized actions. */
+.plan-exercises{margin-top:22px}
+.plan-exercises-heading{align-items:flex-end;margin-bottom:13px}
+.plan-exercises-heading>div{min-width:0;flex:1}
+.section-eyebrow{margin:0 0 6px;color:#a4d4bf;font-size:10px;font-weight:850;letter-spacing:.1em;line-height:1.4}
+.plan-exercises-heading .section-title{margin:0 0 6px;font-size:20px;line-height:1.25}
+.plan-exercises-heading p.small{margin:0;max-width:52ch;line-height:1.55}
+.plan-exercises-count{flex-shrink:0;padding:7px 10px;border:1px solid #3e5c50;border-radius:100px;color:#e2f6e7;font-size:11px;font-weight:850}
+.plan-exercises-list{display:grid;gap:10px}
+.plan-exercise-item{display:grid;grid-template-columns:42px minmax(0,1fr) auto;align-items:start;gap:12px;padding:15px 12px;background:#182937;border:1px solid #3b5060;border-radius:16px;min-width:0}
+.plan-exercise-index{display:grid;place-items:center;width:40px;min-height:40px;border-radius:12px;background:#293e4a;color:#dcf0ed;font-size:15px;font-weight:900;font-variant-numeric:tabular-nums}
+.plan-exercise-detail{min-width:0}
+.plan-exercise-detail h3{margin:0;color:#f2f7fb;font-size:15px;line-height:1.4;font-weight:850;overflow-wrap:anywhere}
+.plan-exercise-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:7px 0 0;color:#d7e5ee;font-size:12px;line-height:1.5}
+.plan-exercise-meta strong{color:#eaffce;font-weight:850}
+.plan-exercise-submeta{margin:4px 0 0;color:#b0c7d6;font-size:11px;line-height:1.5}
+.plan-exercise-edit{display:inline-flex;align-items:center;min-height:44px;margin-top:3px;font-size:12px}
+.plan-exercise-state{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:52px}
+.plan-exercise-state span{color:#b5d9c5;font-size:10px;font-weight:800}
+.plan-exercise-state input{margin:0}
+.plan-exercise-item.is-inactive{background:#14222f;border-color:#314252}
+.plan-exercise-item.is-inactive .plan-exercise-index{background:#253240;color:#a6b7c5}
+.plan-exercise-item.is-inactive .plan-exercise-state span{color:#aebecd}
+.session-exercises{margin-top:23px}
+.session-exercises-header{margin:0 0 13px;padding:0 2px}
+.session-exercises-header h2{margin:0;color:#f0f7fb;font-size:21px;line-height:1.25;letter-spacing:-.02em}
+.session-exercises-header>p:last-child{margin:7px 0 0;color:#b9cbd7;font-size:12px;line-height:1.55}
+.workout-exercise-card{position:relative;overflow:hidden;margin:0 0 19px;padding:15px;background:#172534;border:1px solid #435869;box-shadow:0 8px 22px #0002}
+.workout-exercise-card:before{content:'';position:absolute;inset:0 auto 0 0;width:3px;background:#92c56b;pointer-events:none}
+.workout-exercise-heading{display:grid;grid-template-columns:48px minmax(0,1fr) auto;gap:11px;align-items:start}
+.workout-exercise-number{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:49px;border:1px solid #456a59;border-radius:12px;background:#244336;color:#e9ffd4;font-size:19px;line-height:1.15;font-weight:900;font-variant-numeric:tabular-nums}
+.workout-exercise-number small{font-size:10px;color:#bfdac7;margin-top:2px;font-weight:700}
+.workout-exercise-title{min-width:0}
+.workout-exercise-title h3{margin:0;font-size:17px;line-height:1.33;font-weight:900;letter-spacing:-.015em;overflow-wrap:anywhere}
+.workout-exercise-title .section-eyebrow{margin:0 0 5px}
+.workout-exercise-target{margin:6px 0 0;color:#d2e2ed;font-size:12px;line-height:1.45}
+.workout-exercise-kind{padding:6px 8px;max-width:76px;border-radius:9px;background:#263a49;color:#d5e6ed;border:1px solid #405567;font-size:10px;font-weight:800;text-align:center;overflow-wrap:anywhere}
+.workout-exercise-step{margin:11px 0 4px;padding:8px 10px;border-radius:9px;background:#223341;color:#c5d8e6;font-size:11px;line-height:1.5}
+.workout-exercise-card .set-grid{padding-top:11px;margin-top:13px;border-top:1px solid #3d5060}
+.workout-exercise-card .set-grid .caption{color:#c2d4e1;font-size:10px;font-weight:800;line-height:1.3}
+.workout-exercise-card .set-grid input{background:#101e2b;border-color:#526579;color:#f5fbff;font-size:14px;font-weight:800;font-variant-numeric:tabular-nums}
+.workout-exercise-card .set-grid .cell-label{font-weight:850;color:#dfebf4}
+.workout-exercise-card .set-type{min-height:44px;display:flex;align-items:center;justify-content:center}
+.workout-exercise-card .card-footer{padding-top:12px;border-top:1px solid #384e5e;gap:8px}
+.workout-exercise-card .card-footer button{min-height:44px;padding:8px 4px}
+.workout-exercise-card .card-footer button:last-child{color:#f3bfbd}
+@media(max-width:370px){
+ .plan-exercise-item{grid-template-columns:35px minmax(0,1fr) 48px;gap:8px;padding:12px 9px}
+ .plan-exercise-index{width:35px;min-height:38px;font-size:13px}
+ .plan-exercise-detail h3{font-size:14px}
+ .workout-exercise-heading{grid-template-columns:40px minmax(0,1fr);gap:9px}
+ .workout-exercise-number{min-height:43px;font-size:17px}
+ .workout-exercise-title h3{font-size:16px}
+ .workout-exercise-kind{grid-column:2;justify-self:start}
+ .plan-exercises-heading{flex-wrap:wrap}
+}
+@media(min-width:720px){
+ .plan-exercises-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .plan-exercise-item{height:100%}
+ .workout-exercise-card{padding:21px 22px}
+ .workout-exercise-title h3{font-size:19px}
+}
+
+/* Histórico de exercícios planejados, mas sem execução registrada. */
+.history-skipped{margin:14px 0 0;padding:12px 14px;border:1px solid #495868;border-radius:12px;background:#1a2936}
+.history-skipped>strong{display:block;color:#d9e5ee;font-size:12px;margin-bottom:8px}
+.history-skipped ul{margin:0;padding:0;list-style:none;display:grid;gap:8px}
+.history-skipped li{display:flex;justify-content:space-between;align-items:start;gap:10px;color:#d1dfe8;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.history-skipped li+li{border-top:1px solid #314453;padding-top:8px}
+.history-skipped li span{flex-shrink:0;color:#b1c2d1;font-size:11px;text-align:right;max-width:45%}
+@media(max-width:370px){.history-skipped li{flex-direction:column;gap:2px}.history-skipped li span{text-align:left;max-width:100%}}
+
+
+/* Separar visualmente substituições de acréscimos opcionais. */
+.catalog-mode-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.catalog-mode-switch button{min-width:0;min-height:48px;padding:9px 7px;font-size:12px;line-height:1.35;white-space:normal}
+.catalog-mode-switch button.selected{background:#284635;color:#ebffdd;border-color:#b5e18a;box-shadow:inset 0 0 0 1px #b5e18a}
+.catalog-energy{display:grid;gap:9px;padding:13px;border:1px solid #486c56;border-radius:12px;background:#1b332b}
+.catalog-energy strong{font-size:13px;color:#efffe6}
+.catalog-energy button{justify-self:start;max-width:100%;white-space:normal;min-height:46px}
+.catalog-energy button[aria-pressed="true"]{background:#32543a;border-color:#bbeb8d;color:#f1ffe7}
+.catalog-energy p{margin:0;line-height:1.55}
+@media(max-width:360px){.catalog-mode-switch{grid-template-columns:1fr}}
+
+
+/* Muay Thai v2: differentiated training stimulus and next-session guidance. */
+.muay-readiness{display:grid;gap:10px;margin:14px 0 16px;border-left:3px solid #7aaede;background:#1a2b3a}
+.muay-readiness h2{margin:0;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
+.muay-readiness p:not(.section-eyebrow){font-size:13px;line-height:1.6;margin:0;color:#dbe7ef}
+.muay-readiness small{font-size:11px;color:#b8cad7;line-height:1.5}
+.muay-readiness-rest{border-left-color:#eeb28c}
+.muay-readiness-light{border-left-color:#d9cc84}
+.muay-readiness-normal{border-left-color:#a9de93}
+.muay-today-check{margin-bottom:15px}
+.muay-today-check .field-row{align-items:start}
+.muay-activity{padding:16px;border-left:3px solid #678ca2}
+.muay-activity .row-between h3{font-size:14px}
+.muay-activity .muay-volume{margin-top:13px}
+.muay-activity .field-help{margin-top:8px;line-height:1.5}
+.muay-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.muay-presets button{width:100%;min-width:0;min-height:46px;line-height:1.35;text-align:left;justify-content:flex-start;padding:10px 12px}
+@media(min-width:720px){.muay-presets{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:360px){.muay-presets{grid-template-columns:1fr}.muay-today-check .field-row{grid-template-columns:1fr}}
+
+
+/* FORJA quick entry and daily recovery check-in. */
+.recovery-checkin{margin:15px 0;border-color:#456a61}
+.recovery-checkin>p{line-height:1.5;margin:9px 0}
+.recovery-energy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.recovery-energy button{min-height:50px;white-space:normal;padding:8px 6px;line-height:1.35;font-size:11px}
+.recovery-energy .selected,.quick-rir .selected{background:#315044;color:#edffd7;border-color:#b1e18c}
+.recovery-checkin .field-row{margin-top:12px}
+.quick-set-row{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:7px;padding:4px 3px 14px;border-bottom:1px solid #34495a}
+.quick-rir{display:flex;flex-wrap:wrap;gap:5px}
+.quick-rir button{min-height:40px;padding:7px 9px;font-size:11px}
+.quick-set-confirm{min-height:42px;font-size:11px;white-space:normal}
+.quick-set-confirm.is-done{border-color:#6a996a;color:#dbffd3}
+.review-issues{padding-left:18px;margin:8px 0;display:grid;gap:7px}
+.review-issues li{font-size:12px;line-height:1.55;color:#c9d9e5}
+.session-review{border-color:#47645a}
+.muay-legacy-note{font-size:11px;line-height:1.55;color:#e8d5ac;background:#362c20;border:1px solid #665139;padding:10px 11px;border-radius:10px;margin-top:10px}
+@media(max-width:370px){.recovery-energy{grid-template-columns:1fr}.recovery-energy button{text-align:left}.quick-set-row{display:grid;grid-template-columns:1fr}.quick-rir button{flex:1}.quick-set-confirm{width:100%}}

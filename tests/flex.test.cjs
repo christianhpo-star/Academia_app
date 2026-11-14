@@ -15,6 +15,24 @@ test('catálogo curado tem IDs exclusivos, grupos e metadados legíveis',()=>{
   assert.equal(F.prepareCatalog('remada-unilateral-halter',D.exercises).isNew,true);
   assert.equal(F.prepareCatalog('remada-baixa',D.exercises).isNew,false);
 });
+test('supino canadense está no catálogo como alternativa de peito, sem ativação automática',()=>{
+  const before=structuredClone(D.exercises);
+  const choices=F.options(D.exercises,null,'canadense','B');
+  assert.equal(choices.length,1);
+  const ex=choices[0];
+  assert.equal(ex.id,'supino-canadense');
+  assert.equal(ex.group,'B');
+  assert.equal(ex.muscle,'Peito');
+  assert.match(ex.name,/declinado/);
+  assert.equal(ex.active,false);
+  assert.equal(ex.sets,3);
+  assert.equal(ex.low,8);
+  assert.equal(ex.high,12);
+  assert.equal(ex.step,2.5);
+  assert.ok(F.options(D.exercises,null,'declinado','B').some(x=>x.id===ex.id));
+  assert.equal(F.prepareCatalog(ex.id,D.exercises).isNew,true);
+  assert.deepEqual(D.exercises,before);
+});
 test('omitir só hoje preserva modelo e pode restaurar',()=>{
   const original=structuredClone(D.exercises);
   const draft={planId:'A',entries:{'remada-baixa':{id:'remada-baixa',sets:[{load:40,reps:'',rir:'',warmup:false}]}}};
@@ -40,6 +58,37 @@ test('novo exercício não se torna automaticamente exercício da ficha',()=>{
   assert.equal(F.withdraw(d,found.exercise.id).skipped,false);
   assert.deepEqual(d.skipped,[]);
 });
+test('ao salvar uma sessão parcial marca exercícios sem repetições como pulados',()=>{
+  const draft={planId:'B',
+    entries:{
+      'supino-halteres':{id:'supino-halteres',sets:[{load:20,reps:10,warmup:false}]},
+      'supino-inclinado':{id:'supino-inclinado',sets:[{load:22.5,reps:'',warmup:false}]},
+      'voador':{id:'voador',sets:[{load:'',reps:'',warmup:false}]},
+    },
+    plannedIds:['supino-halteres','supino-inclinado','voador'],
+    skipped:[{id:'triceps-corda',reason:'equipamento'}],
+    addedIds:[],
+  };
+  const before=structuredClone(draft);
+  const result=F.skippedForSave(draft,[{id:'supino-halteres',sets:[{load:20,reps:10,warmup:false}]}]);
+  assert.deepEqual(result,[
+    {id:'triceps-corda',reason:'equipamento'},
+    {id:'supino-inclinado',reason:'sem-registro',automatic:true},
+    {id:'voador',reason:'sem-registro',automatic:true},
+  ]);
+  assert.deepEqual(draft,before);
+  assert.deepEqual(F.skippedForSave(draft),[{id:'triceps-corda',reason:'equipamento'}]);
+});
+test('não marca como pulado o exercício que possui repetições ou foi realizado',()=>{
+  const draft={entries:{
+    a:{id:'a',sets:[{load:30,reps:10,warmup:false}]},
+    b:{id:'b',sets:[{load:20,reps:'',warmup:false}]},
+  },skipped:[]};
+  const result=F.skippedForSave(draft,[{id:'a',sets:[{load:30,reps:10,warmup:false}]}]);
+  assert.deepEqual(result,[{id:'b',reason:'sem-registro',automatic:true}]);
+  assert.equal(F.reasons['sem-registro'],'Sem repetições registradas');
+});
+
 test('dias sem registro não são interpretados como falta nem exercício omitido',()=>{
   const result=F.insights({today:day(8),strengthSessions:[sess(2)]});
   assert.equal(result.signals.length,0);

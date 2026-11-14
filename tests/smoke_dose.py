@@ -3,7 +3,7 @@ import os, re, shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
+HTML=re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261114-safe-import5" />','')
 FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']
 DRAFT='forja.academia.draft.v1'
 MAIN='forja.academia.v1'
@@ -91,6 +91,33 @@ with sync_playwright() as p:
     page.set_viewport_size({'width':320,'height':740})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     page.screenshot(path=str(ROOT/'screenshots'/'dose-after-add-320.png'),full_page=True)
+    # Com a mesma ficha qualificada, optar por outro equipamento em vez de uma série extra.
+    import json
+    alternate=page.evaluate('structuredClone(window.__testStorage)')
+    alternate[DRAFT]=json.dumps(baseline,ensure_ascii=False)
+    page.close()
+    page=open_app(context,alternate,errors)
+    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
+    page.locator('[data-action="catalog-mode"][data-mode="extra"]').click()
+    assert page.locator('.catalog-energy button[aria-pressed="true"]').count()==1
+    suggestion=page.locator('.catalog-suggestion [data-action="catalog-extra-add"]').first
+    assert suggestion.count()==1
+    optional_id=suggestion.get_attribute('data-ex')
+    suggestion.click()
+    optional=page.locator('[data-exercise="'+optional_id+'"]')
+    assert optional.count()==1
+    assert optional.locator('[data-field="reps"]').count()==1
+    assert optional.locator('[data-field="reps"]').first.input_value()==''
+    selected=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft.extraChoice')
+    assert selected['kind']=='exercise' and selected['id']==optional_id
+    assert page.locator('[data-action="dose-add-one"]').count()==0
+    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
+    page.locator('[data-action="catalog-mode"][data-mode="extra"]').click()
+    assert page.locator('[data-action="catalog-extra-add"]').count()==0
+    page.locator('[data-action="flex-catalog-toggle"]').click()
+    # A escolha é apenas um rascunho, e não cria série executada no histórico.
+    assert len(page.evaluate('JSON.parse(localStorage.getItem("forja.academia.v1")).sessions'))==8
+
     # Test fresh qualified draft with same-day Muay: do not offer +1.
     import json
     state=json.loads(storage[MAIN])

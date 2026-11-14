@@ -24,7 +24,7 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 ## Sessão flexível e constância — experiência em revisão
 
 - Durante o treino, é possível retirar um exercício **somente hoje**, restaurá-lo, registrar um motivo opcional e adicionar movimentos existentes ou do catálogo offline; a ficha original permanece inalterada.
-- O catálogo inicial possui 20 movimentos adicionais com IDs estáveis, equipamento e região muscular. A seleção pela busca é local; qualquer exercício integrado ao histórico mantém seu identificador.
+- O catálogo inicial possui 21 movimentos adicionais com IDs estáveis, equipamento e região muscular. A seleção pela busca é local; qualquer exercício integrado ao histórico mantém seu identificador.
 - Exercícios com repetições já lançadas não podem ser retirados diretamente, evitando apagar séries efetivamente realizadas sem confirmação.
 - O histórico salva quais exercícios estavam previstos (`plannedIds`) e quais foram explicitamente retirados (`skipped`), sem inventar omissões em registros antigos.
 - O painel analisa últimos 7, 14 e 28 dias e destaca **mudanças de ritmo ou omissões explicitamente frequentes**. Nenhum dia sem registro é tratado como falta ou descanso obrigatório.
@@ -136,3 +136,31 @@ Cargas aproximadas informadas para o bloco B, sem repetições nem RIR:
 - Tríceps testa **na polia**: 50, 55, 60, 60 kg.
 
 As referências são mostradas apenas ao iniciar o exercício **sem histórico anterior**, com campos de repetições e RIR em branco. O histórico real existente tem prioridade. Dados salvos em navegadores que já usavam o FORJA recebem a migração conservadora das configurações ainda originais sem criar sessões ou substituir exercícios personalizados. Os demais exercícios permanecem para preenchimento na academia.
+
+## Recomendações de substituição e energia extra
+- O catálogo distingue a **substituição** de um exercício ainda não realizado do **acréscimo opcional de volume**. A substituição não conta séries extras.
+- Em **Tenho energia para mais**, a sinalização explícita de energia é apenas uma condição inicial: o motor exige séries realizadas na sessão atual, RIR, histórico comparável, volume e recuperação adequados. Muay Thai recente, dor relevante ou fadiga impedem aumentos automáticos.
+- Quando elegível, o usuário escolhe **uma única opção**: acrescentar uma série ao movimento concluído ou incluir uma variação com outra máquina/equipamento (inicialmente com uma série vazia). Não há registro de treino realizado sem carga e repetições reais.
+- O rascunho persiste a escolha opcional (`extraChoice`) sem alterar dados anteriores, e recomendações são reavaliadas ao confirmar a ação.
+
+## Muay Thai: golpes, tempo e orientação da sessão seguinte
+- Exaustão de chutes e socos usa contagem de repetições; quando pertinente, registre **por lado** (ex.: 50 chutes por perna), sem converter automaticamente em 100 golpes executados no histórico.
+- Combinações são registradas por tempo, como **3 minutos de jab + direto + chute**; é possível registrar múltiplos blocos.
+- Os tipos do catálogo são `exhaustion`, `combination`, `conditioning` e `technique`; registros antigos sem categoria ou lateralidade continuam válidos.
+- Na aba Muay Thai e no início, um painel indica orientação de recuperação com base em esforço percebido, fadiga, dor no joelho, treino recente e tipo dos exercícios realizados.
+- Quando há sinal de alerta, a FORJA sugere descanso ou trabalho leve em vez de progredir intensidade; a indicação de musculação também respeita essas cautelas, sem remover blocos pendentes.
+- A orientação não estima desgaste fisiológico a partir de um número de golpes e deve ser conferida com o relato de recuperação do próprio dia.
+
+## Registro rápido e check-in diário (UX7)
+- RIR 0/1/2/3 por toque durante o exercício: o aplicativo salva somente o esforço informado, sem completar repetições ou cargas por conta própria.
+- Botão de conferência da série exige carga e repetições válidas. Conferência final mostra séries parciais e RIR ausentes sem bloquear uma sessão válida.
+- Check-in **do dia**, com energia, fadiga e joelho. Relato de dias anteriores não se torna automaticamente avaliação de recuperação atual; a fila e a orientação do Muay Thai respeitam os dados de hoje.
+- Histórico antigo do Muay Thai permanece intacto. Entradas com unidades possivelmente ambíguas ou sem categoria exibem aviso contextual, sem correção automática nem penalização da pessoa que usou uma interface anterior.
+- Mantidas as chaves persistentes do armazenamento; nenhum histórico, rascunho ou backup foi apagado.
+
+## Migração segura e histórico no celular (UX8)
+- O backup JSON anterior segue compatível com a versão v1 da FORJA; o arquivo privado preparado contém apenas um campo `migrationAudit` adicional (não altera sessões reais).
+- A importação verifica as referências de exercícios e a estrutura do Muay Thai. Em instalação vazia, importa o histórico completo; se já houver registros, mescla por IDs estáveis, mantendo os registros e configurações do celular em caso de conflito.
+- Pesagens com data igual não são duplicadas. Treinos e sessões de Muay com IDs iguais também não são duplicados.
+- Quando há rascunho em andamento, não apaga o rascunho para importar o histórico. A importação e a restauração são operações locais, nunca fazem upload automático ao repositório.
+- Exporte um backup recente do celular antes da importação para ter uma cópia independente. Entradas de Muay antigas continuam com dados originais, sem inferência de repetições ou intensidade.

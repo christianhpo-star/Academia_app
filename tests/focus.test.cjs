@@ -44,3 +44,20 @@ test('work completion needs real positive load and integer reps',()=>{
  assert.equal(F.performed(row(20,8.5)),false);
  assert.equal(F.performed(row(20,8)),true);
 });
+
+test('revisão em tempo real não inventa execução nem acusa aquecimento como volume',()=>{
+ const entries={
+  a:{id:'a',sets:[{load:25,reps:10,rir:'',warmup:false},{load:30,reps:'',rir:'',warmup:false}]},
+  b:{id:'b',sets:[{load:'',reps:'',rir:'',warmup:false}]},
+  c:{id:'c',sets:[{load:'',reps:12,rir:2,warmup:false}]},
+  d:{id:'d',sets:[{load:10,reps:8,rir:3,warmup:true}]},
+ };
+ assert.deepEqual(F.review(entries),{effectiveSets:1,exercisesLogged:2,skipped:2,missingRir:1,partialSets:1});
+});
+test('check-in do dia anterior nunca é confundido com recuperação atual',()=>{
+ const settings={recoveryCheckin:{day:'2026-11-13',energy:'boa',fatigue:'normal',kneePain:'0'}};
+ assert.equal(F.todayCheckin(settings,'2026-11-14'),null);
+ assert.equal(F.todayCheckin(settings,'2026-11-13').energy,'boa');
+ assert.equal(F.todayCheckin({recoveryCheckin:{day:'2026-11-14',energy:'boa',fatigue:'normal',kneePain:'9'}},'2026-11-14').kneePain,'9');
+ assert.equal(F.todayCheckin({recoveryCheckin:{day:'2026-11-14',energy:'boa',fatigue:'normal',kneePain:'11'}},'2026-11-14'),null);
+});

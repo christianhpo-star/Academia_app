@@ -11,6 +11,7 @@
     ['rosca-scott', 'Rosca Scott', 'A', 'Máquina / barra', 'Bíceps', 2, 10, 12, 2.5],
     ['crucifixo-cabo', 'Crucifixo no cabo', 'B', 'Polia', 'Peito', 3, 10, 15, 2.5],
     ['supino-maquina', 'Supino na máquina', 'B', 'Máquina', 'Peito', 3, 8, 12, 5],
+    ['supino-canadense', 'Supino canadense (declinado) com barra', 'B', 'Barra / banco declinado', 'Peito', 3, 8, 12, 2.5],
     ['crossover-polia', 'Crossover na polia alta', 'B', 'Polia', 'Peito', 3, 10, 15, 2.5],
     ['desenvolvimento-halter', 'Desenvolvimento com halteres', 'B', 'Halteres', 'Ombros', 3, 8, 12, 2.5, 'kg/halter'],
     ['triceps-frances', 'Tríceps francês na polia', 'B', 'Polia', 'Tríceps', 3, 10, 15, 2.5],
@@ -29,6 +30,7 @@
     '': 'Prefiro não informar',
     tempo: 'Tempo disponível',
     equipamento: 'Equipamento indisponível',
+    'sem-registro': 'Sem repetições registradas',
     fadiga: 'Fadiga / recuperação',
     desconforto: 'Dor ou desconforto',
     preferencia: 'Preferência pessoal',
@@ -104,10 +106,24 @@
       (!term || [item.name,item.muscle,item.equipment].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(term))))
       .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
   }
-  function skippedForSave(draft) {
-    return (Array.isArray(draft?.skipped)?draft.skipped:[])
+  // Exercícios sem repetições são explicitamente pulados ao finalizar uma sessão
+  // com trabalho efetivo. Cargas pré-preenchidas são apenas referências.
+  // Sem completedEntries, preserva o contrato antigo para omissões manuais.
+  function skippedForSave(draft,completedEntries=null) {
+    const skipped=(Array.isArray(draft?.skipped)?draft.skipped:[])
       .filter(item=>typeof item?.id==='string' && Object.hasOwn(REASONS,item.reason||''))
       .map(item=>({id:item.id,reason:item.reason||''}));
+    if(!Array.isArray(completedEntries))return skipped;
+    const performed=new Set(completedEntries.map(entry=>entry?.id));
+    const seen=new Set(skipped.map(entry=>entry.id));
+    for(const entry of Object.values(draft?.entries||{})){
+      if(!entry || typeof entry.id!=='string' || performed.has(entry.id) || seen.has(entry.id))continue;
+      // Série só com carga sugerida (sem reps) não foi executada.
+      if(hasRecordedReps(entry))continue;
+      skipped.push({id:entry.id,reason:'sem-registro',automatic:true});
+      seen.add(entry.id);
+    }
+    return skipped;
   }
   const dayTime=day=>typeof day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(day)?Date.parse(day+'T12:00:00Z'):NaN;
   function dayAge(today,day) {
