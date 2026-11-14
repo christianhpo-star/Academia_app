@@ -33,6 +33,13 @@ with sync_playwright() as p:
     shots=ROOT/'screenshots'
     shots.mkdir(exist_ok=True)
     page=open_app(ctx,{},errors,390)
+    assert page.locator('.recovery-checkin').count()==1
+    page.locator('[data-action="recovery-energy"][data-value="boa"]').click()
+    check=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.v1")).settings.recoveryCheckin')
+    assert check['energy']=='boa'
+    page.locator('[data-recovery-field="fatigue"]').select_option('moderada')
+    check=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.v1")).settings.recoveryCheckin')
+    assert check['fatigue']=='moderada'
     page.get_by_role('button',name='Treinos',exact=True).click()
     labels=['Costas','Quadríceps','Peito','Posteriores']
     for width in [320,390,768]:
@@ -80,6 +87,13 @@ with sync_playwright() as p:
     page.set_viewport_size({'width':390,'height':800})
     supino=page.locator('[data-exercise="supino-halteres"]')
     assert supino.locator('.set-history-empty').count()>=1
+    assert page.locator('#workout-review').count()==1
+    rir=supino.locator('[data-action="quick-rir"][data-index="1"][data-rir="2"]')
+    rir.click()
+    assert supino.locator('[data-field="rir"]').nth(1).input_value()=='2'
+    assert page.locator('#workout-review').count()==1
+    supino.locator('[data-action="quick-set-confirm"][data-index="1"]').click()
+    assert 'Informe a carga' in page.locator('#toast').inner_text()
     for i in range(4):
         supino.locator('[data-field="reps"]').nth(i).fill('12')
         supino.locator('[data-field="rir"]').nth(i).fill('2')
