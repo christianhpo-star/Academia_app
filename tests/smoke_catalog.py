@@ -30,6 +30,31 @@ with sync_playwright() as p:
     ctx=browser.new_context(viewport={'width':390,'height':844},locale='pt-BR')
     errors=[]
     page=start(ctx,{},errors)
+    # Catálogo global existe fora do treino, com todos os grupos.
+    page.get_by_role('button',name='Catálogo',exact=True).click()
+    assert page.locator('.catalog-browser-item').count()>=40
+    assert page.locator('#catalog-search').count()==1
+    assert page.locator('#catalog-count').count()==1
+    assert page.locator('#nav [data-tab="catalog"][aria-current="page"]').count()==1
+    initial_count=page.locator('.catalog-browser-item').count()
+    page.locator('#catalog-search').fill('canadense')
+    assert page.locator('.catalog-browser-item:visible').count()==1
+    assert 'canadense' in page.locator('.catalog-browser-item:visible').inner_text().lower()
+    page.locator('#catalog-search').fill('nao-existe-exercicio')
+    assert page.locator('.catalog-browser-item:visible').count()==0
+    assert page.locator('#catalog-empty-state:visible').count()==1
+    page.locator('#catalog-search').fill('')
+    page.locator('[data-action="catalog-filter"][data-group="B"]').click()
+    assert page.locator('.catalog-browser-item').count()<initial_count
+    assert page.locator('.catalog-browser-item').count()>0
+    assert page.locator('#catalog-count').inner_text().startswith(str(page.locator('.catalog-browser-item').count()))
+    # Explorar não inicia nem altera sessão.
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
+    page.locator('[data-action="catalog-filter"][data-group="all"]').click()
+    page.locator('[data-action="catalog-add-plan"][data-ex="supino-canadense"]').click()
+    assert page.locator('[data-action="catalog-activate"][data-ex="supino-canadense"]').count()==0
+    assert page.locator('.catalog-browser-item').filter(has_text='Supino canadense').locator('.catalog-state').inner_text()=='Na ficha'
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Iniciar treino A').click()
     page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
