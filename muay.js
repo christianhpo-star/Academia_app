@@ -189,7 +189,7 @@
       return days>=0&&days<=2;
     });
     if(!latest)return {level:'unknown',title:'Sem Muay Thai recente para avaliar',
-      note:'Registre os exercícios, o esforço percebido e a fadiga para orientar a escolha de amanhã.',
+      note:'Registre os exercícios, o esforço percebido e a fadiga para orientar a escolha da próxima sessão.',
       activities:0};
     const days=(Date.parse(today+'T12:00:00Z')-Date.parse(latest.day+'T12:00:00Z'))/86400000;
     const legPain=(latest.kneePain!=null&&Number(latest.kneePain)>0) ||
@@ -203,17 +203,17 @@
       note:'Há desconforto relatado no joelho. Prefira recuperação e reavalie os sintomas antes de chutes ou exercícios de pernas. Dor persistente merece avaliação profissional.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
     if(high&&days<=1)return {level:'rest',title:'Considere descanso ou recuperação leve',
-      note:'Fadiga alta ou esforço máximo recente. Evite uma sessão intensa adicional e reavalie como está amanhã.',
+      note:'Fadiga alta ou esforço máximo recente. Amanhã, prefira descanso ou apenas mobilidade confortável. Antes de voltar a golpes intensos, confirme recuperação, sono e ausência de sintomas.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
     if(significant&&days<=1)return {level:'light',title:'Priorize técnica leve ou recuperação',
-      note:'O esforço recente pede cautela. Opções são mobilidade ou técnica de baixa intensidade, sem exaustão nem alto volume de chutes; reduza se houver fadiga.',
+      note:'O esforço recente pede cautela. Amanhã, escolha mobilidade leve ou técnica controlada (sombra e combinações de baixa intensidade), sem exaustão nem séries prolongadas de chutes. Se ainda houver fadiga, descanse.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
     if(latest.intensity==null&&(!latest.fatigue||latest.fatigue===''))return {
       level:'unknown',title:'Faltam sinais de recuperação',
       note:'Sem esforço percebido ou fadiga informados, não é possível indicar aumentar a carga amanhã. Registre esses dados para uma orientação mais útil.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
     return {level:'normal',title:'Treino adaptável à recuperação de hoje',
-      note:'Não há sinal de alerta nos dados informados. Avalie sono, dores e energia antes de escolher entre técnica, condicionamento ou descanso. Não aumente volume só por ter completado a sessão.',
+      note:'Não há sinal de alerta informado. Se estiver recuperado, escolha técnica e combinações moderadas ou condicionamento leve conforme o foco anterior; descanso também é uma opção. Não aumente volume apenas por ter concluído a sessão.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
   }
   function readinessCard(data) {
@@ -221,14 +221,20 @@
       '<p class="section-eyebrow">PRÓXIMA SESSÃO · ORIENTAÇÃO</p><h2>'+esc(data.title)+'</h2>'+
       '<p>'+esc(data.note)+'</p>'+
       (data.activities?'<small>'+data.activities+' atividade(s) na última sessão · '+
-         (data.volume||0)+' bloco(s) de exaustão registrados · '+(data.combos||0)+' combinação(ões) cronometradas</small>':'')+
+         (data.volume||0)+' exercício(s) de exaustão · '+(data.combos||0)+' combinação(ões) cronometradas</small>':'')+
       '</section>';
   }
-  function renderPage(muay, today) {
+  function renderPage(muay, today, settings={}) {
     const last = sortedSessions(muay.sessions).slice(0, 3);
     return '<p class="eyebrow">Diário de atividades</p><h1 class="page-title">Muay Thai</h1>' +
       '<p class="lead">Registre aulas e treinos feitos em casa. Eles não substituem nem concluem os blocos de musculação.</p>' +
-      readinessCard(readiness(muay.sessions,today)) +
+      readinessCard(readiness(muay.sessions,today,settings)) +
+      '<section class="card muay-today-check"><h2 class="section-title">Como está sua recuperação hoje?</h2>' +
+      '<p class="small muted">Atualize antes de decidir se deve treinar ou descansar. Este relato não é diagnóstico.</p>' +
+      '<div class="field-row mt-12"><div class="field"><label for="muay-today-fatigue">Fadiga atual</label>' +
+      '<select id="muay-today-fatigue" data-setting="fatigue">' + select({normal:'Normal',moderada:'Moderada',alta:'Alta'},settings.fatigue||'normal') + '</select></div>' +
+      '<div class="field"><label for="muay-today-knee">Dor no joelho agora</label>' +
+      '<select id="muay-today-knee" data-setting="kneePain">' + select({'':'Não informado','0':'0 · Sem dor','1':'1 · Mínima','2':'2 · Leve','3':'3 · Moderada','4':'4 · Importante','5':'5+ · Forte'},settings.kneePain??'') + '</select></div></div></section>' +
       (muay.draft ? renderEditor(muay.draft) :
         '<section class="card"><h2 class="section-title">Como você treinou?</h2><p class="small muted">' +
         'Registre a sessão depois de realizá-la, sem criar treinos fictícios.</p>' +
