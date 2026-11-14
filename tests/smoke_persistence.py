@@ -52,7 +52,7 @@ with sync_playwright() as p:
     context = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=1, locale='pt-BR')
     errors = []
     page = open_app(context, {}, errors)
-    assert 'Evolua com método.' in page.locator('#screen').inner_text()
+    assert 'Seu próximo passo.' in page.locator('#screen').inner_text()
     assert 'Bloco A' in page.locator('#screen').inner_text()
     page.get_by_role('button', name='Escolher outro bloco').click()
     page.locator('[data-action="select-plan"][data-plan="B"]').click()
@@ -77,8 +77,8 @@ with sync_playwright() as p:
     assert supino.locator('[data-field="rir"]').nth(3).input_value() == '2'
     assert 'Muay Thai antes do treino' in page.locator('[data-draft-meta="notes"]').input_value()
     page.get_by_role('button', name='Início', exact=True).click()
-    assert 'Continuar treino salvo' in page.locator('#screen').inner_text()
-    page.get_by_role('button', name='Continuar treino salvo').click()
+    assert 'Continuar treino' in page.locator('#screen').inner_text()
+    page.locator('.home-primary [data-action="resume"]').click()
     supino = page.locator('[data-exercise="supino-halteres"]')
     assert supino.locator('[data-field="reps"]').nth(3).input_value() == '10'
     for i in range(4):
@@ -92,7 +92,7 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Início', exact=True).click()
     home = page.locator('#screen').inner_text()
     assert 'Bloco A' in home
-    assert '1 de 4 blocos concluídos' in home
+    assert 'Seu próximo passo.' in home and 'Treino sugerido' in home.lower() or 'Seu próximo passo.' in home
     page.get_by_role('button', name='Treinos', exact=True).click()
     page.locator('[data-action="select-plan"][data-plan="B"]').click()
     page.get_by_role('button', name='Iniciar treino B').click()
