@@ -161,7 +161,7 @@ with sync_playwright() as p:
     inherited['timestamp'] = '2026-10-30T13:00:00.000Z'
     incoming['sessions'].append(inherited)
     incoming['migrationAudit'] = {'schema':'FORJA v1 compatible / UX7'}
-    page.get_by_role('button', name='Ajustes', exact=True).click()
+    page.locator('.top-settings').click()
     page.on('dialog', lambda dialog: dialog.accept())
     page.locator('#import-file').set_input_files({
         'name':'forja-test-merge.json',
@@ -174,7 +174,7 @@ with sync_playwright() as p:
     assert merged['sessions'][0] == original['sessions'][0]
     assert merged['migrationAudit']['schema'] == 'FORJA v1 compatible / UX7'
     # Repeated import is idempotent: no duplicated series, sessions or weight records.
-    page.get_by_role('button', name='Ajustes', exact=True).click()
+    page.locator('.top-settings').click()
     page.locator('#import-file').set_input_files({
         'name':'forja-test-merge.json',
         'mimeType':'application/json',
