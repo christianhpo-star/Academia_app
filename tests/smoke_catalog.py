@@ -4,7 +4,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261108-ux4-refresh1" />','')
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-supino-canadense1" />','')
 FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']
 def start(context,stored,errors):
     page=context.new_page()
@@ -77,6 +77,29 @@ with sync_playwright() as p:
         for card in page.locator('.catalog-suggestion').all():
             assert card.evaluate('e=>e.scrollWidth<=e.clientWidth+1'),f'clipping {width}'
         if width==320:page.screenshot(path=str(shots/'catalog-recommended-320.png'),full_page=True)
+    import json
+    # Exercício disponível na ficha B, buscável e persistente sem criar treino realizado.
+    page.close()
+    page=start(ctx,{},errors)
+    page.get_by_role('button',name='Treinos',exact=True).click()
+    page.locator('[data-action="select-plan"][data-plan="B"]').click()
+    page.locator('[data-action="start"][data-plan="B"]').click()
+    assert page.locator('[data-exercise="supino-canadense"]').count()==0
+    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
+    assert page.locator('.catalog-suggestion [data-ex="supino-canadense"]').count()==1
+    page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
+    page.locator('#flex-catalog-search').fill('canadense')
+    choice=page.locator('.catalog-all [data-action="flex-add"][data-ex="supino-canadense"]')
+    assert choice.count()==1
+    choice.click()
+    assert page.locator('[data-exercise="supino-canadense"]').count()==1
+    snapshot=page.evaluate('structuredClone(window.__testStorage)')
+    exercise=next(ex for ex in json.loads(snapshot['forja.academia.v1'])['exercises'] if ex['id']=='supino-canadense')
+    assert exercise['active'] is False
+    assert json.loads(snapshot['forja.academia.v1'])['sessions']==[]
+    page.close()
+    page=start(ctx,snapshot,errors)
+    assert page.locator('[data-exercise="supino-canadense"]').count()==1
     assert not errors,errors
     print('PASS catalog: contextual first, 3 max, manual addition, full list search, recovery, 320/390/768, autosave')
     browser.close()
