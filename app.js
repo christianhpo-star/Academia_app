@@ -404,6 +404,7 @@
       ${last?`<div class="section-row"><h2 class="section-title">Última atividade</h2><span class="tiny muted">${dateBR(last.day)}</span></div><div class="card"><strong>${esc(planFor(last.planId).title)}</strong><p class="small muted mt-8">${last.entries.length} exercícios registrados · ${esc(last.energy||'Esforço não informado')}</p></div>`:''}
       ${lastTop?`<div class="section-row"><h2 class="section-title">Seu último peso de treino</h2></div><div class="card"><div class="card-row"><div><strong>${esc(lastTop.x.name)}</strong><p class="last">${esc(lastTop.r.last)}</p></div>${tag(lastTop.r.level==='increase'?'Pode subir':'Em evolução',lastTop.r.level==='increase'?'green':'')}</div><p class="small muted mt-12">${esc(lastTop.r.title)}. ${esc(lastTop.r.explanation)}</p></div>`:''}
       <div class="section-row"><h2 class="section-title">Muay Thai</h2></div>
+      ${M.readinessCard(M.readiness(state.muay.sessions,today(),state.settings))}
       <section class="card"><p class="small muted">Aulas e treinos em casa também entram no seu diário, sem concluir blocos de musculação.</p><button class="secondary full" data-action="open-muay">Registrar Muay Thai</button></section>
       ${weightForm()}
       <p class="small muted">As recomendações são regras de acompanhamento, não substituem orientação de um profissional. Dor no joelho ou piora após treino bloqueiam sugestões automáticas de aumento.</p>`;
@@ -413,7 +414,7 @@
       .map(([v,label])=>`<option value="${v}" ${String(current??'')===v?'selected':''}>${label}</option>`).join('');
   }
   function renderMuay() {
-    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today());
+    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today(),state.settings);
   }
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
@@ -993,7 +994,7 @@
       if(!d||d.activities.length>=30)return notify('Limite de 30 exercícios por sessão.');
       const preset=action==='muay-preset'?M.PRESETS[Number(btn.dataset.preset)]:null;
       if(action==='muay-preset'&&!preset)return;
-      d.activities.push(M.activity(preset?.name||'',preset?.unit||'reps'));save();render();return;
+      d.activities.push(M.activity(preset?.name||'',preset?.unit||'reps',preset||{}));save();render();return;
     }
     if(action==='muay-remove'){
       const d=state.muay.draft;if(!d)return;
@@ -1101,8 +1102,9 @@
       d[field]=el.value;
     }else if(el.dataset.muayId && el.dataset.muayProp){
       const row=d.activities.find(a=>a.id===el.dataset.muayId);
-      if(!row || !['name','sets','quantity','unit'].includes(el.dataset.muayProp))return;
+      if(!row || !['name','sets','quantity','unit','category','side'].includes(el.dataset.muayProp))return;
       row[el.dataset.muayProp]=el.value;
+      if(el.dataset.muayProp==='unit'&&el.value!=='reps')row.side='total';
     }else return;
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
