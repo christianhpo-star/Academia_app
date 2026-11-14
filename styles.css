@@ -423,3 +423,22 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muay-presets button{width:100%;min-width:0;min-height:46px;line-height:1.35;text-align:left;justify-content:flex-start;padding:10px 12px}
 @media(min-width:720px){.muay-presets{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:360px){.muay-presets{grid-template-columns:1fr}.muay-today-check .field-row{grid-template-columns:1fr}}
+
+
+/* FORJA quick entry and daily recovery check-in. */
+.recovery-checkin{margin:15px 0;border-color:#456a61}
+.recovery-checkin>p{line-height:1.5;margin:9px 0}
+.recovery-energy{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+.recovery-energy button{min-height:50px;white-space:normal;padding:8px 6px;line-height:1.35;font-size:11px}
+.recovery-energy .selected,.quick-rir .selected{background:#315044;color:#edffd7;border-color:#b1e18c}
+.recovery-checkin .field-row{margin-top:12px}
+.quick-set-row{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:7px;padding:4px 3px 14px;border-bottom:1px solid #34495a}
+.quick-rir{display:flex;flex-wrap:wrap;gap:5px}
+.quick-rir button{min-height:40px;padding:7px 9px;font-size:11px}
+.quick-set-confirm{min-height:42px;font-size:11px;white-space:normal}
+.quick-set-confirm.is-done{border-color:#6a996a;color:#dbffd3}
+.review-issues{padding-left:18px;margin:8px 0;display:grid;gap:7px}
+.review-issues li{font-size:12px;line-height:1.55;color:#c9d9e5}
+.session-review{border-color:#47645a}
+.muay-legacy-note{font-size:11px;line-height:1.55;color:#e8d5ac;background:#362c20;border:1px solid #665139;padding:10px 11px;border-radius:10px;margin-top:10px}
+@media(max-width:370px){.recovery-energy{grid-template-columns:1fr}.recovery-energy button{text-align:left}.quick-set-row{display:grid;grid-template-columns:1fr}.quick-rir button{flex:1}.quick-set-confirm{width:100%}}
