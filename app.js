@@ -1120,6 +1120,10 @@
       if(!row || !['name','sets','quantity','unit','category','side'].includes(el.dataset.muayProp))return;
       row[el.dataset.muayProp]=el.value;
       if(el.dataset.muayProp==='unit'&&el.value!=='reps')row.side='total';
+      if(el.dataset.muayProp==='category'){
+        if(el.value==='combination'){row.unit='min';row.side='total';}
+        if(el.value==='exhaustion')row.unit='reps';
+      }
     }else return;
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
@@ -1141,6 +1145,9 @@
     collectDraft(event);
     updateMuayField(event);
     const el=event.target;
+    if((el.dataset.muayProp==='unit'||el.dataset.muayProp==='category')&&state.muay.draft){
+      render();return;
+    }
     if(el.dataset.skipReason && ui.draft){
       if(F.setReason(ui.draft,el.dataset.skipReason,el.value))persistDraft();
       return;
