@@ -43,6 +43,12 @@ with sync_playwright() as p:
     page.locator('#catalog-search').fill('nao-existe-exercicio')
     assert page.locator('.catalog-browser-item:visible').count()==0
     assert page.locator('#catalog-empty-state:visible').count()==1
+    page.locator('#catalog-search').fill('canadense')
+    page.locator('[data-action="catalog-filter"][data-group="A"]').click()
+    assert page.locator('.catalog-browser-item:visible').count()==0
+    assert page.locator('#catalog-empty-state:visible').count()==1
+    page.locator('[data-action="catalog-filter"][data-group="B"]').click()
+    assert page.locator('.catalog-browser-item:visible').count()==1
     page.locator('#catalog-search').fill('')
     page.locator('[data-action="catalog-filter"][data-group="B"]').click()
     assert page.locator('.catalog-browser-item').count()<initial_count
