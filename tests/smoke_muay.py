@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-supino-canadense1" />','')
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-recommendations2" />','')
 
 def open_app(ctx, storage=None):
     page=ctx.new_page()
