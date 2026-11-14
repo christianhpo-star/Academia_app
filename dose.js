@@ -24,7 +24,7 @@
   map('pullover-polia', ['costas']);
   map('face-pull', ['ombros'], ['costas']);
   map('rosca-w rosca-martelo rosca-inversa rosca-scott', ['biceps']);
-  map('supino-halteres supino-barra supino-inclinado supino-maquina', ['peito'], ['triceps','ombros']);
+  map('supino-halteres supino-barra supino-inclinado supino-maquina supino-canadense', ['peito'], ['triceps','ombros']);
   map('voador crucifixo-cabo crossover-polia', ['peito']);
   map('elevacao-lateral desenvolvimento-halter remada-alta', ['ombros'], ['triceps']);
   map('triceps-testa triceps-corda triceps-maquina triceps-frances', ['triceps']);
