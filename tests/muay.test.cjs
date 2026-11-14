@@ -100,3 +100,18 @@ test('sugestão pós Muay distingue recuperação, técnica leve e ausência de 
  assert.equal(M.readiness([old],dayAfter).level,'unknown');
  assert.match(M.readinessCard(medium),/PRÓXIMA SESSÃO/);
 });
+
+test('registros antigos incompletos são sinalizados sem conversão automática',()=>{
+ const old={
+  activities:[{id:'old-chutes',name:'CHUTES',unit:'min',quantity:50,sets:2},
+              {id:'old-sombra',name:'Sombra',unit:'min',quantity:null,sets:null}]
+ };
+ const before=structuredClone(old);
+ const review=M.legacyReview(old);
+ assert.equal(review.legacy,2);
+ assert.equal(review.ambiguous,1);
+ assert.equal(review.missing,1);
+ assert.deepEqual(old,before);
+ const fresh={activities:[M.activity('50 chutes por perna','reps',{category:'exhaustion',side:'each',quantity:50})]};
+ assert.equal(M.legacyReview(fresh).legacy,0);
+});
