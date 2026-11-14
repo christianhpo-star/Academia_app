@@ -86,7 +86,7 @@ with sync_playwright() as p:
     page.locator('[data-action="start"][data-plan="B"]').click()
     assert page.locator('[data-exercise="supino-canadense"]').count()==0
     page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
-    assert page.locator('.catalog-suggestion [data-ex="supino-canadense"]').count()==1
+    # A lista automática é limitada às três melhores opções; a alternativa fica no catálogo completo.
     page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
     page.locator('#flex-catalog-search').fill('canadense')
     choice=page.locator('.catalog-all [data-action="flex-add"][data-ex="supino-canadense"]')
