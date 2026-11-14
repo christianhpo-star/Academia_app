@@ -24,7 +24,7 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 ## Sessão flexível e constância — experiência em revisão
 
 - Durante o treino, é possível retirar um exercício **somente hoje**, restaurá-lo, registrar um motivo opcional e adicionar movimentos existentes ou do catálogo offline; a ficha original permanece inalterada.
-- O catálogo inicial possui 20 movimentos adicionais com IDs estáveis, equipamento e região muscular. A seleção pela busca é local; qualquer exercício integrado ao histórico mantém seu identificador.
+- O catálogo inicial possui 21 movimentos adicionais com IDs estáveis, equipamento e região muscular. A seleção pela busca é local; qualquer exercício integrado ao histórico mantém seu identificador.
 - Exercícios com repetições já lançadas não podem ser retirados diretamente, evitando apagar séries efetivamente realizadas sem confirmação.
 - O histórico salva quais exercícios estavam previstos (`plannedIds`) e quais foram explicitamente retirados (`skipped`), sem inventar omissões em registros antigos.
 - O painel analisa últimos 7, 14 e 28 dias e destaca **mudanças de ritmo ou omissões explicitamente frequentes**. Nenhum dia sem registro é tratado como falta ou descanso obrigatório.
