@@ -121,6 +121,7 @@
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
     catalogOpen: false, catalogAll: false, catalogMode:'replacement',
+    catalogGroup:'all',catalogSearch:'',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
   };
@@ -391,7 +392,7 @@
   function render() {
     const main = document.getElementById('screen');
     main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
-      ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() :
+      ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
       ui.tab === 'progress' ? renderProgress() : ui.tab === 'history' ? renderHistory() : renderSettings();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
       const active=btn.dataset.tab===ui.tab;
@@ -428,41 +429,102 @@
       <button class="button-inline" data-action="resume">Continuar treino salvo</button></div>`;
   }
   function renderHome() {
-    const goal = E.progress(state.weights,state.settings.startWeight,state.settings.targetWeight);
-    const left = dayGap(today(),state.settings.goalDate);
-    const next = getNext(), plan = next.id ? planFor(next.id) : null;
-    const pending = dueKnee();
-    const last = latestSessions()[0];
-    const lastTop = state.exercises.map(x=>({x,r:E.recommend(x,state.sessions)}))
-      .filter(item=>item.r.last).sort((a,b)=>(history(b.x.id)[0]?.session.timestamp||'').localeCompare(history(a.x.id)[0]?.session.timestamp||''))[0];
-    return `${headline('Seu painel','Evolua com método.','Cargas, recuperação e constância em um único lugar.')}
-      <section class="card hero" aria-label="Progresso até o objetivo">
-        <div class="row-between"><span class="pill green">META DE RECOMPOSIÇÃO</span><span class="small muted">${left>=0?`${left} dias restantes`:'Data-alvo encerrada'}</span></div>
-        <div class="hero-rows mt-16"><div><span class="metric-label">PESO ATUAL</span><div class="hero-weight">${fmt(goal.current)} <small>kg</small></div></div>
-        <div><span class="metric-label">OBJETIVO</span><div class="hero-weight">${fmt(state.settings.targetWeight)} <small>kg</small></div></div></div>
-        <div class="progress-track" role="progressbar" aria-label="Progresso do peso" aria-valuenow="${goal.percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${goal.percent}%"></span></div>
-        <div class="progress-legend"><span>${goal.percent}% do percurso</span><span>${goal.remaining>0?`${fmt(goal.remaining)} kg até a meta`: 'Meta de peso atingida'}</span></div>
+    const next=getNext(),plan=next.id?planFor(next.id):null;
+    const pending=dueKnee(),last=latestSessions()[0],check=checkin();
+    const checkLabel=check ? (check.energy==='baixa'?'Pouca energia':check.energy==='boa'?'Bem recuperado':'Energia normal') : 'Não informado';
+    const block=ui.draft?planFor(ui.draft.planId):null;
+    return `${headline('Hoje','Seu próximo passo.','Comece o treino ou informe como está se sentindo.')}
+      <section class="home-primary card" aria-labelledby="home-primary-title">
+        <div class="row-between"><span class="home-step-label">${ui.draft?'EM ANDAMENTO':next.rest?'RECUPERAÇÃO SUGERIDA':'TREINO SUGERIDO'}</span>
+          ${tag(ui.draft?`Bloco ${ui.draft.planId}`:next.rest?'Descanso':`Bloco ${next.id}`,ui.draft||!next.rest?'green':'amber')}</div>
+        <h2 id="home-primary-title">${ui.draft?esc(block.title):plan?esc(plan.title):'Recuperar antes de treinar'}</h2>
+        <p class="home-primary-summary">${ui.draft?'Você já começou esta sessão. Continue de onde parou.':plan?esc(plan.subtitle):'Seus blocos continuam pendentes. Reavalie como você está antes de iniciar.'}</p>
+        ${next.rest&&!ui.draft?`<p class="home-rest-reason">${esc(next.reason)}</p>`:''}
+        ${ui.draft?`<button class="primary full home-main-action" data-action="resume">Continuar treino</button>`:
+          plan?`<button class="primary full home-main-action" data-action="start" data-plan="${next.id}">Iniciar treino ${next.id}</button>`:
+          `<button class="secondary full home-main-action" data-action="navigate" data-to="plans">Ver meus treinos</button>`}
+        <div class="home-secondary-actions">
+          <button class="button-inline" data-action="navigate" data-to="plans">Escolher outro bloco</button>
+          ${!ui.draft&&!next.rest?`<details class="home-reason"><summary>Por que este treino?</summary><p>${esc(next.reason)}</p></details>`:''}
+        </div>
       </section>
-      <div class="kpi-row"><div class="kpi"><strong>${state.sessions.length}</strong><span>treinos salvos</span></div><div class="kpi"><strong>${goal.lost>0?'−':''}${fmt(Math.abs(goal.lost))}</strong><span>kg desde o início</span></div><div class="kpi"><strong>14/01</strong><span>meta de 2027</span></div></div>
-      ${resumeBanner()}
-      ${renderRecoveryCheckin()}
-      ${renderAdherencePanel()}
-      ${pending.length?`<div class="callout warn"><strong>Cheque o joelho no dia seguinte.</strong> Há ${pending.length} treino(s) de pernas aguardando registro. <button class="button-inline" data-action="navigate" data-to="history">Registrar agora</button></div>`:''}
-      <div class="section-row"><h2 class="section-title">Seu próximo treino</h2>${tag(next.rest?'Recuperação':`Bloco ${next.id}`,'green')}</div>
-      <section class="card"><div class="card-row"><div><h3>${plan?esc(plan.title):'Recuperação antes do próximo bloco'}</h3><p>${plan?esc(plan.subtitle):'Não há bloco de superiores pendente e liberado pela recuperação atual.'}</p></div><span class="rounded-emoji" aria-hidden="true">${plan?.type==='upper'?'↗':'⌁'}</span></div>
-        <p class="bodycopy mt-12">${esc(next.reason)}</p>
-        ${renderQueue(next)}
-        <p class="small muted mt-12">A recomendação considera o check-in de hoje. Atualize acima se sua recuperação mudou.</p>
-        ${plan?`<button class="primary full mt-12" data-action="start" data-plan="${next.id}">Iniciar ${esc(plan.title)}</button>`:''}
-        <button class="button-inline mt-8" data-action="navigate" data-to="plans">Escolher outro bloco</button>
-      </section>
-      ${last?`<div class="section-row"><h2 class="section-title">Última atividade</h2><span class="tiny muted">${dateBR(last.day)}</span></div><div class="card"><strong>${esc(planFor(last.planId).title)}</strong><p class="small muted mt-8">${last.entries.length} exercícios registrados · ${esc(last.energy||'Esforço não informado')}</p></div>`:''}
-      ${lastTop?`<div class="section-row"><h2 class="section-title">Seu último peso de treino</h2></div><div class="card"><div class="card-row"><div><strong>${esc(lastTop.x.name)}</strong><p class="last">${esc(lastTop.r.last)}</p></div>${tag(lastTop.r.level==='increase'?'Pode subir':'Em evolução',lastTop.r.level==='increase'?'green':'')}</div><p class="small muted mt-12">${esc(lastTop.r.title)}. ${esc(lastTop.r.explanation)}</p></div>`:''}
-      <div class="section-row"><h2 class="section-title">Muay Thai</h2></div>
-      ${M.readinessCard(M.readiness(state.muay.sessions,today(),recoverySettings()))}
-      <section class="card"><p class="small muted">Aulas e treinos em casa também entram no seu diário, sem concluir blocos de musculação.</p><button class="secondary full" data-action="open-muay">Registrar Muay Thai</button></section>
-      ${weightForm()}
-      <p class="small muted">As recomendações são regras de acompanhamento, não substituem orientação de um profissional. Dor no joelho ou piora após treino bloqueiam sugestões automáticas de aumento.</p>`;
+      ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
+        <p>Há ${pending.length} treino(s) aguardando registro após 24h.
+        <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
+      <details class="home-recovery" ${!check?'':''}>
+        <summary><span><strong>Como está sua recuperação hoje?</strong><small>${esc(checkLabel)}</small></span>
+          <span class="home-recovery-action">${check?'Atualizar':'Informar'} <span aria-hidden="true">⌄</span></span></summary>
+        <div class="home-recovery-body">${renderRecoveryCheckin()}</div>
+      </details>
+      <div class="home-minimal-links">
+        ${last?`<button class="home-last-session" data-action="navigate" data-to="history">
+          <span><small>ÚLTIMO TREINO · ${dateBR(last.day)}</small><strong>${esc(planFor(last.planId).title)}</strong></span><span aria-hidden="true">›</span>
+        </button>`:''}
+        <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
+      </div>
+      <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
+  }
+  function renderCatalog() {
+    // F.options merges custom exercises, active plans and curated alternatives
+    // without filtering by workout-in-progress. Browsing never changes a draft.
+    const all=F.options(state.exercises,null);
+    const known=new Map(state.exercises.map(ex=>[ex.id,ex]));
+    const shown=all.filter(ex=>ui.catalogGroup==='all'||ex.group===ui.catalogGroup);
+    const term=ui.catalogSearch.toLocaleLowerCase('pt-BR').trim();
+    const count=shown.filter(ex=>[ex.name,ex.muscle,ex.equipment].some(value=>
+      String(value||'').toLocaleLowerCase('pt-BR').includes(term))).length;
+    return `${headline('Biblioteca','Catálogo de exercícios.','Explore todos os movimentos sem iniciar um treino.')}
+      <search class="catalog-browser-tools" aria-label="Pesquisar e filtrar exercícios">
+        <label for="catalog-search">Buscar exercício ou equipamento</label>
+        <input id="catalog-search" type="search" value="${esc(ui.catalogSearch)}" placeholder="Ex.: supino, polia, halter..." autocomplete="off" aria-controls="catalog-browser-results" />
+      </search>
+      <div class="catalog-group-tabs" role="group" aria-label="Filtrar por bloco">
+        ${[['all','Todos'],['A','Costas'],['B','Peito'],['C','Quadríceps'],['D','Posteriores']].map(([group,label])=>
+          `<button type="button" class="catalog-group-chip ${ui.catalogGroup===group?'selected':''}"
+             data-action="catalog-filter" data-group="${group}" aria-pressed="${ui.catalogGroup===group}">${label}</button>`).join('')}
+      </div>
+      <div class="catalog-browser-head">
+        <h2 class="section-title">Todos os exercícios</h2>
+        <output id="catalog-count" aria-live="polite">${count} de ${all.length} movimentos</output>
+      </div>
+      <div class="catalog-browser-results" id="catalog-browser-results">
+        ${shown.map(ex=>{
+          const existing=known.get(ex.id);
+          const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
+          const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
+          return `<article class="catalog-browser-item" data-catalog-item
+                   data-search="${esc([ex.name,ex.muscle,ex.equipment].join(' ').toLocaleLowerCase('pt-BR'))}">
+            <div class="catalog-browser-header">
+              <span class="catalog-group-code">BLOCO ${esc(ex.group)}</span>
+              <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
+            </div>
+            <h3>${esc(ex.name)}</h3>
+            <p class="catalog-browser-description">${esc(description)}</p>
+            <div class="catalog-browser-bottom">
+              <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
+              ${existing?
+                `<button type="button" class="button-inline" data-action="${existing.active?'edit-ex':'catalog-activate'}" data-ex="${esc(ex.id)}">${existing.active?'Editar':'Ativar na ficha'}</button>`:
+                `<button type="button" class="button-inline" data-action="catalog-add-plan" data-ex="${esc(ex.id)}">Adicionar à ficha</button>`}
+            </div>
+          </article>`;
+        }).join('')}
+      </div>
+      <p class="catalog-empty-state" id="catalog-empty-state" ${count?'hidden':''}>Nenhum exercício encontrado. Experimente outro nome ou grupo.</p>
+      <p class="tiny muted catalog-browser-tip">As alterações na ficha são opcionais. Explorar o catálogo não inicia nem modifica um treino em andamento.</p>`;
+  }
+  function filterCatalogDOM(){
+    const term=ui.catalogSearch.toLocaleLowerCase('pt-BR').trim();
+    let visible=0;
+    document.querySelectorAll('[data-catalog-item]').forEach(item=>{
+      const match=item.dataset.search.includes(term);
+      item.hidden=!match;
+      if(match)visible++;
+    });
+    const total=F.options(state.exercises,null).length;
+    const output=document.getElementById('catalog-count');
+    if(output)output.textContent=visible+' de '+total+' movimentos';
+    const empty=document.getElementById('catalog-empty-state');
+    if(empty)empty.hidden=visible>0;
   }
   function painOptions(current) {
     return [['','Não informado'],['0','0 · Sem dor'],['1','1 · Mínima'],['2','2 · Leve'],['3','3 · Moderada'],['4','4 · Importante'],['5','5+ · Forte']]
@@ -1033,6 +1095,26 @@
       if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
       render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
     }
+    if(action==='catalog-filter'){
+      if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
+      ui.catalogGroup=btn.dataset.group;render();return;
+    }
+    if(action==='catalog-add-plan'){
+      const id=btn.dataset.ex;
+      if(state.exercises.some(ex=>ex.id===id)||state.exercises.length>=200)return;
+      const found=F.prepareCatalog(id,state.exercises);
+      if(!found||!found.isNew)return;
+      const added={...found.exercise,active:true};
+      state.exercises.push(added);
+      if(!save()){state.exercises.pop();return notify('Não foi possível adicionar o exercício.');}
+      render();notify('Exercício incluído na ficha do bloco '+added.group+'.');return;
+    }
+    if(action==='catalog-activate'){
+      const ex=exerciseFor(btn.dataset.ex);if(!ex)return;
+      const previous=ex.active;ex.active=true;
+      if(!save()){ex.active=previous;return;}
+      render();notify('Exercício ativado na ficha do bloco '+ex.group+'.');return;
+    }
     if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;ui.catalogMode='replacement';render();return;}
     if(action==='catalog-mode'){
       if(!ui.draft||!ui.catalogOpen||!['replacement','extra'].includes(btn.dataset.mode))return;
@@ -1264,6 +1346,10 @@
     if(ui.draft && (event.target.dataset.draftMeta==='energy' || event.target.dataset.exPain)){
       const box=document.querySelector('.dose-card');
       if(box)box.outerHTML=renderDosePanel(true);
+    }
+    if(event.target.id==='catalog-search'){
+      ui.catalogSearch=event.target.value;
+      filterCatalogDOM();
     }
     if(event.target.id==='flex-catalog-search'){
       const query=event.target.value.toLocaleLowerCase('pt-BR').trim();
