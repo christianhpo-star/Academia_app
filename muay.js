@@ -199,6 +199,12 @@
     const significant=latest.fatigue==='moderada'||Number(latest.intensity)>=7;
     const volume=(latest.activities||[]).filter(a=>a.category==='exhaustion'&&a.unit==='reps'&&Number(a.quantity)>0);
     const combos=(latest.activities||[]).filter(a=>a.category==='combination'&&a.unit==='min'&&Number(a.quantity)>0);
+    const kickingExhaustion=volume.some(a=>/chute|perna|joelho/i.test(a.name||''));
+    const nextFocus=kickingExhaustion?
+      'Como houve exaustão de chutes, prefira mobilidade confortável ou técnica leve de braços, sem repetir alto volume de chutes.':
+      combos.length?'Como houve combinações cronometradas, prefira técnica controlada e mobilidade, sem repetir rounds intensos.':
+      volume.length?'Como houve exaustão por repetições, prefira técnica leve ou mobilidade em vez de repetir o mesmo volume.':
+      'Você pode priorizar técnica de baixa intensidade e mobilidade.';
     if(legPain)return {level:'rest',title:'Evite impactos e treino intenso de pernas',
       note:'Há desconforto relatado no joelho. Prefira recuperação e reavalie os sintomas antes de chutes ou exercícios de pernas. Dor persistente merece avaliação profissional.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
@@ -206,14 +212,14 @@
       note:'Fadiga alta ou esforço máximo recente. Amanhã, prefira descanso ou apenas mobilidade confortável. Antes de voltar a golpes intensos, confirme recuperação, sono e ausência de sintomas.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
     if(significant&&days<=1)return {level:'light',title:'Priorize técnica leve ou recuperação',
-      note:'O esforço recente pede cautela. Amanhã, escolha mobilidade leve ou técnica controlada (sombra e combinações de baixa intensidade), sem exaustão nem séries prolongadas de chutes. Se ainda houver fadiga, descanse.',
+      note:'O esforço recente pede cautela. '+nextFocus+' Se ainda houver fadiga, descanse.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
     if(latest.intensity==null&&(!latest.fatigue||latest.fatigue===''))return {
       level:'unknown',title:'Faltam sinais de recuperação',
       note:'Sem esforço percebido ou fadiga informados, não é possível indicar aumentar a carga amanhã. Registre esses dados para uma orientação mais útil.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
     return {level:'normal',title:'Treino adaptável à recuperação de hoje',
-      note:'Não há sinal de alerta informado. Se estiver recuperado, escolha técnica e combinações moderadas ou condicionamento leve conforme o foco anterior; descanso também é uma opção. Não aumente volume apenas por ter concluído a sessão.',
+      note:'Não há sinal de alerta informado. Se estiver recuperado, '+nextFocus+' Alternar focos ou descansar é uma opção; não aumente volume apenas por ter concluído a sessão.',
       activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
   }
   function readinessCard(data) {
