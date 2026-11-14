@@ -56,7 +56,28 @@ with sync_playwright() as p:
         if width in [320,390]:page.screenshot(path=str(shots/f'blocks-{width}.png'),full_page=True)
     page.set_viewport_size({'width':390,'height':800})
     page.locator('[data-action="select-plan"][data-plan="B"]').click()
+    assert page.locator('.plan-exercise-item').count()>0
+    assert page.locator('.plan-exercise-item .plan-exercise-index').first.inner_text()=='01'
+    assert page.locator('.plan-exercise-item h3').first.inner_text()=='Supino reto com halteres'
+    assert 'séries' in page.locator('.plan-exercise-meta').first.inner_text()
+    for width in [320,390,768]:
+        page.set_viewport_size({'width':width,'height':800})
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'plan list overflow at {width}'
+        for item in page.locator('.plan-exercise-item').all():
+            assert item.evaluate('e=>e.scrollWidth<=e.clientWidth+1'),f'plan item clipping at {width}'
+    page.set_viewport_size({'width':390,'height':800})
     page.locator('[data-action="start"][data-plan="B"]').click()
+    assert page.locator('.session-exercises-header h2').inner_text()=='Exercícios da sessão'
+    cards=page.locator('.workout-exercise-card')
+    assert cards.count()>0
+    assert cards.first.locator('.workout-exercise-number').inner_text().startswith('01')
+    assert cards.first.locator('.workout-exercise-title h3').inner_text()=='Supino reto com halteres'
+    for width in [320,390,768]:
+        page.set_viewport_size({'width':width,'height':800})
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'workout card overflow at {width}'
+        for card in page.locator('.workout-exercise-card').all():
+            assert card.evaluate('e=>e.scrollWidth<=e.clientWidth+1'),f'workout card clipping at {width}'
+    page.set_viewport_size({'width':390,'height':800})
     supino=page.locator('[data-exercise="supino-halteres"]')
     assert supino.locator('.set-history-empty').count()>=1
     for i in range(4):
