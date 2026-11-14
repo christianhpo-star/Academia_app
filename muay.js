@@ -116,6 +116,21 @@
     const series = a.sets == null || a.sets === '' ? '' : String(a.sets) + ' séries';
     return [series, part].filter(Boolean).join(' × ') || 'Volume não informado';
   }
+  // Backup anterior a categorias e lateralidade: campos ausentes e unidades
+  // suspeitas são qualidade limitada de registro, não sinal de recuperação.
+  function legacyReview(session) {
+    const items=Array.isArray(session?.activities)?session.activities:[];
+    const legacy=items.filter(a=>!a.category || !a.side);
+    const ambiguous=items.filter(a=>a.unit==='min' && /chute|soco|exaust/i.test(a.name||'') &&
+      Number(a.quantity)>20);
+    const missing=items.filter(a=>a.quantity==null||a.quantity==='');
+    return {legacy:legacy.length,ambiguous:ambiguous.length,missing:missing.length};
+  }
+  function legacyNotice(session){
+    const review=legacyReview(session);
+    if(!review.legacy&&!review.ambiguous&&!review.missing)return '';
+    return '<p class="muay-legacy-note">Registro da versão anterior: alguns detalhes não foram informados ou a unidade pode estar ambígua. Mantido sem correção automática; edite apenas se souber o que foi realizado.</p>';
+  }
   function sessionCard(s, showControls = false) {
     return '<article class="card muay-record">' +
       '<div class="card-row"><div><strong>' + esc(dateBR(s.day)) + ' · ' + esc(kinds[s.kind]) + '</strong>' +
@@ -128,6 +143,7 @@
       (s.fatigue ? '<p class="small muted">Fadiga: ' + esc(fatigueLabels[s.fatigue]) + '</p>' : '') +
       (s.kneePain == null ? '' : '<p class="small muted">Joelho após treino: ' + esc(s.kneePain) + '/10</p>') +
       (s.notes ? '<p class="small muted">Observações: ' + esc(s.notes) + '</p>' : '') +
+      legacyNotice(s) +
       (showControls ? '<div class="btnrow mt-12"><button class="secondary small-button" data-action="muay-edit" data-id="' + esc(s.id) + '">Editar registro</button>' +
         '<button class="ghost small-button" data-action="muay-delete" data-id="' + esc(s.id) + '">Excluir</button></div>' : '') +
       '</article>';
@@ -162,6 +178,7 @@
       '</select></div></section>' +
       '<div class="section-row"><h2 class="section-title">Exercícios realizados</h2><small>' + d.activities.length + ' selecionado(s)</small></div>' +
       '<p class="small muted">Toque nos exercícios que fez. Séries, repetições e duração de cada um são opcionais; não serão presumidas.</p>' +
+      (d.editingId?'<p class="muay-legacy-note">Ao editar registros antigos, confirme unidades manualmente. A FORJA não converte minutos em golpes ou atribui fadiga retroativamente.</p>':'') +
       '<div class="muay-presets" role="group" aria-label="Adicionar exercício realizado">' +
       PRESETS.map((p, i) => '<button type="button" class="secondary small-button" data-action="muay-preset" data-preset="' + i + '">+ ' + esc(p.name) + '</button>').join('') +
       '<button type="button" class="secondary small-button" data-action="muay-custom">+ Outro exercício</button></div>' +
@@ -253,7 +270,7 @@
       '<button class="secondary full" data-action="navigate" data-to="history">Ver histórico completo</button>';
   }
   root.AcademiaMuay = {
-    PRESETS, archive, activity, draft, ensureArchive, validDraft, validSession,
+    PRESETS, archive, activity, draft, ensureArchive, validDraft, validSession, legacyReview,
     readiness,readinessCard,
     validArchive, finishDraft, draftFromSession, volumeText, sortedSessions,
     renderPage, historySection,
