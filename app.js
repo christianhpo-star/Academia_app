@@ -217,6 +217,10 @@
   const getNext = () => {
     const suggested=E.nextWorkout(state.sessions,recoverySettings().fatigue,maxKneePain(),DATA.rotation);
     const muay=M.readiness(state.muay.sessions,today(),recoverySettings());
+    const current=checkin();
+    if(current && (current.energy==='baixa'||current.fatigue==='alta'))
+      return {...suggested,id:null,rest:true,modified:true,
+        reason:'O check-in de hoje indica energia baixa ou fadiga alta. Considere descanso ou recuperação leve antes de decidir por outro treino; os blocos continuam pendentes.'};
     if(muay.activities && muay.days<=1 && muay.level==='rest' && !suggested.rest)
       return {...suggested,id:null,rest:true,modified:true,
         reason:'Recuperação recomendada após Muay Thai recente: '+muay.note};
