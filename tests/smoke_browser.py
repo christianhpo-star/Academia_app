@@ -22,7 +22,7 @@ with sync_playwright() as p:
     page.add_style_tag(path=str(root/'styles.css'))
     for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']:
         page.add_script_tag(path=str(root/js))
-    page.wait_for_selector('text=Evolua com método.')
+    page.wait_for_selector('.home-primary')
     assert '82' in page.locator('#screen').inner_text()
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     screenshots=root/'screenshots';screenshots.mkdir(exist_ok=True)
