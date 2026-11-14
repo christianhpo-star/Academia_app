@@ -678,6 +678,8 @@
               `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${fmt(set.load)} ${esc(ex?.unit||'kg')} × ${set.reps} rep.${set.rir == null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
           </div><div class="text-right"><strong>${top?`${fmt(top.load)} ${esc(ex?.unit||'kg')}`:'—'}</strong><br><span>${top?`${top.reps} rep.`:''}</span></div></li>`;
         }).join('')}</ul>
+        ${session.skipped?.length?`<div class="history-skipped"><strong>Pulados nesta sessão · ${session.skipped.length}</strong><ul>${session.skipped.map(item=>
+          `<li>${esc(exerciseFor(item.id)?.name||item.id)}<span>${item.reason==='sem-registro'?'Sem registro':esc(F.reasons[item.reason]||'Motivo não informado')}</span></li>`).join('')}</ul></div>`:''}
         ${session.notes?`<p class="small muted">Observações: ${esc(session.notes)}</p>`:''}
         ${needsDay?(canAssess?`<div class="callout warn"><strong>Como ficou o joelho no dia seguinte?</strong><div class="field-row mt-8"><div class="field"><label for="after-${esc(session.id)}">Dor após 24 h</label><select id="after-${esc(session.id)}" data-after-day="${esc(session.id)}">${painOptions('')}</select></div><div style="display:flex;align-items:end"><button class="secondary full" data-action="save-knee" data-id="${esc(session.id)}">Salvar</button></div></div></div>`:
           `<p class="small muted mt-12">Amanhã, informe se houve dor ou rigidez no joelho antes de progredir cargas de pernas.</p>`):
@@ -795,7 +797,7 @@
     const now=new Date();
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
       timestamp:now.toISOString(),day:today(),entries:result,kneeNextDay:null,
-      plannedIds:[...ui.draft.plannedIds],skipped:F.skippedForSave(ui.draft),
+      plannedIds:[...ui.draft.plannedIds],skipped:F.skippedForSave(ui.draft,result),
       energy:ui.draft.energy,notes:ui.draft.notes.trim().slice(0,1000)});
     if (!save()) {
       state.sessions.pop();
@@ -803,7 +805,10 @@
     }
     const discomfort=result.some(en=>en.pain!==null && en.pain>0);
     clearDraft();ui.tab='history';render();window.scrollTo(0,0);
-    notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':'Treino salvo. Histórico e treinos pendentes atualizados.');
+    const skippedCount=state.sessions[state.sessions.length-1].skipped.filter(item=>item.reason==='sem-registro').length;
+    notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':
+      skippedCount?`Treino salvo. ${skippedCount} exercício(s) sem registro marcado(s) como pulado(s).`:
+      'Treino salvo. Histórico e treinos pendentes atualizados.');
   }
   function saveKnee(id) {
     const session=state.sessions.find(s=>s.id===id);
