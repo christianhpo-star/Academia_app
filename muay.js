@@ -3,6 +3,8 @@
   const places = { casa: 'Em casa', academia: 'Na academia', outro: 'Outro local' };
   const kinds = { individual: 'Treino individual', aula: 'Aula de Muay Thai' };
   const units = { reps: 'repetições', min: 'minutos', rounds: 'rounds' };
+  const categories = { exhaustion:'Exaustão / volume de golpes', combination:'Combinação por tempo', conditioning:'Condicionamento', technique:'Técnica / outros' };
+  const sides = { total:'Total', each:'Por lado (cada perna / braço)' };
   const fatigueLabels = { '': 'Não informado', normal: 'Normal', moderada: 'Moderada', alta: 'Alta' };
   const PRESETS = [
     { name: 'Polichinelos', unit: 'reps' },
@@ -10,7 +12,10 @@
     { name: 'Afundos', unit: 'reps' },
     { name: 'Pular corda', unit: 'min' },
     { name: 'Sombra', unit: 'rounds' },
-    { name: 'Técnica de golpes', unit: 'rounds' },
+    { name: 'Técnica de golpes', unit: 'min', category:'combination' },
+    { name: '50 chutes por perna', unit: 'reps', category:'exhaustion', side:'each', quantity:50 },
+    { name: 'Jab + direto + chute', unit: 'min', category:'combination', quantity:3 },
+    { name: 'Exaustão de socos', unit: 'reps', category:'exhaustion' },
     { name: 'Saco de pancadas', unit: 'rounds' },
     { name: 'Manoplas', unit: 'rounds' },
     { name: 'Deslocamentos', unit: 'min' },
@@ -33,8 +38,9 @@
   };
   const textOk = (v, max) => typeof v === 'string' && v.length <= max;
   const archive = () => ({ sessions: [], draft: null });
-  const activity = (name = '', unit = 'reps') =>
-    ({ id: uid('exercise'), name, quantity: '', unit, sets: '' });
+  const activity = (name = '', unit = 'reps', opts={}) =>
+    ({ id: uid('exercise'), name, quantity: opts.quantity ?? '', unit, sets: '', 
+       category: opts.category || (unit==='min'?'combination':'technique'),side:opts.side||'total' });
   const draft = (day, place = 'casa') => ({
     day, place, kind: place === 'academia' ? 'aula' : 'individual',
     duration: '', intensity: '', fatigue: '', kneePain: '', notes: '',
@@ -44,7 +50,10 @@
     textOk(value.id, 100) && textOk(value.name, 100) &&
     (!complete || value.name.trim().length > 0) &&
     Object.hasOwn(units, value.unit) && optional(value.quantity, 0.1, 3000, value.unit !== 'min') &&
-    optional(value.sets, 1, 30, true);
+    optional(value.sets, 1, 30, true) &&
+    (value.category===undefined || Object.hasOwn(categories,value.category)) &&
+    (value.side===undefined || Object.hasOwn(sides,value.side)) &&
+    (value.side!=='each' || value.unit==='reps');
   const validDraft = value => !!value && typeof value === 'object' &&
     dateOk(value.day) && Object.hasOwn(places, value.place) && Object.hasOwn(kinds, value.kind) &&
     optional(value.duration, 1, 360, true) && optional(value.intensity, 1, 10, true) &&
@@ -74,6 +83,7 @@
     const values = raw.activities.map(item => ({
       id: item.id, name: item.name.trim(), unit: item.unit,
       quantity: numeric(item.quantity), sets: numeric(item.sets),
+      category: item.category||'technique',side:item.side||'total',
     }));
     const session = {
       id: raw.editingId || uid('muay'),
@@ -101,7 +111,8 @@
     '<option value="' + esc(value) + '"' + (String(current) === value ? ' selected' : '') + '>' + esc(label) + '</option>'
   ).join('');
   function volumeText(a) {
-    const part = a.quantity == null || a.quantity === '' ? '' : String(a.quantity) + ' ' + units[a.unit];
+    const part = a.quantity == null || a.quantity === '' ? '' : String(a.quantity) + ' ' + units[a.unit] +
+      (a.unit==='reps' && a.side==='each' ? ' por lado' : '');
     const series = a.sets == null || a.sets === '' ? '' : String(a.sets) + ' séries';
     return [series, part].filter(Boolean).join(' × ') || 'Volume não informado';
   }
@@ -157,19 +168,67 @@
       (d.activities.length ? d.activities.map((a, i) => '<section class="exercise-card muay-activity">' +
         '<div class="row-between"><h3>Exercício ' + (i + 1) + '</h3><button class="button-inline" data-action="muay-remove" data-id="' + esc(a.id) + '">Remover</button></div>' +
         '<div class="field mt-12"><label for="muay-name-' + esc(a.id) + '">Nome do exercício</label><input id="muay-name-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="name" maxlength="100" value="' + esc(a.name) + '" placeholder="Ex.: sequência de chutes" /></div>' +
-        '<div class="muay-volume mt-12"><div class="field"><label for="muay-sets-' + esc(a.id) + '">Séries (opcional)</label><input id="muay-sets-' + esc(a.id) + '" type="number" min="1" max="30" step="1" inputmode="numeric" data-muay-id="' + esc(a.id) + '" data-muay-prop="sets" value="' + esc(a.sets) + '" /></div>' +
-        '<div class="field"><label for="muay-quantity-' + esc(a.id) + '">Quantidade (opcional)</label><input id="muay-quantity-' + esc(a.id) + '" type="number" min="0.1" max="3000" step="any" inputmode="decimal" data-muay-id="' + esc(a.id) + '" data-muay-prop="quantity" value="' + esc(a.quantity) + '" /></div>' +
-        '<div class="field"><label for="muay-unit-' + esc(a.id) + '">Unidade</label><select id="muay-unit-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="unit">' + select(units, a.unit) + '</select></div></div></section>').join('') :
+        '<div class="field mt-12"><label for="muay-category-' + esc(a.id) + '">Tipo de exercício</label><select id="muay-category-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="category">' + select(categories,a.category||'technique') + '</select></div>' +
+        '<div class="muay-volume mt-12"><div class="field"><label for="muay-sets-' + esc(a.id) + '">Blocos / séries (opcional)</label><input id="muay-sets-' + esc(a.id) + '" type="number" min="1" max="30" step="1" inputmode="numeric" data-muay-id="' + esc(a.id) + '" data-muay-prop="sets" value="' + esc(a.sets) + '" /></div>' +
+        '<div class="field"><label for="muay-quantity-' + esc(a.id) + '">Quantidade por bloco (opcional)</label><input id="muay-quantity-' + esc(a.id) + '" type="number" min="0.1" max="3000" step="any" inputmode="decimal" data-muay-id="' + esc(a.id) + '" data-muay-prop="quantity" value="' + esc(a.quantity) + '" /></div>' +
+        '<div class="field"><label for="muay-unit-' + esc(a.id) + '">Unidade</label><select id="muay-unit-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="unit">' + select(units, a.unit) + '</select></div></div>' +
+        (a.unit==='reps'?'<div class="field mt-12"><label for="muay-side-' + esc(a.id) + '">Como contar?</label><select id="muay-side-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="side">' + select(sides,a.side||'total') + '</select><span class="field-help">Exemplo: 50 chutes por perna = 50 por lado, não 50 no total.</span></div>':'<p class="field-help mt-8">Combinações: informe minutos por bloco. Exemplo: 3 minutos de jab + direto + chute.</p>') +
+        '</section>').join('') :
         '<div class="empty mt-12">Adicione somente os exercícios que realmente realizou.</div>') +
       '<section class="card"><div class="field"><label for="muay-notes">Observações (opcional)</label>' +
       '<textarea id="muay-notes" data-muay-field="notes" maxlength="1000" placeholder="Ex.: aquecimento, sequências de golpes, recuperação, alterações na aula">' + esc(d.notes) + '</textarea></div>' +
       '<div class="btnrow mt-16"><button class="primary" data-action="muay-finish">Salvar treino</button>' +
       '<button class="ghost" data-action="muay-cancel">Descartar rascunho</button></div></section>';
   }
+  // Avaliação conservadora baseada em esforço relatado, nunca em gasto calórico inferido.
+  // Quantidade de golpes e duração não equivalem automaticamente a fadiga fisiológica.
+  function readiness(sessions,today,settings={}) {
+    const latest=sortedSessions(sessions||[]).find(s=>{
+      if(!dateOk(s?.day)||!dateOk(today))return false;
+      const days=(Date.parse(today+'T12:00:00Z')-Date.parse(s.day+'T12:00:00Z'))/86400000;
+      return days>=0&&days<=2;
+    });
+    if(!latest)return {level:'unknown',title:'Sem Muay Thai recente para avaliar',
+      note:'Registre os exercícios, o esforço percebido e a fadiga para orientar a escolha de amanhã.',
+      activities:0};
+    const days=(Date.parse(today+'T12:00:00Z')-Date.parse(latest.day+'T12:00:00Z'))/86400000;
+    const legPain=(latest.kneePain!=null&&Number(latest.kneePain)>0) ||
+      (settings.kneePain!==''&&settings.kneePain!=null&&Number(settings.kneePain)>0);
+    const high=latest.fatigue==='alta'||Number(latest.intensity)>=9 ||
+      (settings.fatigue==='alta');
+    const significant=latest.fatigue==='moderada'||Number(latest.intensity)>=7;
+    const volume=(latest.activities||[]).filter(a=>a.category==='exhaustion'&&a.unit==='reps'&&Number(a.quantity)>0);
+    const combos=(latest.activities||[]).filter(a=>a.category==='combination'&&a.unit==='min'&&Number(a.quantity)>0);
+    if(legPain)return {level:'rest',title:'Evite impactos e treino intenso de pernas',
+      note:'Há desconforto relatado no joelho. Prefira recuperação e reavalie os sintomas antes de chutes ou exercícios de pernas. Dor persistente merece avaliação profissional.',
+      activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
+    if(high&&days<=1)return {level:'rest',title:'Considere descanso ou recuperação leve',
+      note:'Fadiga alta ou esforço máximo recente. Evite uma sessão intensa adicional e reavalie como está amanhã.',
+      activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
+    if(significant&&days<=1)return {level:'light',title:'Priorize técnica leve ou recuperação',
+      note:'O esforço recente pede cautela. Opções são mobilidade ou técnica de baixa intensidade, sem exaustão nem alto volume de chutes; reduza se houver fadiga.',
+      activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
+    if(latest.intensity==null&&(!latest.fatigue||latest.fatigue===''))return {
+      level:'unknown',title:'Faltam sinais de recuperação',
+      note:'Sem esforço percebido ou fadiga informados, não é possível indicar aumentar a carga amanhã. Registre esses dados para uma orientação mais útil.',
+      activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
+    return {level:'normal',title:'Treino adaptável à recuperação de hoje',
+      note:'Não há sinal de alerta nos dados informados. Avalie sono, dores e energia antes de escolher entre técnica, condicionamento ou descanso. Não aumente volume só por ter completado a sessão.',
+      activities:latest.activities.length,days,volume:volume.length,combos:combos.length};
+  }
+  function readinessCard(data) {
+    return '<section class="card muay-readiness muay-readiness-'+esc(data.level)+'" aria-label="Orientação de recuperação">'+
+      '<p class="section-eyebrow">PRÓXIMA SESSÃO · ORIENTAÇÃO</p><h2>'+esc(data.title)+'</h2>'+
+      '<p>'+esc(data.note)+'</p>'+
+      (data.activities?'<small>'+data.activities+' atividade(s) na última sessão · '+
+         (data.volume||0)+' bloco(s) de exaustão registrados · '+(data.combos||0)+' combinação(ões) cronometradas</small>':'')+
+      '</section>';
+  }
   function renderPage(muay, today) {
     const last = sortedSessions(muay.sessions).slice(0, 3);
     return '<p class="eyebrow">Diário de atividades</p><h1 class="page-title">Muay Thai</h1>' +
       '<p class="lead">Registre aulas e treinos feitos em casa. Eles não substituem nem concluem os blocos de musculação.</p>' +
+      readinessCard(readiness(muay.sessions,today)) +
       (muay.draft ? renderEditor(muay.draft) :
         '<section class="card"><h2 class="section-title">Como você treinou?</h2><p class="small muted">' +
         'Registre a sessão depois de realizá-la, sem criar treinos fictícios.</p>' +
@@ -183,6 +242,7 @@
   }
   root.AcademiaMuay = {
     PRESETS, archive, activity, draft, ensureArchive, validDraft, validSession,
+    readiness,readinessCard,
     validArchive, finishDraft, draftFromSession, volumeText, sortedSessions,
     renderPage, historySection,
   };
