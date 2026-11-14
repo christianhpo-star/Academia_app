@@ -44,8 +44,10 @@ with sync_playwright() as p:
         first.locator('[data-field="rir"]').nth(i).fill('2')
     page.get_by_role('button',name='Salvar treino').click()
     assert 'Seu histórico' in page.locator('#screen').inner_text()
-    page.get_by_role('button',name='Início',exact=True).click()
+    # Última carga fica no histórico/evolução, não na home de ação rápida.
     assert '25 kg/halter' in page.locator('#screen').inner_text()
+    page.get_by_role('button',name='Início',exact=True).click()
+    assert page.locator('.home-primary').count()==1
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Iniciar treino B').click()
     first=page.locator('[data-exercise="supino-halteres"]')
