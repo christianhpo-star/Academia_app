@@ -142,3 +142,11 @@ As referências são mostradas apenas ao iniciar o exercício **sem histórico a
 - Em **Tenho energia para mais**, a sinalização explícita de energia é apenas uma condição inicial: o motor exige séries realizadas na sessão atual, RIR, histórico comparável, volume e recuperação adequados. Muay Thai recente, dor relevante ou fadiga impedem aumentos automáticos.
 - Quando elegível, o usuário escolhe **uma única opção**: acrescentar uma série ao movimento concluído ou incluir uma variação com outra máquina/equipamento (inicialmente com uma série vazia). Não há registro de treino realizado sem carga e repetições reais.
 - O rascunho persiste a escolha opcional (`extraChoice`) sem alterar dados anteriores, e recomendações são reavaliadas ao confirmar a ação.
+
+## Muay Thai: golpes, tempo e orientação da sessão seguinte
+- Exaustão de chutes e socos usa contagem de repetições; quando pertinente, registre **por lado** (ex.: 50 chutes por perna), sem converter automaticamente em 100 golpes executados no histórico.
+- Combinações são registradas por tempo, como **3 minutos de jab + direto + chute**; é possível registrar múltiplos blocos.
+- Os tipos do catálogo são `exhaustion`, `combination`, `conditioning` e `technique`; registros antigos sem categoria ou lateralidade continuam válidos.
+- Na aba Muay Thai e no início, um painel indica orientação de recuperação com base em esforço percebido, fadiga, dor no joelho, treino recente e tipo dos exercícios realizados.
+- Quando há sinal de alerta, a FORJA sugere descanso ou trabalho leve em vez de progredir intensidade; a indicação de musculação também respeita essas cautelas, sem remover blocos pendentes.
+- A orientação não estima desgaste fisiológico a partir de um número de golpes e deve ser conferida com o relato de recuperação do próprio dia.
