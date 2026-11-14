@@ -5,8 +5,9 @@ const F=require('../flex.js');
 const D=require('../data.js');
 const DOSE=require('../dose.js');
 const TODAY='2026-11-20';
-const row=(id,load=40)=>({id,pain:'',sets:[{load,reps:10,rir:3,warmup:false}]});
-const session=(day,id)=>({id:'s'+day,day:'2026-11-'+day,timestamp:'2026-11-'+day+'T13:00:00Z',entries:[row(id)],planId:'A'});
+const row=(id,load=40)=>({id,pain:'',sets:[{load,reps:'',rir:'',warmup:false}]});
+const done=(id,sets=4)=>({id,pain:0,sets:Array.from({length:sets},()=>({load:25,reps:10,rir:3,warmup:false}))});
+const session=(day,id)=>({id:'s'+day,day:'2026-11-'+day,timestamp:'2026-11-'+day+'T13:00:00Z',entries:[{id,pain:0,sets:[{load:40,reps:10,rir:3,warmup:false}]}],planId:'A'});
 function run(draft,extra={}){
  const options=F.options(D.exercises,draft);
  return A.suggest({options,draft,exercises:D.exercises,settings:{fatigue:'normal',kneePain:''},
@@ -86,6 +87,53 @@ test('histórico real aparece como referência quando registrado, não altera fi
  assert.deepEqual(D.exercises,state);
 });
 
+
+test('substituição considera somente exercício ainda não executado na sessão',()=>{
+ const completed=done('supino-halteres');
+ const draft={planId:'B',entries:{
+   'supino-halteres':completed,
+   'triceps-corda':row('triceps-corda')
+ }};
+ const choices=F.options(D.exercises,draft);
+ const result=run(draft,{options:choices});
+ assert.ok(result.recommendations.every(x=>x.referenceId!=='supino-halteres'));
+ assert.ok(result.recommendations.every(x=>x.kind!=='extra-set'&&x.kind!=='extra-exercise'));
+});
+test('energia sobrando não sugere equipamento novo sem histórico e execução suficientes',()=>{
+ const draft={planId:'B',energy:'leve',entries:{'supino-inclinado':done('supino-inclinado')}};
+ const advice=run(draft,{mode:'extra',
+   analysis:DOSE.analyze({today:TODAY,exercises:D.exercises,draft,settings:{fatigue:'normal',kneePain:''}})});
+ assert.equal(advice.recommendations.length,0);
+ assert.match(advice.message,/histórico|recuperação/i);
+});
+test('depois de realizar séries, recomenda +1 série OU novo equipamento para o mesmo músculo',()=>{
+ const sessions=[2,4,6,8,11,13,18].map(day=>({
+   id:'s'+day,day:'2026-11-'+String(day).padStart(2,'0'),
+   timestamp:'2026-11-'+String(day).padStart(2,'0')+'T13:00:00Z',
+   planId:'B',entries:[done('supino-inclinado')]
+ }));
+ const draft={planId:'B',energy:'leve',entries:{'supino-inclinado':done('supino-inclinado')}};
+ const original=structuredClone(draft);
+ const settings={fatigue:'normal',kneePain:''};
+ const analysis=DOSE.analyze({today:TODAY,strengthSessions:sessions,exercises:D.exercises,draft,settings});
+ assert.ok(analysis.candidates.some(x=>x.exerciseId==='supino-inclinado'));
+ const result=run(draft,{strengthSessions:sessions,settings,analysis,mode:'extra'});
+ assert.ok(result.recommendations.some(x=>x.kind==='extra-set'&&x.id==='supino-inclinado'));
+ assert.ok(result.recommendations.some(x=>x.kind==='extra-exercise'&&x.id!=='supino-inclinado'));
+ assert.ok(result.recommendations.every(x=>['extra-set','extra-exercise'].includes(x.kind)));
+ assert.deepEqual(draft,original);
+ draft.extraChoice={kind:'set',id:'supino-inclinado'};
+ const blocked=run(draft,{strengthSessions:sessions,settings,mode:'extra',
+   analysis:DOSE.analyze({today:TODAY,strengthSessions:sessions,exercises:D.exercises,draft,settings})});
+ assert.equal(blocked.recommendations.length,0);
+});
+test('Muay Thai recente impede acréscimos mesmo com energia informada',()=>{
+ const draft={planId:'B',energy:'leve',entries:{'supino-inclinado':done('supino-inclinado')}};
+ const result=run(draft,{mode:'extra',muaySessions:[{day:TODAY,intensity:8}],
+   analysis:{candidates:[{exerciseId:'supino-inclinado',muscleId:'peito',muscle:'Peito'}]}});
+ assert.equal(result.recommendations.length,0);
+ assert.match(result.caution,/Muay Thai/);
+});
 
 test('omissão por fadiga não vira pedido para substituir o treino',()=>{
  const draft={planId:'C',entries:{},skipped:[{id:'leg-press',reason:'fadiga'}]};
