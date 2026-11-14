@@ -157,3 +157,10 @@ As referências são mostradas apenas ao iniciar o exercício **sem histórico a
 - Check-in **do dia**, com energia, fadiga e joelho. Relato de dias anteriores não se torna automaticamente avaliação de recuperação atual; a fila e a orientação do Muay Thai respeitam os dados de hoje.
 - Histórico antigo do Muay Thai permanece intacto. Entradas com unidades possivelmente ambíguas ou sem categoria exibem aviso contextual, sem correção automática nem penalização da pessoa que usou uma interface anterior.
 - Mantidas as chaves persistentes do armazenamento; nenhum histórico, rascunho ou backup foi apagado.
+
+## Migração segura e histórico no celular (UX8)
+- O backup JSON anterior segue compatível com a versão v1 da FORJA; o arquivo privado preparado contém apenas um campo `migrationAudit` adicional (não altera sessões reais).
+- A importação verifica as referências de exercícios e a estrutura do Muay Thai. Em instalação vazia, importa o histórico completo; se já houver registros, mescla por IDs estáveis, mantendo os registros e configurações do celular em caso de conflito.
+- Pesagens com data igual não são duplicadas. Treinos e sessões de Muay com IDs iguais também não são duplicados.
+- Quando há rascunho em andamento, não apaga o rascunho para importar o histórico. A importação e a restauração são operações locais, nunca fazem upload automático ao repositório.
+- Exporte um backup recente do celular antes da importação para ter uma cópia independente. Entradas de Muay antigas continuam com dados originais, sem inferência de repetições ou intensidade.
