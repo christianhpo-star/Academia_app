@@ -253,11 +253,11 @@
       '<p class="lead">Registre aulas e treinos feitos em casa. Eles não substituem nem concluem os blocos de musculação.</p>' +
       readinessCard(readiness(muay.sessions,today,settings)) +
       '<section class="card muay-today-check"><h2 class="section-title">Como está sua recuperação hoje?</h2>' +
-      '<p class="small muted">Atualize antes de decidir se deve treinar ou descansar. Este relato não é diagnóstico.</p>' +
+      '<p class="small muted">Registre como está hoje: os valores de outro dia não serão reutilizados. Este relato não é diagnóstico.</p>' +
       '<div class="field-row mt-12"><div class="field"><label for="muay-today-fatigue">Fadiga atual</label>' +
-      '<select id="muay-today-fatigue" data-setting="fatigue">' + select({normal:'Normal',moderada:'Moderada',alta:'Alta'},settings.fatigue||'normal') + '</select></div>' +
+      '<select id="muay-today-fatigue" data-recovery-field="fatigue">' + select({normal:'Normal',moderada:'Moderada',alta:'Alta'},settings.fatigue||'normal') + '</select></div>' +
       '<div class="field"><label for="muay-today-knee">Dor no joelho agora</label>' +
-      '<select id="muay-today-knee" data-setting="kneePain">' + select({'':'Não informado','0':'0 · Sem dor','1':'1 · Mínima','2':'2 · Leve','3':'3 · Moderada','4':'4 · Importante','5':'5+ · Forte'},settings.kneePain??'') + '</select></div></div></section>' +
+      '<select id="muay-today-knee" data-recovery-field="kneePain">' + select({'':'Não informado','0':'0 · Sem dor','1':'1 · Mínima','2':'2 · Leve','3':'3 · Moderada','4':'4 · Importante','5':'5+ · Forte'},settings.kneePain??'') + '</select></div></div></section>' +
       (muay.draft ? renderEditor(muay.draft) :
         '<section class="card"><h2 class="section-title">Como você treinou?</h2><p class="small muted">' +
         'Registre a sessão depois de realizá-la, sem criar treinos fictícios.</p>' +
