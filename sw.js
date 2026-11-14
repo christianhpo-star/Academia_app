@@ -1,8 +1,8 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v16-20261114-muay-recovery3-catalog';
+const CACHE = 'forja-shell-v17-20261114-quick-checkin4-catalog';
 const APP_FILES = [
-  './', './index.html', './styles.css?v=20261114-muay-recovery3', './app.js?v=20261114-muay-recovery3', './data.js?v=20261114-muay-recovery3',
-  './engine.js?v=20261114-muay-recovery3', './muay.js?v=20261114-muay-recovery3', './calendar.js?v=20261114-muay-recovery3', './flex.js?v=20261114-muay-recovery3', './dose.js?v=20261114-muay-recovery3', './focus.js?v=20261114-muay-recovery3', './catalog-advice.js?v=20261114-muay-recovery3', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=20261114-quick-checkin4', './app.js?v=20261114-quick-checkin4', './data.js?v=20261114-quick-checkin4',
+  './engine.js?v=20261114-quick-checkin4', './muay.js?v=20261114-quick-checkin4', './calendar.js?v=20261114-quick-checkin4', './flex.js?v=20261114-quick-checkin4', './dose.js?v=20261114-quick-checkin4', './focus.js?v=20261114-quick-checkin4', './catalog-advice.js?v=20261114-quick-checkin4', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
