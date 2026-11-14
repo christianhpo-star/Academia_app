@@ -403,3 +403,23 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-energy button[aria-pressed="true"]{background:#32543a;border-color:#bbeb8d;color:#f1ffe7}
 .catalog-energy p{margin:0;line-height:1.55}
 @media(max-width:360px){.catalog-mode-switch{grid-template-columns:1fr}}
+
+
+/* Muay Thai v2: differentiated training stimulus and next-session guidance. */
+.muay-readiness{display:grid;gap:10px;margin:14px 0 16px;border-left:3px solid #7aaede;background:#1a2b3a}
+.muay-readiness h2{margin:0;font-size:18px;line-height:1.35;overflow-wrap:anywhere}
+.muay-readiness p:not(.section-eyebrow){font-size:13px;line-height:1.6;margin:0;color:#dbe7ef}
+.muay-readiness small{font-size:11px;color:#b8cad7;line-height:1.5}
+.muay-readiness-rest{border-left-color:#eeb28c}
+.muay-readiness-light{border-left-color:#d9cc84}
+.muay-readiness-normal{border-left-color:#a9de93}
+.muay-today-check{margin-bottom:15px}
+.muay-today-check .field-row{align-items:start}
+.muay-activity{padding:16px;border-left:3px solid #678ca2}
+.muay-activity .row-between h3{font-size:14px}
+.muay-activity .muay-volume{margin-top:13px}
+.muay-activity .field-help{margin-top:8px;line-height:1.5}
+.muay-presets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.muay-presets button{width:100%;min-width:0;min-height:46px;line-height:1.35;text-align:left;justify-content:flex-start;padding:10px 12px}
+@media(min-width:720px){.muay-presets{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:360px){.muay-presets{grid-template-columns:1fr}.muay-today-check .field-row{grid-template-columns:1fr}}
