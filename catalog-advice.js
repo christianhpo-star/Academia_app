@@ -29,7 +29,7 @@
   function extraOptions({catalogue,draft,dose,analysis}) {
     if(draft?.energy!=='leve')return {recommendations:[],message:'Sinalize que está com energia sobrando para avaliar acréscimos.'};
     if(draft?.extraChoice)return {recommendations:[],message:'Você já escolheu um acréscimo nesta sessão. Não será oferecido outro automaticamente.'};
-    const eligible=analysis?.candidates||[];
+    const eligible=(analysis?.candidates||[]).slice(0,1);
     if(!eligible.length)return {recommendations:[],message:'Ainda não há histórico, execução, RIR e recuperação suficientes para sugerir volume adicional. Continue com a ficha planejada.'};
     const suggestions=[];
     for(const candidate of eligible){
@@ -37,7 +37,6 @@
       const source=draft.entries?.[candidate.exerciseId];
       if(!profile || !complete(source,dose))continue;
       const muscle=candidate.muscleId;
-      const base=draft.entries?.[candidate.exerciseId];
       suggestions.push({
         id:candidate.exerciseId,sourceId:candidate.exerciseId,name:candidate.exercise,
         group:draft.planId,muscle:candidate.muscle,equipment:'Mesmo equipamento',
