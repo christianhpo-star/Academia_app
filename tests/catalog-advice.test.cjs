@@ -26,6 +26,17 @@ test('ficha A gera até três alternativas relacionadas à musculatura da ficha'
  assert.equal(result.recommendations.some(x=>x.group==='C'),false);
  assert.match(result.message,/alternativas/);
 });
+test('supino canadense aparece como alternativa de peito sem alterar o treino',()=>{
+  const draft={planId:'B',entries:{'supino-halteres':row('supino-halteres')}};
+  const original=structuredClone(draft);
+  const suggestions=run(draft).recommendations;
+  const candidate=suggestions.find(x=>x.id==='supino-canadense');
+  assert.ok(candidate,'recomendar o supino canadense como variação');
+  assert.equal(candidate.kind,'variation');
+  assert.equal(candidate.referenceId,'supino-halteres');
+  assert.equal(candidate.group,'B');
+  assert.deepEqual(draft,original);
+});
 test('prioriza uma substituição do exercício removido e explica o movimento',()=>{
  const draft={planId:'C',entries:{},skipped:[{id:'leg-press',reason:'equipamento'}]};
  const result=run(draft);
