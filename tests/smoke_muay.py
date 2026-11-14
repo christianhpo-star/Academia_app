@@ -33,11 +33,20 @@ with sync_playwright() as p:
     page.on('pageerror',lambda err:errors.append(str(err)))
     page.get_by_role('button',name='Registrar Muay Thai').click()
     page.get_by_role('button',name='Treino em casa').click()
+    assert page.locator('.muay-readiness').count()==1
+    page.get_by_role('button',name='+ 50 chutes por perna').click()
+    assert page.locator('[data-muay-prop="category"]').first.input_value()=='exhaustion'
+    assert page.locator('[data-muay-prop="side"]').first.input_value()=='each'
+    assert page.locator('[data-muay-prop="quantity"]').first.input_value()=='50'
+    page.get_by_role('button',name='+ Jab + direto + chute').click()
+    assert page.locator('[data-muay-prop="category"]').nth(1).input_value()=='combination'
+    assert page.locator('[data-muay-prop="unit"]').nth(1).input_value()=='min'
+    assert page.locator('[data-muay-prop="quantity"]').nth(1).input_value()=='3'
     page.get_by_role('button',name='+ Polichinelos').click()
-    name=page.locator('[data-muay-prop="name"]').first
+    name=page.locator('[data-muay-prop="name"]').last
     assert name.input_value()=='Polichinelos'
-    page.locator('[data-muay-prop="sets"]').first.fill('3')
-    page.locator('[data-muay-prop="quantity"]').first.fill('20')
+    page.locator('[data-muay-prop="sets"]').last.fill('3')
+    page.locator('[data-muay-prop="quantity"]').last.fill('20')
     page.locator('[data-muay-field="duration"]').fill('35')
     page.locator('[data-muay-field="intensity"]').select_option('7')
     shots=ROOT/'screenshots'
@@ -50,17 +59,27 @@ with sync_playwright() as p:
     snap=page.evaluate('structuredClone(window.__testStorage)')
     page.close()
     page=open_app(ctx,snap)
-    assert page.locator('[data-muay-prop="quantity"]').first.input_value()=='20'
+    assert page.locator('[data-muay-prop="quantity"]').last.input_value()=='20'
+    assert page.locator('[data-muay-prop="quantity"]').first.input_value()=='50'
+    assert page.locator('[data-muay-prop="side"]').first.input_value()=='each'
     assert page.locator('[data-muay-field="duration"]').input_value()=='35'
     page.get_by_role('button',name='Salvar treino').click()
     assert 'Polichinelos' in page.locator('#screen').inner_text()
+    assert '50 repetições por lado' in page.locator('#screen').inner_text()
+    assert '3 minutos' in page.locator('#screen').inner_text()
+
     snap=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
     assert len(snap['muay']['sessions'])==1 and snap['sessions']==[]
     assert snap['muay']['sessions'][0]['place']=='casa'
+    assert snap['muay']['sessions'][0]['activities'][0]['side']=='each'
+    assert snap['muay']['sessions'][0]['activities'][1]['category']=='combination'
+    page.get_by_role('button',name='Início',exact=True).click()
+    assert page.locator('.muay-readiness').count()==1
+    page.get_by_role('button',name='Histórico',exact=True).click()
     page.screenshot(path=str(shots/'muay-history-390.png'),full_page=True)
     page.locator('[data-action="muay-edit"]').click()
-    assert page.locator('[data-muay-prop="quantity"]').first.input_value()=='20'
-    page.locator('[data-muay-prop="quantity"]').first.fill('25')
+    assert page.locator('[data-muay-prop="quantity"]').last.input_value()=='20'
+    page.locator('[data-muay-prop="quantity"]').last.fill('25')
     page.get_by_role('button',name='Salvar treino').click()
     assert len(page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"]).muay.sessions'))==1
     page.set_viewport_size({'width':320,'height':740})
