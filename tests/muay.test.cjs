@@ -88,7 +88,7 @@ test('sugestão pós Muay distingue recuperação, técnica leve e ausência de 
  const dayAfter='2026-11-03';
  const medium=M.readiness([session],dayAfter,{fatigue:'normal',kneePain:''});
  assert.equal(medium.level,'light');
- assert.match(medium.note,/técnica controlada/i);
+ assert.match(medium.note,/técnica leve de braços/i);
  const high={...session,intensity:9,fatigue:'alta'};
  assert.equal(M.readiness([high],dayAfter).level,'rest');
  const knee={...session,kneePain:3};
