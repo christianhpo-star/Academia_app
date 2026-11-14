@@ -178,7 +178,22 @@
   const currentExercises = id => state.exercises.filter(x=>x.group===id && x.active);
   const history = id => E.historyOf(state.sessions,id);
   const maxKneePain = () => state.settings.kneePain === '' ? null : Number(state.settings.kneePain);
-  const getNext = () => E.nextWorkout(state.sessions,state.settings.fatigue,maxKneePain(),DATA.rotation);
+  const getNext = () => {
+    const suggested=E.nextWorkout(state.sessions,state.settings.fatigue,maxKneePain(),DATA.rotation);
+    const muay=M.readiness(state.muay.sessions,today(),state.settings);
+    if(muay.activities && muay.days<=1 && muay.level==='rest' && !suggested.rest)
+      return {...suggested,id:null,rest:true,modified:true,
+        reason:'Recuperação recomendada após Muay Thai recente: '+muay.note};
+    if(muay.activities && muay.days<=1 && muay.level==='light' &&
+       suggested.id && ['C','D'].includes(suggested.id)){
+      const upper=suggested.pending.find(id=>['A','B'].includes(id));
+      if(upper)return {...suggested,id:upper,rest:false,modified:true,
+        reason:'Muay Thai recente com esforço significativo: priorize superiores se estiver recuperado. '+muay.note};
+      return {...suggested,id:null,rest:true,modified:true,
+        reason:'Pernas foram exigidas recentemente no Muay Thai: '+muay.note};
+    }
+    return suggested;
+  };
   const latestSessions = () => [...state.sessions].sort((a,b)=>b.timestamp.localeCompare(a.timestamp));
   function dueKnee() {
     return latestSessions().filter(s => s.kneeNextDay == null &&
