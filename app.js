@@ -885,8 +885,46 @@
       if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
       render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
     }
-    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;render();return;}
+    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;ui.catalogMode='replacement';render();return;}
+    if(action==='catalog-mode'){
+      if(!ui.draft||!ui.catalogOpen||!['replacement','extra'].includes(btn.dataset.mode))return;
+      ui.catalogMode=btn.dataset.mode;ui.catalogAll=false;render();return;
+    }
+    if(action==='catalog-energy'){
+      if(!ui.draft||!ui.catalogOpen||ui.catalogMode!=='extra')return;
+      const previous=ui.draft.energy;
+      ui.draft.energy=previous==='leve'?'normal':'leve';
+      if(!persistDraft()){ui.draft.energy=previous;return notify('Não foi possível salvar a energia da sessão.');}
+      render();return;
+    }
     if(action==='catalog-show-all'){if(!ui.draft||!ui.catalogOpen)return;ui.catalogAll=!ui.catalogAll;render();return;}
+    if(action==='catalog-extra-add'){
+      if(!ui.draft||ui.catalogMode!=='extra'||ui.draft.extraChoice)return;
+      const analysis=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+        exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
+      const options=F.options(state.exercises,ui.draft);
+      const suggested=ADVICE.suggest({options,draft:ui.draft,exercises:state.exercises,
+        strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+        settings:state.settings,today:today(),dose:DOSE,mode:'extra',analysis});
+      if(!suggested.recommendations.some(item=>item.kind==='extra-exercise'&&
+          item.id===btn.dataset.ex&&item.sourceId===btn.dataset.source))
+        return notify('A recomendação mudou. Revise sua execução e recuperação.');
+      const id=btn.dataset.ex,found=F.prepareCatalog(id,state.exercises);
+      if(!found||found.isNew&&state.exercises.length>=200)return notify('Exercício indisponível no catálogo.');
+      if(!F.addToDraft(ui.draft,id,found.exercise,{
+        id,sets:[{load:'',reps:'',rir:'',warmup:false}],pain:''
+      }))return notify('Exercício já incluído ou limite alcançado.');
+      if(found.isNew){
+        state.exercises.push(found.exercise);
+        if(!save()){state.exercises.pop();delete ui.draft.entries[id];
+          ui.draft.addedIds=ui.draft.addedIds.filter(x=>x!==id);return;}
+      }
+      ui.draft.extraChoice={kind:'exercise',id,sourceId:btn.dataset.source};
+      if(!persistDraft()){delete ui.draft.extraChoice;delete ui.draft.entries[id];
+        ui.draft.addedIds=ui.draft.addedIds.filter(x=>x!==id);
+        return notify('Não foi possível salvar o rascunho.');}
+      ui.catalogOpen=false;render();notify('Exercício opcional adicionado com uma série em branco.');return;
+    }
     if(action==='flex-add'){
       const draft=ui.draft,id=btn.dataset.ex;if(!draft)return;
       const found=F.prepareCatalog(id,state.exercises);
@@ -902,8 +940,10 @@
       ui.catalogOpen=false;render();notify('Exercício adicionado apenas ao treino do dia.');return;
     }
     if(action==='flex-withdraw'){
+      const choice=ui.draft?.extraChoice;
       const result=F.withdraw(ui.draft,btn.dataset.ex);
       if(result.error)return notify(result.error);
+      if(choice?.kind==='exercise'&&choice.id===btn.dataset.ex)delete ui.draft.extraChoice;
       if(!persistDraft())return notify('Não foi possível salvar a alteração.');
       render();return;
     }
@@ -913,7 +953,7 @@
       render();return;
     }
     if(action==='dose-add-one'){
-      if(!ui.draft)return;
+      if(!ui.draft||ui.draft.extraChoice)return;
       const ex=exerciseFor(btn.dataset.ex),en=ui.draft.entries[btn.dataset.ex];
       if(!ex||!en||en.sets.length>=12)return notify('Não é possível adicionar outra série neste exercício.');
       const decision=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
@@ -921,7 +961,8 @@
       if(!decision.candidates.some(candidate=>candidate.exerciseId===ex.id))
         return notify('A sugestão já não se aplica aos dados atuais da sessão.');
       en.sets.push({load:'',reps:'',rir:'',warmup:false});
-      if(!persistDraft()){en.sets.pop();return notify('Não foi possível salvar a nova série.');}
+      ui.draft.extraChoice={kind:'set',id:ex.id};
+      if(!persistDraft()){en.sets.pop();delete ui.draft.extraChoice;return notify('Não foi possível salvar a nova série.');}
       render();notify('Série opcional adicionada em branco. Só contará após ser realizada.');return;
     }
     if(action==='calendar-shift'){
@@ -993,7 +1034,12 @@
     else if(action==='select-plan') {ui.plan=btn.dataset.plan;render();}
     else if(action==='start') startWorkout(btn.dataset.plan);
     else if(action==='add-set') {const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length<12){en.sets.push({load:'',reps:'',rir:'',warmup:false});persistDraft();render();}}
-    else if(action==='remove-set'){const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length>1){en.sets.pop();persistDraft();render();}}
+    else if(action==='remove-set'){const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length>1){
+      en.sets.pop();
+      if(ui.draft.extraChoice?.kind==='set'&&ui.draft.extraChoice.id===btn.dataset.ex &&
+        en.sets.length===Number(exerciseFor(btn.dataset.ex)?.sets))delete ui.draft.extraChoice;
+      persistDraft();render();
+    }}
     else if(action==='toggle-warmup'){const set=ui.draft?.entries[btn.dataset.ex]?.sets[Number(btn.dataset.index)];if(set){set.warmup=!set.warmup;persistDraft();render();}}
     else if(action==='apply-reco'){
       const ex=exerciseFor(btn.dataset.ex), en=ui.draft?.entries[btn.dataset.ex], rec=E.recommend(ex,state.sessions);
