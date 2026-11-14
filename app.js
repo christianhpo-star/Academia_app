@@ -801,7 +801,8 @@
       <div class="field mt-12"><label for="goal-date">Data-alvo</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
-      <div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar backup</button></div></section>
+      <div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
+        <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
       <section class="card"><h2 class="section-title">Sobre as sugestões</h2><p class="small muted">O app diferencia aquecimento e séries efetivas. Para sugerir aumento, exige duas sessões consistentes dentro da faixa de repetições e RIR informado. Em exercícios de joelho, também exige ausência de sintomas durante e no dia seguinte.</p>
       <div class="callout warn">Não é um diagnóstico. Dor recorrente abaixo da patela deve ser avaliada por profissional de saúde; uma joelheira não garante segurança para aumentar a carga.</div>
       <button class="danger-button full mt-12" data-action="reset">Apagar registros deste aparelho</button></section>
@@ -921,20 +922,60 @@
     download(`forja-series-${today()}.csv`,'\ufeff'+rows.map(row=>row.map(csvSafe).join(';')).join('\r\n'),'text/csv;charset=utf-8');
     notify('Planilha CSV exportada.');
   }
+  // Safe migration of a backup into an already used phone. Same IDs in the
+  // phone take priority, so an older backup cannot overwrite later edits.
+  function mergeImportedHistory(current,incoming) {
+    const unionById=(left,right)=>{
+      const result=[...left], ids=new Set(left.map(item=>item.id));
+      for(const item of right)if(!ids.has(item.id)){result.push(item);ids.add(item.id);}
+      return result;
+    };
+    const existingDates=new Set(current.weights.map(item=>item.date));
+    const existingWeightIds=new Set(current.weights.map(item=>item.id));
+    const newWeights=incoming.weights.filter(item=>!existingDates.has(item.date)&&!existingWeightIds.has(item.id));
+    return {
+      ...incoming,...current,
+      settings:current.settings,
+      referenceDefaultsVersion:Math.max(current.referenceDefaultsVersion||0,incoming.referenceDefaultsVersion||0),
+      weights:[...current.weights,...newWeights],
+      exercises:unionById(current.exercises,incoming.exercises),
+      sessions:unionById(current.sessions,incoming.sessions),
+      muay:{...incoming.muay,...current.muay,
+        sessions:unionById(current.muay.sessions,incoming.muay.sessions),
+        draft:current.muay.draft||incoming.muay.draft||null},
+      migrationAudit:incoming.migrationAudit||current.migrationAudit,
+    };
+  }
   async function importJSON(file) {
-    if(!file) return;
+    if(!file)return;
     if(file.size>5*1024*1024)return notify('Arquivo muito grande (limite de 5 MB).');
     try{
       const parsed=JSON.parse(await file.text());
       if(!validState(parsed))throw new Error('Estrutura incompatível');
       M.ensureArchive(parsed);
       if(!M.validArchive(parsed.muay))throw new Error('Histórico de Muay Thai inválido');
-      if(!confirm('Importar este backup substitui os registros salvos neste aparelho. Continuar?')) return;
+      const importedIds=new Set(parsed.exercises.map(ex=>ex.id));
+      if(parsed.sessions.some(session=>session.entries.some(entry=>!importedIds.has(entry.id))))
+        throw new Error('Treinos importados referenciam exercícios ausentes.');
+      const existing=state.sessions.length+state.muay.sessions.length+
+        state.weights.filter(item=>!item.initial).length;
+      const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft);
+      const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
+        'carregados neste aparelho';
+      const counts=parsed.sessions.length+' musculação, '+parsed.muay.sessions.length+
+        ' Muay Thai e '+parsed.weights.length+' pesagem(ns)';
+      if(!confirm('Importar '+counts+'? Os registros serão '+action+'. '+
+        'A FORJA preserva as informações legadas sem completar dados antigos. '+
+        'Se houver treinos novos no aparelho, recomendamos exportar um backup antes.'))return;
       const oldState=state;
-      state=parsed;
-      if (!save()) {state=oldState;return notify('Importação não concluída: falha ao salvar o histórico.');}
-      clearDraft();muayMode=false;ui.editor=null;ui.tab='home';render();notify('Backup importado com sucesso.');
-    }catch(err){notify('Não foi possível importar: verifique se é um backup FORJA válido.');}
+      state=hasCurrent?mergeImportedHistory(state,parsed):parsed;
+      if(!validState(state)||!M.validArchive(state.muay)){state=oldState;throw new Error('Falha ao validar estado mesclado.');}
+      if(!save()){state=oldState;return notify('Importação não concluída. Seu histórico anterior foi mantido.');}
+      if(!hasCurrent)clearDraft();
+      muayMode=false;ui.editor=null;ui.tab='home';render();
+      notify(hasCurrent?'Backup mesclado. Dados anteriores preservados.':'Backup importado com sucesso.');
+    }catch(err){console.warn('Importação não concluída',err);
+      notify('Não foi possível importar: verifique o backup FORJA e os registros informados.');}
     document.getElementById('import-file').value='';
   }
   function handleAction(btn) {
