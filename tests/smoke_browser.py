@@ -23,7 +23,8 @@ with sync_playwright() as p:
     for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']:
         page.add_script_tag(path=str(root/js))
     page.wait_for_selector('.home-primary')
-    assert '82' in page.locator('#screen').inner_text()
+    assert 'Seu próximo passo.' in page.locator('#screen').inner_text()
+    assert page.locator('.hero').count()==0
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     screenshots=root/'screenshots';screenshots.mkdir(exist_ok=True)
     page.screenshot(path=str(screenshots/'home.png'),full_page=True)
