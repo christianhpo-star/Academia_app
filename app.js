@@ -492,8 +492,9 @@
           const existing=known.get(ex.id);
           const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
           const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
+          const searchable=[ex.name,ex.muscle,ex.equipment].join(' ').toLocaleLowerCase('pt-BR');
           return `<article class="catalog-browser-item" data-catalog-item
-                   data-search="${esc([ex.name,ex.muscle,ex.equipment].join(' ').toLocaleLowerCase('pt-BR'))}">
+                   data-search="${esc(searchable)}" ${searchable.includes(term)?'':'hidden'}>
             <div class="catalog-browser-header">
               <span class="catalog-group-code">BLOCO ${esc(ex.group)}</span>
               <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
