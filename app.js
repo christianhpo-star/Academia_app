@@ -1314,6 +1314,9 @@
       }
     }
   }
+  document.querySelector('.top-settings')?.addEventListener('click',()=>{
+    ui.editor=null;ui.tab='settings';render();window.scrollTo(0,0);
+  });
   document.getElementById('nav').addEventListener('click',event=>{
     const btn=event.target.closest('[data-tab]');if(!btn)return;
     ui.editor=null;ui.tab=btn.dataset.tab;render();window.scrollTo(0,0);
