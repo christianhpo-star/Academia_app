@@ -5,6 +5,8 @@ Requires Playwright Python and Chromium. Browser navigation is not required.
 A fresh browser page is created to simulate a reload, seeded with the saved storage snapshot.
 """
 import os
+import json
+import copy
 import re
 import shutil
 from pathlib import Path
@@ -150,6 +152,37 @@ with sync_playwright() as p:
     assert 'Treino recuperado após interrupção.' in recovered.locator('#screen').inner_text()
     assert recovered.locator('[data-exercise="supino-halteres"] [data-field="reps"]').nth(1).input_value() == '10'
     recovered.close()
+    # Synthetic private-agnostic import: dedup by stable ID; never replace the phone's sessions.
+    original = json.loads(storage_snapshot(page)['forja.academia.v1'])
+    incoming = copy.deepcopy(original)
+    inherited = copy.deepcopy(original['sessions'][0])
+    inherited['id'] = 'synthetic-old-session'
+    inherited['day'] = '2026-10-30'
+    inherited['timestamp'] = '2026-10-30T13:00:00.000Z'
+    incoming['sessions'].append(inherited)
+    incoming['migrationAudit'] = {'schema':'FORJA v1 compatible / UX7'}
+    page.get_by_role('button', name='Ajustes', exact=True).click()
+    page.on('dialog', lambda dialog: dialog.accept())
+    page.locator('#import-file').set_input_files({
+        'name':'forja-test-merge.json',
+        'mimeType':'application/json',
+        'buffer':json.dumps(incoming,ensure_ascii=False).encode('utf-8'),
+    })
+    merged = json.loads(storage_snapshot(page)['forja.academia.v1'])
+    assert len(merged['sessions']) == len(original['sessions'])+1
+    assert len({x['id'] for x in merged['sessions']}) == len(merged['sessions'])
+    assert merged['sessions'][0] == original['sessions'][0]
+    assert merged['migrationAudit']['schema'] == 'FORJA v1 compatible / UX7'
+    # Repeated import is idempotent: no duplicated series, sessions or weight records.
+    page.get_by_role('button', name='Ajustes', exact=True).click()
+    page.locator('#import-file').set_input_files({
+        'name':'forja-test-merge.json',
+        'mimeType':'application/json',
+        'buffer':json.dumps(incoming,ensure_ascii=False).encode('utf-8'),
+    })
+    again = json.loads(storage_snapshot(page)['forja.academia.v1'])
+    assert len(again['sessions']) == len(merged['sessions'])
+    assert len(again['weights']) == len(merged['weights'])
     assert errors == [], errors
-    print('PASS: autosave, simulated reload recovery, navigation, queue, set comparisons, warmup, discard and history')
+    print('PASS: autosave, interrupted draft recovery, history and safe idempotent backup merge')
     browser.close()
