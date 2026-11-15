@@ -26,6 +26,7 @@ jobs:
           node --check catalog-advice.js
           node --check body-measures.js
           node --check activity.js
+          node --check health-import.js
           node --check nutrition-goals.js
           node --check nutrition.js
           node --check nutrition-catalog.js
@@ -33,7 +34,7 @@ jobs:
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
+        run: node --test tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
@@ -54,6 +55,7 @@ jobs:
           python3 tests/smoke_catalog.py
           python3 tests/smoke_body.py
           python3 tests/smoke_activity.py
+          python3 tests/smoke_health.py
           python3 tests/smoke_history.py
       - name: Upload isolated PR source for diagnostics
         if: always() && github.event_name == 'pull_request'

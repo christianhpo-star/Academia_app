@@ -10,6 +10,7 @@
   const FOCUS = window.ForjaFocus;
   const BODY = window.ForjaBodyMeasures;
   const ACT = window.ForjaActivity;
+  const HEALTH = window.ForjaHealthImport;
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
   const NCAT = window.ForjaNutritionCatalog;
@@ -36,7 +37,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[], nutrition:NUTRITION.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[], nutrition:NUTRITION.archive(),
     };
   }
   function load() {
@@ -62,7 +63,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
-      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && NUTRITION.validArchive(value.nutrition) &&
+      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && HEALTH.validMonthlyList(value.healthMonthly) && HEALTH.validWeightReports(value.healthWeightReports) && NUTRITION.validArchive(value.nutrition) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -1017,6 +1018,37 @@
       <p class="small muted">Sugestões de carga só aparecem após duas sessões consistentes. Séries de aquecimento são excluídas da análise.</p>
       <div class="btnrow mt-16"><button class="primary" type="submit" style="flex:2">Salvar exercício</button><button class="ghost" type="button" data-action="exit-editor" style="flex:1">Voltar</button></div></form>`;
   }
+  function renderHealthSummary(){
+    const months=HEALTH.averages(state.healthMonthly||[]);
+    const rows=months.map(m=>'<div class="health-month-row"><strong>'+esc(m.month)+'</strong>'+
+      '<span>'+fmt(m.steps)+' passos · '+fmt(m.activityMinutes)+' min · '+fmt(m.activityKcal)+' kcal de atividade</span>'+
+      '<small>'+fmt(m.stepsPerCalendarDay)+' passos/dia no período · '+(m.complete?'mês completo':'mês parcial')+'</small></div>').join('');
+    const latest=(state.healthWeightReports||[]).slice().sort((a,b)=>b.date.localeCompare(a.date))[0];
+    return (months.length?'<p class="small muted">Totais observados; nunca divididos em dias individuais no histórico de atividade.</p>'+rows:
+      '<p class="small muted">Nenhum resumo do Samsung Health importado.</p>')+
+      (latest?'<p class="small mt-12">Peso informado em '+dateBR(latest.date)+': '+fmt(latest.weightKg)+' kg · IMC relatado '+fmt(latest.reportedBmi)+'.</p>':'')+
+      '<p class="small muted">Não usamos calorias de atividade como gasto total; um mês parcial não comprova redução de atividade. Registros são locais.</p>';
+  }
+  async function importHealthFile(file){
+    if(!file)return;
+    try{
+      if(file.size>1024*1024)throw new Error('Arquivo muito grande (limite de 1 MB).');
+      const data=JSON.parse(await file.text());
+      const result=HEALTH.apply(state,data,today());
+      if(result.error)throw new Error(result.error);
+      const c=result.changes;
+      const summary=c.monthly+' mês(es), '+c.daily+' dia(s) de passos, '+c.weightReports+
+        ' relatório(s) corporais e '+c.weights+' pesagem(ns) nova(s).';
+      if(!confirm('Importar estes dados do Samsung Health? '+summary+
+        ' Registros existentes têm prioridade. Resumos mensais não serão transformados em dados diários.'))return;
+      const previous=state;
+      state=result.next;
+      if(!validState(state)||!save()){state=previous;throw new Error('Falha de armazenamento. Histórico anterior preservado.');}
+      ui.tab='settings';render();
+      notify('Histórico Samsung Health importado. '+summary);
+    }catch(err){notify('Importação não concluída: '+err.message);}
+    finally{const input=document.getElementById('import-health-file');if(input)input.value='';}
+  }
   function renderSettings() {
     return `${headline('Preferências','Seus ajustes.','Dados no próprio aparelho. Sem login, mensalidade ou envio para servidores.')}
       <button class="secondary full mb-8" data-action="nutrition-goals">Perfil e metas de alimentação · altura e idade</button>
@@ -1025,7 +1057,9 @@
       <div class="field"><label for="target-weight">Meta (kg)</label><input id="target-weight" name="targetWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.targetWeight}" required /></div></div>
       <div class="field mt-12"><label for="goal-date">Data-alvo</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
+      <section class="card"><h2 class="section-title">Samsung Health · histórico importado</h2>${renderHealthSummary()}</section>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
+      <button class="secondary full mt-12" data-action="import-health">Importar histórico do Samsung Health (JSON)</button><p class="small muted">Importe um arquivo de transcrição dos seus registros. Os totais mensais ficam separados dos dias observados. Importação local, sem substituir treinos, refeições ou pesagens existentes.</p>
       <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, passos diários, alimentação, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
         <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
       <section class="card"><h2 class="section-title">Sobre as sugestões</h2><p class="small muted">O app diferencia aquecimento e séries efetivas. Para sugerir aumento, exige duas sessões consistentes dentro da faixa de repetições e RIR informado. Em exercícios de joelho, também exige ausência de sintomas durante e no dia seguinte.</p>
@@ -1151,12 +1185,15 @@
         'Estimativas alimentares de baixa confiança devem permanecer separadas de rótulos ou medidas observadas.',
         'Bioimpedância do Galaxy Watch é estimativa indireta; utilizar tendências, sem diagnóstico e sem cálculo automático de gasto.',
         'Passos diários informados manualmente são contagens observadas de dias específicos; dias sem registro não equivalem a zero.',
+        'healthMonthly contém somatórios mensais do Samsung Health, que não equivalem a séries de dados diários e não devem alimentar médias de passos de dias não observados.',
+        'healthWeightReports conserva o IMC relatado pelo Samsung Health como indicador calculado, distinto de medidas de gordura corporal.',
+        'Meses parciais (complete:false) não podem ser comparados diretamente a meses completos sem ressalvas.',
         'Sugestões de fator de atividade são heurísticas categóricas, não PAL medido e não somam calorias de exercícios.',
         'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
       ],
       counts:{strengthSessions:state.sessions.length,muaySessions:state.muay.sessions.length,
         weightRecords:state.weights.length,bodyMeasurements:(state.bodyMeasurements||[]).length,
-        watchBioimpedance:(state.bioimpedance||[]).length,stepDays:(state.activitySteps||[]).length,meals:(state.nutrition?.entries||[]).length},
+        watchBioimpedance:(state.bioimpedance||[]).length,stepDays:(state.activitySteps||[]).length,healthMonths:(state.healthMonthly||[]).length,reportedWeightDays:(state.healthWeightReports||[]).length,meals:(state.nutrition?.entries||[]).length},
       state:copy(state),strengthDraft,
     };
     download('forja-todos-dados-para-ia-'+today()+'.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8');
@@ -1194,6 +1231,8 @@
       bodyMeasurements:BODY.merge(current.bodyMeasurements,incoming.bodyMeasurements),
       bioimpedance:BODY.mergeBio(current.bioimpedance,incoming.bioimpedance),
       activitySteps:ACT.mergeSteps(current.activitySteps,incoming.activitySteps),
+      healthMonthly:HEALTH.mergeMonthly(current.healthMonthly,incoming.healthMonthly),
+      healthWeightReports:HEALTH.mergeWeightReports(current.healthWeightReports,incoming.healthWeightReports),
       nutrition:NUTRITION.merge(current.nutrition,incoming.nutrition),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
@@ -1216,7 +1255,7 @@
       const existing=state.sessions.length+state.muay.sessions.length+
         state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length+
         (state.nutrition?.entries||[]).length+(state.nutrition?.foods||[]).length+
-        (state.nutrition?.mealTemplates||[]).length+(state.bioimpedance||[]).length+(state.activitySteps||[]).length;
+        (state.nutrition?.mealTemplates||[]).length+(state.bioimpedance||[]).length+(state.activitySteps||[]).length+(state.healthMonthly||[]).length+(state.healthWeightReports||[]).length;
       const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft)||Boolean(state.nutrition.draft)||Boolean(state.nutrition.settings.profile)||(state.nutrition.settings.targets||[]).length>0;
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
@@ -1557,6 +1596,7 @@
     else if(action==='save-knee')saveKnee(btn.dataset.id);
     else if(action==='export-json')exportJSON();
     else if(action==='export-ai')exportForAI();
+    else if(action==='import-health')document.getElementById('import-health-file').click();
     else if(action==='export-csv')exportCSV();
     else if(action==='import-json')document.getElementById('import-file').click();
     else if(action==='reset'){
@@ -1665,6 +1705,7 @@
 
   });
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
+  document.getElementById('import-health-file').addEventListener('change',event=>importHealthFile(event.target.files?.[0]));
   render();
   if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
     // Avoid a cached service-worker script after a new GitHub Pages release.
@@ -1676,7 +1717,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ux13',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ux14',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
