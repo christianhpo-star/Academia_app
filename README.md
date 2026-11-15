@@ -1,6 +1,14 @@
 # FORJA
 
 
+## Açaís Doce Cascão — referência estimada
+
+- Foram incluídos **Açaí trufado Branco 500 ml** e **Açaí trufado Preto 500 ml**, além dos adicionais opcionais de creme Ninho e creme de avelã. Os itens têm estimativas de baixa confiança, nunca rótulos oficiais.
+- **Branco:** ≈814 kcal, faixa ilustrativa 615–1041 kcal; P ≈10 g, C ≈133 g, G ≈27 g por copo. **Preto:** ≈1003 kcal, faixa ilustrativa 741–1292 kcal; P ≈9 g, C ≈134 g, G ≈47 g.
+- Meio copo usa proporcionalidade com a ressalva das camadas desiguais. Uma porção adicional só é registrada se selecionada pelo usuário.
+- O histórico armazena o cálculo e a incerteza junto à entrada; o painel mostra estimativas separadamente dos valores nutricionais com fonte, sem sugerir compensação por treino ou atribuir consumo automaticamente ao usuário ou sua esposa.
+- Metodologia, ingredientes simulados e limites: [docs/acai-estimates.md](docs/acai-estimates.md).
+
 ## Catálogo alimentar rápido (etapa 3, validação pendente)
 
 O módulo de alimentação permite buscar alimentos sem rede, escolher porções, registrar produtos embalados, e salvar refeições registradas como favoritas. As fotos fornecidas pelo usuário permitiram identificar atalhos de exemplo para Itambé morango zero lactose (200 g, 52 kcal, 6 g de proteína, 7 g de carboidratos e 0 g de gordura) e Piracanjuba PRO FORCE Banoffee (250 ml, 170 kcal, 23 g de proteína, 17 g de carboidratos e 1 g de gordura). Os dados de 250 ml são calculados por embalagem, sem converter volume para gramas. A foto não contém garantia de equivalência a embalagens futuras; conferir sempre o rótulo. Whey Growth sem sabor/linha especificados permanece sem estimativa. Não há registro automático de consumo.
