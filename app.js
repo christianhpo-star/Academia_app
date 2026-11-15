@@ -126,7 +126,7 @@
     catalogGroup:'all',catalogSearch:'',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
-    bodyOpen:false,bodyView:'current',bodyEditDate:null,
+    bodyOpen:false,bodyView:'current',bodyEditDate:null,homeRecoveryOpen:false,
   };
   let toastTimeout;
   function draftStatusText() {
@@ -454,7 +454,7 @@
       ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
         <p>Há ${pending.length} treino(s) aguardando registro após 24h.
         <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
-      <details class="home-recovery" ${!check?'':''}>
+      <details class="home-recovery" ${ui.homeRecoveryOpen?'open':''}>
         <summary><span><strong>Como está sua recuperação hoje?</strong><small>${esc(checkLabel)}</small></span>
           <span class="home-recovery-action">${check?'Atualizar':'Informar'} <span aria-hidden="true">⌄</span></span></summary>
         <div class="home-recovery-body">${renderRecoveryCheckin()}</div>
@@ -1162,6 +1162,7 @@
     }
     if(action==='recovery-energy'){
       if(!['boa','normal','baixa'].includes(btn.dataset.value))return;
+      ui.homeRecoveryOpen=true;
       const existing=checkin();
       state.settings.recoveryCheckin={
         day:today(),energy:btn.dataset.value,fatigue:existing?.fatigue||'normal',
@@ -1428,6 +1429,9 @@
     render();window.scrollTo(0,0);
   });
   const screen=document.getElementById('screen');
+  screen.addEventListener('toggle',event=>{
+    if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
+  },true);
   screen.addEventListener('click',event=>{
     const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
   });
@@ -1473,6 +1477,7 @@
     updateMuayField(event);
     const el=event.target;
     if(el.dataset.recoveryField){
+      ui.homeRecoveryOpen=true;
       const field=el.dataset.recoveryField;
       if(!['fatigue','kneePain'].includes(field))return;
       const value=el.value;
