@@ -70,7 +70,7 @@ with sync_playwright() as p:
       {'id':'body-2026-11-14','date':'2026-11-14','values':{'chest':150}},
       {'id':'body-2026-10-25','date':'2026-10-25','values':{'chest':98}}]
     page.locator('.top-settings').click()
-    page.on('dialog',lambda dlg:dlg.accept())
+    page.once('dialog',lambda dlg:dlg.accept())
     page.locator('#import-file').set_input_files({
       'name':'synthetic-body-backup.json','mimeType':'application/json',
       'buffer':json.dumps(incoming).encode('utf-8')})
@@ -78,6 +78,7 @@ with sync_playwright() as p:
     assert len(merged['bodyMeasurements'])==3
     assert next(x for x in merged['bodyMeasurements'] if x['date']=='2026-11-14')['values']['chest']==99.5
     page.locator('.top-settings').click()
+    page.once('dialog',lambda dlg:dlg.accept())
     page.locator('#import-file').set_input_files({
       'name':'synthetic-body-backup.json','mimeType':'application/json',
       'buffer':json.dumps(incoming).encode('utf-8')})
