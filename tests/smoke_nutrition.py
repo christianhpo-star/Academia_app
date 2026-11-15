@@ -102,6 +102,9 @@ with sync_playwright() as p:
     for width in [320,390,768]:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+        if width in (320,390):
+            assert page.evaluate("document.querySelector('.nd-meal').getBoundingClientRect().top < document.querySelector('.bottom-nav').getBoundingClientRect().top"),f'first meal below visible viewport at {width}px'
+            assert page.evaluate("[...document.querySelectorAll('#nav .nav-link span')].every(el => el.scrollWidth <= el.clientWidth)"),f'bottom nav label clipped at {width}px'
     page.set_viewport_size({'width':390,'height':844})
     (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots/nutrition-390.png'),full_page=True)
