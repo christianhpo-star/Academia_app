@@ -141,7 +141,7 @@ test('alimentos pesquisados aparecem primeiro no café sem depender de consumo p
 
 test('catálogo TACO cobre carnes, frituras e pratos brasileiros com fonte específica',()=>{
  const taco=C.foods.filter(f=>f.id.startsWith('taco:2011:'));
- assert.equal(taco.length,53);
+ assert.equal(taco.length,54);
  assert.equal(new Set(C.foods.map(f=>f.id)).size,C.foods.length);
  for(const f of taco) {
    assert.equal(N.validFood(f),true,f.id);
@@ -211,8 +211,8 @@ test('porções caseiras aproximadas não substituem peso escolhido; histórico 
 test('peso exato de 121 g e 121,5 g calcula nutrientes automaticamente sem arredondar a porções fixas',()=>{
  const beef=C.makeItem('taco:2011:346','custom',121,id);
  assert.equal(beef.unit,'g');assert.equal(beef.quantity,121);assert.equal(beef.grams,121);
- assert.equal(N.observedTotals([entry(beef)],'2026-11-14').totals.energyKcal,234.7);
- assert.equal(N.observedTotals([entry(beef)],'2026-11-14').totals.proteinG,43.4);
+ assert.ok(Math.abs(N.observedTotals([entry(beef)],'2026-11-14').totals.energyKcal-234.74)<0.001);
+ assert.ok(Math.abs(N.observedTotals([entry(beef)],'2026-11-14').totals.proteinG-43.439)<0.001);
  const pork=C.makeItem('taco:2011:429','custom',121.5,id);
  assert.equal(pork.grams,121.5);
  assert.equal(N.observedTotals([entry(pork)],'2026-11-14').totals.energyKcal,340.2);
