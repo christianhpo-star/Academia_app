@@ -342,11 +342,11 @@
     if(!['custom','customMl'].includes(portionId)&&!portion)return null;
     const liquid=!!food.nutrientsPerMl;
     const grams=liquid?null:portionId==='custom'?qty:(portion.grams==null?null:Math.round(qty*portion.grams*100)/100);
-    const volume=liquid?(portionId==='customMl'?qty:(portionId==='half'?food.portions[0].label:null)):null;
+    const mlPerPortion=liquid?Number(food.portions[0].label.split(' ')[0]):null;
     if(grams!==null && (grams<=0||grams>10000))return null;
     const item={
       id:makeId('item'),foodId:food.id,label:food.name,
-      quantity:liquid?(portionId==='customMl'?qty:portionId==='half'?(Number(food.portions[0].label.split(' ')[0])/2)*qty:portionId==='100ml'?100*qty:Number(food.portions[0].label.split(' ')[0])*qty):portionId==='custom'?grams:qty,
+      quantity:liquid?(portionId==='customMl'?qty:portionId==='half'?(mlPerPortion/2)*qty:portionId==='100ml'?100*qty:mlPerPortion*qty):portionId==='custom'?grams:qty,
       unit:liquid?'ml':portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
       ...(liquid?{nutrientsPerMl:{...food.nutrientsPerMl}}:{}),
