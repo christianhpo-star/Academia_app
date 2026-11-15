@@ -105,7 +105,7 @@ with sync_playwright() as p:
     assert half['items'][0]['estimate']['central']['energyKcal']==407.2
     assert half['items'][0]['nutrientsPer100g']['energyKcal'] is None
     assert half['items'][0]['grams'] is None
-    assert 'confiança baixa' in restored.locator('#screen').inner_text()
+    assert 'baixa confiança' in restored.locator('#screen').inner_text()
     restored.locator('[data-action="nutrition-pick"][data-food="local:doce-cascao-acai-trufado-preto-500ml"]').click()
     restored.locator('#nutrition-catalog-form button[type="submit"]').click()
     archive_whole=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
