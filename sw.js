@@ -1,8 +1,8 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v19-20261114-home-catalog6-catalog';
+const CACHE = 'forja-shell-v20-20261114-body9-catalog';
 const APP_FILES = [
-  './', './index.html', './styles.css?v=20261114-home-catalog6', './app.js?v=20261114-home-catalog6', './data.js?v=20261114-home-catalog6',
-  './engine.js?v=20261114-home-catalog6', './muay.js?v=20261114-home-catalog6', './calendar.js?v=20261114-home-catalog6', './flex.js?v=20261114-home-catalog6', './dose.js?v=20261114-home-catalog6', './focus.js?v=20261114-home-catalog6', './catalog-advice.js?v=20261114-home-catalog6', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=20261114-body9', './body-measures.js?v=20261114-body9', './app.js?v=20261114-body9', './data.js?v=20261114-body9',
+  './engine.js?v=20261114-body9', './muay.js?v=20261114-body9', './calendar.js?v=20261114-body9', './flex.js?v=20261114-body9', './dose.js?v=20261114-body9', './focus.js?v=20261114-body9', './catalog-advice.js?v=20261114-body9', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
