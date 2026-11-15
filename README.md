@@ -2,11 +2,13 @@
 
 ## Catálogo brasileiro ampliado — TACO/Unicamp (2026-11-15)
 
-- O catálogo offline ganhou **53 entradas da TACO 4ª edição (2011)**, incluindo cortes bovinos e suínos, batata frita, frango empanado à milanesa, peixe, ovo frito, arroz integral, feijão carioca, feijão tropeiro, feijoada, macarrão, pão francês, coxinha, pastel, salpicão, frutas e legumes.
+- O catálogo offline ganhou **54 entradas da TACO 4ª edição (2011)** (incluindo bolo pronto de chocolate), incluindo cortes bovinos e suínos, batata frita, frango empanado à milanesa, peixe, ovo frito, arroz integral, feijão carioca, feijão tropeiro, feijoada, macarrão, pão francês, coxinha, pastel, salpicão, frutas e legumes.
 - Cada alimento inclui **nome do preparo**, número da entrada na TACO, nutrientes por **100 g de parte comestível** e origem identificada. Valores não analisados permanecem **desconhecidos**; não são substituídos por zero.
 - **Porções em colheres, conchas, fatias, bifes e unidades são aproximações de UX**, não medidas oficiais da TACO. Confira o peso real quando possível; óleo, empanamento, corte, receita e restaurante alteram a composição.
 - A busca reconhece grafias com ou sem acentos, além de nomes comuns como “bife de boi”, “bife de porco” e “frango empanado”. A tela de almoço e jantar prioriza essas opções, sem presumir consumo.
 - Fonte: NEPA/Unicamp, **Tabela Brasileira de Composição de Alimentos (TACO), 4ª ed., 2011**. Reprodução com citação autorizada na publicação. [Documento oficial](https://nepa.unicamp.br/wp-content/uploads/sites/27/2023/10/taco_4_edicao_ampliada_e_revisada.pdf).
+- **Peso livre é a opção inicial** quando a composição é dada por 100 g: digite valores como 121 g ou 121,5 g e veja a prévia automática de calorias, proteínas, carboidratos e gorduras antes de salvar. Porções domésticas são atalhos opcionais. Produtos com valores apenas por embalagem continuam usando porções, sem presumir densidade.
+- **Doces:** bolo de chocolate simples TACO nº 16 (410 kcal/100 g), brigadeiro tradicional e brigadeiro com morango. Os dois brigadeiros são **estimativas de baixa confiança**, pois receita, cobertura e quantidade de morango variam; mantemos faixas e origem do cálculo, separadas dos rótulos. A receita com morango pressupõe 80% brigadeiro e 20% morango por peso, e não equivale necessariamente a bombom coberto.
 - **Não há mudança no formato do backup**, no histórico, nas metas pessoais ou na lógica dos treinos. Dados pessoais não estão no repositório.
 
 
