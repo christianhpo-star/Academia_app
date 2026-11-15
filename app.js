@@ -11,6 +11,7 @@
   const BODY = window.ForjaBodyMeasures;
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
+  const NCAT = window.ForjaNutritionCatalog;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -130,7 +131,7 @@
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,homeRecoveryOpen:false,
-    nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,
+    nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
   };
   let toastTimeout;
@@ -401,7 +402,7 @@
     const main = document.getElementById('screen');
     main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
-      ui.tab === 'progress' ? (ui.nutritionOpen ? NUI.render({archive:state.nutrition,date:today(),editId:ui.nutritionEditId,limit:ui.nutritionLimit}) : ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
+      ui.tab === 'progress' ? (ui.nutritionOpen ? NUI.render({archive:state.nutrition,date:today(),editId:ui.nutritionEditId,limit:ui.nutritionLimit,selectedFoodId:ui.nutritionPicked}) : ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
       const active=btn.dataset.tab===ui.tab;
       btn.classList.toggle('active',active);
@@ -1172,8 +1173,48 @@
     if(!save()){state.nutrition.entries=old;return notify('Não foi possível salvar. Os dados anteriores foram preservados.');}
     ui.nutritionEditId=null;render();notify(editing?'Refeição atualizada.':'Refeição salva neste aparelho.');
   }
+  function saveNutritionCatalog(form){
+    const fd=new FormData(form);
+    const foodId=ui.nutritionPicked;
+    const item=NCAT.makeItem(foodId,String(fd.get('portionId')||''),Number(fd.get('quantity')),NUI.newId);
+    const mealType=String(fd.get('mealType')||'snack');
+    if(!item||!NUTRITION.MEALS.includes(mealType))return notify('Selecione uma porção válida.');
+    const entry={id:NUI.newId('meal'),date:today(),mealType,time:null,notes:'',items:[item]};
+    if(!NUTRITION.validEntry(entry))return notify('Dados alimentares inválidos.');
+    state.nutrition.entries.push(entry);
+    if(!save()){state.nutrition.entries.pop();return notify('Não foi possível salvar. Histórico preservado.');}
+    ui.nutritionPicked=null;render();notify('Alimento registrado.');return;
+  }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='nutrition-pick'){
+      if(!NCAT.find(btn.dataset.food))return;
+      ui.nutritionPicked=btn.dataset.food;render();
+      document.querySelector('#nutrition-catalog-form')?.scrollIntoView({block:'nearest'});return;
+    }
+    if(action==='nutrition-save-favorite'){
+      const row=state.nutrition.entries.find(item=>item.id===btn.dataset.id);
+      if(!row||state.nutrition.mealTemplates.length>=300)return;
+      const fav=NCAT.makeFavorite(row,state.nutrition,'',NUI.newId);
+      if(!fav||state.nutrition.foods.length+fav.foodsToAdd.length>500)return notify('Esta refeição não pode ser salva como favorita.');
+      state.nutrition.foods.push(...fav.foodsToAdd);
+      state.nutrition.mealTemplates.push(fav.favorite);
+      if(!save()){
+        state.nutrition.mealTemplates.pop();
+        state.nutrition.foods.splice(state.nutrition.foods.length-fav.foodsToAdd.length,fav.foodsToAdd.length);
+        return notify('Não foi possível salvar o favorito.');
+      }
+      render();notify('Refeição salva como favorita.');return;
+    }
+    if(action==='nutrition-use-favorite'){
+      const fav=state.nutrition.mealTemplates.find(item=>item.id===btn.dataset.id);
+      if(!fav)return;
+      const entry=NCAT.fromFavorite(fav,today(),state.nutrition,NUI.newId);
+      if(!entry)return notify('Refeição favorita incompatível.');
+      state.nutrition.entries.push(entry);
+      if(!save()){state.nutrition.entries.pop();return notify('Não foi possível registrar o favorito.');}
+      render();notify('Refeição favorita registrada.');return;
+    }
     if(action==='nutrition-open'){
       ui.nutritionOpen=true;ui.bodyOpen=false;ui.nutritionEditId=null;ui.tab='progress';
       render();window.scrollTo(0,0);return;
@@ -1186,7 +1227,7 @@
     }
     if(action==='nutrition-cancel-edit'){ui.nutritionEditId=null;render();return;}
     if(action==='nutrition-edit'){
-      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1))return;
+      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1&&!row.items[0].nutrientsPerServing))return;
       ui.nutritionEditId=btn.dataset.id;render();
       document.querySelector('#nutrition-form')?.scrollIntoView({block:'start'});return;
     }
@@ -1559,6 +1600,12 @@
       const box=document.querySelector('.dose-card');
       if(box)box.outerHTML=renderDosePanel(true);
     }
+    if(event.target.id==='nutrition-search'){
+      const term=event.target.value.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+      document.querySelectorAll('[data-nutrition-name]').forEach(row=>{
+        row.hidden=!row.dataset.nutritionName.includes(term);
+      });
+    }
     if(event.target.id==='catalog-search'){
       ui.catalogSearch=event.target.value;
       filterCatalogDOM();
@@ -1608,6 +1655,7 @@
     else if(event.target.id==='exercise-form')saveExercise(event.target);
     else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
     else if(event.target.id==='nutrition-form')saveNutrition(event.target);
+    else if(event.target.id==='nutrition-catalog-form')saveNutritionCatalog(event.target);
   });
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   render();
@@ -1621,7 +1669,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-nutrition2',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-nutrition3',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

@@ -57,6 +57,7 @@
         !numberOk(item.quantity, 0.001, 10000) || !UNITS.includes(item.unit) ||
         !optionalNumber(item.grams, 0.001, 10000)) return false;
 
+    if (item.nutrientsPerServing !== undefined && !nutrientsOk(item.nutrientsPerServing)) return false;
     if (!withSnapshot) return idOk(item.foodId);
     if (!textOk(item.label) ||
         !(item.foodId === undefined || item.foodId === null || idOk(item.foodId)) ||
@@ -140,7 +141,13 @@
       for (const key of NUTRIENTS) {
         let total = 0, complete = true;
         for (const item of items) {
-          // Millilitres and household units do not imply a weight in grams.
+          // Verified per-package facts work for liquids without assuming millilitres equal grams.
+          if (item.nutrientsPerServing) {
+            const nutrient = item.nutrientsPerServing[key];
+            if (nutrient === null || item.unit !== 'portion') { complete = false; break; }
+            total += nutrient * item.quantity;
+            continue;
+          }
           const grams = item.unit === 'g' ? item.quantity : item.grams;
           const nutrient = item.nutrientsPer100g[key];
           if (grams == null || nutrient === null) { complete = false; break; }

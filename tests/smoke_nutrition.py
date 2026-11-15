@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition.js','nutrition-ui.js','app.js']
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
 
 def start(context,stored,errors):
     page=context.new_page()
@@ -72,6 +72,29 @@ with sync_playwright() as p:
     restored.locator('[data-action="nutrition-delete"]').first.click()
     final=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
     assert len(final['nutrition']['entries'])==1
+    # Packaged labels are captured per serving. 250 ml is not treated as 250 g.
+    restored.locator('[data-action="nutrition-pick"][data-food="photo:itambe-zero-morango-200g"]').click()
+    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
+    with_yogurt=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
+    y=next(row for row in with_yogurt['nutrition']['entries'] if row['items'][0]['foodId']=='photo:itambe-zero-morango-200g')
+    assert y['items'][0]['nutrientsPerServing']['energyKcal']==52
+    restored.locator('[data-action="nutrition-pick"][data-food="photo:piracanjuba-proforce-banoffee-250ml"]').click()
+    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
+    with_drink=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
+    drink=next(row for row in with_drink['nutrition']['entries'] if row['items'][0]['foodId']=='photo:piracanjuba-proforce-banoffee-250ml')
+    assert drink['items'][0]['grams'] is None
+    assert drink['items'][0]['nutrientsPerServing']['proteinG']==23
+    card=restored.locator('.nutrition-entry').filter(has=restored.locator('[data-action="nutrition-save-favorite"][data-id="'+drink['id']+'"]'))
+    card.locator('summary').click()
+    card.locator('[data-action="nutrition-save-favorite"]').click()
+    fav_state=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
+    assert len(fav_state['nutrition']['mealTemplates'])==1
+    restored.locator('[data-action="nutrition-use-favorite"]').first.click()
+    repeated=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
+    assert len(repeated['nutrition']['entries'])==4
+    assert sum(row['items'][0]['nutrientsPerServing']['proteinG']==23 for row in repeated['nutrition']['entries'] if row['items'][0].get('nutrientsPerServing'))==2
+    assert restored.evaluate('document.documentElement.scrollWidth<=innerWidth')
+
     assert errors==[],errors
     context.close();browser.close()
     print('PASS nutrition: quick log, repeat, edit, delete, reload, 320/390px and no invented macros')

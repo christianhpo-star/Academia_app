@@ -2,6 +2,7 @@
 (function installNutritionUI(root) {
   'use strict';
   const N = root.ForjaNutrition;
+  const CAT = root.ForjaNutritionCatalog;
   const escapeHTML = value => String(value ?? '').replace(/[&<>"']/g, char =>
     ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const labels = {breakfast:'Café da manhã',lunch:'Almoço',snack:'Lanche',dinner:'Jantar',other:'Outra refeição'};
@@ -12,10 +13,29 @@
     '<option value="'+escapeHTML(pair[0])+'"'+(pair[0]===current?' selected':'')+'>'+escapeHTML(pair[1])+'</option>').join('');
   const dateBR = value => /^\d{4}-\d{2}-\d{2}$/.test(value) ?
     value.slice(8,10)+'/'+value.slice(5,7)+'/'+value.slice(0,4) : 'Sem data';
-  function render({archive,date,editId=null,limit=3}) {
+  function render({archive,date,editId=null,limit=3,selectedFoodId=null}) {
     const rows=(archive?.entries||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
     const edit=rows.find(row=>row.id===editId && row.items.length===1)||null;
     const first=edit?.items[0], summary=N.observedTotals(archive.entries,date);
+    const selected=CAT.find(selectedFoodId);
+    const foodRows=CAT.foods.map(food=>
+      '<button type="button" class="nutrition-food" data-action="nutrition-pick" data-food="'+escapeHTML(food.id)+
+      '" data-nutrition-name="'+escapeHTML([food.name,...(food.aliases||[])].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())+'">'+
+      '<strong>'+escapeHTML(food.name)+'</strong><small>'+escapeHTML(food.category)+
+      (food.nutrientsPerServing?' · Dados por embalagem':' · Porção aproximada')+'</small></button>').join('');
+    const favoriteRows=(archive.mealTemplates||[]).slice().reverse().slice(0,8).map(favorite=>
+      '<button type="button" class="nutrition-food" data-action="nutrition-use-favorite" data-id="'+escapeHTML(favorite.id)+'">'+
+      '<strong>'+escapeHTML(favorite.name)+'</strong><small>Repetir refeição favorita</small></button>').join('');
+    const selectPortions=selected?selected.portions.map(portion=>
+      '<option value="'+escapeHTML(portion.id)+'">'+escapeHTML(portion.label)+'</option>').join(''):'';
+    const catalogForm=selected?'<form id="nutrition-catalog-form" class="mt-12">'+
+      '<strong>'+escapeHTML(selected.name)+'</strong><p class="small muted">'+escapeHTML(selected.note)+'</p>'+
+      '<div class="field"><label for="nutrition-portion">Porção</label><select name="portionId" id="nutrition-portion">'+selectPortions+'</select></div>'+
+      '<div class="field-row mt-12"><div class="field"><label for="nutrition-count">Quantidade de porções</label>'+
+      '<input id="nutrition-count" name="quantity" type="number" min="0.001" max="10000" step="any" value="1" required /></div>'+
+      '<div class="field"><label for="nutrition-meal-type">Refeição</label><select id="nutrition-meal-type" name="mealType">'+option(labels,'snack')+'</select></div></div>'+
+      '<button type="submit" class="primary mt-12">Registrar alimento</button></form>':
+      '<p class="small muted mt-12">Escolha um alimento para selecionar uma porção. Nenhum registro será criado automaticamente.</p>';
     const total=summary.totals;
     const metrics=nutrients.map(([key,label]) =>
       '<div class="kpi"><strong>'+ (total[key]===null?'—':fmt(total[key]))+
@@ -32,7 +52,8 @@
         ' · '+dateBR(entry.date)+'</strong><small>'+escapeHTML(entry.items.map(x=>x.label).join(', '))+
         '</small></summary><div class="mt-12"><ul class="mini-list">'+items+
         '</ul><div class="btnrow mt-12"><button type="button" class="secondary" data-action="nutrition-repeat" data-id="'+escapeHTML(entry.id)+'">Repetir hoje</button>'+
-        (entry.items.length===1?'<button type="button" class="secondary" data-action="nutrition-edit" data-id="'+escapeHTML(entry.id)+'">Editar</button>':'')+
+        (entry.items.length===1&&!entry.items[0].nutrientsPerServing?'<button type="button" class="secondary" data-action="nutrition-edit" data-id="'+escapeHTML(entry.id)+'">Editar</button>':'')+
+        '<button type="button" class="secondary" data-action="nutrition-save-favorite" data-id="'+escapeHTML(entry.id)+'">Salvar como favorito</button>'+ 
         '<button type="button" class="ghost" data-action="nutrition-delete" data-id="'+escapeHTML(entry.id)+'">Excluir</button></div></div></details>';
     }).join('');
     return '<div class="nutrition-screen">'+
@@ -42,6 +63,12 @@
       '<section class="card"><div class="row-between"><h2 class="section-title">Registros de '+dateBR(date)+'</h2><span class="pill">'+summary.mealsRecorded+' refeição(ões)</span></div>'+
       '<div class="kpi-row nutrition-summary">'+metrics+'</div>'+
       '<p class="small muted">Valores apenas dos alimentos informados com quantidade em gramas e composição conhecida. Um traço indica informação insuficiente. Não representa o consumo total do dia.</p></section>'+
+      '<section class="card"><h2 class="section-title">Catálogo rápido</h2>'+ 
+      '<div class="field mt-12"><label for="nutrition-search">Buscar alimentos e produtos</label>'+ 
+      '<input type="search" id="nutrition-search" placeholder="Ex.: iogurte, PRO FORCE, arroz, whey" autocomplete="off" /></div>'+ 
+      '<div class="nutrition-food-list">'+foodRows+'</div>'+catalogForm+'</section>'+ 
+      '<section class="card"><h2 class="section-title">Refeições favoritas</h2>'+ 
+      (favoriteRows?'<div class="nutrition-food-list">'+favoriteRows+'</div>':'<p class="small muted">Abra uma refeição do histórico e toque em Salvar como favorito.</p>')+'</section>'+ 
       '<form id="nutrition-form" class="card">'+
       '<div class="row-between"><h2 class="section-title">'+(edit?'Editar refeição':'Registrar refeição')+
       '</h2><span class="pill green">Offline</span></div>'+
