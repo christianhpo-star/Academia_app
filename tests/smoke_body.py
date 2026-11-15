@@ -74,6 +74,7 @@ with sync_playwright() as p:
     page.locator('#import-file').set_input_files({
       'name':'synthetic-body-backup.json','mimeType':'application/json',
       'buffer':json.dumps(incoming).encode('utf-8')})
+    page.wait_for_function('JSON.parse(window.__storage["forja.academia.v1"]).bodyMeasurements.length === 3',timeout=8000)
     merged=json.loads(page.evaluate('window.__storage["forja.academia.v1"]'))
     assert len(merged['bodyMeasurements'])==3
     assert next(x for x in merged['bodyMeasurements'] if x['date']=='2026-11-14')['values']['chest']==99.5
