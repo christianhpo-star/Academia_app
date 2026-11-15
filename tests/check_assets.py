@@ -6,7 +6,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 text_assets = [
     'index.html', 'styles.css', 'app.js', 'data.js', 'engine.js',
-    'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'nutrition-goals.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'sw.js', 'manifest.webmanifest', 'README.md',
+    'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'nutrition-goals.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'sw.js', 'manifest.webmanifest', 'README.md',
     'tests/engine.test.cjs', 'tests/smoke_browser.py'
 ]
 for path in text_assets:
@@ -16,7 +16,7 @@ for path in text_assets:
     assert '\x00' not in content, f'{path} contains binary or null data'
 
 index = (root / 'index.html').read_text(encoding='utf-8')
-for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './nutrition-goals.js','./nutrition.js', './nutrition-catalog.js', './nutrition-ui.js', './app.js', './styles.css', './manifest.webmanifest']:
+for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './activity.js', './nutrition-goals.js','./nutrition.js', './nutrition-catalog.js', './nutrition-ui.js', './app.js', './styles.css', './manifest.webmanifest']:
     assert path in index, f'index.html must reference {path}'
 
 manifest = json.loads((root / 'manifest.webmanifest').read_text(encoding='utf-8'))
@@ -38,7 +38,7 @@ release = '20261115-ux13'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
 assets = ['styles.css', 'data.js', 'engine.js', 'muay.js', 'calendar.js',
-          'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'nutrition-goals.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'app.js']
+          'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'nutrition-goals.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'app.js']
 for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
