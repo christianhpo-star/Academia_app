@@ -35,7 +35,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[], nutrition:NUTRITION.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[], nutrition:NUTRITION.archive(),
     };
   }
   function load() {
@@ -61,7 +61,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
-      BODY.validRecords(value.bodyMeasurements) && NUTRITION.validArchive(value.nutrition) &&
+      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && NUTRITION.validArchive(value.nutrition) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -130,7 +130,7 @@
     catalogGroup:'all',catalogSearch:'',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
-    bodyOpen:false,bodyView:'current',bodyEditDate:null,homeRecoveryOpen:false,
+    bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
   };
@@ -891,7 +891,38 @@
          esc(edit?.values?.[field.id]??'')+'"/></div>').join('')+'</div>'+
        '<button type="submit" class="primary full mt-16">Salvar medidas</button>'+
        '<p class="tiny muted mt-12">Deixe vazias as regiões não medidas. O registro pode ser complementado depois, e fica guardado neste aparelho e no backup JSON.</p></form>')+
-      '</div>';
+      renderBioSection()+'</div>';
+  }
+  function renderBioSection(){
+    const readings=BODY.recentBio(state.bioimpedance||[]);
+    const recent=readings[0];
+    const day=ui.bioEditDate||today();
+    const editing=readings.find(row=>row.date===day)||null;
+    const latest=recent?'<div class="bio-latest"><strong>Última leitura · '+dateBR(recent.date)+'</strong><div class="bio-values">'+
+      BODY.BIO_FIELDS.filter(f=>recent.values[f.id]!=null).map(f=>'<div><span>'+esc(f.label)+'</span><strong>'+fmt(recent.values[f.id])+' '+esc(f.unit)+'</strong></div>').join('')+'</div></div>':
+      '<p class="small muted">Nenhuma leitura registrada ainda.</p>';
+    const fields=BODY.BIO_FIELDS.map(f=>'<div class="field"><label for="bio-'+esc(f.id)+'">'+esc(f.label)+' ('+esc(f.unit)+')</label>'+
+      '<input id="bio-'+esc(f.id)+'" name="'+esc(f.id)+'" type="number" inputmode="decimal" min="'+f.min+'" max="'+f.max+'" step="any" placeholder="Opcional" value="'+esc(editing?.values?.[f.id]??'')+'"></div>').join('');
+    return '<details class="card bio-panel" '+(ui.bioOpen?'open':'')+'><summary>Bioimpedância · Galaxy Watch ('+readings.length+')</summary>'+
+      '<p class="small muted">Registro manual do Samsung Health. O relógio estima composição corporal; leituras isoladas podem variar com hidratação e horário. Nenhuma meta calórica será alterada automaticamente.</p>'+latest+
+      '<form id="bio-form"><div class="field"><label for="bio-date">Data da leitura</label><input id="bio-date" name="date" type="date" max="'+today()+'" value="'+esc(day)+'" required></div>'+
+      '<div class="bio-field-grid">'+fields+'</div><button class="primary full mt-16" type="submit">Salvar leitura do relógio</button></form>'+
+      (readings.length?'<details class="bio-history mt-12"><summary>Ver leituras anteriores</summary>'+readings.slice(0,12).map(r=>
+        '<div class="bio-history-row"><span>'+dateBR(r.date)+'</span><div class="btnrow">'+
+        '<button type="button" class="button-inline" data-action="bio-edit" data-date="'+esc(r.date)+'">Editar</button>'+
+        '<button type="button" class="button-inline" data-action="bio-delete" data-date="'+esc(r.date)+'">Excluir</button></div></div>').join('')+'</details>':'')+
+      '<p class="small muted">Fonte: Galaxy Watch, entrada manual. Os resultados não são diagnósticos; compare tendências em condições de medição semelhantes.</p></details>';
+  }
+  function saveBio(form){
+    const data=new FormData(form),date=String(data.get('date')||'');
+    if(date>today())return notify('A data da leitura não pode ser futura.');
+    const values=Object.fromEntries(BODY.BIO_FIELDS.map(f=>[f.id,data.get(f.id)]));
+    const result=BODY.upsertBio(state.bioimpedance||[],date,values);
+    if(result.error)return notify(result.error);
+    const old=state.bioimpedance;
+    state.bioimpedance=result.items;
+    if(!save()){state.bioimpedance=old;return notify('Não foi possível salvar a leitura. Seus dados anteriores foram mantidos.');}
+    ui.bioOpen=true;ui.bioEditDate=null;render();notify('Leitura do relógio salva neste aparelho.');
   }
   function saveBodyMeasures(form){
     const fd=new FormData(form),date=String(fd.get('date')||'');
@@ -1129,6 +1160,7 @@
       exercises:unionById(current.exercises,incoming.exercises),
       sessions:unionById(current.sessions,incoming.sessions),
       bodyMeasurements:BODY.merge(current.bodyMeasurements,incoming.bodyMeasurements),
+      bioimpedance:BODY.mergeBio(current.bioimpedance,incoming.bioimpedance),
       nutrition:NUTRITION.merge(current.nutrition,incoming.nutrition),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
@@ -1151,7 +1183,7 @@
       const existing=state.sessions.length+state.muay.sessions.length+
         state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length+
         (state.nutrition?.entries||[]).length+(state.nutrition?.foods||[]).length+
-        (state.nutrition?.mealTemplates||[]).length;
+        (state.nutrition?.mealTemplates||[]).length+(state.bioimpedance||[]).length;
       const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft)||Boolean(state.nutrition.draft)||Boolean(state.nutrition.settings.profile)||(state.nutrition.settings.targets||[]).length>0;
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
@@ -1266,6 +1298,19 @@
       if(!BODY.validDate(btn.dataset.date))return;
       ui.bodyEditDate=btn.dataset.date;ui.bodyView='current';render();
       document.querySelector('#body-measures-form')?.scrollIntoView({block:'start',behavior:'smooth'});return;
+    }
+    if(action==='bio-edit'){
+      if(!BODY.validDate(btn.dataset.date))return;
+      ui.bioEditDate=btn.dataset.date;ui.bioOpen=true;ui.bodyView='current';
+      render();document.querySelector('#bio-form')?.scrollIntoView({block:'nearest'});return;
+    }
+    if(action==='bio-delete'){
+      const date=btn.dataset.date;
+      if(!BODY.validDate(date)||!confirm('Excluir a leitura de bioimpedância de '+dateBR(date)+'?'))return;
+      const old=state.bioimpedance;
+      state.bioimpedance=(old||[]).filter(item=>item.date!==date);
+      if(!save()){state.bioimpedance=old;return;}
+      ui.bioEditDate=null;ui.bioOpen=true;render();notify('Leitura excluída.');return;
     }
     if(action==='catalog-filter'){
       if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
@@ -1582,6 +1627,7 @@
     else if(event.target.id==='goal-form')setGoal(event.target);
     else if(event.target.id==='exercise-form')saveExercise(event.target);
     else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
+    else if(event.target.id==='bio-form')saveBio(event.target);
 
   });
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
