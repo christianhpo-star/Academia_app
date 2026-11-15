@@ -3,8 +3,10 @@
   'use strict';
 
   const VERSION = 1;
+  const GOALS = root.ForjaNutritionGoals || (typeof require==='function' ? require('./nutrition-goals.js') : null);
   const NUTRIENTS = ['energyKcal', 'proteinG', 'carbsG', 'fatG'];
-  const MEALS = ['breakfast', 'lunch', 'snack', 'dinner', 'other'];
+  const ALL_NUTRIENTS = [...NUTRIENTS, 'fiberG'];
+  const MEALS = ['breakfast', 'lunch', 'snack', 'dinner', 'supper', 'other'];
   const UNITS = ['g', 'ml', 'unit', 'spoon', 'ladle', 'portion'];
   const PREPARATIONS = ['raw', 'cooked', 'other'];
   const MODES = ['simple', 'detailed'];
@@ -33,7 +35,7 @@
   });
 
   function nutrientsOk(value) {
-    if (!isObject(value)) return false;
+    if (!isObject(value) || !optionalNumber(value.fiberG,0,100)) return false;
     return NUTRIENTS.every(key =>
       Object.hasOwn(value, key) &&
       (value[key] === null || numberOk(value[key], 0, key === 'energyKcal' ? 1200 : 100))
@@ -83,7 +85,7 @@
 
     // A numeric nutrient without a traceable source must not enter calculations.
     return item.source !== null ||
-      NUTRIENTS.every(key => item.nutrientsPer100g[key] === null);
+      ALL_NUTRIENTS.every(key => item.nutrientsPer100g[key] == null) && (!item.nutrientsPerServing || ALL_NUTRIENTS.every(key=>item.nutrientsPerServing[key]==null));
   }
 
   function validTemplate(template) {
@@ -104,10 +106,16 @@
       entry.items.every(item => validPortion(item, true));
   }
 
+  function validDraft(d) {
+    return isObject(d) && (d.pending===undefined || (isObject(d.pending)&&Object.keys(d.pending).length<=15&&Object.entries(d.pending).every(([k,v])=>k.length<=40&&typeof v==='string'&&v.length<=500))) && (d.editId==null || idOk(d.editId)) && isObject(d.entry) && Array.isArray(d.entry.items) &&
+      (d.entry.items.length ? validEntry(d.entry) : validEntry({...d.entry,items:[{id:'draft-placeholder',label:'Rascunho',quantity:1,unit:'portion',grams:null,nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},source:null}]}));
+  }
+
   function validArchive(value) {
     if (value === undefined) return true; // Pre-nutrition FORJA v1 backups.
     return isObject(value) && value.schemaVersion === VERSION &&
-      isObject(value.settings) && MODES.includes(value.settings.mode) &&
+      isObject(value.settings) && MODES.includes(value.settings.mode) && GOALS.validSettings(value.settings) &&
+      (value.draft==null || validDraft(value.draft)) &&
       Array.isArray(value.foods) && value.foods.length <= 500 &&
       Array.isArray(value.mealTemplates) && value.mealTemplates.length <= 300 &&
       Array.isArray(value.entries) && value.entries.length <= 10000 &&
@@ -142,7 +150,9 @@
       mealTemplates: union(a.mealTemplates, b.mealTemplates),
       entries: union(a.entries, b.entries),
       settings: { ...b.settings, ...a.settings },
+      ...(a.draft||b.draft?{draft:a.draft||b.draft}:{}),
     };
+    if(a.settings.targets||b.settings.targets) merged.settings.targets=union(a.settings.targets||[],b.settings.targets||[]).filter((t,i,all)=>all.findIndex(x=>x.from===t.from)===i);
     if (!validArchive(merged)) throw new Error('Mesclagem alimentar inválida.');
     return merged;
   }
@@ -152,22 +162,22 @@
       throw new Error('Período ou refeições inválidos.');
     const daily = entries.filter(entry => entry.date === date);
     const items = daily.flatMap(entry => entry.items);
-    const totals = Object.fromEntries(NUTRIENTS.map(key => [key, null]));
-    const known = Object.fromEntries(NUTRIENTS.map(key => [key, 0]));
+    const totals = Object.fromEntries(ALL_NUTRIENTS.map(key => [key, null]));
+    const known = Object.fromEntries(ALL_NUTRIENTS.map(key => [key, 0]));
     if (items.length) {
-      for (const key of NUTRIENTS) {
+      for (const key of ALL_NUTRIENTS) {
         let total = 0, complete = true;
         for (const item of items) {
           // Verified per-package facts work for liquids without assuming millilitres equal grams.
           if (item.nutrientsPerServing) {
             const nutrient = item.nutrientsPerServing[key];
-            if (nutrient === null || item.unit !== 'portion') { complete = false; break; }
+            if (nutrient == null || item.unit !== 'portion') { complete = false; break; }
             total += nutrient * item.quantity;
             continue;
           }
           const grams = item.unit === 'g' ? item.quantity : item.grams;
           const nutrient = item.nutrientsPer100g[key];
-          if (grams == null || nutrient === null) { complete = false; break; }
+          if (grams == null || nutrient == null) { complete = false; break; }
           total += nutrient * grams / 100;
         }
         if (complete) {
@@ -195,7 +205,7 @@
       excludesOtherItems:estimated.length!==items.length,totals};
   }
   const api = {
-    VERSION, NUTRIENTS, MEALS, UNITS, archive, dateOk, nutrientsOk, validFood,
+    VERSION, NUTRIENTS, ALL_NUTRIENTS, validDraft, MEALS, UNITS, archive, dateOk, nutrientsOk, validFood,
     validEntry, validTemplate, validArchive, validEstimate, ensureArchive, merge, observedTotals, estimatedTotals,
   };
   root.ForjaNutrition = api;

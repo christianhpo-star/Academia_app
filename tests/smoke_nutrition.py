@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition-goals.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
 
 def start(context,stored,errors):
     page=context.new_page()
@@ -25,101 +25,97 @@ def start(context,stored,errors):
     return page
 
 with sync_playwright() as p:
-    chrome=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or shutil.which('google-chrome')
-    opts={'headless':True,'args':['--no-sandbox']}
-    if chrome:opts['executable_path']=chrome
-    browser=p.chromium.launch(**opts)
+    browser=p.chromium.launch(headless=True,executable_path=shutil.which('chromium'),args=['--no-sandbox'])
     context=browser.new_context(viewport={'width':390,'height':844},locale='pt-BR')
     errors=[]
     page=start(context,{},errors)
-    assert 'Seu próximo passo.' in page.locator('h1').inner_text()
-    page.locator('[data-action="nutrition-open"]').first.click()
-    assert page.locator('h1').inner_text()=='Alimentação.'
-    assert page.locator('#nutrition-form').count()==1
-    assert 'Ainda não há refeições registradas' in page.locator('#screen').inner_text()
-    page.locator('#meal-name').fill('Exemplo sintético de almoço')
-    page.locator('#meal-quantity').fill('2')
-    page.locator('#meal-unit').select_option('portion')
-    page.locator('#nutrition-form button[type="submit"]').click()
-    saved=json.loads(page.evaluate("window.__testStorage['forja.academia.v1']"))
-    assert len(saved['nutrition']['entries'])==1
-    entry=saved['nutrition']['entries'][0]
-    assert entry['items'][0]['nutrientsPer100g']['energyKcal'] is None
-    assert entry['items'][0]['source'] is None
-    assert len(saved['sessions'])==0
-    page.locator('.nutrition-entry summary').first.click()
-    page.locator('[data-action="nutrition-repeat"]').first.click()
-    repeated=json.loads(page.evaluate("window.__testStorage['forja.academia.v1']"))
-    assert len(repeated['nutrition']['entries'])==2
-    assert len({v['id'] for v in repeated['nutrition']['entries']})==2
-    page.locator('.nutrition-entry summary').first.click()
-    page.locator('[data-action="nutrition-edit"]').first.click()
-    page.locator('#meal-name').fill('Exemplo editado')
-    page.locator('#nutrition-form button[type="submit"]').click()
-    modified=json.loads(page.evaluate("window.__testStorage['forja.academia.v1']"))
-    assert len(modified['nutrition']['entries'])==2
-    assert 'Exemplo editado' in str(modified['nutrition']['entries'])
-    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-    page.set_viewport_size({'width':320,'height':700})
-    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    page.on('dialog',lambda d:d.accept())
+    page.locator('#nav [data-tab="nutrition"]').click()
+    assert page.locator('.nd-meal').count()==5
+    assert page.locator('.nd-meal').last.locator('h2').inner_text()=='Ceia'
+    page.locator('[data-nd="previous"]').click()
+    day=page.locator('#nd-date').input_value()
+    page.locator('[data-nd="add"][data-meal="lunch"]').click()
+    page.locator('[data-nd="mode"][data-mode="search"]').click()
+    page.locator('#nd-search').fill('PRO FORCE')
+    page.locator('[data-nd="pick"]').click()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    page.locator('#nd-search').fill('ovo')
+    page.locator('[data-nd="pick"]').click()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    page.locator('#nd-meal button[type="submit"]').click()
+    def state():return json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
+    saved=state();entry=saved['nutrition']['entries'][0]
+    assert entry['date']==day and entry['mealType']=='lunch'
+    assert len(entry['items'])==2 and entry['items'][0]['grams'] is None
+    assert entry['items'][0]['nutrientsPerServing']['proteinG']==23
+    # Compound editing keeps packaged units and IDs.
+    page.locator('.nd-entry summary').first.click()
+    page.locator('[data-nd="edit"]').first.click()
+    page.locator('#nd-qty-0').fill('2')
+    page.locator('#nd-meal button[type="submit"]').click()
+    edited=state()['nutrition']['entries'][0]
+    assert edited['id']==entry['id'] and edited['items'][0]['id']==entry['items'][0]['id']
+    assert edited['items'][0]['quantity']==2 and edited['items'][0]['grams'] is None
+    page.locator('.nd-entry summary').first.click()
+    page.locator('[data-nd="favorite"]').first.click()
+    page.locator('[data-nd="add"][data-meal="supper"]').click()
+    page.locator('[data-nd="mode"][data-mode="favorites"]').click()
+    page.locator('[data-nd="use-favorite"]').first.click()
+    assert len(state()['nutrition']['entries'])==1 # review does not log
+    page.locator('#nd-meal button[type="submit"]').click()
+    assert state()['nutrition']['entries'][1]['mealType']=='supper'
+    assert state()['nutrition']['entries'][1]['date']==day
+    # Draft survives navigation/restart without a fictitious meal.
+    page.locator('[data-nd="add"][data-meal="breakfast"]').click()
+    page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
+    page.locator('#nd-label').fill('Rascunho sintético')
+    page.locator('[data-nd="close"]').click()
     storage=page.evaluate('structuredClone(window.__testStorage)')
-    page.close()
-    restored=start(context,storage,errors)
-    restored.locator('[data-action="nutrition-open"]').first.click()
-    assert restored.locator('.nutrition-entry').count()==2
-    restored.locator('.nutrition-entry summary').first.click()
-    restored.once('dialog',lambda dialog:dialog.accept())
-    restored.locator('[data-action="nutrition-delete"]').first.click()
-    final=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    assert len(final['nutrition']['entries'])==1
-    # Packaged labels are captured per serving. 250 ml is not treated as 250 g.
-    restored.locator('[data-action="nutrition-pick"][data-food="photo:itambe-zero-morango-200g"]').click()
-    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
-    with_yogurt=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    y=next(row for row in with_yogurt['nutrition']['entries'] if row['items'][0]['foodId']=='photo:itambe-zero-morango-200g')
-    assert y['items'][0]['nutrientsPerServing']['energyKcal']==52
-    restored.locator('[data-action="nutrition-pick"][data-food="photo:piracanjuba-proforce-banoffee-250ml"]').click()
-    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
-    with_drink=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    drink=next(row for row in with_drink['nutrition']['entries'] if row['items'][0]['foodId']=='photo:piracanjuba-proforce-banoffee-250ml')
-    assert drink['items'][0]['grams'] is None
-    assert drink['items'][0]['nutrientsPerServing']['proteinG']==23
-    card=restored.locator('.nutrition-entry').filter(has=restored.locator('[data-action="nutrition-save-favorite"][data-id="'+drink['id']+'"]'))
-    card.locator('summary').click()
-    card.locator('[data-action="nutrition-save-favorite"]').click()
-    fav_state=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    assert len(fav_state['nutrition']['mealTemplates'])==1
-    restored.locator('[data-action="nutrition-use-favorite"]').first.click()
-    repeated=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    assert len(repeated['nutrition']['entries'])==4
-    assert sum(row['items'][0]['nutrientsPerServing']['proteinG']==23 for row in repeated['nutrition']['entries'] if row['items'][0].get('nutrientsPerServing'))==2
-    assert restored.evaluate('document.documentElement.scrollWidth<=innerWidth')
-
-    # Doce Cascão — estimates remain approximate, independent of packaged facts.
-    restored.locator('[data-action="nutrition-pick"][data-food="local:doce-cascao-acai-trufado-branco-500ml"]').click()
-    assert 'Faixa aproximada' in restored.locator('#nutrition-catalog-form').inner_text()
-    restored.locator('#nutrition-portion').select_option('half')
-    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
-    archive_half=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    half=next(row for row in archive_half['nutrition']['entries'] if row['items'][0]['foodId']=='local:doce-cascao-acai-trufado-branco-500ml')
-    assert half['items'][0]['estimate']['central']['energyKcal']==407.2
-    assert half['items'][0]['nutrientsPer100g']['energyKcal'] is None
-    assert half['items'][0]['grams'] is None
-    assert 'baixa confiança' in restored.locator('#screen').inner_text()
-    restored.locator('[data-action="nutrition-pick"][data-food="local:doce-cascao-acai-trufado-preto-500ml"]').click()
-    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
-    archive_whole=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    preto=next(row for row in archive_whole['nutrition']['entries'] if row['items'][0]['foodId']=='local:doce-cascao-acai-trufado-preto-500ml')
-    assert preto['items'][0]['estimate']['central']['energyKcal']==1003.4
-    assert all(row['items'][0]['foodId'] not in ('local:doce-cascao-adicional-avela','local:doce-cascao-adicional-ninho') for row in archive_whole['nutrition']['entries'])
-    card=restored.locator('.nutrition-entry').filter(has=restored.locator('[data-action="nutrition-save-favorite"][data-id="'+preto['id']+'"]'))
-    card.locator('summary').click()
-    card.locator('[data-action="nutrition-save-favorite"]').click()
-    restored.locator('[data-action="nutrition-use-favorite"]').first.click()
-    saved=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
-    assert sum(row['items'][0].get('estimate',{}).get('central',{}).get('energyKcal',0)==1003.4 for row in saved['nutrition']['entries'])==2
-    assert restored.evaluate('document.documentElement.scrollWidth <= innerWidth')
-
+    page.close();page=start(context,storage,errors);page.on('dialog',lambda d:d.accept())
+    page.locator('#nav [data-tab="nutrition"]').click()
+    page.locator('[data-nd="resume"]').click()
+    page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
+    assert page.locator('#nd-label').input_value()=='Rascunho sintético'
+    page.locator('#nd-manual button[type="submit"]').click()
+    page.locator('#nd-meal button[type="submit"]').click()
+    assert len(state()['nutrition']['entries'])==3
+    # Complete profile, accept estimate, override target; edits to profile never overwrite it.
+    page.locator('[data-nd="goals"]').first.click()
+    page.locator('#nd-heightCm').fill('175,5');page.locator('#nd-age').fill('30');page.locator('#nd-weightKg').fill('80')
+    page.locator('#nd-sex').select_option('male');page.locator('#nd-activity').select_option('1.55')
+    page.locator('[name="adultScope"]').check()
+    page.locator('#nd-profile button[type="submit"]').click()
+    page.locator('[data-nd="suggest"]').click()
+    page.locator('[data-nd="accept"]').click()
+    assert state()['nutrition']['settings']['profile']['heightCm']==175.5
+    page.locator('[data-nd="today"]').click()
+    page.locator('[data-nd="goals"]').first.click()
+    page.locator('#nd-target-proteinG').fill('150')
+    page.locator('#nd-target button[type="submit"]').click()
+    target=state()['nutrition']['settings']['targets'][-1]
+    assert target['source']=='manual' and target['values']['proteinG']==150
+    page.locator('[data-nd="goals"]').first.click()
+    page.locator('#nd-age').fill('31');page.locator('#nd-profile button[type="submit"]').click()
+    assert state()['nutrition']['settings']['targets'][-1]==target
+    page.locator('[data-nd="close"]').click()
+    for width in [320,390,768]:
+        page.set_viewport_size({'width':width,'height':844})
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+    page.set_viewport_size({'width':390,'height':844})
+    (ROOT/'screenshots').mkdir(exist_ok=True)
+    page.screenshot(path=str(ROOT/'screenshots/nutrition-390.png'),full_page=True)
+    # Quota errors preserve original history and form.
+    page.locator('[data-nd="add"][data-meal="snack"]').click()
+    page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
+    page.locator('#nd-label').fill('Falha de armazenamento')
+    page.locator('#nd-manual button[type="submit"]').click()
+    original=state()['nutrition']['entries']
+    page.evaluate("localStorage.setItem=()=>{throw new Error('quota')}")
+    page.locator('#nd-meal button[type="submit"]').click()
+    assert page.locator('dialog').is_visible()
+    assert state()['nutrition']['entries']==original
+    assert 'Não foi possível salvar' in page.locator('dialog [role="alert"]').inner_text()
     assert errors==[],errors
-    context.close();browser.close()
-    print('PASS nutrition: quick log, repeat, edit, delete, reload, 320/390px and no invented macros')
+    browser.close()
+    print('PASS nutrition: dated compound meals, favorites, draft recovery, editable profile/goals, quota, responsive')

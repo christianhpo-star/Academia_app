@@ -1,5 +1,14 @@
 # FORJA
 
+## Diário alimentar e metas (issue #17)
+
+Alimentação tem acesso direto na navegação, com seletor de data, gráficos circulares, cinco refeições (incluindo ceia), favoritos e editor composto com rascunho local. Em **Minhas metas**, informe altura, idade, peso, atividade e objetivo; aceite uma sugestão explicada ou mantenha metas manuais/profissionais. Catálogo de exercícios permanece em Treinos.
+
+As sugestões são estimativas iniciais, não gasto medido; não somam calorias de treino automaticamente e não sobrescrevem metas manuais. Fibras desconhecidas permanecem desconhecidas; estimativas de açaí continuam separadas dos totais. Perfil, metas e rascunho entram no backup privado. [Contrato, evidências e limites](docs/nutrition-goals.md).
+
+As seções abaixo descrevem etapas anteriores; quando divergirem sobre acesso ou metas, prevalece a descrição acima.
+
+
 
 ## Açaís Doce Cascão — referência estimada
 
