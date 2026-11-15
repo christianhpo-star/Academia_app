@@ -72,7 +72,7 @@
         '<strong>Alimentos estimados registrados: ≈ '+fmt(estimateSummary.totals.central.energyKcal)+' kcal</strong>'+
         '<span>Faixa aproximada: '+fmt(estimateSummary.totals.low.energyKcal)+'–'+fmt(estimateSummary.totals.high.energyKcal)+' kcal · baixa confiança</span>'+
         '<small>Separado dos valores do rótulo; inclui somente os itens estimados. Não representa todas as refeições do dia.</small></div>':'')+
-      '<p class="small muted">Valores apenas de alimentos registrados com rótulo ou composição informada e porção suficiente. Estimativas de sobremesas aparecem separadas abaixo. Um traço indica informação insuficiente, não zero ou consumo total do dia.</p></section>'+
+      '<p class="small muted">Valores apenas de alimentos registrados com rótulo ou composição informada e porção suficiente. Estimativas de sobremesas aparecem separadas abaixo. Um traço indica informação insuficiente, não zero. Não representa o consumo total do dia.</p></section>'+
       '<section class="card"><h2 class="section-title">Catálogo rápido</h2>'+ 
       '<div class="field mt-12"><label for="nutrition-search">Buscar alimentos e produtos</label>'+ 
       '<input type="search" id="nutrition-search" placeholder="Ex.: iogurte, PRO FORCE, arroz, whey" autocomplete="off" /></div>'+ 
