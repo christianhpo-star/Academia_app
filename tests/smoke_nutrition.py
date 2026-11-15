@@ -50,16 +50,27 @@ with sync_playwright() as p:
     saved=state();entry=saved['nutrition']['entries'][0]
     assert entry['date']==day and entry['mealType']=='lunch'
     assert len(entry['items'])==2 and entry['items'][0]['grams'] is None
+    lunch=page.locator('.nd-meal').filter(has=page.get_by_role('heading',name='Almoço'))
+    assert lunch.locator('.nd-meal-macro').count()==3
+    assert lunch.locator('.nd-meal-details').count()==1
+    assert not lunch.locator('.nd-food-table').is_visible(), 'Food rows must start collapsed'
+    lunch.locator('.nd-meal-details > summary').click()
+    assert lunch.locator('.nd-food-table').is_visible()
+    assert lunch.locator('.nd-food-table tbody tr').count()==2
+    assert 'P (g)' in lunch.locator('.nd-food-table thead').inner_text()
+    assert 'Fib (g)' in lunch.locator('.nd-food-table thead').inner_text()
+    assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
+    lunch.locator('.nd-meal-details > summary').click()
     assert entry['items'][0]['nutrientsPerServing']['proteinG']==23
     # Compound editing keeps packaged units and IDs.
-    page.locator('.nd-entry summary').first.click()
+    page.locator('.nd-meal-details > summary').first.click()
     page.locator('[data-nd="edit"]').first.click()
     page.locator('#nd-qty-0').fill('2')
     page.locator('#nd-meal button[type="submit"]').click()
     edited=state()['nutrition']['entries'][0]
     assert edited['id']==entry['id'] and edited['items'][0]['id']==entry['items'][0]['id']
     assert edited['items'][0]['quantity']==2 and edited['items'][0]['grams'] is None
-    page.locator('.nd-entry summary').first.click()
+    page.locator('.nd-meal-details > summary').first.click()
     page.locator('[data-nd="favorite"]').first.click()
     page.locator('[data-nd="add"][data-meal="supper"]').click()
     page.locator('[data-nd="mode"][data-mode="favorites"]').click()

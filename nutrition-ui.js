@@ -22,12 +22,74 @@
     const pct=value!=null&&target>0?Math.min(100,value/target*100):0;
     return button('goals',`<span class="nd-ring" style="--progress:${pct}%;--ring-color:var(--${{energyKcal:'lime',proteinG:'red',carbsG:'blue',fatG:'orange',fiberG:'lime'}[key]})"><span><strong>${fmt(value)}</strong><small>/ ${fmt(target)} ${key==='energyKcal'?'kcal':'g'}</small></span></span><span class="nd-ring-description">${nutrients[key]}${key==='energyKcal'?'':`<small class="nd-ring-readable-total" aria-hidden="true">${fmt(value)} / ${fmt(target)} g</small>`}</span>`, `aria-label="${nutrients[key]}: ${fmt(value)} de ${fmt(target)} ${key==='energyKcal'?'kcal':'gramas'}. Ver metas"`,'nd-ring-button');
   }
-  function entryHTML(e){
+  // Meal rings reference the daily target; there is no invented per-meal quota.
+  function mealMacroRing(key,value,dailyTarget){
+    const pct=value!=null&&dailyTarget>0?Math.max(0,Math.min(100,value/dailyTarget*100)):0;
+    const color={proteinG:'red',carbsG:'blue',fatG:'orange'}[key];
+    const label={proteinG:'Proteínas',carbsG:'Carboidratos',fatG:'Gorduras'}[key];
+    const short={proteinG:'Proteína',carbsG:'Carbo',fatG:'Gordura'}[key];
+    const aria=value==null?'Informação incompleta':fmt(value)+' gramas registradas'+(dailyTarget>0?' de '+fmt(dailyTarget)+' gramas da meta diária':' (sem meta diária)');
+    return '<div class="nd-meal-macro" aria-label="'+esc(label)+': '+esc(aria)+'">'+
+      '<span class="nd-meal-macro-ring" style="--progress:'+pct+'%;--ring-color:var(--'+color+')">'+
+      '<span>'+fmt(value)+'</span></span><span class="nd-meal-macro-name">'+short+'</span><small>g</small></div>';
+  }
+  function foodInitials(label){
+    const words=String(label||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').match(/[A-Za-z0-9]+/g)||[];
+    return (words.slice(0,2).map(w=>w[0]).join('')||'?').toUpperCase();
+  }
+  function shortFoodLabel(label){
+    const name=String(label||'');
+    if(/^Itamb[eé]/i.test(name)&&/morango/i.test(name))return 'Itambé morango';
+    if(/^Piracanjuba/i.test(name)&&/banoffee/i.test(name))return 'PRO FORCE Banoffee';
+    if(/^Doce Casc[aã]o/i.test(name))return name.replace(/^Doce Casc[aã]o\s*[—-]\s*/i,'');
+    return name.split(/[,()]/)[0].trim();
+  }
+  function foodRow(item,entryDate){
+    const row=N.observedTotals([{id:'render-entry',date:entryDate,mealType:'other',items:[item]}],entryDate).totals;
+    const label=String(item.label);
+    const portion=fmt(item.quantity)+' '+String(units[item.unit]||item.unit)+(item.grams!=null?' · '+fmt(item.grams)+' g':'');
+    return '<tr><th scope="row"><span class="nd-food-id">'+
+      '<span class="nd-food-monogram" aria-hidden="true">'+esc(foodInitials(label))+'</span>'+
+      '<span class="nd-food-copy"><span class="nd-food-short" title="'+esc(label)+'">'+esc(shortFoodLabel(label))+
+      '</span><small>'+esc(portion)+'</small></span></span></th>'+
+      ['proteinG','carbsG','fiberG'].map(key=>'<td aria-label="'+esc(nutrients[key])+': '+
+        (row[key]===null?'não informado':fmt(row[key])+' gramas')+'">'+fmt(row[key])+'</td>').join('')+'</tr>';
+  }
+  function entryHTML(e,index=0){
     const total=N.observedTotals([e],e.date).totals.energyKcal;
     const estimate=N.estimatedTotals([e],e.date);
-    return `<details class="nd-entry"><summary><span>${esc(e.items.slice(0,3).map(i=>i.label).join(' · '))}${e.items.length>3?' · +'+(e.items.length-3):''}</span><small>${fmt(total)} kcal · ${e.items.length} alimento(s)</small></summary><ul class="mini-list">${e.items.map(i=>`<li><span>${esc(i.label)}<br>${fmt(i.quantity)} ${esc(units[i.unit])}${i.grams!=null?' · '+fmt(i.grams)+' g':''}<br><small>${esc(i.source?.name||'Composição não informada')}</small></span></li>`).join('')}</ul>
-    ${estimate.estimatedItems?`<p class="callout warn">Estimativa de confiança baixa: ${fmt(estimate.totals.central.energyKcal)} kcal (faixa ${fmt(estimate.totals.low.energyKcal)}–${fmt(estimate.totals.high.energyKcal)}). Separada dos gráficos; não representa todas as refeições do dia.</p><details><summary>Como foi estimado</summary>${e.items.filter(i=>i.estimate).map(i=>`<p class="small">${esc(i.estimate.assumptions)}</p>`).join('')}</details>`:''}
-    <div class="btnrow mt-12">${button('edit','Editar',`data-id="${esc(e.id)}"`)}${button('repeat','Repetir nesta data',`data-id="${esc(e.id)}"`)}${button('favorite','Salvar favorito',`data-id="${esc(e.id)}"`)}${button('delete','Excluir',`data-id="${esc(e.id)}"`,'ghost')}</div></details>`;
+    return '<section class="nd-entry" aria-label="Registro '+(index+1)+'">'+
+      '<div class="nd-entry-caption"><strong>Registro '+(index+1)+'</strong><span>'+fmt(total)+' kcal · '+e.items.length+' alimento(s)</span></div>'+
+      '<div class="nd-food-table-wrap"><table class="nd-food-table">'+
+      '<colgroup><col class="nd-food-col-name"><col span="3" class="nd-food-col-number"></colgroup>'+
+      '<thead><tr><th scope="col">Alimento</th><th scope="col"><abbr title="Proteínas em gramas">P (g)</abbr></th>'+
+      '<th scope="col"><abbr title="Carboidratos em gramas">C (g)</abbr></th>'+
+      '<th scope="col"><abbr title="Fibras em gramas">Fib (g)</abbr></th></tr></thead>'+
+      '<tbody>'+e.items.map(item=>foodRow(item,e.date)).join('')+'</tbody></table></div>'+
+      '<p class="nd-food-legend">— = valor não informado. Nome completo disponível ao consultar cada alimento.</p>'+
+      (estimate.estimatedItems?'<div class="callout warn">Estimativa de confiança baixa: '+fmt(estimate.totals.central.energyKcal)+
+        ' kcal (faixa '+fmt(estimate.totals.low.energyKcal)+'–'+fmt(estimate.totals.high.energyKcal)+
+        '). Separada dos totais registrados.<details><summary>Como foi estimado</summary>'+
+        e.items.filter(i=>i.estimate).map(i=>'<p class="small">'+esc(i.estimate.assumptions)+'</p>').join('')+'</details></div>':'')+
+      '<div class="btnrow mt-12">'+button('edit','Editar','data-id="'+esc(e.id)+'"')+
+      button('repeat','Repetir nesta data','data-id="'+esc(e.id)+'"')+
+      button('favorite','Salvar favorito','data-id="'+esc(e.id)+'"')+
+      button('delete','Excluir','data-id="'+esc(e.id)+'"','ghost')+'</div></section>';
+  }
+  function mealCardHTML(type,label,rows,total,target,date){
+    const macros=rows.length?N.observedTotals(rows,date).totals:null;
+    const foodCount=rows.reduce((n,row)=>n+row.items.length,0);
+    const dailyTarget=target&&target.values||{};
+    const main='<div class="row-between"><div><h2 class="section-title">'+esc(label)+
+      '</h2><p class="small muted mb-0">'+(rows.length?fmt(total)+' kcal registradas':'Sem registros')+'</p></div>'+
+      button('add','+','data-meal="'+esc(type)+'" aria-label="Adicionar ao '+esc(label)+'"','nd-add')+'</div>';
+    const macro=rows.length?
+      '<div class="nd-meal-macro-row">'+['proteinG','carbsG','fatG'].map(k=>mealMacroRing(k,macros[k],dailyTarget[k])).join('')+'</div>'+
+      '<p class="nd-meal-macro-hint">Anéis = parcela da meta diária, não meta por refeição.</p>':'';
+    const details=rows.length?
+      '<details class="nd-meal-details"><summary>Ver '+foodCount+' alimento(s)<span class="nd-meal-chevron" aria-hidden="true">⌄</span></summary>'+
+      rows.map((e,index)=>entryHTML(e,index)).join('')+'</details>':'';
+    return '<section class="card nd-meal">'+main+macro+details+'</section>';
   }
   function render({archive,date,limit=3,state={}}){
     const totals=N.observedTotals(archive.entries,date),target=G.active(archive.settings,date);
@@ -42,13 +104,13 @@
       ${button('add','+ Registrar refeição','data-meal="lunch"','primary full')}
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{
         const rows=daily.filter(e=>e.mealType===type),total=N.observedTotals(rows,date).totals.energyKcal;
-        return `<section class="card nd-meal"><div class="row-between"><div><h2 class="section-title">${label}</h2><p class="small muted mb-0">${rows.length?fmt(total)+' kcal registradas':'Sem registros'}</p></div>${button('add','+',`data-meal="${type}" aria-label="Adicionar ao ${label}"`,'nd-add')}</div>${rows.slice(0,3).map(entryHTML).join('')}${rows.length>3?`<details><summary>Ver todos (${rows.length})</summary>${rows.slice(3).map(entryHTML).join('')}</details>`:''}</section>`;
+        return mealCardHTML(type,label,rows,total,target,date);
       }).join('')}</div>
       ${!archive.entries.length?'<p class="small muted">Ainda não há refeições registradas. Comece pelo que consumiu hoje.</p>':''}
       <details class="card"><summary>Treino, objetivo e acompanhamento</summary><p class="small">${context.strength} sessão(ões) de força e ${context.muay} de Muay registradas nesta data. Últimos 7 dias: ${context.weeklyStrength} de força e ${context.weeklyMuay} de Muay.</p>
       <p class="small">${context.strength&&context.muay?'Dia com duas modalidades: organize fontes de carboidratos nas refeições próximas aos treinos, conforme tolerância.':context.strength||context.muay?'Distribua fontes de proteína nas refeições e considere carboidratos para sustentar o treino.':'Sem treino registrado nesta data; isso não significa descanso ou menor necessidade de alimento.'} As metas não mudam automaticamente.</p>
       <p class="small muted">${context.recentWeights} pesagens em 28 dias; ${context.measures} aferições corporais disponíveis.${context.weightChange!=null?' Variação entre primeira e última pesagem: '+fmt(context.weightChange)+' kg.':''} ${context.abdomenChange!=null?' Variação de abdômen no umbigo: '+fmt(context.abdomenChange)+' cm.':''} Medidas e força não comprovam mudança de gordura ou músculo. Revise tendências de 2–4 semanas, recuperação e qualidade dos registros antes de ajustar metas.</p>${context.abdomenChange!=null&&context.abdomenChange<0&&context.weightChange!=null&&Math.abs(context.weightChange)<1?'<p class="small">Peso pouco alterado e medida abdominal menor: confira técnica de aferição, desempenho e tendência antes de reduzir energia apenas pela balança. Isso não prova recomposição.</p>':''}${button('goals','Rever sugestão','','button-inline')}<p class="small"><a href="https://pubmed.ncbi.nlm.nih.gov/26920240/" target="_blank" rel="noopener">Base: nutrição e desempenho (AND/DC/ACSM)</a></p></details>
-      <details class="card" id="nd-history"><summary>Histórico alimentar · ${days.length} outros dias</summary>${days.slice(0,limit).map(d=>`<details class="nd-entry"><summary>${dateBR(d)}</summary>${button('day','Abrir dia',`data-date="${d}"`)}${archive.entries.filter(e=>e.date===d).map(entryHTML).join('')}</details>`).join('')}${days.length>limit?button('more','Ver mais dias'):''}</details>
+      <details class="card" id="nd-history"><summary>Histórico alimentar · ${days.length} outros dias</summary>${days.slice(0,limit).map(d=>`<details class="nd-entry"><summary>${dateBR(d)}</summary>${button('day','Abrir dia',`data-date="${d}"`)}${archive.entries.filter(e=>e.date===d).map((e,index)=>entryHTML(e,index)).join('')}</details>`).join('')}${days.length>limit?button('more','Ver mais dias'):''}</details>
       <p class="small muted">Dados neste aparelho, incluídos no backup JSON.</p></div>`;
   }
   function controller({get,commit,commitSteps,notify,today,refresh}){

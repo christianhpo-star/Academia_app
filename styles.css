@@ -799,3 +799,42 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .reminder-settings p{margin:6px 0;line-height:1.55}
 .reminder-pref-state{border:1px solid var(--line);border-radius:20px;font-size:11px;padding:7px 9px;white-space:nowrap;color:var(--muted)}
 @media(max-width:350px){.reminder-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.reminder-panel .reminder-action{min-width:0}.reminder-panel .reminder-action:first-child{grid-column:1/-1}}
+
+/* UX18: macro-first, accessible collapsed meal cards */
+.nutrition-screen .nd-meal{min-width:0;overflow:hidden}
+.nd-meal-macro-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin-top:14px}
+.nd-meal-macro{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;gap:3px;text-align:center;color:var(--text);font-variant-numeric:tabular-nums}
+.nd-meal-macro-ring{display:grid;place-items:center;width:58px;height:58px;padding:5px;border-radius:50%;background:conic-gradient(var(--ring-color) var(--progress),#2d3e50 0)}
+.nd-meal-macro-ring>span{display:grid;place-items:center;width:100%;height:100%;border-radius:50%;background:var(--card);font-size:15px;font-weight:800;letter-spacing:-.025em}
+.nd-meal-macro-name{font-size:12px;font-weight:750;line-height:1.15;overflow-wrap:normal}
+.nd-meal-macro>small{font-size:10px;color:var(--muted);line-height:1}
+.nd-meal-macro-hint{font-size:10px;color:var(--muted);margin:9px 0 5px;line-height:1.4}
+.nd-meal-details{margin-top:5px;border-top:1px solid var(--line)}
+.nd-meal-details>summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 3px;color:var(--blue);font-size:13px;font-weight:800}
+.nd-meal-details>summary::-webkit-details-marker{display:none}
+.nd-meal-details>summary:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:7px}
+.nd-meal-chevron{transition:transform .2s ease;font-size:24px;line-height:1}
+.nd-meal-details[open] .nd-meal-chevron{transform:rotate(180deg)}
+.nd-meal-details .nd-entry{padding:12px 0 0;margin:0;border-top:1px solid var(--line)}
+.nd-entry-caption{display:flex;align-items:baseline;justify-content:space-between;gap:9px;color:var(--text);font-size:12px}
+.nd-entry-caption span{color:var(--muted);font-size:11px;text-align:right}
+.nd-food-table-wrap{width:100%;min-width:0;margin-top:10px}
+.nd-food-table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:11px;font-variant-numeric:tabular-nums}
+.nd-food-col-name{width:49%}.nd-food-col-number{width:17%}
+.nd-food-table th,.nd-food-table td{padding:9px 2px;vertical-align:middle;border-bottom:1px solid var(--line)}
+.nd-food-table thead th{font-size:10px;color:#c4d4e4;font-weight:750;white-space:nowrap}
+.nd-food-table thead th:first-child,.nd-food-table tbody th{text-align:left}
+.nd-food-table td,.nd-food-table thead th:not(:first-child){text-align:right}
+.nd-food-table td{color:var(--text);font-size:11px}
+.nd-food-table abbr{text-decoration:none}
+.nd-food-id{display:flex;align-items:center;gap:7px;min-width:0;max-width:100%}
+.nd-food-monogram{display:grid;place-items:center;flex:none;width:29px;height:29px;border-radius:9px;background:var(--card2);border:1px solid #43566a;color:#c5f56b;font-size:10px;font-weight:850;letter-spacing:-.02em}
+.nd-food-copy{display:flex;flex-direction:column;min-width:0;max-width:100%;gap:3px}
+.nd-food-short{display:block;min-width:0;max-width:100%;color:var(--text);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nd-food-copy small{color:var(--muted);font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.nd-food-legend{color:var(--muted);font-size:10px;line-height:1.4;margin:8px 0}
+.nd-meal-details .btnrow{gap:6px;padding-bottom:8px}
+.nd-meal-details .btnrow button{min-height:44px;padding:10px;font-size:11px}
+@media(min-width:600px){.nd-meal-macro-row{max-width:365px}.nd-meal-macro-ring{width:63px;height:63px}}
+@media(max-width:355px){.nd-meal-macro-ring{width:49px;height:49px}.nd-meal-macro-ring>span{font-size:12px}.nd-meal-macro-name{font-size:11px}.nd-food-monogram{width:24px;height:24px;font-size:9px}.nd-food-id{gap:4px}.nd-food-table th,.nd-food-table td{padding:8px 1px}.nd-food-table{font-size:10px}.nd-food-table td{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.nd-meal-chevron{transition:none}}
