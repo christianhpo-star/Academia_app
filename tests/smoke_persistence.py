@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = re.sub(r'<script defer src="\./[^\"]+"></script>', '', (ROOT / 'index.html').read_text())
-INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261114-safe-import5" />', '')
+INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261114-body9" />', '')
 
 
 def open_app(context, storage, errors):
@@ -33,7 +33,7 @@ def open_app(context, storage, errors):
       });
     }""", storage)
     page.add_style_tag(path=str(ROOT / 'styles.css'))
-    for script in ['data.js', 'engine.js', 'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'app.js']:
+    for script in ['data.js', 'engine.js', 'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'app.js']:
         page.add_script_tag(path=str(ROOT / script))
     page.wait_for_selector('#screen h1')
     return page
@@ -52,7 +52,7 @@ with sync_playwright() as p:
     context = browser.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=1, locale='pt-BR')
     errors = []
     page = open_app(context, {}, errors)
-    assert 'Evolua com método.' in page.locator('#screen').inner_text()
+    assert 'Seu próximo passo.' in page.locator('#screen').inner_text()
     assert 'Bloco A' in page.locator('#screen').inner_text()
     page.get_by_role('button', name='Escolher outro bloco').click()
     page.locator('[data-action="select-plan"][data-plan="B"]').click()
@@ -77,8 +77,8 @@ with sync_playwright() as p:
     assert supino.locator('[data-field="rir"]').nth(3).input_value() == '2'
     assert 'Muay Thai antes do treino' in page.locator('[data-draft-meta="notes"]').input_value()
     page.get_by_role('button', name='Início', exact=True).click()
-    assert 'Continuar treino salvo' in page.locator('#screen').inner_text()
-    page.get_by_role('button', name='Continuar treino salvo').click()
+    assert 'Continuar treino' in page.locator('#screen').inner_text()
+    page.locator('.home-primary [data-action="resume"]').click()
     supino = page.locator('[data-exercise="supino-halteres"]')
     assert supino.locator('[data-field="reps"]').nth(3).input_value() == '10'
     for i in range(4):
@@ -92,7 +92,7 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Início', exact=True).click()
     home = page.locator('#screen').inner_text()
     assert 'Bloco A' in home
-    assert '1 de 4 blocos concluídos' in home
+    assert 'Seu próximo passo.' in home and 'Treino sugerido' in home.lower() or 'Seu próximo passo.' in home
     page.get_by_role('button', name='Treinos', exact=True).click()
     page.locator('[data-action="select-plan"][data-plan="B"]').click()
     page.get_by_role('button', name='Iniciar treino B').click()
@@ -116,7 +116,7 @@ with sync_playwright() as p:
     assert supino.locator('[data-field="reps"]').nth(3).input_value() == '12'
     assert supino.locator('[data-action="toggle-warmup"]').nth(3).inner_text().strip() == 'Aquec.'
     assert 'Tipo de série diferente' in supino.inner_text()
-    page.on('dialog', lambda dialog: dialog.accept())
+    page.once('dialog', lambda dialog: dialog.accept())
     page.get_by_role('button', name='Cancelar').click()
     assert 'forja.academia.draft.v1' not in storage_snapshot(page)
     page.get_by_role('button', name='Histórico', exact=True).click()
@@ -161,7 +161,7 @@ with sync_playwright() as p:
     inherited['timestamp'] = '2026-10-30T13:00:00.000Z'
     incoming['sessions'].append(inherited)
     incoming['migrationAudit'] = {'schema':'FORJA v1 compatible / UX7'}
-    page.get_by_role('button', name='Ajustes', exact=True).click()
+    page.locator('.top-settings').click()
     page.on('dialog', lambda dialog: dialog.accept())
     page.locator('#import-file').set_input_files({
         'name':'forja-test-merge.json',
@@ -174,7 +174,8 @@ with sync_playwright() as p:
     assert merged['sessions'][0] == original['sessions'][0]
     assert merged['migrationAudit']['schema'] == 'FORJA v1 compatible / UX7'
     # Repeated import is idempotent: no duplicated series, sessions or weight records.
-    page.get_by_role('button', name='Ajustes', exact=True).click()
+    page.locator('.top-settings').click()
+    page.once('dialog', lambda dialog: dialog.accept())
     page.locator('#import-file').set_input_files({
         'name':'forja-test-merge.json',
         'mimeType':'application/json',

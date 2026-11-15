@@ -16,14 +16,15 @@ with sync_playwright() as p:
     root=Path(__file__).resolve().parents[1]
     html=(root/'index.html').read_text()
     html=re.sub(r'<script defer src="\./[^"]+"></script>','',html)
-    html=html.replace('<link rel="stylesheet" href="./styles.css?v=20261114-safe-import5" />','')
+    html=html.replace('<link rel="stylesheet" href="./styles.css?v=20261114-body9" />','')
     page.set_content(html)
     page.evaluate("Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem(){return null},setItem(){}}})")
     page.add_style_tag(path=str(root/'styles.css'))
-    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']:
+    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','app.js']:
         page.add_script_tag(path=str(root/js))
-    page.wait_for_selector('text=Evolua com método.')
-    assert '82' in page.locator('#screen').inner_text()
+    page.wait_for_selector('.home-primary')
+    assert 'Seu próximo passo.' in page.locator('#screen').inner_text()
+    assert page.locator('.hero').count()==0
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     screenshots=root/'screenshots';screenshots.mkdir(exist_ok=True)
     page.screenshot(path=str(screenshots/'home.png'),full_page=True)
@@ -43,8 +44,10 @@ with sync_playwright() as p:
         first.locator('[data-field="rir"]').nth(i).fill('2')
     page.get_by_role('button',name='Salvar treino').click()
     assert 'Seu histórico' in page.locator('#screen').inner_text()
-    page.get_by_role('button',name='Início',exact=True).click()
+    # Última carga fica no histórico/evolução, não na home de ação rápida.
     assert '25 kg/halter' in page.locator('#screen').inner_text()
+    page.get_by_role('button',name='Início',exact=True).click()
+    assert page.locator('.home-primary').count()==1
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Iniciar treino B').click()
     first=page.locator('[data-exercise="supino-halteres"]')

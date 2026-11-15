@@ -9,24 +9,28 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png" />
   <link rel="apple-touch-icon" href="./icons/icon-192.png" />
   <link rel="manifest" href="./manifest.webmanifest" />
-  <link rel="stylesheet" href="./styles.css?v=20261114-safe-import5" />
+  <link rel="stylesheet" href="./styles.css?v=20261114-body9" />
   <title>FORJA — Evolução de força</title>
-  <script defer src="./data.js?v=20261114-safe-import5"></script>
-  <script defer src="./engine.js?v=20261114-safe-import5"></script>
-  <script defer src="./muay.js?v=20261114-safe-import5"></script>
-  <script defer src="./calendar.js?v=20261114-safe-import5"></script>
-  <script defer src="./flex.js?v=20261114-safe-import5"></script>
-  <script defer src="./dose.js?v=20261114-safe-import5"></script>
-  <script defer src="./focus.js?v=20261114-safe-import5"></script>
-  <script defer src="./catalog-advice.js?v=20261114-safe-import5"></script>
-  <script defer src="./app.js?v=20261114-safe-import5"></script>
+  <script defer src="./data.js?v=20261114-body9"></script>
+  <script defer src="./engine.js?v=20261114-body9"></script>
+  <script defer src="./muay.js?v=20261114-body9"></script>
+  <script defer src="./calendar.js?v=20261114-body9"></script>
+  <script defer src="./flex.js?v=20261114-body9"></script>
+  <script defer src="./dose.js?v=20261114-body9"></script>
+  <script defer src="./focus.js?v=20261114-body9"></script>
+  <script defer src="./catalog-advice.js?v=20261114-body9"></script>
+  <script defer src="./body-measures.js?v=20261114-body9"></script>
+  <script defer src="./app.js?v=20261114-body9"></script>
 </head>
 <body>
   <div class="app-shell">
     <header class="topbar">
       <div class="brandmark" aria-hidden="true">F<span>↗</span></div>
       <div class="brandcopy"><strong>FORJA</strong><span>MEU TREINO</span></div>
-      <span class="header-badge">EVOLUÇÃO CONTÍNUA <small class="forja-build">UX8 · 20261114</small></span>
+      <button type="button" class="top-settings" data-action="top-settings" aria-label="Abrir ajustes" title="Ajustes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.7 2.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-2.7-2.7.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.3 7l2.7-2.7.1.1A1.7 1.7 0 0 0 9 4.7a1.7 1.7 0 0 0 1-1.6V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.7 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1v4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+      </button>
+      <span class="header-badge"><small class="forja-build">UX9 · 20261114</small></span>
     </header>
     <main id="screen" tabindex="-1" aria-live="off"><p class="loading">Preparando seu painel...</p></main>
     <nav class="bottom-nav" id="nav" aria-label="Navegação principal">
@@ -36,15 +40,16 @@
       <button type="button" data-tab="plans" class="nav-link" aria-label="Treinos">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 7v10M18 7v10M4 9h4v6H4zM16 9h4v6h-4zM8 12h8M2 10v4M22 10v4"/></svg><span>Treinos</span>
       </button>
+      <button type="button" data-tab="catalog" class="nav-link" aria-label="Catálogo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span>Catálogo</span>
+      </button>
       <button type="button" data-tab="progress" class="nav-link" aria-label="Evolução">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m6 16 5-5 3 2 6-7"/></svg><span>Evolução</span>
       </button>
       <button type="button" data-tab="history" class="nav-link" aria-label="Histórico">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 2-6"/><path d="M3 3v5h5M12 7v5l3 2"/></svg><span>Histórico</span>
       </button>
-      <button type="button" data-tab="settings" class="nav-link" aria-label="Ajustes">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.7 2.7-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1-2.7-2.7.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.6-1H3v-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9L4.3 7l2.7-2.7.1.1A1.7 1.7 0 0 0 9 4.7a1.7 1.7 0 0 0 1-1.6V3h4v.1a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1L19.7 7l-.1.1a1.7 1.7 0 0 0-.3 1.9 1.7 1.7 0 0 0 1.6 1h.1v4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg><span>Ajustes</span>
-      </button>
+
     </nav>
   </div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

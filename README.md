@@ -164,3 +164,17 @@ As referências são mostradas apenas ao iniciar o exercício **sem histórico a
 - Pesagens com data igual não são duplicadas. Treinos e sessões de Muay com IDs iguais também não são duplicados.
 - Quando há rascunho em andamento, não apaga o rascunho para importar o histórico. A importação e a restauração são operações locais, nunca fazem upload automático ao repositório.
 - Exporte um backup recente do celular antes da importação para ter uma cópia independente. Entradas de Muay antigas continuam com dados originais, sem inferência de repetições ou intensidade.
+
+## UX9 — Início claro e catálogo independente
+- A tela inicial mostra **uma ação principal** (continuar treino em andamento ou iniciar bloco recomendado), a avaliação de recuperação em seção recolhível e, de forma discreta, o último treino e acesso ao Muay Thai.
+- Gráficos, pesagens, metas e volume ficam na aba Evolução; o histórico permanece em Histórico, sem poluir a primeira tela.
+- Navegação inferior: Início, Treinos, Catálogo, Evolução e Histórico. Ajustes são acessados pelo ícone do cabeçalho.
+- O catálogo global lista todos os exercícios (ativos, inativos e alternativas), busca por nome/equipamento/músculo, filtra por grupo e mostra o status da ficha.
+- Incluir uma opção do catálogo na ficha é uma ação explícita, **não inicia sessão** e não registra séries imaginárias. Filtrar e consultar não alteram histórico ou rascunho.
+- O protótipo foi preparado para revisão visual no Figma; publicação no site depende de CI verde.
+
+## Circunferências corporais (14/11/2026)
+- Aba Evolução → Medidas corporais: desenho vetorial ilustrativo, valores sobrepostos por região (pescoço, peitoral, braços e antebraços por lado, abdômen no umbigo, quadril, coxas e panturrilhas por lado), abas de medidas atuais e histórico.
+- Cada aferição pode ser salva e corrigida com data e valores parciais, validando unidades em centímetros. Comparações indicam diferenças absolutas, não inferências de gordura ou massa muscular.
+- Registros ficam em `bodyMeasurements` no backup pessoal local, não em código público; BACKUPS v1 antigos continuam válidos. O importador mescla aferições pela data, preservando as existentes no celular.
+- O backup pessoal aferido em 14/11/2026 é um artefato privado compartilhado à parte, nunca incluído no repositório. Abrir uma versão nova do app não injeta medições pessoais automaticamente.

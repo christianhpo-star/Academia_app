@@ -4,8 +4,8 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-safe-import5" />','')
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-body9" />','')
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','app.js']
 def open_app(ctx, storage, errors, width):
     page=ctx.new_page()
     page.set_viewport_size({'width':width,'height':800})
@@ -33,6 +33,14 @@ with sync_playwright() as p:
     shots=ROOT/'screenshots'
     shots.mkdir(exist_ok=True)
     page=open_app(ctx,{},errors,390)
+    assert page.locator('.home-primary').count()==1
+    assert page.locator('.home-primary [data-action="start"]').count()==1
+    assert page.locator('.hero').count()==0
+    assert page.locator('.kpi-row').count()==0
+    assert page.locator('#nav [data-tab="catalog"]').count()==1
+    assert page.locator('#nav [data-tab="settings"]').count()==0
+    assert page.locator('.home-recovery').count()==1
+    page.locator('.home-recovery > summary').click()
     assert page.locator('.recovery-checkin').count()==1
     page.locator('[data-action="recovery-energy"][data-value="boa"]').click()
     check=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.v1")).settings.recoveryCheckin')

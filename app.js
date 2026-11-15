@@ -8,6 +8,7 @@
   const ADVICE = window.ForjaCatalogAdvice;
   const DOSE = window.ForjaDose;
   const FOCUS = window.ForjaFocus;
+  const BODY = window.ForjaBodyMeasures;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -31,7 +32,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],
     };
   }
   function load() {
@@ -56,6 +57,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
+      BODY.validRecords(value.bodyMeasurements) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -121,8 +123,10 @@
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
     catalogOpen: false, catalogAll: false, catalogMode:'replacement',
+    catalogGroup:'all',catalogSearch:'',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
+    bodyOpen:false,bodyView:'current',bodyEditDate:null,homeRecoveryOpen:false,
   };
   let toastTimeout;
   function draftStatusText() {
@@ -391,8 +395,8 @@
   function render() {
     const main = document.getElementById('screen');
     main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
-      ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() :
-      ui.tab === 'progress' ? renderProgress() : ui.tab === 'history' ? renderHistory() : renderSettings();
+      ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
+      ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
       const active=btn.dataset.tab===ui.tab;
       btn.classList.toggle('active',active);
@@ -428,41 +432,103 @@
       <button class="button-inline" data-action="resume">Continuar treino salvo</button></div>`;
   }
   function renderHome() {
-    const goal = E.progress(state.weights,state.settings.startWeight,state.settings.targetWeight);
-    const left = dayGap(today(),state.settings.goalDate);
-    const next = getNext(), plan = next.id ? planFor(next.id) : null;
-    const pending = dueKnee();
-    const last = latestSessions()[0];
-    const lastTop = state.exercises.map(x=>({x,r:E.recommend(x,state.sessions)}))
-      .filter(item=>item.r.last).sort((a,b)=>(history(b.x.id)[0]?.session.timestamp||'').localeCompare(history(a.x.id)[0]?.session.timestamp||''))[0];
-    return `${headline('Seu painel','Evolua com método.','Cargas, recuperação e constância em um único lugar.')}
-      <section class="card hero" aria-label="Progresso até o objetivo">
-        <div class="row-between"><span class="pill green">META DE RECOMPOSIÇÃO</span><span class="small muted">${left>=0?`${left} dias restantes`:'Data-alvo encerrada'}</span></div>
-        <div class="hero-rows mt-16"><div><span class="metric-label">PESO ATUAL</span><div class="hero-weight">${fmt(goal.current)} <small>kg</small></div></div>
-        <div><span class="metric-label">OBJETIVO</span><div class="hero-weight">${fmt(state.settings.targetWeight)} <small>kg</small></div></div></div>
-        <div class="progress-track" role="progressbar" aria-label="Progresso do peso" aria-valuenow="${goal.percent}" aria-valuemin="0" aria-valuemax="100"><span style="width:${goal.percent}%"></span></div>
-        <div class="progress-legend"><span>${goal.percent}% do percurso</span><span>${goal.remaining>0?`${fmt(goal.remaining)} kg até a meta`: 'Meta de peso atingida'}</span></div>
+    const next=getNext(),plan=next.id?planFor(next.id):null;
+    const pending=dueKnee(),last=latestSessions()[0],check=checkin();
+    const checkLabel=check ? (check.energy==='baixa'?'Pouca energia':check.energy==='boa'?'Bem recuperado':'Energia normal') : 'Não informado';
+    const block=ui.draft?planFor(ui.draft.planId):null;
+    return `${headline('Hoje','Seu próximo passo.','Comece o treino ou informe como está se sentindo.')}
+      <section class="home-primary card" aria-labelledby="home-primary-title">
+        <div class="row-between"><span class="home-step-label">${ui.draft?'EM ANDAMENTO':next.rest?'RECUPERAÇÃO SUGERIDA':'TREINO SUGERIDO'}</span>
+          ${tag(ui.draft?`Bloco ${ui.draft.planId}`:next.rest?'Descanso':`Bloco ${next.id}`,ui.draft||!next.rest?'green':'amber')}</div>
+        <h2 id="home-primary-title">${ui.draft?esc(block.title):plan?esc(plan.title):'Recuperar antes de treinar'}</h2>
+        <p class="home-primary-summary">${ui.draft?'Você já começou esta sessão. Continue de onde parou.':plan?esc(plan.subtitle):'Seus blocos continuam pendentes. Reavalie como você está antes de iniciar.'}</p>
+        ${next.rest&&!ui.draft?`<p class="home-rest-reason">${esc(next.reason)}</p>`:''}
+        ${ui.draft?`<button class="primary full home-main-action" data-action="resume">Continuar treino</button>`:
+          plan?`<button class="primary full home-main-action" data-action="start" data-plan="${next.id}">Iniciar treino ${next.id}</button>`:
+          `<button class="secondary full home-main-action" data-action="navigate" data-to="plans">Ver meus treinos</button>`}
+        <div class="home-secondary-actions">
+          <button class="button-inline" data-action="navigate" data-to="plans">Escolher outro bloco</button>
+          ${!ui.draft&&!next.rest?`<details class="home-reason"><summary>Por que este treino?</summary><p>${esc(next.reason)}</p></details>`:''}
+        </div>
       </section>
-      <div class="kpi-row"><div class="kpi"><strong>${state.sessions.length}</strong><span>treinos salvos</span></div><div class="kpi"><strong>${goal.lost>0?'−':''}${fmt(Math.abs(goal.lost))}</strong><span>kg desde o início</span></div><div class="kpi"><strong>14/01</strong><span>meta de 2027</span></div></div>
-      ${resumeBanner()}
-      ${renderRecoveryCheckin()}
-      ${renderAdherencePanel()}
-      ${pending.length?`<div class="callout warn"><strong>Cheque o joelho no dia seguinte.</strong> Há ${pending.length} treino(s) de pernas aguardando registro. <button class="button-inline" data-action="navigate" data-to="history">Registrar agora</button></div>`:''}
-      <div class="section-row"><h2 class="section-title">Seu próximo treino</h2>${tag(next.rest?'Recuperação':`Bloco ${next.id}`,'green')}</div>
-      <section class="card"><div class="card-row"><div><h3>${plan?esc(plan.title):'Recuperação antes do próximo bloco'}</h3><p>${plan?esc(plan.subtitle):'Não há bloco de superiores pendente e liberado pela recuperação atual.'}</p></div><span class="rounded-emoji" aria-hidden="true">${plan?.type==='upper'?'↗':'⌁'}</span></div>
-        <p class="bodycopy mt-12">${esc(next.reason)}</p>
-        ${renderQueue(next)}
-        <p class="small muted mt-12">A recomendação considera o check-in de hoje. Atualize acima se sua recuperação mudou.</p>
-        ${plan?`<button class="primary full mt-12" data-action="start" data-plan="${next.id}">Iniciar ${esc(plan.title)}</button>`:''}
-        <button class="button-inline mt-8" data-action="navigate" data-to="plans">Escolher outro bloco</button>
-      </section>
-      ${last?`<div class="section-row"><h2 class="section-title">Última atividade</h2><span class="tiny muted">${dateBR(last.day)}</span></div><div class="card"><strong>${esc(planFor(last.planId).title)}</strong><p class="small muted mt-8">${last.entries.length} exercícios registrados · ${esc(last.energy||'Esforço não informado')}</p></div>`:''}
-      ${lastTop?`<div class="section-row"><h2 class="section-title">Seu último peso de treino</h2></div><div class="card"><div class="card-row"><div><strong>${esc(lastTop.x.name)}</strong><p class="last">${esc(lastTop.r.last)}</p></div>${tag(lastTop.r.level==='increase'?'Pode subir':'Em evolução',lastTop.r.level==='increase'?'green':'')}</div><p class="small muted mt-12">${esc(lastTop.r.title)}. ${esc(lastTop.r.explanation)}</p></div>`:''}
-      <div class="section-row"><h2 class="section-title">Muay Thai</h2></div>
-      ${M.readinessCard(M.readiness(state.muay.sessions,today(),recoverySettings()))}
-      <section class="card"><p class="small muted">Aulas e treinos em casa também entram no seu diário, sem concluir blocos de musculação.</p><button class="secondary full" data-action="open-muay">Registrar Muay Thai</button></section>
-      ${weightForm()}
-      <p class="small muted">As recomendações são regras de acompanhamento, não substituem orientação de um profissional. Dor no joelho ou piora após treino bloqueiam sugestões automáticas de aumento.</p>`;
+      ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
+        <p>Há ${pending.length} treino(s) aguardando registro após 24h.
+        <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
+      <details class="home-recovery" ${ui.homeRecoveryOpen?'open':''}>
+        <summary><span><strong>Como está sua recuperação hoje?</strong><small>${esc(checkLabel)}</small></span>
+          <span class="home-recovery-action">${check?'Atualizar':'Informar'} <span aria-hidden="true">⌄</span></span></summary>
+        <div class="home-recovery-body">${renderRecoveryCheckin()}</div>
+      </details>
+      <div class="home-minimal-links">
+        ${last?`<button class="home-last-session" data-action="navigate" data-to="history">
+          <span><small>ÚLTIMO TREINO · ${dateBR(last.day)}</small><strong>${esc(planFor(last.planId).title)}</strong></span><span aria-hidden="true">›</span>
+        </button>`:''}
+        <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
+      </div>
+      <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
+  }
+  function renderCatalog() {
+    // F.options merges custom exercises, active plans and curated alternatives
+    // without filtering by workout-in-progress. Browsing never changes a draft.
+    const all=F.options(state.exercises,null);
+    const known=new Map(state.exercises.map(ex=>[ex.id,ex]));
+    const shown=all.filter(ex=>ui.catalogGroup==='all'||ex.group===ui.catalogGroup);
+    const term=ui.catalogSearch.toLocaleLowerCase('pt-BR').trim();
+    const count=shown.filter(ex=>[ex.name,ex.muscle,ex.equipment].some(value=>
+      String(value||'').toLocaleLowerCase('pt-BR').includes(term))).length;
+    return `${headline('Biblioteca','Catálogo de exercícios.','Explore todos os movimentos sem iniciar um treino.')}
+      <search class="catalog-browser-tools" aria-label="Pesquisar e filtrar exercícios">
+        <label for="catalog-search">Buscar exercício ou equipamento</label>
+        <input id="catalog-search" type="search" value="${esc(ui.catalogSearch)}" placeholder="Ex.: supino, polia, halter..." autocomplete="off" aria-controls="catalog-browser-results" />
+      </search>
+      <div class="catalog-group-tabs" role="group" aria-label="Filtrar por bloco">
+        ${[['all','Todos'],['A','Costas'],['B','Peito'],['C','Quadríceps'],['D','Posteriores']].map(([group,label])=>
+          `<button type="button" class="catalog-group-chip ${ui.catalogGroup===group?'selected':''}"
+             data-action="catalog-filter" data-group="${group}" aria-pressed="${ui.catalogGroup===group}">${label}</button>`).join('')}
+      </div>
+      <div class="catalog-browser-head">
+        <h2 class="section-title">Todos os exercícios</h2>
+        <output id="catalog-count" aria-live="polite">${count} de ${all.length} movimentos</output>
+      </div>
+      <div class="catalog-browser-results" id="catalog-browser-results">
+        ${shown.map(ex=>{
+          const existing=known.get(ex.id);
+          const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
+          const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
+          const searchable=[ex.name,ex.muscle,ex.equipment].join(' ').toLocaleLowerCase('pt-BR');
+          return `<article class="catalog-browser-item" data-catalog-item
+                   data-search="${esc(searchable)}" ${searchable.includes(term)?'':'hidden'}>
+            <div class="catalog-browser-header">
+              <span class="catalog-group-code">BLOCO ${esc(ex.group)}</span>
+              <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
+            </div>
+            <h3>${esc(ex.name)}</h3>
+            <p class="catalog-browser-description">${esc(description)}</p>
+            <div class="catalog-browser-bottom">
+              <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
+              ${existing?
+                `<button type="button" class="button-inline" data-action="${existing.active?'edit-ex':'catalog-activate'}" data-ex="${esc(ex.id)}">${existing.active?'Editar':'Ativar na ficha'}</button>`:
+                `<button type="button" class="button-inline" data-action="catalog-add-plan" data-ex="${esc(ex.id)}">Adicionar à ficha</button>`}
+            </div>
+          </article>`;
+        }).join('')}
+      </div>
+      <p class="catalog-empty-state" id="catalog-empty-state" ${count?'hidden':''}>Nenhum exercício encontrado. Experimente outro nome ou grupo.</p>
+      <p class="tiny muted catalog-browser-tip">As alterações na ficha são opcionais. Explorar o catálogo não inicia nem modifica um treino em andamento.</p>`;
+  }
+  function filterCatalogDOM(){
+    const term=ui.catalogSearch.toLocaleLowerCase('pt-BR').trim();
+    let visible=0;
+    document.querySelectorAll('[data-catalog-item]').forEach(item=>{
+      const match=item.dataset.search.includes(term);
+      item.hidden=!match;
+      if(match)visible++;
+    });
+    const total=F.options(state.exercises,null).length;
+    const output=document.getElementById('catalog-count');
+    if(output)output.textContent=visible+' de '+total+' movimentos';
+    const empty=document.getElementById('catalog-empty-state');
+    if(empty)empty.hidden=visible>0;
   }
   function painOptions(current) {
     return [['','Não informado'],['0','0 · Sem dor'],['1','1 · Mínima'],['2','2 · Leve'],['3','3 · Moderada'],['4','4 · Importante'],['5','5+ · Forte']]
@@ -729,7 +795,12 @@
     const x=i=>items.length===1?160:24+i*(272/(items.length-1));
     const y=val=>122-((val-min)/Math.max(.1,max-min))*100;
     const points=items.map((it,i)=>`${x(i)},${y(it.weight)}`).join(' ');
+    const bm=BODY.recent(state.bodyMeasurements||[])[0];
     return `${headline('Acompanhe seu processo','Sua evolução.','Olhe a tendência do peso junto da força, recuperação e circunferência abdominal.')}
+      <button type="button" class="body-quick-card" data-action="body-open">
+        <span><strong>Medidas corporais</strong><small>${bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':'Circunferências por região e histórico'}</small></span>
+        <span aria-hidden="true">›</span>
+      </button>
       <div class="kpi-row"><div class="kpi"><strong>${fmt(p.current)}</strong><span>kg atuais</span></div><div class="kpi"><strong>${p.lost>=0?'−':'+'}${fmt(Math.abs(p.lost))}</strong><span>kg de variação</span></div><div class="kpi"><strong>${days>0?days:'—'}</strong><span>dias até a meta</span></div></div>
       <div class="card"><div class="row-between"><h2 class="section-title">Histórico de peso</h2>${tag(`${items.length} registro(s)`,'green')}</div>
       <div class="chart-wrap mt-12"><svg viewBox="0 0 320 160" role="img" aria-label="Gráfico de peso registrado. Atual ${fmt(p.current)} quilos, meta ${fmt(state.settings.targetWeight)} quilos.">
@@ -746,6 +817,83 @@
       ${weightForm()}
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
   }
+  function bodyFigure(current){
+    const values=current?.values||{};
+    // Responsive, original vector silhouette; values are DOM labels, not baked into an image.
+    const labels=BODY.FIELDS.filter(f=>values[f.id]!==undefined).map(f=>{
+      return '<span class="body-measure-pin" style="--pin-x:'+f.x+'%;--pin-y:'+f.y+'%" title="'+
+        esc(f.label)+'" aria-label="'+esc(f.label)+': '+esc(BODY.fmt(values[f.id]))+'">'+
+        esc(BODY.fmt(values[f.id]))+'</span>';
+    }).join('');
+    return '<div class="body-figure" role="group" aria-label="Mapa ilustrativo das circunferências corporais">'+
+     '<svg viewBox="0 0 260 460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Silhueta corporal humana, vista de frente">'+
+     '<defs><linearGradient id="forja-body-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#93a8b7"/><stop offset=".52" stop-color="#556f83"/><stop offset="1" stop-color="#293f53"/></linearGradient></defs>'+
+     '<g fill="url(#forja-body-gradient)" stroke="#b0c3c9" stroke-opacity=".25" stroke-width="1.2">'+
+     '<ellipse cx="130" cy="43" rx="26" ry="34"/>'+
+     '<path d="M119 71L116 84 102 89 88 100 92 159 107 208 151 208 169 159 173 100 156 89 144 84 142 71Z"/>'+
+     '<path d="M97 94Q75 93 69 112L48 190 38 249Q35 262 44 266 53 264 56 252L77 193 96 139Z"/>'+
+     '<path d="M163 94Q185 93 191 112L212 190 222 249Q225 262 216 266 207 264 204 252L183 193 164 139Z"/>'+
+     '<path d="M107 205L104 240 95 313 95 360 91 404 86 429Q83 441 102 441L111 432 122 355 128 287 130 255 131 287 138 355 149 432 158 441Q177 441 174 429L169 404 165 360 165 313 156 240 152 205Z"/>'+
+     '</g><g stroke="#d6e4e7" stroke-opacity=".18" fill="none" stroke-width="2">'+
+     '<path d="M130 104V174M111 133Q130 144 148 133M105 185Q130 191 155 185M130 215V245"/>'+
+     '</g></svg>'+labels+'</div>';
+  }
+  function renderBodyMeasures(){
+    const records=BODY.recent(state.bodyMeasurements||[]);
+    const current=records[0]||null, history=ui.bodyView==='history';
+    const edit=BODY.findDay(records,ui.bodyEditDate||today());
+    const formDay=ui.bodyEditDate||today();
+    return '<div class="body-page">'+
+      '<button type="button" class="button-inline body-back" data-action="body-back">← Voltar à evolução</button>'+
+      headline('Acompanhamento corporal','Medidas corporais.','Circunferências em centímetros, registradas por data.')+
+      '<div class="body-tabs" role="group" aria-label="Visualizar medidas">'+
+        '<button class="'+(!history?'selected':'')+'" data-action="body-view" data-view="current" aria-pressed="'+(!history)+'">Medidas atuais</button>'+
+        '<button class="'+(history?'selected':'')+'" data-action="body-view" data-view="history" aria-pressed="'+history+'">Histórico</button>'+
+      '</div>'+
+      (history?
+        (records.length?'<div class="body-history-list">'+records.map((entry,i)=>{
+          const older=records[i+1];return '<article class="card body-history-entry"><div class="row-between"><h2 class="section-title">'+
+          dateBR(entry.date)+'</h2><button class="button-inline" data-action="body-edit" data-date="'+esc(entry.date)+'">Editar</button></div>'+
+          '<div class="body-history-grid">'+BODY.FIELDS.filter(field=>entry.values[field.id]!==undefined).map(field=>{
+            const delta=BODY.diff(entry,older,field.id);return '<div class="body-history-cell"><span>'+esc(field.label)+'</span><strong>'+
+            esc(BODY.fmt(entry.values[field.id]))+'</strong>'+
+            (delta!==null?'<small class="body-delta">'+(delta>0?'+':'')+delta.toLocaleString('pt-BR')+' cm</small>':'')+'</div>';
+          }).join('')+'</div></article>';
+        }).join('')+'</div>':'<div class="empty">Nenhuma aferição salva até o momento.</div>')+
+        '<p class="small muted">As diferenças mostram apenas variação de circunferência, não uma estimativa de gordura ou massa muscular.</p>'
+      :
+      '<section class="body-figure-card"><div class="row-between"><strong>Vista frontal</strong><span class="pill">'+(current?dateBR(current.date):'Sem aferição')+'</span></div>'+
+       bodyFigure(current)+
+       '<p class="tiny muted body-side-note">Direita e esquerda correspondem aos lados da pessoa representada. Silhueta ilustrativa, sem proporções clínicas.</p></section>'+
+       '<form class="card body-form" id="body-measures-form">'+
+       '<div class="row-between"><h2 class="section-title">'+(ui.bodyEditDate?'Editar aferição':'Registrar aferição')+'</h2><span class="pill">cm</span></div>'+
+       '<div class="field mt-12"><label for="body-date">Data da medição</label><input id="body-date" name="date" type="date" value="'+esc(formDay)+'" required /></div>'+
+       '<div class="body-field-grid">'+BODY.FIELDS.map(field=>
+         '<div class="field"><label for="measure-'+esc(field.id)+'">'+esc(field.label)+'</label>'+
+         '<input id="measure-'+esc(field.id)+'" name="'+esc(field.id)+'" type="number" inputmode="decimal" min=".1" max="300" step=".1" placeholder="—" value="'+
+         esc(edit?.values?.[field.id]??'')+'"/></div>').join('')+'</div>'+
+       '<button type="submit" class="primary full mt-16">Salvar medidas</button>'+
+       '<p class="tiny muted mt-12">Deixe vazias as regiões não medidas. O registro pode ser complementado depois, e fica guardado neste aparelho e no backup JSON.</p></form>')+
+      '</div>';
+  }
+  function saveBodyMeasures(form){
+    const fd=new FormData(form),date=String(fd.get('date')||'');
+    const values={};
+    for(const field of BODY.FIELDS){
+      const value=String(fd.get(field.id)||'').trim();
+      if(value)values[field.id]=value;
+    }
+    const result=BODY.upsert(state.bodyMeasurements||[],date,values);
+    if(result.error)return notify(result.error);
+    const before=state.bodyMeasurements;
+    state.bodyMeasurements=result.items;
+    if(!save()){
+      state.bodyMeasurements=before;
+      return notify('Não foi possível salvar as medidas. Seus registros anteriores continuam preservados.');
+    }
+    ui.bodyEditDate=null;render();notify('Medidas de '+dateBR(date)+' salvas.');
+  }
+
   function renderHistory() {
     const sessions=latestSessions();
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
@@ -940,6 +1088,7 @@
       weights:[...current.weights,...newWeights],
       exercises:unionById(current.exercises,incoming.exercises),
       sessions:unionById(current.sessions,incoming.sessions),
+      bodyMeasurements:BODY.merge(current.bodyMeasurements,incoming.bodyMeasurements),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
         draft:current.muay.draft||incoming.muay.draft||null},
@@ -958,12 +1107,13 @@
       if(parsed.sessions.some(session=>session.entries.some(entry=>!importedIds.has(entry.id))))
         throw new Error('Treinos importados referenciam exercícios ausentes.');
       const existing=state.sessions.length+state.muay.sessions.length+
-        state.weights.filter(item=>!item.initial).length;
+        state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length;
       const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft);
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
       const counts=parsed.sessions.length+' musculação, '+parsed.muay.sessions.length+
-        ' Muay Thai e '+parsed.weights.length+' pesagem(ns)';
+        ' Muay Thai, '+parsed.weights.length+' pesagem(ns) e '+
+        (parsed.bodyMeasurements||[]).length+' medição(ões) corporais';
       if(!confirm('Importar '+counts+'? Os registros serão '+action+'. '+
         'A FORJA preserva as informações legadas sem completar dados antigos. '+
         'Se houver treinos novos no aparelho, recomendamos exportar um backup antes.'))return;
@@ -1012,6 +1162,7 @@
     }
     if(action==='recovery-energy'){
       if(!['boa','normal','baixa'].includes(btn.dataset.value))return;
+      ui.homeRecoveryOpen=true;
       const existing=checkin();
       state.settings.recoveryCheckin={
         day:today(),energy:btn.dataset.value,fatigue:existing?.fatigue||'normal',
@@ -1032,6 +1183,42 @@
       if(!copied)return notify('Nenhuma carga pendente disponível para copiar.');
       if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
       render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
+    }
+    if(action==='body-open'){
+      ui.bodyOpen=true;ui.bodyView='current';ui.bodyEditDate=null;ui.tab='progress';
+      render();window.scrollTo(0,0);return;
+    }
+    if(action==='body-back'){
+      ui.bodyOpen=false;ui.bodyEditDate=null;render();window.scrollTo(0,0);return;
+    }
+    if(action==='body-view'){
+      if(!['current','history'].includes(btn.dataset.view))return;
+      ui.bodyView=btn.dataset.view;ui.bodyEditDate=null;render();return;
+    }
+    if(action==='body-edit'){
+      if(!BODY.validDate(btn.dataset.date))return;
+      ui.bodyEditDate=btn.dataset.date;ui.bodyView='current';render();
+      document.querySelector('#body-measures-form')?.scrollIntoView({block:'start',behavior:'smooth'});return;
+    }
+    if(action==='catalog-filter'){
+      if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
+      ui.catalogGroup=btn.dataset.group;render();return;
+    }
+    if(action==='catalog-add-plan'){
+      const id=btn.dataset.ex;
+      if(state.exercises.some(ex=>ex.id===id)||state.exercises.length>=200)return;
+      const found=F.prepareCatalog(id,state.exercises);
+      if(!found||!found.isNew)return;
+      const added={...found.exercise,active:true};
+      state.exercises.push(added);
+      if(!save()){state.exercises.pop();return notify('Não foi possível adicionar o exercício.');}
+      render();notify('Exercício incluído na ficha do bloco '+added.group+'.');return;
+    }
+    if(action==='catalog-activate'){
+      const ex=exerciseFor(btn.dataset.ex);if(!ex)return;
+      const previous=ex.active;ex.active=true;
+      if(!save()){ex.active=previous;return;}
+      render();notify('Exercício ativado na ficha do bloco '+ex.group+'.');return;
     }
     if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;ui.catalogMode='replacement';render();return;}
     if(action==='catalog-mode'){
@@ -1232,11 +1419,19 @@
       }
     }
   }
+  document.querySelector('.top-settings')?.addEventListener('click',()=>{
+    ui.editor=null;ui.tab='settings';render();window.scrollTo(0,0);
+  });
   document.getElementById('nav').addEventListener('click',event=>{
     const btn=event.target.closest('[data-tab]');if(!btn)return;
-    ui.editor=null;ui.tab=btn.dataset.tab;render();window.scrollTo(0,0);
+    ui.editor=null;ui.tab=btn.dataset.tab;
+    if(ui.tab==='progress')ui.bodyOpen=false;
+    render();window.scrollTo(0,0);
   });
   const screen=document.getElementById('screen');
+  screen.addEventListener('toggle',event=>{
+    if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
+  },true);
   screen.addEventListener('click',event=>{
     const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
   });
@@ -1265,6 +1460,10 @@
       const box=document.querySelector('.dose-card');
       if(box)box.outerHTML=renderDosePanel(true);
     }
+    if(event.target.id==='catalog-search'){
+      ui.catalogSearch=event.target.value;
+      filterCatalogDOM();
+    }
     if(event.target.id==='flex-catalog-search'){
       const query=event.target.value.toLocaleLowerCase('pt-BR').trim();
       document.querySelectorAll('[data-flex-name]').forEach(row=>{
@@ -1278,6 +1477,7 @@
     updateMuayField(event);
     const el=event.target;
     if(el.dataset.recoveryField){
+      ui.homeRecoveryOpen=true;
       const field=el.dataset.recoveryField;
       if(!['fatigue','kneePain'].includes(field))return;
       const value=el.value;
@@ -1307,6 +1507,7 @@
     if(event.target.id==='weight-form')setWeight(event.target);
     else if(event.target.id==='goal-form')setGoal(event.target);
     else if(event.target.id==='exercise-form')saveExercise(event.target);
+    else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
   });
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   render();
@@ -1320,7 +1521,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-safe-import5',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-body9',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
