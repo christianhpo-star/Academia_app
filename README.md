@@ -178,3 +178,9 @@ As referências são mostradas apenas ao iniciar o exercício **sem histórico a
 - Cada aferição pode ser salva e corrigida com data e valores parciais, validando unidades em centímetros. Comparações indicam diferenças absolutas, não inferências de gordura ou massa muscular.
 - Registros ficam em `bodyMeasurements` no backup pessoal local, não em código público; BACKUPS v1 antigos continuam válidos. O importador mescla aferições pela data, preservando as existentes no celular.
 - O backup pessoal aferido em 14/11/2026 é um artefato privado compartilhado à parte, nunca incluído no repositório. Abrir uma versão nova do app não injeta medições pessoais automaticamente.
+
+## UX10 — Registro de Muay Thai e Histórico compacto
+- Muay Thai: início rápido, esforço e fadiga por toque; duração e joelho visíveis; data, local, tipo, observações e escalas precisas em seção avançada.
+- Exercícios realizados: quatro atalhos em primeiro plano, demais em seção recolhível; volume e número de blocos diretamente editáveis. Nome, categoria, unidade e lateralidade em detalhes opcionais, preservando significado exato de chutes por lado e combinações cronometradas.
+- Histórico: calendário recolhível, três sessões de musculação e três de Muay Thai inicialmente visíveis, expansão de cinco em cinco e cartões com detalhes fechados até serem solicitados. Avaliação pendente do joelho mantém a sessão aberta quando mostrada.
+- Nenhuma informação legada é preenchida ou convertida automaticamente; importação, histórico, rascunhos e chaves locais permanecem intactos.
