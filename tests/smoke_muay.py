@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-home-catalog6" />','')
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-body9" />','')
 
 def open_app(ctx, storage=None):
     page=ctx.new_page()
@@ -19,7 +19,7 @@ def open_app(ctx, storage=None):
       }})
     }""",storage or {})
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']:
+    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','app.js']:
         page.add_script_tag(path=str(ROOT/js))
     page.locator('#screen h1').wait_for()
     return page
