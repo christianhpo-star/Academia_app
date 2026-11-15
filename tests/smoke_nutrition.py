@@ -152,9 +152,9 @@ with sync_playwright() as p:
     original=state()['nutrition']['entries']
     page.evaluate("() => { localStorage.setItem = () => {throw new Error('quota')}; }")
     page.locator('#nd-meal button[type="submit"]').click()
-    assert page.locator('dialog').is_visible()
+    assert page.locator('.nd-dialog').is_visible()
     assert state()['nutrition']['entries']==original
-    assert 'Não foi possível salvar' in page.locator('dialog [role="alert"]').inner_text()
+    assert 'Não foi possível salvar' in page.locator('.nd-dialog [role="alert"]').inner_text()
     assert errors==[],errors
     browser.close()
     print('PASS nutrition: dated compound meals, favorites, draft recovery, editable profile/goals, quota, responsive')
