@@ -74,7 +74,8 @@ def main():
     server=ThreadingHTTPServer(("127.0.0.1",0),partial(SilentHandler,directory=str(ROOT)))
     thread=threading.Thread(target=server.serve_forever,daemon=True)
     thread.start()
-    origin=f"http://127.0.0.1:{server.server_port}/"
+    # app.js intentionally registers its service worker for HTTPS or localhost.
+    origin=f"http://localhost:{server.server_port}/"
     try:
       with sync_playwright() as p:
         chrome=os.environ.get("CHROMIUM_PATH") or shutil.which("chromium") or shutil.which("google-chrome")
