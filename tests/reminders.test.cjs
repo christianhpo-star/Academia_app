@@ -25,7 +25,9 @@ test('large acute weight swing triggers verification, not a diagnosis or nutriti
  assert.ok(prefs.prefs.items['weight-check'].until==='2026-11-29');
  state.reminderPrefs=prefs.prefs;
  assert.equal(R.assess(state,'2026-11-16').visible.some(r=>r.id==='weight-check'),false);
- assert.equal(R.assess(state,'2026-11-30').visible.some(r=>r.id==='weight-check'),true);
+ assert.equal(R.assess(state,'2026-11-30').visible.some(r=>r.id==='weight-check'),false);
+ state.weights=[weigh('2026-11-29',83),weigh('2026-12-01',86)];
+ assert.equal(R.assess(state,'2026-12-02').visible.some(r=>r.id==='weight-check'),true);
 });
 test('profile weight differs by 5 percent and is linked to the existing profile confirmation',()=>{
  const state=base();
@@ -122,4 +124,11 @@ test('older weigh-in never contradicts a profile confirmed after that measuremen
  state.weights=[weigh('2026-10-01',80)];
  state.nutrition.settings.profile={...profile,confirmedAt:'2026-11-10',weightKg:90};
  assert.equal(R.assess(state,day).visible.some(x=>x.id==='profile-weight'),false);
+});
+
+test('a profile reminder does not persist forever from an old weight reading',()=>{
+ const state=base();
+ state.weights=[weigh('2026-10-01',80),weigh('2026-10-30',85)];
+ assert.equal(R.assess(state,'2026-11-02').visible.some(x=>x.id==='profile-weight'),true);
+ assert.equal(R.assess(state,'2026-12-30').visible.some(x=>x.id==='profile-weight'),false);
 });
