@@ -37,6 +37,8 @@ jobs:
         run: |
           python3 -m pip install --user playwright
           python3 -m playwright install --with-deps chromium
+      - name: Browser smoke - nutrition diary and goals
+        run: python3 tests/smoke_nutrition.py
       - name: Browser smoke - strength persistence and radar
         run: |
           python3 tests/smoke_browser.py
@@ -51,7 +53,6 @@ jobs:
           python3 tests/smoke_catalog.py
           python3 tests/smoke_body.py
           python3 tests/smoke_history.py
-          python3 tests/smoke_nutrition.py
       - name: Upload isolated PR source for diagnostics
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4

@@ -1152,7 +1152,7 @@
         state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length+
         (state.nutrition?.entries||[]).length+(state.nutrition?.foods||[]).length+
         (state.nutrition?.mealTemplates||[]).length;
-      const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft);
+      const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft)||Boolean(state.nutrition.draft)||Boolean(state.nutrition.settings.profile)||(state.nutrition.settings.targets||[]).length>0;
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
       const counts=parsed.sessions.length+' musculação, '+parsed.muay.sessions.length+

@@ -35,13 +35,20 @@
   function active(settings,day){return (settings.targets||[]).filter(t=>t.from<=day).sort((a,b)=>b.from.localeCompare(a.from))[0]||null;}
   function difference(v){return KEYS.slice(0,4).some(k=>v[k]==null)?null:Math.round(v.energyKcal-4*v.proteinG-4*v.carbsG-9*v.fatG);}
   function context(state,day){
-    const strength=(state.sessions||[]).filter(s=>(s.date||s.timestamp?.slice(0,10))===day).length;
+    const strength=(state.sessions||[]).filter(s=>(s.day||s.date||s.timestamp?.slice(0,10))===day).length;
     const muay=(state.muay?.sessions||[]).filter(s=>(s.day||s.date)===day).length;
     const weights=(state.weights||[]).filter(w=>!w.initial&&w.date<=day).sort((a,b)=>a.date.localeCompare(b.date));
     const cutoff=new Date(day+'T12:00:00Z');cutoff.setUTCDate(cutoff.getUTCDate()-28);
     const recent=weights.filter(w=>w.date>=cutoff.toISOString().slice(0,10));
-    const measures=(state.bodyMeasurements||[]).filter(m=>(m.date||'')<=day).length;
-    return {strength,muay,measures,recentWeights:recent.length,
+    const measurements=(state.bodyMeasurements||[]).filter(m=>m.date<=day).sort((a,b)=>a.date.localeCompare(b.date));
+    const measures=measurements.length;
+    const abdomen=measurements.filter(m=>m.date>=cutoff.toISOString().slice(0,10)&&Number.isFinite(m.values?.abdomen));
+    const abdomenChange=abdomen.length>=2&&Date.parse(abdomen.at(-1).date)-Date.parse(abdomen[0].date)>=14*86400000?Math.round((abdomen.at(-1).values.abdomen-abdomen[0].values.abdomen)*10)/10:null;
+    const week=new Date(day+'T12:00:00Z');week.setUTCDate(week.getUTCDate()-6);const weekStart=week.toISOString().slice(0,10);
+    const inWeek=d=>d>=weekStart&&d<=day;
+    const weeklyStrength=(state.sessions||[]).filter(s=>inWeek(s.day||s.date||s.timestamp?.slice(0,10))).length;
+    const weeklyMuay=(state.muay?.sessions||[]).filter(s=>inWeek(s.day||s.date)).length;
+    return {strength,muay,measures,abdomenChange,weeklyStrength,weeklyMuay,recentWeights:recent.length,
       weightChange:recent.length>=2&&Date.parse(recent.at(-1).date)-Date.parse(recent[0].date)>=14*86400000?Math.round((recent.at(-1).weight-recent[0].weight)*10)/10:null};
   }
   const api={KEYS,validProfile,validTarget,validSettings,estimate,active,difference,context};root.ForjaNutritionGoals=api;

@@ -35,7 +35,7 @@ with sync_playwright() as p:
     assert page.locator('.nd-meal').last.locator('h2').inner_text()=='Ceia'
     page.locator('[data-nd="previous"]').click()
     day=page.locator('#nd-date').input_value()
-    page.locator('[data-nd="add"][data-meal="lunch"]').click()
+    page.locator('.nd-meal [data-nd="add"][data-meal="lunch"]').click()
     page.locator('[data-nd="mode"][data-mode="search"]').click()
     page.locator('#nd-search').fill('PRO FORCE')
     page.locator('[data-nd="pick"]').click()

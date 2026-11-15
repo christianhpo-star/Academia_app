@@ -27,3 +27,7 @@ test('rascunho vazio e parcial validado e recuperado em backup',()=>{
  const a=N.archive();a.draft={editId:null,entry:{id:'draft',date:'2026-11-15',mealType:'supper',items:[]},pending:{label:'rascunho'}};
  assert.ok(N.validArchive(a));assert.deepEqual(N.merge(undefined,a),a);assert.ok(!N.validArchive({...a,draft:{entry:{}}}));
 });
+test('contexto compara medidas no mesmo local sem inferir gordura',()=>{
+ const c=G.context({sessions:[{timestamp:'2026-11-14T13:00:00'}],muay:{sessions:[{day:'2026-11-15'}]},bodyMeasurements:[{date:'2026-11-01',values:{abdomen:90}},{date:'2026-11-15',values:{abdomen:89}}],weights:[{date:'2026-11-01',weight:80},{date:'2026-11-15',weight:80.2}]},'2026-11-15');
+ assert.equal(c.abdomenChange,-1);assert.equal(c.weightChange,.2);assert.equal(c.weeklyStrength,1);assert.equal(c.weeklyMuay,1);assert.equal(c.muay,1);assert.equal(c.bodyFat,undefined);
+});

@@ -112,3 +112,15 @@ test('favoritos de sobremesas mantêm faixa e não inventam outros consumos',()=
   const restored=N.merge(arch,{...N.archive(),entries:[copy]});
   assert.equal(restored.entries[0].items[0].estimate.confidence,'low');
 });
+
+test('favorito preserva composição corrigida sem voltar ao catálogo',()=>{
+  let n=0;const id=p=>p+'-corrected-'+(++n),archive=N.archive();
+  const item=C.makeItem('ref:generic-169757','100g',1,id);
+  item.nutrientsPer100g.proteinG=4;item.source={name:'Rótulo revisado'};
+  const entry={id:'corrected-entry',date:'2026-11-15',mealType:'lunch',items:[item]};
+  const result=C.makeFavorite(entry,archive,'',id);
+  archive.foods.push(...result.foodsToAdd);archive.mealTemplates.push(result.favorite);
+  const repeated=C.fromFavorite(result.favorite,'2026-11-16',archive,id);
+  assert.equal(repeated.items[0].nutrientsPer100g.proteinG,4);
+  assert.equal(repeated.items[0].source.name,'Rótulo revisado');
+});
