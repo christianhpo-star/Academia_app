@@ -124,3 +124,16 @@ test('favorito preserva composição corrigida sem voltar ao catálogo',()=>{
   assert.equal(repeated.items[0].nutrientsPer100g.proteinG,4);
   assert.equal(repeated.items[0].source.name,'Rótulo revisado');
 });
+
+test('alimentos pesquisados aparecem primeiro no café sem depender de consumo prévio',()=>{
+ const breakfast=C.orderedForMeal('breakfast');
+ assert.deepEqual(breakfast.slice(0,3).map(x=>x.id),[
+   'photo:itambe-zero-morango-200g',
+   'photo:piracanjuba-proforce-banoffee-250ml',
+   'growth:whey-unknown'
+ ]);
+ assert.equal(breakfast.length,C.foods.length);
+ assert.equal(C.orderedForMeal('lunch')[0].id,'ref:generic-169757');
+ assert.ok(C.search('ITAMBE').some(x=>x.name.includes('Itambé')));
+ assert.ok(C.search('banoffee').some(x=>x.name.includes('PRO FORCE')));
+});

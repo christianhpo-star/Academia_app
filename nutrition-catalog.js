@@ -161,6 +161,24 @@
     return foods.filter(food=>normalize([food.name,...food.aliases].join(' ')).includes(term));
   };
 
+  // Display order, not a dietary recommendation or a user-specific consumption log.
+  // Branded products already in the offline catalogue appear before generic foods.
+  const mealFirst={
+    breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+      'growth:whey-unknown','ref:generic-173424','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
+    lunch:['ref:generic-169757','ref:generic-173735','ref:generic-171477','ref:generic-173424'],
+    snack:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+      'growth:whey-unknown','ref:generic-173944','ref:generic-169705',
+      'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml'],
+    dinner:['ref:generic-169757','ref:generic-173735','ref:generic-171477','ref:generic-173424'],
+    supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+      'ref:generic-171265','growth:whey-unknown']
+  };
+  function orderedForMeal(mealType){
+    const ids=mealFirst[mealType]||mealFirst.breakfast;
+    const ranking=new Map(ids.map((id,i)=>[id,i]));
+    return foods.slice().sort((a,b)=>(ranking.get(a.id)??999)-(ranking.get(b.id)??999));
+  }
   // Copy estimates into each entry so catalogue updates cannot rewrite past records.
   function copyEstimate(estimate, factor=1) {
     return {
@@ -236,7 +254,7 @@
       time:null,notes:'',items};
     return N.validEntry(entry)?entry:null;
   }
-  const api={VERSION:1,foods,find,search,makeItem,makeFavorite,fromFavorite};
+  const api={VERSION:1,foods,find,search,orderedForMeal,makeItem,makeFavorite,fromFavorite};
   root.ForjaNutritionCatalog=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -36,6 +36,8 @@ with sync_playwright() as p:
     page.locator('[data-nd="previous"]').click()
     day=page.locator('#nd-date').input_value()
     page.locator('.nd-meal [data-nd="add"][data-meal="lunch"]').click()
+    assert page.locator('[data-nd="pick"]').count()>=6, 'Catalogue must open with suggestions, not empty Recentes'
+    assert 'Arroz branco' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="search"]').click()
     page.locator('#nd-search').fill('PRO FORCE')
     page.locator('[data-nd="pick"]').click()
@@ -68,6 +70,14 @@ with sync_playwright() as p:
     assert state()['nutrition']['entries'][1]['date']==day
     # Draft survives navigation/restart without a fictitious meal.
     page.locator('[data-nd="add"][data-meal="breakfast"]').click()
+    assert 'Itambé' in page.locator('#nd-results').inner_text(), 'Itambé should be suggested for breakfast'
+    assert 'Piracanjuba' in page.locator('#nd-results').inner_text(), 'Piracanjuba should be visible without search'
+    assert 'Whey Growth' in page.locator('#nd-results').inner_text(), 'Whey shortcut should be visible without search'
+    page.locator('#nd-search').fill('itambe')
+    assert 'Itambé' in page.locator('#nd-results').inner_text()
+    page.locator('#nd-search').fill('não existe alimento')
+    assert 'Nenhum item encontrado' in page.locator('#nd-results').inner_text()
+    page.locator('#nd-search').fill('')
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
     page.locator('#nd-label').fill('Rascunho sintético')
     page.locator('[data-nd="close"]').click()
