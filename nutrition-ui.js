@@ -18,16 +18,117 @@
   const field=(name,label,value='',extra='')=>`<div class="field"><label for="nd-${name}">${label}</label><input id="nd-${name}" name="${name}" value="${esc(value??'')}" ${extra}></div>`;
   const select=(name,label,obj,value)=>`<div class="field"><label for="nd-${name}">${label}</label><select id="nd-${name}" name="${name}">${options(obj,value)}</select></div>`;
   const dateBR=d=>d.split('-').reverse().join('/');
+
+  // Explicitly scoped to locally verified product art. No unverified branded picture is rendered.
+  // SVG category illustrations are offline, deterministic and available for saved legacy items.
+  const FOOD_ICONS={
+    yogurt:'<path d="M5 8h14l-1.5 12h-11L5 8Z"/><path d="M7 5h10l2 3H5l2-3Z"/><circle cx="12" cy="13" r="3"/><path d="m12 11 1 2-2 2"/>',
+    drink:'<path d="M7 6h10l1 14H6L7 6Z"/><path d="M7 6 10 3h6l1 3M8 10h8M12 2v4"/><circle cx="12" cy="14" r="2"/>',
+    whey:'<path d="M7 3h10l2 16-2 2H7l-2-2L7 3Z"/><path d="M7 7h10M10 12l2-2 2 2-2 4-2-4Z"/>',
+    rice:'<path d="M3 13h18l-2 6H5l-2-6Z"/><path d="M5 11c0-4 14-4 14 0M7 8l1-2M12 8V5M17 8l-1-2"/>',
+    beans:'<path d="M3 13h18l-2 6H5l-2-6Z"/><path d="M6 12c0-6 12-6 12 0"/><path d="M8 9c2-2 4 0 2 2M14 9c2-2 4 0 2 2"/>',
+    chicken:'<path d="M7 16c-4-3-3-9 2-11s9 2 8 7c-1 4-7 7-10 4Z"/><path d="m6 17-3 3M3 17l4 4"/>',
+    egg:'<path d="M12 3c-4 0-7 6-7 11a7 7 0 0 0 14 0c0-5-3-11-7-11Z"/><circle cx="12" cy="14" r="3"/>',
+    banana:'<path d="M5 3C3 9 7 19 14 21c4 1 7-2 7-5-3 2-7 1-10-3C8 9 8 5 9 2L5 3Z"/><path d="m5 3 3 1"/>',
+    oats:'<path d="M4 12h16l-2 8H6l-2-8Z"/><path d="M5 10c2-4 12-4 14 0M10 8l-1-4M14 8l1-4M8 13l1 2M15 13l-1 2"/>',
+    milk:'<path d="M7 3h9l2 5v13H6V8l1-5Z"/><path d="M6 8h12M9 3v5M9 12h6v5H9z"/>',
+    dessert:'<path d="M5 12c0-5 14-5 14 0l-2 8H7l-2-8Z"/><path d="M7 12c-4-4 1-8 5-6 4-4 9 2 5 6"/><circle cx="12" cy="9" r="1"/>',
+    topping:'<path d="M11 14 6 21M13 12c5 2 9-8 3-9-5 0-7 7-3 9Z"/>',
+    food:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M3 2v8M6 2v8M3 6h3M20 2v19"/>'
+  };
+  const FOOD_KINDS={
+    'photo:itambe-zero-morango-200g':'yogurt',
+    'photo:piracanjuba-proforce-banoffee-250ml':'drink',
+    'growth:whey-unknown':'whey',
+    'ref:generic-169757':'rice',
+    'ref:generic-173735':'beans',
+    'ref:generic-171477':'chicken',
+    'ref:generic-173424':'egg',
+    'ref:generic-173944':'banana',
+    'ref:generic-169705':'oats',
+    'ref:generic-171265':'milk'
+  };
+  const normalizedLabel=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  function foodKind(item){
+    const food=CAT.find(item.foodId||item.id)||item;
+    const id=food.id||item.foodId;
+    if(FOOD_KINDS[id])return FOOD_KINDS[id];
+    if(String(id||'').includes('doce-cascao-adicional'))return 'topping';
+    if(String(id||'').includes('doce-cascao'))return 'dessert';
+    const label=normalizedLabel(food.name||item.label||'');
+    if(/iogurte|yogurt/.test(label))return 'yogurt';
+    if(/proforce|pro force|bebida proteica|shake/.test(label))return 'drink';
+    if(/whey|suplemento/.test(label))return 'whey';
+    if(/arroz/.test(label))return 'rice';
+    if(/feijao/.test(label))return 'beans';
+    if(/frango/.test(label))return 'chicken';
+    if(/ovo/.test(label))return 'egg';
+    if(/banana/.test(label))return 'banana';
+    if(/aveia/.test(label))return 'oats';
+    if(/leite/.test(label))return 'milk';
+    if(/acai|sobremesa|sorvete/.test(label))return 'dessert';
+    if(/creme|adicional/.test(label))return 'topping';
+    return 'food';
+  }
+  function foodVisual(item){
+    const kind=foodKind(item),food=CAT.find(item.foodId||item.id)||item;
+    // Future packaging thumbnails must be bundled and manually verified, never guessed from names.
+    const image=typeof food.image==='string'&&/^\.\/assets\/foods\/[a-z0-9-]+\.(png|webp|jpe?g|svg)$/.test(food.image)?food.image:null;
+    if(image)return '<span class="nd-food-thumb nd-food-thumb-image"><img src="'+esc(image)+'" alt="" loading="lazy" decoding="async"></span>';
+    return '<span class="nd-food-thumb" data-food-icon="'+kind+'" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">'+FOOD_ICONS[kind]+'</svg></span>';
+  }
+  function itemNutrient(item,key){
+    if(item.estimate)return null;
+    const perServing=item.nutrientsPerServing;
+    if(perServing){
+      const amount=perServing[key];
+      return item.unit==='portion'&&amount!=null?Math.round(amount*item.quantity*10)/10:null;
+    }
+    const grams=item.unit==='g'?item.quantity:item.grams;
+    const amount=item.nutrientsPer100g?.[key];
+    return grams!=null&&amount!=null?Math.round(grams*amount/10)/10:null;
+  }
+  function itemMacros(item){
+    const fields=[['P','proteinG','Proteínas'],['C','carbsG','Carboidratos'],['Fib','fiberG','Fibras']];
+    const spoken=fields.map(([,key,label])=>label+': '+fmt(itemNutrient(item,key))+' g').join('; ');
+    return '<span class="nd-food-macros" aria-label="'+esc(spoken)+'">'+fields.map(([symbol,key])=>
+      '<span aria-hidden="true"><b>'+symbol+'</b>'+fmt(itemNutrient(item,key))+'</span>').join('')+'</span>';
+  }
+  const portionLabel=i=>fmt(i.quantity)+' '+(units[i.unit]||i.unit)+(i.grams!=null?' · '+fmt(i.grams)+' g':'');
+
   function ring(key,value,target){
-    const pct=value!=null&&target>0?Math.min(100,value/target*100):0;
-    return button('goals',`<span class="nd-ring" style="--progress:${pct}%;--ring-color:var(--${{energyKcal:'lime',proteinG:'red',carbsG:'blue',fatG:'orange',fiberG:'lime'}[key]})"><span><strong>${fmt(value)}</strong><small>/ ${fmt(target)} ${key==='energyKcal'?'kcal':'g'}</small></span></span><span class="nd-ring-description">${nutrients[key]}${key==='energyKcal'?'':`<small class="nd-ring-readable-total" aria-hidden="true">${fmt(value)} / ${fmt(target)} g</small>`}</span>`, `aria-label="${nutrients[key]}: ${fmt(value)} de ${fmt(target)} ${key==='energyKcal'?'kcal':'gramas'}. Ver metas"`,'nd-ring-button');
+    const isEnergy=key==='energyKcal',hasTarget=target!=null&&target>0;
+    const pct=value!=null&&hasTarget?Math.min(100,Math.max(0,value/target*100)):0;
+    const display=value==null?'—':!isEnergy&&value>=1000?fmt(Math.round(value/100)/10)+'k':fmt(value);
+    const description=isEnergy?
+      '<span class="nd-ring-goal">'+(hasTarget?'Meta: '+fmt(target)+' kcal':'Meta não informada')+'</span>'+
+      (hasTarget&&value!=null?'<span class="nd-ring-percent">'+fmt(Math.round(value/target*100))+'% da meta</span>':''):
+      '<small class="nd-ring-readable-total" aria-hidden="true">'+fmt(value)+' / '+fmt(target)+' g</small>';
+    const content='<span class="nd-ring" style="--progress:'+pct+'%;--ring-color:var(--'+
+      {energyKcal:'lime',proteinG:'red',carbsG:'blue',fatG:'orange',fiberG:'lime'}[key]+
+      ')"><span class="nd-ring-inner"><strong>'+display+'</strong>'+
+      (isEnergy?'<small class="nd-ring-unit">kcal</small>':'')+'</span></span>'+
+      '<span class="nd-ring-description"><span class="nd-ring-title">'+nutrients[key]+'</span>'+description+'</span>';
+    return button('goals',content,'aria-label="'+nutrients[key]+': '+fmt(value)+' de '+fmt(target)+
+      (isEnergy?' kcal':' gramas')+'. Ver metas"','nd-ring-button');
   }
   function entryHTML(e){
     const total=N.observedTotals([e],e.date).totals.energyKcal;
     const estimate=N.estimatedTotals([e],e.date);
-    return `<details class="nd-entry"><summary><span>${esc(e.items.slice(0,3).map(i=>i.label).join(' · '))}${e.items.length>3?' · +'+(e.items.length-3):''}</span><small>${fmt(total)} kcal · ${e.items.length} alimento(s)</small></summary><ul class="mini-list">${e.items.map(i=>`<li><span>${esc(i.label)}<br>${fmt(i.quantity)} ${esc(units[i.unit])}${i.grams!=null?' · '+fmt(i.grams)+' g':''}<br><small>${esc(i.source?.name||'Composição não informada')}</small></span></li>`).join('')}</ul>
-    ${estimate.estimatedItems?`<p class="callout warn">Estimativa de confiança baixa: ${fmt(estimate.totals.central.energyKcal)} kcal (faixa ${fmt(estimate.totals.low.energyKcal)}–${fmt(estimate.totals.high.energyKcal)}). Separada dos gráficos; não representa todas as refeições do dia.</p><details><summary>Como foi estimado</summary>${e.items.filter(i=>i.estimate).map(i=>`<p class="small">${esc(i.estimate.assumptions)}</p>`).join('')}</details>`:''}
-    <div class="btnrow mt-12">${button('edit','Editar',`data-id="${esc(e.id)}"`)}${button('repeat','Repetir nesta data',`data-id="${esc(e.id)}"`)}${button('favorite','Salvar favorito',`data-id="${esc(e.id)}"`)}${button('delete','Excluir',`data-id="${esc(e.id)}"`,'ghost')}</div></details>`;
+    const items=e.items.map(i=>'<li class="nd-food-row">'+foodVisual(i)+
+      '<span class="nd-food-meta"><strong title="'+esc(i.label)+'">'+esc(i.label)+'</strong>'+
+      '<small>'+esc(portionLabel(i))+'</small></span>'+itemMacros(i)+'</li>').join('');
+    return '<details class="nd-entry"><summary><span>'+esc(e.items.slice(0,3).map(i=>i.label).join(' · '))+
+      (e.items.length>3?' · +'+(e.items.length-3):'')+'</span><small>'+fmt(total)+' kcal · '+
+      e.items.length+' alimento(s)</small></summary><ul class="nd-food-list" aria-label="Alimentos registrados">'+items+'</ul>'+
+      (estimate.estimatedItems?'<p class="callout warn">Estimativa de confiança baixa: '+fmt(estimate.totals.central.energyKcal)+
+        ' kcal (faixa '+fmt(estimate.totals.low.energyKcal)+'–'+fmt(estimate.totals.high.energyKcal)+
+        '). Separada dos gráficos; não representa todas as refeições do dia.</p><details><summary>Como foi estimado</summary>'+
+        e.items.filter(i=>i.estimate).map(i=>'<p class="small">'+esc(i.estimate.assumptions)+'</p>').join('')+'</details>':'')+
+      '<div class="btnrow mt-12">'+button('edit','Editar','data-id="'+esc(e.id)+'"')+
+      button('repeat','Repetir nesta data','data-id="'+esc(e.id)+'"')+
+      button('favorite','Salvar favorito','data-id="'+esc(e.id)+'"')+
+      button('delete','Excluir','data-id="'+esc(e.id)+'"','ghost')+'</div></details>';
   }
   function render({archive,date,limit=3,state={}}){
     const totals=N.observedTotals(archive.entries,date),target=G.active(archive.settings,date);
@@ -79,7 +180,7 @@
     }
     function mealBody(){
       const e=draft.entry;
-      dialog.querySelector('#nd-dialog-body').innerHTML=`<form id="nd-meal"><div class="field-row">${field('mealDate','Data',e.date,`type="date" max="${today()}" required`)}${select('mealType','Refeição',labels,e.mealType)}</div><div id="nd-items">${e.items.map((i,index)=>`<div class="nd-item"><strong>${esc(i.label)}</strong><div class="field-row">${field('qty-'+index,'Quantidade ('+esc(units[i.unit])+')',i.quantity,`type="number" inputmode="decimal" min="0.001" max="10000" step="any" data-index="${index}" required`)}${button('remove','Retirar',`data-index="${index}"`,'ghost')}</div><small class="muted">${i.grams!=null?fmt(i.grams)+' g · ':''}${esc(i.source?.name||'Sem composição conhecida')}${i.estimate?' · confiança baixa':''}</small><details><summary>Composição e fonte</summary><p class="small">${esc(i.source?.reference||'Valores não informados')}${i.estimate?' · '+esc(i.estimate.assumptions):''}</p><div class="field-row">${!i.estimate?G.KEYS.map(k=>field('item-'+index+'-'+k,nutrients[k]+' / '+(i.nutrientsPerServing?'porção':'100 g'),(i.nutrientsPerServing||i.nutrientsPer100g)[k],`type="number" min="0" max="${k==='energyKcal'?1200:100}" step="any" data-nutrient="${k}" data-index="${index}"`)).join(''):'Estimativa preservada. Ajuste a quantidade ou substitua o alimento.'}</div></details></div>`).join('')||'<p class="small muted">Escolha alimentos abaixo para montar sua refeição.</p>'}</div>
+      dialog.querySelector('#nd-dialog-body').innerHTML=`<form id="nd-meal"><div class="field-row">${field('mealDate','Data',e.date,`type="date" max="${today()}" required`)}${select('mealType','Refeição',labels,e.mealType)}</div><div id="nd-items">${e.items.map((i,index)=>`<div class="nd-item"><div class="nd-item-head">${foodVisual(i)}<strong>${esc(i.label)}</strong></div><div class="field-row">${field('qty-'+index,'Quantidade ('+esc(units[i.unit])+')',i.quantity,`type="number" inputmode="decimal" min="0.001" max="10000" step="any" data-index="${index}" required`)}${button('remove','Retirar',`data-index="${index}"`,'ghost')}</div><small class="muted">${i.grams!=null?fmt(i.grams)+' g · ':''}${esc(i.source?.name||'Sem composição conhecida')}${i.estimate?' · confiança baixa':''}</small><details><summary>Composição e fonte</summary><p class="small">${esc(i.source?.reference||'Valores não informados')}${i.estimate?' · '+esc(i.estimate.assumptions):''}</p><div class="field-row">${!i.estimate?G.KEYS.map(k=>field('item-'+index+'-'+k,nutrients[k]+' / '+(i.nutrientsPerServing?'porção':'100 g'),(i.nutrientsPerServing||i.nutrientsPer100g)[k],`type="number" min="0" max="${k==='energyKcal'?1200:100}" step="any" data-nutrient="${k}" data-index="${index}"`)).join(''):'Estimativa preservada. Ajuste a quantidade ou substitua o alimento.'}</div></details></div>`).join('')||'<p class="small muted">Escolha alimentos abaixo para montar sua refeição.</p>'}</div>
       <p id="nd-preview" class="small" aria-live="polite"></p><details><summary>Horário e observações</summary>${field('time','Horário',e.time,'type="time"')}${field('notes','Observações',e.notes,'maxlength="500"')}</details><div class="nd-save"><button class="primary full" type="submit">Salvar refeição</button></div></form>
       <section class="mt-16"><h3>Adicionar alimentos</h3><p class="small muted">Os produtos pesquisados e alimentos básicos já estão no catálogo. Escolha uma sugestão ou pesquise por nome e marca; não é necessário ter registrado antes.</p><div class="btnrow">${button('mode','Recentes','data-mode="recent"')}${button('mode','Favoritos','data-mode="favorites"')}${button('mode','Buscar','data-mode="search"')}</div><div class="field mt-12"><label for="nd-search">Buscar alimentos e produtos</label><input id="nd-search" type="search" value="${esc(search)}" placeholder="Nome, produto ou ingrediente"></div><div id="nd-results"></div><div id="nd-portion"></div></section>
       <details class="mt-16"><summary>Adicionar manualmente / rótulo</summary><form id="nd-manual">${field('label','Alimento ou preparação','','maxlength="120" required')}<div class="field-row">${field('quantity','Quantidade',1,'type="number" min="0.001" max="10000" step="any" required')}${select('unit','Unidade',units,'portion')}</div>${field('grams','Peso total equivalente em g (opcional)','','type="number" min="0.001" max="10000" step="any"')}<details><summary>Informações nutricionais do rótulo</summary>${select('basis','Valores informados por',{'100g':'100 g',serving:'uma porção'},'100g')}<p class="small muted">Por porção: use unidade porção; não converta ml em g. Campos vazios ficam desconhecidos.</p><div class="field-row">${G.KEYS.map(k=>field(k,nutrients[k]+(k==='energyKcal'?' (kcal)':' (g)'),' ',`type="number" min="0" max="${k==='energyKcal'?1200:100}" step="any"`)).join('')}</div></details><button type="submit" class="secondary full mt-12">Adicionar à refeição</button></form></details>${button('discard','Descartar rascunho','','ghost full mt-16')}`;
@@ -89,12 +190,12 @@
     function preview(){if(!draft)return;const e=draft.entry;const el=dialog.querySelector('#nd-preview');if(el)el.textContent=N.validEntry(e)?'Prévia: '+fmt(N.observedTotals([e],e.date).totals.energyKcal)+' kcal · traço indica dados incompletos.':'Adicione ao menos um alimento com quantidade válida.';}
     function results(){
       let rows=[];
-      if(mode==='favorites'&&!search)rows=archive().mealTemplates.map(f=>button('use-favorite',esc(f.name),`data-id="${esc(f.id)}"`,'nd-result'));
+      if(mode==='favorites'&&!search)rows=archive().mealTemplates.map(f=>button('use-favorite',foodVisual({label:f.name})+'<span class="nd-result-copy"><strong>'+esc(f.name)+'</strong></span>',`data-id="${esc(f.id)}"`,'nd-result nd-food-result'));
       else if(mode==='recent'&&!search){
-        const seen=new Set();rows=archive().entries.slice().reverse().flatMap(e=>e.items.map(i=>({i,e}))).filter(({i})=>{const key=i.foodId||i.label;if(seen.has(key))return false;seen.add(key);return true;}).map(({i,e})=>button('recent',esc(i.label),`data-entry="${esc(e.id)}" data-id="${esc(i.id)}"`,'nd-result'));
+        const seen=new Set();rows=archive().entries.slice().reverse().flatMap(e=>e.items.map(i=>({i,e}))).filter(({i})=>{const key=i.foodId||i.label;if(seen.has(key))return false;seen.add(key);return true;}).map(({i,e})=>button('recent',foodVisual(i)+'<span class="nd-result-copy"><strong>'+esc(i.label)+'</strong></span>',`data-entry="${esc(e.id)}" data-id="${esc(i.id)}"`,'nd-result nd-food-result'));
       }else {
         const found=search?CAT.search(search):CAT.orderedForMeal(draft.entry.mealType);
-        rows=found.map(f=>button('pick',`${esc(f.name)}<small>${esc(f.category)}${f.estimate?' · estimativa':''}${f.nutrientsPerServing?' · rótulo por porção':''}</small>`,`data-id="${esc(f.id)}"`,'nd-result'));
+        rows=found.map(f=>button('pick',foodVisual(f)+'<span class="nd-result-copy"><strong>'+esc(f.name)+'</strong><small>'+esc(f.category)+(f.estimate?' · estimativa':'')+(f.nutrientsPerServing?' · rótulo por porção':'')+'</small></span>',`data-id="${esc(f.id)}"`,'nd-result nd-food-result'));
       }
       const empty=mode==='recent'&&!search?'Você ainda não registrou alimentos. Abra Buscar para ver todo o catálogo.':
         mode==='favorites'&&!search?'Sem favoritos ainda. Abra Buscar e escolha um alimento para começar.':
@@ -104,7 +205,7 @@
     }
     function portion(){
       const food=CAT.find(picked),el=dialog.querySelector('#nd-portion');
-      el.innerHTML=food?`<form id="nd-catalog" class="panel-soft mt-12"><strong>${esc(food.name)}</strong><p class="small">${esc(food.note)}</p>${food.estimate?`<p class="small">Faixa aproximada: ${fmt(food.estimate.low.energyKcal)}–${fmt(food.estimate.high.energyKcal)} kcal; confiança baixa.</p>`:''}${select('portion','Porção',Object.fromEntries(food.portions.map(p=>[p.id,p.label]).concat(!food.nutrientsPerServing&&!food.estimate?[['custom','Peso em gramas']]:[])),food.portions[0].id)}${field('count','Quantidade de porções (ou gramas)',1,'type="number" min="0.001" max="10000" step="any" required')}<button class="secondary full mt-12" type="submit">Adicionar à refeição</button></form>`:'';
+      el.innerHTML=food?`<form id="nd-catalog" class="panel-soft mt-12"><div class="nd-item-head">${foodVisual(food)}<strong>${esc(food.name)}</strong></div><p class="small">${esc(food.note)}</p>${food.estimate?`<p class="small">Faixa aproximada: ${fmt(food.estimate.low.energyKcal)}–${fmt(food.estimate.high.energyKcal)} kcal; confiança baixa.</p>`:''}${select('portion','Porção',Object.fromEntries(food.portions.map(p=>[p.id,p.label]).concat(!food.nutrientsPerServing&&!food.estimate?[['custom','Peso em gramas']]:[])),food.portions[0].id)}${field('count','Quantidade de porções (ou gramas)',1,'type="number" min="0.001" max="10000" step="any" required')}<button class="secondary full mt-12" type="submit">Adicionar à refeição</button></form>`:'';
     }
     function addItems(items){if(draft.entry.items.length+items.length>30)return error('Limite de 30 alimentos por refeição.');draft.entry.items.push(...items);saveDraft();picked=null;mealBody();}
 
