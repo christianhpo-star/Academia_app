@@ -91,6 +91,7 @@ with sync_playwright() as p:
     assert state()['nutrition']['settings']['profile']['heightCm']==175.5
     page.locator('[data-nd="today"]').click()
     page.locator('[data-nd="goals"]').first.click()
+    page.locator('.nd-goals-manual > summary').click()
     page.locator('#nd-target-proteinG').fill('150')
     page.locator('#nd-target button[type="submit"]').click()
     target=state()['nutrition']['settings']['targets'][-1]
