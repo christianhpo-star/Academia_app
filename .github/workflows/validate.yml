@@ -45,6 +45,8 @@ jobs:
           python3 -m playwright install --with-deps chromium
       - name: Browser smoke - nutrition diary and goals
         run: python3 tests/smoke_nutrition.py
+      - name: Browser smoke - offline user videos (mobile emulation)
+        run: python3 tests/smoke_video_offline.py
       - name: Browser smoke - strength persistence and radar
         run: |
           python3 tests/smoke_browser.py
@@ -90,6 +92,7 @@ jobs:
             screenshots/previous-series-*.png
             screenshots/focus-*.png
             screenshots/catalog-*.png
+            screenshots/video-*.png
             screenshots/body-*.png
             screenshots/nutrition-*.png
           if-no-files-found: warn

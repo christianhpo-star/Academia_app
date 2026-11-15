@@ -126,7 +126,7 @@
       if(file)addFile(file);
       event.target.value='';
     });
-    dialog.addEventListener('close',()=>{generation++;resetPlayer();selected='';});
+    dialog.addEventListener('close',()=>{if(dialog.open)return;generation++;resetPlayer();selected='';});
     return dialog;
   }
   async function open(id,name,ref){
