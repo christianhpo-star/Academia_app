@@ -93,3 +93,26 @@ test('snooze, dismissal and global toggle have no server, timer or mutation of r
  assert.equal(JSON.stringify(state.weights),before);
  const enabled=R.setEnabled(disabled,true).prefs;assert.equal(R.assess({...state,reminderPrefs:enabled},'2026-11-23').visible.some(x=>x.id===first.id),true);
 });
+
+test('step routine shift needs adequate coverage and avoids false precision from missing days',()=>{
+ const state=base();
+ state.nutrition.settings.profile={...profile,activity:1.55};
+ const start=new Date('2026-10-19T12:00:00Z');
+ const make=(i,n)=>{
+  const date=new Date(start);date.setUTCDate(date.getUTCDate()+i);
+  const d=date.toISOString().slice(0,10);
+  return {id:'steps-'+d,date:d,steps:n,source:'samsung-health-manual'};
+ };
+ // Last two 14-day windows contain seven observed days each.
+ state.activitySteps=[
+  ...Array.from({length:7},(_,i)=>make(i,9000)),
+  ...Array.from({length:7},(_,i)=>make(i+14,5000))
+ ];
+ const result=R.assess(state,day);
+ const reminder=result.visible.find(x=>x.id==='activity-review');
+ assert.ok(reminder);
+ assert.ok(reminder.reason.includes('duas quinzenas'));
+ assert.ok(reminder.signature.includes('down'));
+ state.activitySteps=state.activitySteps.slice(0,9);
+ assert.ok(!R.assess(state,day).visible.some(x=>x.id==='activity-review'));
+});
