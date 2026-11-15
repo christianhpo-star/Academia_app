@@ -14,7 +14,8 @@
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
   const NCAT = window.ForjaNutritionCatalog;
-  const MOTION = window.ForjaExerciseMotion;
+  // Graceful fallback if an old cached shell loads without the optional visual module.
+  const MOTION = window.ForjaExerciseMotion || {has:()=>false,thumb:()=>'',viewer:()=>''};
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
