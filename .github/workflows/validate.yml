@@ -32,13 +32,14 @@ jobs:
           node --check nutrition-goals.js
           node --check goal-planner.js
           node --check reminders.js
+          node --check daily-routine.js
           node --check nutrition.js
           node --check nutrition-catalog.js
           node --check nutrition-ui.js
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/exercise-video.test.cjs tests/exercise-references.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
+        run: node --test tests/exercise-references.test.cjs tests/exercise-video.test.cjs tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
@@ -46,7 +47,9 @@ jobs:
       - name: Browser smoke - nutrition diary and goals
         run: python3 tests/smoke_nutrition.py
       - name: Browser smoke - offline user videos (mobile emulation)
-        run: python3 tests/smoke_video_offline.py
+        run: |
+          command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+          python3 tests/smoke_video_offline.py
       - name: Browser smoke - strength persistence and radar
         run: |
           python3 tests/smoke_browser.py
@@ -63,6 +66,7 @@ jobs:
           python3 tests/smoke_activity.py
           python3 tests/smoke_health.py
           python3 tests/smoke_reminders.py
+          python3 tests/smoke_daily_routine.py
           python3 tests/smoke_history.py
       - name: Upload isolated PR source for diagnostics
         if: always() && github.event_name == 'pull_request'

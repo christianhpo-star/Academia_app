@@ -11,6 +11,7 @@
   const BODY = window.ForjaBodyMeasures;
   const ACT = window.ForjaActivity;
   const REM = window.ForjaReminders;
+  const ROUTINE = window.ForjaDailyRoutine;
   const PLANNER = window.ForjaGoalPlanner;
   const HEALTH = window.ForjaHealthImport;
   const NUTRITION = window.ForjaNutrition;
@@ -43,7 +44,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}}, nutrition:NUTRITION.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(), nutrition:NUTRITION.archive(),
     };
   }
   function load() {
@@ -69,7 +70,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
-      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && HEALTH.validMonthlyList(value.healthMonthly) && HEALTH.validWeightReports(value.healthWeightReports) && REM.validPrefs(value.reminderPrefs) && NUTRITION.validArchive(value.nutrition) &&
+      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && HEALTH.validMonthlyList(value.healthMonthly) && HEALTH.validWeightReports(value.healthWeightReports) && REM.validPrefs(value.reminderPrefs) && ROUTINE.valid(value.dailyRoutine) && NUTRITION.validArchive(value.nutrition) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -138,7 +139,7 @@
     catalogGroup:'all',catalogSearch:'',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
-    bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,
+    bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
   };
@@ -517,6 +518,77 @@
     if(!save()){state.reminderPrefs=old;return;}
     render();notify(kind==='dismiss'?'Sugestão dispensada.':'Sugestão adiada.');return;
   }
+  function renderDailyRoutine(){
+    if(ui.routineHidden)return '';
+    const report=ROUTINE.status(state.dailyRoutine,today());
+    if(!report.configured)return '';
+    const actions=report.items.map(slot=>{
+      const label=slot.confirmed?'Registrado hoje':'A confirmar';
+      return '<div class="routine-row"><span class="routine-icon" aria-hidden="true">'+(slot.kind==='medication'?'◈':'◇')+'</span>'+
+        '<div class="routine-details"><strong>'+esc(slot.label)+'</strong><small>'+esc(slot.title)+(slot.time?' · '+slot.time:' · sem horário')+'</small></div>'+
+        '<span class="routine-status">'+label+'</span>'+
+        '<button type="button" class="'+(slot.confirmed?'secondary':'primary')+' routine-confirm" data-action="routine-confirm" data-slot="'+slot.id+'" aria-pressed="'+String(slot.confirmed)+'">'+
+        (slot.confirmed?'Desfazer':'Registrei')+'</button></div>';
+    }).join('');
+    return '<section class="daily-routine card" aria-label="Rotina diária opcional">'+
+      '<div class="row-between"><div><p class="eyebrow">ROTINA DO DIA</p><h2 class="section-title">Cuidados diários</h2></div>'+
+      '<button type="button" class="button-inline" data-action="routine-hide">Ocultar nesta abertura</button></div>'+
+      actions+'<div class="routine-footer"><button type="button" class="button-inline" data-action="routine-manage">'+
+      'Editar rotina e horários'+'</button><p class="tiny muted">Registro voluntário. Sem alertas externos ou mudanças automáticas nos treinos e metas.</p></div></section>';
+  }
+  function renderDailyRoutineSettings(){
+    const archive=ROUTINE.normalize(state.dailyRoutine);
+    const fields=archive.slots.map(slot=>{
+      const title=ROUTINE.meta[slot.id].title;
+      return '<fieldset class="routine-config-item"><legend>'+title+'</legend>'+
+        '<label for="routine-'+slot.id+'-label">Nome</label>'+
+        '<input id="routine-'+slot.id+'-label" name="'+slot.id+'Label" maxlength="80" placeholder="'+
+          (slot.id==='medication'?'Nome do medicamento prescrito':'Nome do suplemento')+'" value="'+esc(slot.label)+'">'+
+        '<label for="routine-'+slot.id+'-time">Horário de referência (opcional)</label>'+
+        '<input id="routine-'+slot.id+'-time" type="time" name="'+slot.id+'Time" value="'+esc(slot.time)+'">'+
+        '<label class="routine-check"><input type="checkbox" name="'+slot.id+'Active" '+(slot.active?'checked':'')+'> Incluir na rotina</label></fieldset>';
+    }).join('');
+    const present=archive.enabled;
+    return '<section class="card routine-settings" id="routine-settings"><h2 class="section-title">Rotina diária opcional</h2>'+
+      '<p class="small muted">Para medicamento, use apenas o nome e o horário prescritos. Não é necessário informar dose. A confirmação é manual e os dados ficam neste dispositivo.</p>'+
+      '<form id="daily-routine-form">'+fields+'<button class="primary full mt-12" type="submit">Salvar configuração</button></form>'+
+      (archive.slots.some(slot=>slot.active&&slot.label.trim())?
+        '<button class="secondary full mt-12" type="button" data-action="routine-enable">'+
+        (present?'Desativar cartão de rotina':'Ativar cartão de rotina')+'</button>':'')+
+      '<p class="tiny muted">Não há notificações em segundo plano nem indicação de doses perdidas. Você pode remover registros de hoje com Desfazer.</p></section>';
+  }
+  function saveDailyRoutineSettings(form){
+    const values=new FormData(form);
+    const configuration={};
+    for(const id of ROUTINE.IDS){
+      configuration[id]={label:String(values.get(id+'Label')||''),time:String(values.get(id+'Time')||''),active:values.has(id+'Active')};
+    }
+    const result=ROUTINE.configure(state.dailyRoutine,configuration,today());
+    if(result.error)return notify(result.error);
+    const previous=state.dailyRoutine;state.dailyRoutine=result.archive;
+    if(!save()){state.dailyRoutine=previous;return;}
+    render();notify('Configuração salva neste aparelho.');
+  }
+  function handleDailyRoutineAction(btn){
+    const action=btn.dataset.action;
+    if(action==='routine-hide'){ui.routineHidden=true;render();return;}
+    if(action==='routine-show'){ui.routineHidden=false;render();return;}
+    if(action==='routine-manage'){ui.tab='settings';render();document.getElementById('routine-settings')?.scrollIntoView({block:'start'});return;}
+    if(action==='routine-enable'){
+      const result=ROUTINE.setEnabled(state.dailyRoutine,ROUTINE.normalize(state.dailyRoutine).enabled===false);
+      if(result.error)return notify(result.error);
+      const previous=state.dailyRoutine;state.dailyRoutine=result.archive;
+      if(!save()){state.dailyRoutine=previous;return;}
+      ui.routineHidden=false;render();notify('Preferência da rotina salva.');return;
+    }
+    if(action==='routine-confirm'){
+      const result=ROUTINE.toggleRecord(state.dailyRoutine,btn.dataset.slot,today(),new Date().toISOString());
+      if(result.error)return notify(result.error);
+      const previous=state.dailyRoutine;state.dailyRoutine=result.archive;
+      if(!save()){state.dailyRoutine=previous;return;}
+      render();notify(result.confirmed?'Confirmação registrada.':'Confirmação desfeita.');return;
+    }
+  }
   function renderHome() {
     const next=getNext(),plan=next.id?planFor(next.id):null;
     const pending=dueKnee(),last=latestSessions()[0],check=checkin();
@@ -540,6 +612,7 @@
       ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
         <p>Há ${pending.length} treino(s) aguardando registro após 24h.
         <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
+      ${renderDailyRoutine()}
       ${renderReminderPanel('home')}
       <details class="home-recovery" ${ui.homeRecoveryOpen?'open':''}>
         <summary><span><strong>Como está sua recuperação hoje?</strong><small>${esc(checkLabel)}</small></span>
@@ -552,6 +625,7 @@
         </button>`:''}
         <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
         <button class="home-muay-link" data-action="nutrition-open"><span>Registrar alimentação</span><span aria-hidden="true">›</span></button>
+        ${!ROUTINE.status(state.dailyRoutine,today()).configured?`<button class="home-muay-link" data-action="routine-manage"><span>Configurar rotina diária (opcional)</span><span aria-hidden="true">›</span></button>`:''}
       </div>
       <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
   }
@@ -1145,6 +1219,7 @@
     return `${headline('Preferências','Seus ajustes.','Dados no próprio aparelho. Sem login, mensalidade ou envio para servidores.')}
       <button class="secondary full mb-8" data-action="nutrition-goals">Perfil e metas de alimentação · altura e idade</button>
       ${renderReminderPreferences()}
+      ${renderDailyRoutineSettings()}
       <form id="goal-form" class="card"><h2 class="section-title">Objetivo e prazo</h2>
       <div class="field mt-12"><label for="goal-mode">Meu objetivo</label><select id="goal-mode" name="goalMode">${Object.entries(PLANNER.MODES).map(([key,label])=>`<option value="${esc(key)}" ${(state.settings.goalMode||'weight')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></div>
       <div class="field-row mt-12"><div class="field"><label for="initial-weight">Peso inicial (kg)</label><input id="initial-weight" name="startWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.startWeight}" required /></div>
@@ -1154,7 +1229,7 @@
       <section class="card"><h2 class="section-title">Samsung Health · histórico importado</h2>${renderHealthSummary()}</section>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
       <button class="secondary full mt-12" data-action="import-health">Importar histórico do Samsung Health (JSON)</button><p class="small muted">Importe um arquivo de transcrição dos seus registros. Os totais mensais ficam separados dos dias observados. Importação local, sem substituir treinos, refeições ou pesagens existentes.</p>
-      <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, passos diários, alimentação, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
+      <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, passos diários, alimentação, rotina diária de saúde, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
         <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
       <section class="card"><h2 class="section-title">Sobre as sugestões</h2><p class="small muted">O app diferencia aquecimento e séries efetivas. Para sugerir aumento, exige duas sessões consistentes dentro da faixa de repetições e RIR informado. Em exercícios de joelho, também exige ausência de sintomas durante e no dia seguinte.</p>
       <div class="callout warn">Não é um diagnóstico. Dor recorrente abaixo da patela deve ser avaliada por profissional de saúde; uma joelheira não garante segurança para aumentar a carga.</div>
@@ -1288,6 +1363,7 @@
         'healthMonthly contém somatórios mensais do Samsung Health, que não equivalem a séries de dados diários e não devem alimentar médias de passos de dias não observados.',
         'healthWeightReports conserva o IMC relatado pelo Samsung Health como indicador calculado, distinto de medidas de gordura corporal.',
         'Meses parciais (complete:false) não podem ser comparados diretamente a meses completos sem ressalvas.',
+        'state.dailyRoutine contém somente confirmações manuais opcionais de medicamento/suplemento; ausência não indica dose esquecida, não demonstra efeito no desempenho e não fundamenta conclusões clínicas.',
         'Sugestões de fator de atividade são heurísticas categóricas, não PAL medido e não somam calorias de exercícios.',
         'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
       ],
@@ -1334,6 +1410,7 @@
       healthMonthly:HEALTH.mergeMonthly(current.healthMonthly,incoming.healthMonthly),
       healthWeightReports:HEALTH.mergeWeightReports(current.healthWeightReports,incoming.healthWeightReports),
       reminderPrefs:current.reminderPrefs||incoming.reminderPrefs||{enabled:true,items:{}},
+      dailyRoutine:ROUTINE.merge(current.dailyRoutine,incoming.dailyRoutine),
       nutrition:NUTRITION.merge(current.nutrition,incoming.nutrition),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
@@ -1384,6 +1461,9 @@
       const exercise=F.options(state.exercises,null).find(x=>x.id===id);
       if(exercise)VIDEOS.open(id,exercise.name,REFS.get(id)).catch(err=>console.warn('Vídeo local indisponível',err));
       return;
+    }
+    if(action==='routine-confirm'||action==='routine-hide'||action==='routine-show'||action==='routine-manage'||action==='routine-enable'){
+      handleDailyRoutineAction(btn);return;
     }
     if(action==='reminder-manage'){ui.tab='settings';render();document.querySelector('.reminder-settings')?.scrollIntoView({block:'start'});return;}
     if(action==='reminder-open'||action==='reminder-snooze'||action==='reminder-dismiss'||action==='reminder-toggle'){
@@ -1811,6 +1891,7 @@
     event.preventDefault();
     if(event.target.id==='weight-form')setWeight(event.target);
     else if(event.target.id==='goal-form')setGoal(event.target);
+    else if(event.target.id==='daily-routine-form')saveDailyRoutineSettings(event.target);
     else if(event.target.id==='exercise-form')saveExercise(event.target);
     else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
     else if(event.target.id==='bio-form')saveBio(event.target);
@@ -1819,6 +1900,20 @@
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   document.getElementById('import-health-file').addEventListener('change',event=>importHealthFile(event.target.files?.[0]));
   render();
+  // Resuming the installed PWA after midnight must show today's status,
+  // even if Android kept the JavaScript tab alive in the background.
+  let lastVisibleDay=today();
+  function refreshOnNewDay(){
+    const currentDay=today();
+    if(currentDay===lastVisibleDay)return;
+    lastVisibleDay=currentDay;
+    ui.routineHidden=false;
+    if(ui.tab==='home')render();
+  }
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')refreshOnNewDay();
+  });
+  window.addEventListener('pageshow',refreshOnNewDay);
   if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
     // Avoid a cached service-worker script after a new GitHub Pages release.
     const hadController=Boolean(navigator.serviceWorker.controller);
@@ -1829,7 +1924,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ref3d4',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ref3d5',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

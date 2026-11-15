@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
 HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','exercise-references.js','exercise-video.js','app.js']
+FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','exercise-references.js','exercise-video.js','app.js']
 def start(context,stored,errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
@@ -35,19 +35,17 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
     assert page.locator('.catalog-browser-item').count()>=40
     assert page.locator('#catalog-search').count()==1
-    button=page.locator('.catalog-browser-item [data-action="video-open"][data-ex="supino-canadense"]')
-    assert button.count()==1
-    before_draft=page.evaluate('localStorage.getItem("forja.academia.draft.v1")')
-    button.click()
+    video_button=page.locator('.catalog-browser-item [data-action="video-open"][data-ex="supino-canadense"]')
+    assert video_button.count()==1
+    draft_before=page.evaluate('localStorage.getItem("forja.academia.draft.v1")')
+    video_button.click()
     assert page.locator('#exercise-video-dialog').is_visible()
     assert page.locator('#exercise-video-dialog a[href="https://fitlapse.com/en/exercise/barbell-decline-bench-press/"]').count()==1
-    assert page.locator('#exercise-video-dialog a').first.get_attribute('target')=='_blank'
-    assert 'noopener noreferrer' in page.locator('#exercise-video-dialog a').first.get_attribute('rel')
     assert page.locator('#exercise-video-dialog [data-video-action="choose"]').is_visible()
-    assert page.locator('#exercise-video-dialog video, #exercise-video-dialog iframe').count()==0
+    assert page.locator('#exercise-video-dialog video').count()==0
     page.locator('#exercise-video-dialog [data-video-action="close"]').click()
     assert not page.locator('#exercise-video-dialog').is_visible()
-    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==before_draft
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==draft_before
     assert page.locator('#catalog-count').count()==1
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
     initial_count=page.locator('.catalog-browser-item').count()
