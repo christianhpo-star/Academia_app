@@ -803,7 +803,7 @@
     const points=items.map((it,i)=>`${x(i)},${y(it.weight)}`).join(' ');
     const bm=BODY.recent(state.bodyMeasurements||[])[0];
     return `${headline('Acompanhe seu processo','Sua evolução.','Olhe a tendência do peso junto da força, recuperação e circunferência abdominal.')}
-      <button type="button" class="body-quick-card" data-action="nutrition-open"><span><strong>Alimentação</strong><small>Refeições registradas e estimativas opcionais</small></span><span aria-hidden="true">›</span></button>
+      <button type="button" class="nutrition-quick-card" data-action="nutrition-open"><span><strong>Alimentação</strong><small>Refeições registradas e estimativas opcionais</small></span><span aria-hidden="true">›</span></button>
       <button type="button" class="body-quick-card" data-action="body-open">
         <span><strong>Medidas corporais</strong><small>${bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':'Circunferências por região e histórico'}</small></span>
         <span aria-hidden="true">›</span>
