@@ -36,3 +36,11 @@
 Registrar modelo/versão de Android, navegador, URL/versão testada, tamanho/codec do vídeo, status de cada item e uma captura do modal sem dados sensíveis. Arquivos de vídeo **não estão incluídos no backup JSON** de treinos. Vídeos do usuário ficam no IndexedDB local e não sincronizam entre aparelhos. O modo avião só é aceito depois do primeiro carregamento com o service worker atualizado.
 
 Em caso de falha, não fazer merge do PR #27. Relatar no próprio PR com evidência e versão. O motor de animações SVG anterior (#22) permanece separado.
+
+## Laboratório de vídeos 3D — pacote automatizado no PR #27
+
+- Na CI do PR de rascunho, `tests/smoke_qa_preview.py` gera e valida uma PWA **FORJA QA** completa em `qa_preview_dist/`. Depois dos testes, o GitHub Actions a entrega como artefato `forja-pr27-preview-android` (retenção de 7 dias); **não faz deploy nem altera o site principal**.
+- A prévia contém a faixa **AMBIENTE DE TESTE**, um Laboratório 3D independente em `/avaliar-3d.html`, um diagnóstico em `/diagnostico.html`, um vídeo sintético original e um manifesto próprio. Não distribui vídeos de terceiros e não importa backup real.
+- O construtor separa as chaves de armazenamento de treinos e vídeos para `forja.qa.*`, usa `forja-qa-shell-*` e só elimina caches de QA. Tudo ocorre em uma **origem HTTPS diferente** da PWA habitual.
+- Verificações automáticas incluem layout a 320, 390 e 768 px, interação com vídeo, troca de velocidade e carregamento de páginas no modo offline após instalar o service worker. O teste de aparelho físico permanece obrigatório.
+- **Não publicar o artefato sobre a URL/domínio da instalação existente.** Não mesclar o Laboratório de QA como parte do produto final sem revisão de escopo. A produção do FORJA continua offline-first.

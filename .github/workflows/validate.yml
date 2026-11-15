@@ -82,17 +82,15 @@ jobs:
             tests/*.cjs
             icons/*.png
           retention-days: 1
+      - name: Build and test isolated Android 3D QA preview
+        if: success() && github.event_name == 'pull_request' && github.head_ref == 'feature/forja-exercise-3d-references-v5'
+        run: python3 tests/smoke_qa_preview.py
       - name: Upload isolated Android HTTPS preview (static site)
         if: success() && github.event_name == 'pull_request' && github.head_ref == 'feature/forja-exercise-3d-references-v5'
         uses: actions/upload-artifact@v4
         with:
           name: forja-pr27-preview-android
-          path: |
-            *.html
-            *.js
-            *.css
-            *.webmanifest
-            icons/*.png
+          path: qa_preview_dist/
           if-no-files-found: error
           retention-days: 7
       - name: Upload Muay screenshots for visual review
@@ -110,6 +108,7 @@ jobs:
             screenshots/focus-*.png
             screenshots/catalog-*.png
             screenshots/video-*.png
+            screenshots/qa-lab-*.png
             screenshots/body-*.png
             screenshots/nutrition-*.png
           if-no-files-found: warn
