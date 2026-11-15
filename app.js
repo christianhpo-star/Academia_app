@@ -9,6 +9,7 @@
   const DOSE = window.ForjaDose;
   const FOCUS = window.ForjaFocus;
   const BODY = window.ForjaBodyMeasures;
+  const NUTRITION = window.ForjaNutrition;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -32,7 +33,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[], nutrition:NUTRITION.archive(),
     };
   }
   function load() {
@@ -41,9 +42,10 @@
       const parsed = JSON.parse(raw);
       if (!validState(parsed)) throw new Error('Backup incompatível');
       const upgradedMuay = M.ensureArchive(parsed);
+      const upgradedNutrition = NUTRITION.ensureArchive(parsed);
       if (!M.validArchive(parsed.muay)) throw new Error('Dados Muay Thai incompatíveis');
       const upgradedReferences = migrateReferences(parsed);
-      if (upgradedMuay || upgradedReferences) {
+      if (upgradedMuay || upgradedNutrition || upgradedReferences) {
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
       }
@@ -57,7 +59,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
-      BODY.validRecords(value.bodyMeasurements) &&
+      BODY.validRecords(value.bodyMeasurements) && NUTRITION.validArchive(value.nutrition) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -1112,6 +1114,7 @@
       exercises:unionById(current.exercises,incoming.exercises),
       sessions:unionById(current.sessions,incoming.sessions),
       bodyMeasurements:BODY.merge(current.bodyMeasurements,incoming.bodyMeasurements),
+      nutrition:NUTRITION.merge(current.nutrition,incoming.nutrition),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
         draft:current.muay.draft||incoming.muay.draft||null},
@@ -1125,12 +1128,15 @@
       const parsed=JSON.parse(await file.text());
       if(!validState(parsed))throw new Error('Estrutura incompatível');
       M.ensureArchive(parsed);
+      NUTRITION.ensureArchive(parsed);
       if(!M.validArchive(parsed.muay))throw new Error('Histórico de Muay Thai inválido');
       const importedIds=new Set(parsed.exercises.map(ex=>ex.id));
       if(parsed.sessions.some(session=>session.entries.some(entry=>!importedIds.has(entry.id))))
         throw new Error('Treinos importados referenciam exercícios ausentes.');
       const existing=state.sessions.length+state.muay.sessions.length+
-        state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length;
+        state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length+
+        (state.nutrition?.entries||[]).length+(state.nutrition?.foods||[]).length+
+        (state.nutrition?.mealTemplates||[]).length;
       const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft);
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
@@ -1563,7 +1569,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-ux10',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-nutrition1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

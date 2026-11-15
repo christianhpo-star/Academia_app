@@ -16,11 +16,11 @@ with sync_playwright() as p:
     root=Path(__file__).resolve().parents[1]
     html=(root/'index.html').read_text()
     html=re.sub(r'<script defer src="\./[^"]+"></script>','',html)
-    html=html.replace('<link rel="stylesheet" href="./styles.css?v=20261114-ux10" />','')
+    html=html.replace('<link rel="stylesheet" href="./styles.css?v=20261114-nutrition1" />','')
     page.set_content(html)
     page.evaluate("Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem(){return null},setItem(){}}})")
     page.add_style_tag(path=str(root/'styles.css'))
-    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','app.js']:
+    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition.js','app.js']:
         page.add_script_tag(path=str(root/js))
     page.wait_for_selector('.home-primary')
     assert 'Seu próximo passo.' in page.locator('#screen').inner_text()
