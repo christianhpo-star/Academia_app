@@ -283,10 +283,10 @@
     'growth:official:sache-natural'];
   const mealFirst={
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:official:top-natural','growth:whey-unknown',...GROWTH_TOP_IDS.filter(id=>id!=='growth:official:top-natural'),'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
+      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
     lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','ref:generic-171477','taco:2011:429','taco:2011:539'],
     snack:['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:official:top-natural','growth:whey-unknown',...GROWTH_TOP_IDS.filter(id=>id!=='growth:official:top-natural'),'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
+      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml'],
     dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','taco:2011:538','taco:2011:429'],
     supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
