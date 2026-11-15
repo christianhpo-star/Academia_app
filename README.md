@@ -1,5 +1,14 @@
 # FORJA
 
+## FORJA UX13 — histórico de atividade e recomendações
+
+- **Alimentação > Minhas metas**: após salvar um perfil completo, uma prévia com energia e macronutrientes é apresentada; os valores só se tornam metas quando o usuário aceita. Ajustes manuais e profissionais são preservados.
+- **Passos do Samsung Health**: entrada manual por dia no mesmo formulário de metas, com atalho próximo ao fator de atividade; médias dos dias registrados em 7/14/28 dias e indicação de cobertura. A ausência de passos não é zero e treinos não adicionam calorias à fórmula.
+- **Fator de atividade**: faixa heurística sugerida somente depois de dados distribuídos por pelo menos 7 dias, com a frequência de musculação e Muay Thai como contexto. A proposta apenas altera a prévia: é necessário selecionar, salvar o perfil e aceitar as metas. Não é PAL medido.
+- **Evolução > Medidas corporais**: leituras opcionais de bioimpedância do Galaxy Watch informadas manualmente e armazenadas por data; não são diagnósticos e não mudam automaticamente as metas.
+- **Ajustes > Seus dados**: exportação de todo o histórico para análise por IA em um JSON gerado localmente, além do backup de restauração. O arquivo pode conter dados sensíveis e não deve ser publicado no repositório. A exportação para IA **não é** arquivo de restauração.
+- **Sem sincronização automática** com Samsung Health. [Contrato, algoritmo e limites](docs/activity-factor.md).
+
 ## Diário alimentar e metas (issue #17)
 
 Alimentação tem acesso direto na navegação, com seletor de data, gráficos circulares, cinco refeições (incluindo ceia), favoritos e editor composto com rascunho local. Em **Minhas metas**, informe altura, idade, peso, atividade e objetivo; aceite uma sugestão explicada ou mantenha metas manuais/profissionais. Catálogo de exercícios permanece em Treinos.

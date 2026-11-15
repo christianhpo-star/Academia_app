@@ -1,0 +1,62 @@
+const test=require('node:test');
+const assert=require('node:assert/strict');
+const A=require('../activity.js');
+const day=n=>new Date(Date.UTC(2026,10,1+n,12)).toISOString().slice(0,10);
+const steps=(n,count)=>Array.from({length:n},(_,i)=>A.upsertSteps([],day(i),count).item);
+const workout=i=>({day:day(i),timestamp:day(i)+'T12:00:00Z'});
+test('legacy backups and missing days are not zeros',()=>{
+  assert.equal(A.validSteps(undefined),true);
+  assert.equal(A.validSteps([]),true);
+  assert.equal(A.assess({sessions:Array.from({length:14},(_,i)=>workout(i)),muay:{sessions:[]}},day(27)).suggestedFactor,null);
+  const result=A.upsertSteps([],day(0),0);
+  assert.equal(result.item.steps,0);
+  assert.equal(A.assess({activitySteps:[result.item]},day(0)).windows.last7.stepDays,1);
+  assert.equal(A.assess({activitySteps:[result.item]},day(0)).windows.last7.avgSteps,0);
+});
+test('validations, correction and idempotent backup merge',()=>{
+  const d=day(0);
+  const start=A.upsertSteps([],d,'8324');
+  assert.equal(start.items[0].steps,8324);
+  const updated=A.upsertSteps(start.items,d,'9300');
+  assert.equal(updated.items.length,1);
+  assert.equal(updated.items[0].steps,9300);
+  assert.ok(A.upsertSteps([],d,'100001').error);
+  assert.ok(A.upsertSteps([],d,'1.7').error);
+  assert.ok(A.upsertSteps([],'2026-11-31','5000').error);
+  const backup=[start.items[0],A.upsertSteps([],day(1),5700).item];
+  const merged=A.mergeSteps(updated.items,backup);
+  assert.equal(merged.length,2);
+  assert.equal(merged[0].steps,9300);
+  assert.deepEqual(A.mergeSteps(merged,backup),merged);
+  assert.equal(A.validSteps([{...updated.items[0],steps:-1}]),false);
+});
+test('short history only suggests a provisional category with representative steps',()=>{
+  const records=steps(7,6000);
+  const state={activitySteps:records,sessions:[workout(0),workout(2)],muay:{sessions:[workout(4)]}};
+  const a=A.assess(state,day(6));
+  assert.equal(a.coverage,'limitada');
+  assert.equal(a.windows.last7.stepDays,7);
+  assert.equal(a.windows.last7.workoutDays,3);
+  assert.equal(a.windows.last14.avgSteps,6000);
+  assert.equal(a.suggestedFactor,1.375);
+  assert.deepEqual(a.range,[1.2,1.55]);
+  assert.ok(a.warnings.some(s=>s.includes('não é PAL medido')));
+});
+test('concentrated step days and incomplete histories do not infer an activity factor',()=>{
+  const state={activitySteps:steps(7,11000),sessions:steps(7,1000).map((_,i)=>workout(i)),muay:{sessions:[]}};
+  const a=A.assess(state,day(6));
+  assert.equal(a.suggestedFactor,null);
+  assert.equal(a.windows.last7.workoutDays,7);
+});
+test('step band is not a validated PAL equation; training can only change one category with coverage',()=>{
+  const records=steps(21,8000);
+  const workouts=Array.from({length:14},(_,i)=>workout(i+7));
+  const a=A.assess({activitySteps:records,sessions:workouts,muay:{sessions:[]}},day(20));
+  assert.equal(a.coverage,'ampla');
+  assert.equal(a.suggestedFactor,1.725);
+  assert.equal(a.windows.last14.workoutDays,14);
+  assert.deepEqual(a.range,[1.55,1.9]);
+  const low=A.assess({activitySteps:steps(21,1800),sessions:workouts,muay:{sessions:[]}},day(20));
+  assert.equal(low.suggestedFactor,1.2);
+  assert.equal(low.windows.last28.avgSteps,1800);
+});
