@@ -95,7 +95,7 @@ test('tela diária soma almoço conhecido e brigadeiro estimado com sinalizaçã
   assert.match(html,/≈252 kcal registradas/);
   assert.match(html,/234,7 kcal registradas/);
   assert.match(html,/Detalhes e incerteza/);
-  assert.match(html,/≈315/); // exact per 100g recipe: central reference
+  assert.match(html,/Estimativa de confiança baixa: 252/);
   assert.equal(N.observedTotals(archive.entries,date).totals.energyKcal,null);
 });
 test('dados desconhecidos mantêm subtotais por nutriente sem assumir ingestão zero',()=>{
@@ -107,6 +107,6 @@ test('dados desconhecidos mantêm subtotais por nutriente sem assumir ingestão 
  const html=UI.render({archive,date});
  assert.match(html,/≈52/);
  assert.match(html,/1 alimento\(s\) sem calorias disponíveis/);
- assert.match(html,/Informação incompleta/);
+ assert.match(html,/Energia com composição informada: 52 kcal/);
  assert.match(html,/não zero/);
 });
