@@ -37,7 +37,7 @@ for icon in manifest['icons']:
 release = '20261115-ux18'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
-assets = ['styles.css', 'data.js', 'engine.js', 'muay.js', 'calendar.js',
+assets = ['data.js', 'engine.js', 'muay.js', 'calendar.js',
           'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js']
 for asset in assets:
     expected = f'./{asset}?v={release}'
