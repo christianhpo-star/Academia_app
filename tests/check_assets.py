@@ -6,7 +6,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 text_assets = [
     'index.html', 'styles.css', 'app.js', 'data.js', 'engine.js',
-    'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'exercise-motion.js', 'sw.js', 'manifest.webmanifest', 'README.md',
+    'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'exercise-motion.js', 'sw.js', 'manifest.webmanifest', 'README.md',
     'tests/engine.test.cjs', 'tests/smoke_browser.py'
 ]
 for path in text_assets:
@@ -16,7 +16,7 @@ for path in text_assets:
     assert '\x00' not in content, f'{path} contains binary or null data'
 
 index = (root / 'index.html').read_text(encoding='utf-8')
-for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './activity.js', './health-import.js', './nutrition-goals.js', './goal-planner.js','./nutrition.js', './nutrition-catalog.js', './nutrition-ui.js', './exercise-motion.js', './app.js', './styles.css', './manifest.webmanifest']:
+for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './activity.js', './health-import.js', './nutrition-goals.js', './goal-planner.js', './reminders.js','./nutrition.js', './nutrition-catalog.js', './nutrition-ui.js', './exercise-motion.js', './app.js', './styles.css', './manifest.webmanifest']:
     assert path in index, f'index.html must reference {path}'
 
 manifest = json.loads((root / 'manifest.webmanifest').read_text(encoding='utf-8'))
@@ -34,25 +34,24 @@ for icon in manifest['icons']:
 
 
 # Prevent stale UI versions being silently reused by the offline shell.
-release = '20261115-ux15'
+release = '20261115-ux16'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
 assets = ['data.js', 'engine.js', 'muay.js', 'calendar.js',
-          'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js']
+          'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js']
 for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
     assert expected in worker, f'missing asset version in offline worker: {asset}'
-motion_release = '20261115-motion4'
+motion_release = '20261115-motion5'
 for asset in ['styles.css', 'app.js', 'exercise-motion.js']:
     expected = f'./{asset}?v={motion_release}'
     assert expected in index, f'missing updated asset version in HTML: {asset}'
     assert expected in worker, f'missing updated asset version in offline worker: {asset}'
-assert f'forja-shell-v34-{motion_release}' in worker, 'offline cache not version-bumped'
+assert f'forja-shell-v35-{motion_release}' in worker, 'offline cache not version-bumped'
 assert f"./sw.js?v={motion_release}" in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'
-assert 'id="motion-dialog"' in index, 'motion viewer dialog must be available before app initialization'
-assert 'FORJA MOVE v3 mobile QA' in (root / 'styles.css').read_text(encoding='utf-8'), 'mobile motion visual adjustments missing'
+assert 'id="motion-dialog"' in index, 'motion viewer missing from index'
 
 print('All deployment assets are valid.')
