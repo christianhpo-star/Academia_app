@@ -39,6 +39,22 @@ with sync_playwright() as p:
     assert page.locator('[data-nd="pick"]').count()>=6, 'Catalogue must open with suggestions, not empty Recentes'
     assert 'Arroz branco' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="search"]').click()
+    # Brazilian everyday foods must be searchable by preparation, not grouped as generic meat.
+    for search_term,food_name in [
+        ('bife de boi','Bife bovino'),
+        ('bife de porco','Bisteca suína'),
+        ('frango empanado','Filé de frango empanado'),
+        ('batata frita','Batata frita em palitos')
+    ]:
+        page.locator('#nd-search').fill(search_term)
+        assert food_name in page.locator('#nd-results').inner_text(),search_term
+    page.locator('#nd-search').fill('batata frita')
+    page.locator('[data-nd="pick"][data-id="taco:2011:93"]').click()
+    page.locator('#nd-portion').select_option('100g')
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==1
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
     page.locator('#nd-search').fill('PRO FORCE')
     page.locator('[data-nd="pick"]').click()
     page.locator('#nd-catalog button[type="submit"]').click()
