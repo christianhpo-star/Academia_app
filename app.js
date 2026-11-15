@@ -548,7 +548,7 @@
     return '<section class="card routine-settings" id="routine-settings"><h2 class="section-title">Rotina diária opcional</h2>'+
       '<p class="small muted">Para medicamento, use apenas o nome e o horário prescritos. Não é necessário informar dose. A confirmação é manual e os dados ficam neste dispositivo.</p>'+
       '<form id="daily-routine-form">'+fields+'<button class="primary full mt-12" type="submit">Salvar configuração</button></form>'+
-      (ROUTINE.status(archive,today()).configured?
+      (archive.slots.some(slot=>slot.active&&slot.label.trim())?
         '<button class="secondary full mt-12" type="button" data-action="routine-enable">'+
         (present?'Desativar cartão de rotina':'Ativar cartão de rotina')+'</button>':'')+
       '<p class="tiny muted">Não há notificações em segundo plano nem indicação de doses perdidas. Você pode remover registros de hoje com Desfazer.</p></section>';
