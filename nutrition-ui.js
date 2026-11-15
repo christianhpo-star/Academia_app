@@ -4,6 +4,7 @@
   const N=root.ForjaNutrition,CAT=root.ForjaNutritionCatalog;
   const G=root.ForjaNutritionGoals||(typeof require==='function'?require('./nutrition-goals.js'):null);
   const BODY=root.ForjaBodyMeasures||(typeof require==='function'?require('./body-measures.js'):null);
+  const ACT=root.ForjaActivity||(typeof require==='function'?require('./activity.js'):null);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=v=>v==null?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(v);
   const labels={breakfast:'Café da manhã',lunch:'Almoço',snack:'Lanche',dinner:'Jantar',supper:'Ceia',other:'Outros registros'};
@@ -49,7 +50,7 @@
       <details class="card" id="nd-history"><summary>Histórico alimentar · ${days.length} outros dias</summary>${days.slice(0,limit).map(d=>`<details class="nd-entry"><summary>${dateBR(d)}</summary>${button('day','Abrir dia',`data-date="${d}"`)}${archive.entries.filter(e=>e.date===d).map(entryHTML).join('')}</details>`).join('')}${days.length>limit?button('more','Ver mais dias'):''}</details>
       <p class="small muted">Dados neste aparelho, incluídos no backup JSON.</p></div>`;
   }
-  function controller({get,commit,notify,today,refresh}){
+  function controller({get,commit,commitSteps,notify,today,refresh}){
     let day=today(),limit=3,dialog=null,returnFocus=null,draft=null,picked=null,search='',mode='recent',all=false,profileDraft=null,suggestion=null;
     const archive=()=>get().nutrition;
     const transact=change=>{const next=clone(archive());change(next);return commit(next);};
@@ -99,6 +100,42 @@
       el.innerHTML=food?`<form id="nd-catalog" class="panel-soft mt-12"><strong>${esc(food.name)}</strong><p class="small">${esc(food.note)}</p>${food.estimate?`<p class="small">Faixa aproximada: ${fmt(food.estimate.low.energyKcal)}–${fmt(food.estimate.high.energyKcal)} kcal; confiança baixa.</p>`:''}${select('portion','Porção',Object.fromEntries(food.portions.map(p=>[p.id,p.label]).concat(!food.nutrientsPerServing&&!food.estimate?[['custom','Peso em gramas']]:[])),food.portions[0].id)}${field('count','Quantidade de porções (ou gramas)',1,'type="number" min="0.001" max="10000" step="any" required')}<button class="secondary full mt-12" type="submit">Adicionar à refeição</button></form>`:'';
     }
     function addItems(items){if(draft.entry.items.length+items.length>30)return error('Limite de 30 alimentos por refeição.');draft.entry.items.push(...items);saveDraft();picked=null;mealBody();}
+
+    function activityAdvice(){
+      const a=ACT.assess(get(),today());
+      const w=a.windows.last28;
+      const label=a.suggestedFactor==null?'Ainda sem sugestão numérica':'Fator sugerido: '+String(a.suggestedFactor).replace('.',',')+' (provisório)';
+      return '<section class="nd-activity-advice" aria-label="Atividade observada">'+
+        '<strong>'+esc(label)+'</strong>'+
+        '<p class="small muted">Últimos 28 dias: '+w.stepDays+' dia(s) com passos; '+w.strength+' sessão(ões) de musculação; '+
+        w.muay+' sessão(ões) de Muay Thai. '+(w.avgSteps==null?'Média de passos indisponível.':'Média nos dias registrados: '+fmt(w.avgSteps)+' passos.')+'</p>'+
+        (a.suggestedFactor==null?
+        '<p class="small muted">Precisamos de passos distribuídos por pelo menos 7 dias, incluindo dias sem treino, para propor uma faixa inicial.</p>':
+        '<p class="small muted">Cobertura '+esc(a.coverage)+'. Faixa heurística '+a.range.map(v=>String(v).replace('.',',')).join('–')+'. Não é gasto medido.</p>'+
+        button('apply-activity','Usar fator sugerido no perfil','class="button-inline" data-factor="'+a.suggestedFactor+'"','button-inline'))+
+        '<p class="small muted">O fator escolhido e as metas só mudam depois de sua confirmação.</p></section>';
+    }
+    function activityPanel(open=false){
+      const rows=(get().activitySteps||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+      const a=ACT.assess(get(),today());
+      const w=a.windows;
+      const describe=x=>x.avgSteps==null?'—':fmt(x.avgSteps);
+      const entries=rows.slice(0,10).map(row=>
+        '<div class="nd-step-history-row"><span>'+dateBR(row.date)+' · '+fmt(row.steps)+' passos</span>'+
+        '<button type="button" class="button-inline" data-nd="edit-steps" data-date="'+esc(row.date)+'">Editar</button>'+
+        '<button type="button" class="button-inline" data-nd="remove-steps" data-date="'+esc(row.date)+'">Excluir</button></div>').join('');
+      return '<details id="nd-steps-panel" class="nd-steps-panel" '+(open?'open':'')+'><summary>Registrar passos do Samsung Health ('+rows.length+')</summary>'+
+        '<p class="small muted">Copie a contagem diária do Samsung Health. O FORJA não se conecta automaticamente ao relógio. Registre dias com e sem treino; não é necessário informar calorias.</p>'+
+        '<div class="nd-step-overview"><div><strong>7 dias</strong><span>'+describe(w.last7)+' passos/dia registrado</span></div>'+
+        '<div><strong>14 dias</strong><span>'+describe(w.last14)+' passos/dia registrado</span></div>'+
+        '<div><strong>28 dias</strong><span>'+describe(w.last28)+' passos/dia registrado</span></div></div>'+
+        '<form id="nd-steps-form"><div class="field-row">'+
+        '<div class="field"><label for="nd-step-date">Dia da contagem</label><input id="nd-step-date" name="date" type="date" max="'+today()+'" value="'+today()+'" required></div>'+
+        '<div class="field"><label for="nd-step-count">Passos nesse dia</label><input id="nd-step-count" name="steps" inputmode="numeric" type="number" step="1" min="0" max="100000" placeholder="Ex.: 8200" required></div></div>'+
+        '<button type="submit" class="secondary full mt-12">Salvar passos neste aparelho</button></form>'+
+        (entries?'<div class="nd-step-history mt-12"><strong>Últimos registros</strong>'+entries+'</div>':'')+
+        '<p class="small muted">Amostras incompletas não são tratadas como zero. A sugestão é uma heurística editável; não duplicamos gasto calórico do exercício.</p></details>';
+    }
     function goals(){
       draft=null;profileDraft=clone(archive().settings.profile||{heightCm:null,age:null,weightKg:null,activity:null,sex:'',goal:'recomposition',adultScope:false,confirmedAt:today()});
       openModal('Minhas metas');goalsBody();
@@ -113,11 +150,13 @@
       ${select('goal','Objetivo',{recomposition:'Recomposição corporal',loss:'Redução de gordura',maintain:'Manutenção',gain:'Ganho gradual'},p.goal)}
       ${select('activity','Atividade habitual, incluindo treinos',{'':'Selecione','1.2':'Pouca atividade (1,2)','1.375':'Atividade leve (1,375)','1.55':'Atividade moderada (1,55)','1.725':'Atividade alta (1,725)','1.9':'Atividade muito alta (1,9)'},p.activity??'')}
       <p class="small muted">Considere trabalho, deslocamentos e frequência/duração dos treinos. Fatores são aproximações; não escolha apenas pela modalidade. Não somamos calorias de exercícios novamente.</p>
+      <div id="nd-activity-advice">${activityAdvice()}</div>
       <label class="nd-check"><input type="checkbox" name="adultScope" ${p.adultScope?'checked':''}> Sou adulto e não tenho necessidade clínica específica que exija um plano alimentar individual. Caso contrário, usarei metas profissionais.</label>
       <p class="small muted">Última confirmação: ${dateBR(p.confirmedAt)}. Idade não avança automaticamente; confira ao revisar.</p>
       <p class="small muted">${circumference?'Circunferências registradas em '+dateBR(circumference.date)+'. ':''}${wearable?'Galaxy Watch: última leitura em '+dateBR(wearable.date)+'. ':''}Medidas corporais e bioimpedância auxiliam a avaliar tendências, mas não substituem o cálculo de gasto nem determinam calorias automaticamente.</p>
       <div class="btnrow"><button type="submit" class="primary">Salvar perfil e calcular</button>${button('suggest','Recalcular prévia','','secondary')}</div></form>
       <section id="nd-suggestion" aria-live="polite" class="nd-suggestion-slot"></section>
+      ${activityPanel()}
       <details class="nd-goals-manual mt-12" ${current?.source==='manual'||current?.source==='professional'?'open':''}><summary>Editar metas manualmente</summary><p class="small muted">Opção para substituir a estimativa. Metas manuais ou profissionais não são alteradas sem sua confirmação.</p><form id="nd-target"><div class="field-row">${G.KEYS.map(k=>field('target-'+k,nutrients[k]+(k==='energyKcal'?' (kcal/dia)':' (g/dia)'),current?.values[k],`type="number" min="1" max="${k==='energyKcal'?10000:1000}" step="any"`)).join('')}</div><p class="small muted">Campos vazios deixam o nutriente sem meta. Fibra: referência mínima, não teto. Valores manuais ficam protegidos.</p>
       ${select('source','Origem',{manual:'Ajustada por você',professional:'Informada por profissional'},current?.source==='professional'?'professional':'manual')}${field('from','Válida a partir de',today(),`type="date" min="${today()}" required`)}<p id="nd-macro-diff" class="small" aria-live="polite"></p>${button('balance','Recalcular carboidratos pelo saldo','','button-inline')}<button class="primary full mt-12" type="submit">Salvar metas manuais</button></form></details>
       <details class="mt-16"><summary>Como calculamos · fontes e limites</summary><p class="small">Mifflin–St Jeor: 10 × peso + 6,25 × altura − 5 × idade + constante. Repouso × atividade estima manutenção. Recomposição/manutenção começam na manutenção; redução de gordura em −10%; ganho em +5%. São pontos de partida, não garantia de resultado.</p><p class="small">Proteína: referência 1,6–2,2 g/kg com treino resistido, sugestão inicial 1,8. Gordura: referência 20–35% da energia, início em 25%. Carboidratos: saldo energético após proteína e gordura. Fibras: referência mínima 25 g/dia. Constantes de início são escolhas do produto, ajustáveis.</p><p class="small">Circunferências não viram gordura corporal estimada. Sem dados completos não inferimos baixa ingestão. Metas não mudam por uma pesagem ou sessão. Revisão de tendências em 2–4 semanas é uma janela operacional.</p><ul class="small"><li><a href="https://pubmed.ncbi.nlm.nih.gov/2305711/" target="_blank" rel="noopener">Mifflin et al., 1990</a></li><li><a href="https://pubmed.ncbi.nlm.nih.gov/42867412/" target="_blank" rel="noopener">ISSN, 2026</a></li><li><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/" target="_blank" rel="noopener">Morton et al., 2018</a></li><li><a href="https://pubmed.ncbi.nlm.nih.gov/26920240/" target="_blank" rel="noopener">AND/DC/ACSM, 2016</a></li><li><a href="https://www.who.int/publications/b/69157" target="_blank" rel="noopener">OMS: carboidratos e fibras</a></li></ul></details>
@@ -176,6 +215,18 @@
         if(serving&&f.get('unit')!=='portion')return error('Para valores por porção, selecione a unidade porção.');
         const item={id:id('item'),foodId:null,label:String(f.get('label')).trim(),quantity:num(f.get('quantity')),unit:f.get('unit'),grams:num(f.get('grams')),nutrientsPer100g:serving?Object.fromEntries(G.KEYS.map(k=>[k,null])):n,source:G.KEYS.some(k=>n[k]!=null)?{name:'Rótulo informado manualmente',reference:'Valores conferidos pelo usuário'}:null,...(serving?{nutrientsPerServing:n}:{})};
         if(!N.validEntry({...draft.entry,items:[item]}))return error('Revise quantidade e composição.');delete draft.pending;addItems([item]);
+      }else if(form.id==='nd-steps-form'){
+        const date=String(f.get('date')||''),count=String(f.get('steps')||'');
+        if(date>today())return error('Não é possível registrar passos de um dia futuro.');
+        const result=ACT.upsertSteps(get().activitySteps||[],date,count);
+        if(result.error)return error(result.error);
+        if(!commitSteps(result.items))return error('Não foi possível salvar os passos. Registros anteriores preservados.');
+        const panel=dialog.querySelector('#nd-steps-panel');
+        if(panel)panel.outerHTML=activityPanel(true);
+        const advice=dialog.querySelector('#nd-activity-advice');
+        if(advice)advice.innerHTML=activityAdvice();
+        previewSuggestion(false);
+        notify('Passos salvos. O fator manual não foi alterado.');
       }else if(form.id==='nd-profile'){
         const p=readProfile();if(!G.validProfile(p))return error('Revise altura (100–250 cm), idade adulta inteira (18–100), peso (30–350 kg) e atividade. Campos podem ficar vazios para metas manuais.');
         if(transact(a=>{a.settings.profile=p;})){profileDraft=p;previewSuggestion(true);notify('Perfil salvo. Confira a sugestão e aceite se desejar.');}else error('Perfil não salvo. Tente novamente.');
@@ -197,7 +248,15 @@
       if(el.name==='notes')draft.entry.notes=el.value;
       if(el.closest('#nd-meal')){preview();if(N.validDraft(draft))saveDraft();}
     }
-    function change(e){if(e.target.tagName==='SELECT'||e.target.type==='date')input(e);}
+    function change(e){
+      if(e.target.id==='nd-step-date'){
+        const row=(get().activitySteps||[]).find(x=>x.date===e.target.value);
+        const count=dialog.querySelector('#nd-step-count');
+        if(count)count.value=row?String(row.steps):'';
+        return;
+      }
+      if(e.target.tagName==='SELECT'||e.target.type==='date')input(e);
+    }
     function modalClick(event){const b=event.target.closest('[data-nd]');if(!b)return;const a=b.dataset.nd;
       if(a==='close')return close();
       if(a==='mode'){mode=b.dataset.mode;search='';all=false;dialog.querySelector('#nd-search').value='';results();}
@@ -207,6 +266,35 @@
       if(a==='recent'){const item=archive().entries.find(e=>e.id===b.dataset.entry)?.items.find(i=>i.id===b.dataset.id);if(item)addItems([{...clone(item),id:id('item')}]);}
       if(a==='use-favorite'){const f=archive().mealTemplates.find(f=>f.id===b.dataset.id),e=f&&CAT.fromFavorite(f,draft.entry.date,archive(),id);if(e)addItems(e.items);else error('Favorito incompatível.');}
       if(a==='discard'&&confirm('Descartar este rascunho? O registro original não será alterado.')){if(transact(a=>{delete a.draft;})){close(true);refresh();}else error('Não foi possível descartar.');}
+      if(a==='apply-activity'){
+        const factor=Number(b.dataset.factor);
+        const current=ACT.assess(get(),today()).suggestedFactor;
+        if(!current||current!==factor)return error('Histórico insuficiente para essa sugestão. Revise os passos.');
+        const el=dialog.querySelector('#nd-activity');
+        if(!el)return;
+        el.value=String(factor);
+        profileDraft=readProfile();previewSuggestion(false);
+        error('Fator selecionado como prévia. Salve o perfil e aceite as metas para confirmar.');
+        return;
+      }
+      if(a==='edit-steps'){
+        const row=(get().activitySteps||[]).find(x=>x.date===b.dataset.date);
+        if(!row)return;
+        dialog.querySelector('#nd-step-date').value=row.date;
+        dialog.querySelector('#nd-step-count').value=row.steps;
+        dialog.querySelector('#nd-steps-panel').open=true;
+        dialog.querySelector('#nd-step-count').focus();return;
+      }
+      if(a==='remove-steps'){
+        const date=b.dataset.date,rows=get().activitySteps||[];
+        if(!rows.some(x=>x.date===date)||!confirm('Excluir a contagem de passos de '+dateBR(date)+'?'))return;
+        if(!commitSteps(rows.filter(x=>x.date!==date)))return error('Não foi possível excluir. Dados anteriores preservados.');
+        const panel=dialog.querySelector('#nd-steps-panel');
+        if(panel)panel.outerHTML=activityPanel(true);
+        const advice=dialog.querySelector('#nd-activity-advice');
+        if(advice)advice.innerHTML=activityAdvice();
+        previewSuggestion(false);notify('Registro de passos excluído.');return;
+      }
       if(a==='use-weight'){const w=(get().weights||[]).filter(w=>!w.initial).sort((a,b)=>b.date.localeCompare(a.date))[0];if(w){dialog.querySelector('#nd-weightKg').value=w.weight;previewSuggestion(false);}}
       if(a==='suggest'){profileDraft=readProfile();previewSuggestion(true);}
       if(a==='accept'&&suggestion?.values){saveTarget({id:id('target'),from:today(),source:'suggested',values:suggestion.values,profile:profileDraft,formula:suggestion.formula});}
