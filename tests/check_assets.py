@@ -34,24 +34,24 @@ for icon in manifest['icons']:
 
 
 # Prevent stale UI versions being silently reused by the offline shell.
-release = '20261115-ux18'
+release = '20261115-ux19'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
-assets = ['data.js', 'engine.js', 'muay.js', 'calendar.js',
+assets = ['styles.css', 'data.js', 'engine.js', 'muay.js', 'calendar.js',
           'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js']
 for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
     assert expected in worker, f'missing asset version in offline worker: {asset}'
-ref_release='20261115-ref3d3'
+ref_release='20261115-ref3d4'
 for asset in ['styles.css','app.js','exercise-references.js','exercise-video.js']:
     expected=f'./{asset}?v={ref_release}'
     assert expected in index, f'missing reference asset in HTML: {asset}'
     assert expected in worker, f'missing reference asset in offline worker: {asset}'
-assert f'forja-shell-v35-{ref_release}' in worker, 'offline cache not version-bumped'
+assert f'forja-shell-v36-{ref_release}' in worker, 'offline cache not version-bumped'
 assert f'./sw.js?v={ref_release}' in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'
-assert 'id="exercise-video-dialog"' in index, 'video viewer dialog missing from index'
+assert 'id="exercise-video-dialog"' in index, 'video modal missing'
 
 print('All deployment assets are valid.')

@@ -52,3 +52,28 @@ test('no empty-ring cards, no invented macros or meal targets, escaping still ap
  assert.match(rendered,/&lt;img/);
  assert.match(rendered,/Informação incompleta/);
 });
+
+
+test('energia exibida sem meta numérica dentro do anel, com rótulo visível ao lado',()=>{
+ const archive=N.archive();
+ const item=CAT.makeItem('photo:itambe-zero-morango-200g','pack',1,p=>p+'-sample');
+ archive.entries.push({id:'m-ux19',date:'2026-11-15',mealType:'breakfast',items:[item]});
+ const html=UI.render({archive,date:'2026-11-15'});
+ assert.match(html,/class="nd-ring-inner"/);
+ assert.match(html,/class="nd-ring-unit">kcal/);
+ assert.match(html,/class="nd-ring-goal">Meta não informada/);
+ assert.doesNotMatch(html,/<small>\/ — kcal<\/small>/);
+ assert.match(html,/nd-food-thumb/);
+ assert.match(html,/data-food-icon="yogurt"/);
+ assert.match(html,/nd-food-table/);
+ assert.match(html,/6<\/td>/);
+});
+test('renderização de alimentos antigos mantém nutrientes e usa ilustrações offline',()=>{
+ const item=CAT.makeItem('ref:generic-173944','medium',1,p=>p+'-sample');
+ const meal={id:'m-ux19-banana',date:'2026-11-15',mealType:'breakfast',items:[item]};
+ const original=structuredClone(meal);
+ const html=UI.render({archive:{...N.archive(),entries:[meal]},date:meal.date});
+ assert.match(html,/data-food-icon="banana"/);
+ assert.match(html,/class="nd-meal-details"/);
+ assert.deepEqual(meal,original);
+});
