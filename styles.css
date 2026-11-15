@@ -602,3 +602,12 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .nutrition-screen .btnrow { flex-wrap:wrap; }
 
 .nutrition-quick-card {min-height:65px;background:#1d2c37;border-color:#405b6c;margin:0 0 14px;}
+
+/* Compact personal food library and favorites. */
+.nutrition-food-list {display:grid;gap:6px;margin-top:10px;max-height:240px;overflow-y:auto;}
+.nutrition-food {display:flex;gap:4px;flex-direction:column;align-items:flex-start;text-align:left;min-height:50px;width:100%;border:1px solid #3a5260;border-radius:11px;background:#1d2b37;color:var(--text);padding:10px 12px;white-space:normal;}
+.nutrition-food small {color:#b4c7d4;line-height:1.4;}
+.nutrition-food[hidden] {display:none!important;}
+.nutrition-food:focus-visible {outline:2px solid #b4e5a7;outline-offset:2px;}
+.nutrition-screen #nutrition-catalog-form .field-row {margin-top:10px;}
+.nutrition-screen .nutrition-entry .btnrow {display:flex;flex-wrap:wrap;gap:6px;}

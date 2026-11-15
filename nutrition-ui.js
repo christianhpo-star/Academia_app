@@ -52,7 +52,7 @@
         ' · '+dateBR(entry.date)+'</strong><small>'+escapeHTML(entry.items.map(x=>x.label).join(', '))+
         '</small></summary><div class="mt-12"><ul class="mini-list">'+items+
         '</ul><div class="btnrow mt-12"><button type="button" class="secondary" data-action="nutrition-repeat" data-id="'+escapeHTML(entry.id)+'">Repetir hoje</button>'+
-        (entry.items.length===1?'<button type="button" class="secondary" data-action="nutrition-edit" data-id="'+escapeHTML(entry.id)+'">Editar</button>':'')+
+        (entry.items.length===1&&!entry.items[0].nutrientsPerServing?'<button type="button" class="secondary" data-action="nutrition-edit" data-id="'+escapeHTML(entry.id)+'">Editar</button>':'')+
         '<button type="button" class="secondary" data-action="nutrition-save-favorite" data-id="'+escapeHTML(entry.id)+'">Salvar como favorito</button>'+ 
         '<button type="button" class="ghost" data-action="nutrition-delete" data-id="'+escapeHTML(entry.id)+'">Excluir</button></div></div></details>';
     }).join('');

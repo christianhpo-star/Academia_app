@@ -1227,7 +1227,7 @@
     }
     if(action==='nutrition-cancel-edit'){ui.nutritionEditId=null;render();return;}
     if(action==='nutrition-edit'){
-      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1))return;
+      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1&&!row.items[0].nutrientsPerServing))return;
       ui.nutritionEditId=btn.dataset.id;render();
       document.querySelector('#nutrition-form')?.scrollIntoView({block:'start'});return;
     }
@@ -1669,7 +1669,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-nutrition2',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-nutrition3',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
