@@ -79,7 +79,7 @@ with sync_playwright() as p:
     page.locator('[data-nd="pick"]').click()
     page.locator('#nd-catalog button[type="submit"]').click()
     page.locator('#nd-search').fill('ovo')
-    page.locator('[data-nd="pick"]').click()
+    page.locator('[data-nd="pick"][data-id="ref:generic-173424"]').click()
     page.locator('#nd-catalog button[type="submit"]').click()
     page.locator('#nd-meal button[type="submit"]').click()
     def state():return json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
