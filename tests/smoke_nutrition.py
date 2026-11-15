@@ -81,7 +81,7 @@ with sync_playwright() as p:
     page.locator('#nd-search').fill('ovo')
     page.locator('[data-nd="pick"][data-id="ref:generic-173424"]').click()
     page.locator('#nd-catalog button[type="submit"]').click()
-    page.locator('#nd-meal button[type="submit"]').click()
+    page.locator('.nd-save-sticky button[type="submit"]').click()
     def state():return json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
     saved=state();entry=saved['nutrition']['entries'][0]
     assert entry['date']==day and entry['mealType']=='lunch'
@@ -108,7 +108,7 @@ with sync_playwright() as p:
     page.locator('.nd-meal-details > summary').first.click()
     page.locator('[data-nd="edit"]').first.click()
     page.locator('#nd-qty-0').fill('2')
-    page.locator('#nd-meal button[type="submit"]').click()
+    page.locator('.nd-save-sticky button[type="submit"]').click()
     edited=state()['nutrition']['entries'][0]
     assert edited['id']==entry['id'] and edited['items'][0]['id']==entry['items'][0]['id']
     assert edited['items'][0]['quantity']==2 and edited['items'][0]['grams'] is None
@@ -118,7 +118,7 @@ with sync_playwright() as p:
     page.locator('[data-nd="mode"][data-mode="favorites"]').click()
     page.locator('[data-nd="use-favorite"]').first.click()
     assert len(state()['nutrition']['entries'])==1 # review does not log
-    page.locator('#nd-meal button[type="submit"]').click()
+    page.locator('.nd-save-sticky button[type="submit"]').click()
     assert state()['nutrition']['entries'][1]['mealType']=='supper'
     assert state()['nutrition']['entries'][1]['date']==day
     # Draft survives navigation/restart without a fictitious meal.
@@ -138,6 +138,36 @@ with sync_playwright() as p:
     assert page.locator('#nd-items .nd-item').count()==1
     page.locator('#nd-items [data-nd="remove"]').first.click()
     assert page.locator('#nd-items .nd-item').count()==0
+    # Integrated whey mixer: one inline editor, separate milk item, correct subtotal.
+    page.locator('#nd-search').fill('Growth 100% Whey Protein Concentrado Chocolate')
+    page.locator('[data-nd="pick"][data-id="growth:official:100-chocolate"]').click()
+    assert page.locator('#nd-portion-panel #nd-catalog').count()==1
+    assert page.locator('#nd-results [data-nd="pick"]').count()==0
+    page.locator('#nd-count').fill('35.5')
+    page.locator('#nd-milk').select_option('skim')
+    page.locator('#nd-milkMl').fill('200')
+    assert '208,2 kcal' in page.locator('#nd-food-preview').inner_text()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==2
+    assert page.locator('#nd-qty-1').input_value()=='200'
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
+    # Coffee and Monster use precise millilitres, no misleading mL-to-gram conversion.
+    page.locator('#nd-search').fill('monster 0')
+    page.locator('[data-nd="pick"][data-id="drink:monster-zero-sugar-473ml"]').click()
+    assert page.locator('#nd-portion').input_value()=='customMl'
+    page.locator('#nd-count').fill('473')
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-qty-0').input_value()=='473'
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    page.locator('#nd-search').fill('cafe sem acucar')
+    page.locator('[data-nd="pick"][data-id="drink:cafe-coado-sem-acucar"]').click()
+    page.locator('#nd-count').fill('80')
+    assert '7,2 kcal' in page.locator('#nd-food-preview').inner_text()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('.nd-save-sticky button').is_disabled()
     page.locator('#nd-search').fill('itambe')
     assert 'Itambé' in page.locator('#nd-results').inner_text()
     page.locator('#nd-search').fill('não existe alimento')
@@ -153,7 +183,7 @@ with sync_playwright() as p:
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
     assert page.locator('#nd-label').input_value()=='Rascunho sintético'
     page.locator('#nd-manual button[type="submit"]').click()
-    page.locator('#nd-meal button[type="submit"]').click()
+    page.locator('.nd-save-sticky button[type="submit"]').click()
     assert len(state()['nutrition']['entries'])==3
     # Complete profile, accept estimate, override target; edits to profile never overwrite it.
     page.locator('[data-nd="goals"]').first.click()
@@ -225,7 +255,7 @@ with sync_playwright() as p:
     page.locator('#nd-manual button[type="submit"]').click()
     original=state()['nutrition']['entries']
     page.evaluate("() => { localStorage.setItem = () => {throw new Error('quota')}; }")
-    page.locator('#nd-meal button[type="submit"]').click()
+    page.locator('.nd-save-sticky button[type="submit"]').click()
     assert page.locator('dialog').is_visible()
     assert state()['nutrition']['entries']==original
     assert 'Não foi possível salvar' in page.locator('dialog [role="alert"]').inner_text()
