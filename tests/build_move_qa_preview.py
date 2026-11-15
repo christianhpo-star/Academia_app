@@ -90,7 +90,6 @@ def main():
         if path.name in ("app.js","exercise-video.js"):
             for prod in ("'forja.academia.v1'","'forja.academia.draft.v1'","'forja.exercise.video.v1'"):
                 if prod in source:raise RuntimeError(f"Production storage key left in QA: {path}")
-    import re
     index=(OUT/"index.html").read_text(encoding="utf-8")
     sw=(OUT/"sw.js").read_text(encoding="utf-8")
     paths=set(re.findall(r'(?:src|href)="\./([^"?#]+)',index))
