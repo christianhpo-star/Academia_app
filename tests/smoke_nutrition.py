@@ -126,6 +126,18 @@ with sync_playwright() as p:
     assert 'Itambé' in page.locator('#nd-results').inner_text(), 'Itambé should be suggested for breakfast'
     assert 'Piracanjuba' in page.locator('#nd-results').inner_text(), 'Piracanjuba should be visible without search'
     assert 'Whey Growth' in page.locator('#nd-results').inner_text(), 'Whey shortcut should be visible without search'
+    # Growth products: product-specific labels, fractional grams and daily totals.
+    page.locator('#nd-search').fill('Growth 100% Whey Protein Concentrado Chocolate')
+    assert 'Growth — 100% Whey Protein Concentrado (Chocolate)' in page.locator('#nd-results').inner_text()
+    page.locator('[data-nd="pick"][data-id="growth:official:100-chocolate"]').click()
+    assert page.locator('#nd-catalog select[name="portion"]').input_value()=='custom'
+    page.locator('#nd-catalog input[name="count"]').fill('35.5')
+    assert '143,2 kcal' in page.locator('#nd-food-preview').inner_text()
+    assert '24,9 g' in page.locator('#nd-food-preview').inner_text()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==1
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
     page.locator('#nd-search').fill('itambe')
     assert 'Itambé' in page.locator('#nd-results').inner_text()
     page.locator('#nd-search').fill('não existe alimento')
