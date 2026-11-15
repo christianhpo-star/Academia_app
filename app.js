@@ -1880,6 +1880,7 @@
   const screen=document.getElementById('screen');
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
+    if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
   },true);
   screen.addEventListener('click',event=>{
@@ -2001,7 +2002,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-inline24',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-trends25',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

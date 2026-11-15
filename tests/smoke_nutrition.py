@@ -41,6 +41,13 @@ with sync_playwright() as p:
     page.locator('#home-steps-form button[type="submit"]').click()
     log=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
     assert len(log['activitySteps'])==1 and log['activitySteps'][0]['steps']==9152
+    page.locator('#nav [data-tab="progress"]').click()
+    assert page.locator('.progress-steps-day').count()==14
+    assert page.locator('.progress-steps-day.known').count()==1
+    assert page.locator('.progress-advanced-radar').count()==1
+    assert not page.locator('.progress-advanced-radar').evaluate('(node)=>node.open')
+    page.locator('[data-action="progress-steps-days"][data-days="28"]').click()
+    assert page.locator('.progress-steps-day').count()==28
     page.locator('#nav [data-tab="nutrition"]').click()
     assert page.locator('.nd-meal').count()==5
     assert page.locator('.nd-meal').last.locator('h2').inner_text()=='Ceia'
@@ -51,8 +58,8 @@ with sync_playwright() as p:
     assert 'Arroz branco' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="fruits"]').click()
     assert 'Abacaxi' in page.locator('#nd-results').inner_text()
-    assert 'Morango' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="all"]').click()
+    assert 'Morango' in page.locator('#nd-results').inner_text()
     assert 'Manga Tommy Atkins' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="search"]').click()
     # Brazilian everyday foods must be searchable by preparation, not grouped as generic meat.
