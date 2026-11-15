@@ -137,3 +137,108 @@ test('alimentos pesquisados aparecem primeiro no café sem depender de consumo p
  assert.ok(C.search('ITAMBE').some(x=>x.name.includes('Itambé')));
  assert.ok(C.search('banoffee').some(x=>x.name.includes('PRO FORCE')));
 });
+
+
+test('catálogo TACO cobre carnes, frituras e pratos brasileiros com fonte específica',()=>{
+ const taco=C.foods.filter(f=>f.id.startsWith('taco:2011:'));
+ assert.equal(taco.length,54);
+ assert.equal(new Set(C.foods.map(f=>f.id)).size,C.foods.length);
+ for(const f of taco) {
+   assert.equal(N.validFood(f),true,f.id);
+   assert.equal(f.source.name,'NEPA/UNICAMP — TACO');
+   assert.match(f.source.reference,/Tabela TACO 4ª ed\. \(2011\), item \d+/);
+   assert.ok(f.portions.some(p=>p.id==='100g'),f.name);
+   assert.ok(f.portions.every(p=>p.grams>0),f.name);
+ }
+ const specifics=[
+   ['taco:2011:346',194,35.9,0,4.5],
+   ['taco:2011:429',280,28.9,0,17.4],
+   ['taco:2011:93',267,5,35.6,13.1],
+   ['taco:2011:401',221,28.5,7.5,7.8],
+   ['taco:2011:539',152,10.2,19.6,6.8],
+ ];
+ for(const [foodId,kcal,protein,carbs,fat] of specifics){
+   const food=C.find(foodId);
+   assert.equal(food.nutrientsPer100g.energyKcal,kcal);
+   assert.equal(food.nutrientsPer100g.proteinG,protein);
+   assert.equal(food.nutrientsPer100g.carbsG,carbs);
+   assert.equal(food.nutrientsPer100g.fatG,fat);
+   const item=C.makeItem(foodId,'100g',1,id);
+   assert.ok(item,foodId);
+   assert.equal(item.grams,100);
+   const meal=entry(item);
+   assert.ok(N.validEntry(meal),foodId);
+   const totals=N.observedTotals([meal],'2026-11-14').totals;
+   assert.equal(totals.energyKcal,kcal);
+ }
+});
+test('busca de comidas brasileiras reconhece grafias com e sem acento e indica preparo',()=>{
+ const examples=[
+   ['bife de boi','taco:2011:346'],
+   ['bife de porco','taco:2011:429'],
+   ['batata frita','taco:2011:93'],
+   ['frango empanado','taco:2011:401'],
+   ['feijao tropeiro','taco:2011:539'],
+   ['pao de queijo','taco:2011:140'],
+   ['macarrao','taco:2011:542'],
+ ];
+ for(const [query,foodId] of examples){
+   assert.ok(C.search(query).some(f=>f.id===foodId),query);
+ }
+ assert.ok(C.orderedForMeal('lunch').slice(0,10).some(f=>f.id==='taco:2011:346'));
+ assert.ok(C.orderedForMeal('dinner').slice(0,10).some(f=>f.id==='taco:2011:401'));
+ const raw=C.find('taco:2011:222');
+ assert.equal(raw.preparation,'raw');
+});
+test('porções caseiras aproximadas não substituem peso escolhido; histórico e favoritos preservados',()=>{
+ const food=C.find('taco:2011:93');
+ const item=C.makeItem(food.id,'medium',1,id);
+ assert.equal(item.grams,120);
+ assert.equal(N.observedTotals([entry(item)],'2026-11-14').totals.energyKcal,320.4);
+ const meal=entry(item);
+ const fav=C.makeFavorite(meal,N.archive(),'Batata do almoço',id);
+ const archive=N.archive();
+ archive.mealTemplates.push(fav.favorite);
+ assert.ok(N.validArchive(archive));
+ const repeat=C.fromFavorite(fav.favorite,'2026-11-15',archive,id);
+ assert.equal(repeat.items[0].grams,120);
+ assert.equal(repeat.items[0].source.name,'NEPA/UNICAMP — TACO');
+ assert.notEqual(repeat.id,meal.id);
+ assert.equal(C.find('growth:whey-unknown').nutrientsPer100g.proteinG,null);
+});
+
+
+test('peso exato de 121 g e 121,5 g calcula nutrientes automaticamente sem arredondar a porções fixas',()=>{
+ const beef=C.makeItem('taco:2011:346','custom',121,id);
+ assert.equal(beef.unit,'g');assert.equal(beef.quantity,121);assert.equal(beef.grams,121);
+ assert.ok(Math.abs(N.observedTotals([entry(beef)],'2026-11-14').totals.energyKcal-234.74)<0.001);
+ assert.ok(Math.abs(N.observedTotals([entry(beef)],'2026-11-14').totals.proteinG-43.439)<0.001);
+ const pork=C.makeItem('taco:2011:429','custom',121.5,id);
+ assert.equal(pork.grams,121.5);
+ assert.equal(N.observedTotals([entry(pork)],'2026-11-14').totals.energyKcal,340.2);
+ assert.equal(C.makeItem('taco:2011:346','custom',0,id),null);
+ assert.equal(C.makeItem('taco:2011:346','custom',10001,id),null);
+});
+test('brigadeiro, morango e bolo de chocolate aceitam gramagem livre e origem da composição',()=>{
+ const cake=C.find('taco:2011:16');
+ assert.equal(cake.nutrientsPer100g.energyKcal,410);
+ assert.equal(cake.source.name,'NEPA/UNICAMP — TACO');
+ const slice=C.makeItem(cake.id,'custom',121,id);
+ assert.equal(N.observedTotals([entry(slice)],'2026-11-14').totals.energyKcal,496.1);
+ for(const key of ['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango']){
+   const food=C.find(key);
+   assert.equal(food.estimate.confidence,'low');
+   assert.equal(food.nutrientsPer100g.energyKcal,null);
+   const item=C.makeItem(key,'custom',121,id);
+   assert.equal(item.unit,'g');assert.equal(item.quantity,121);assert.equal(item.grams,121);
+   const e=entry(item);
+   assert.equal(N.validEntry(e),true);
+   assert.equal(N.observedTotals([e],'2026-11-14').totals.energyKcal,null);
+   const actual=N.estimatedTotals([e],'2026-11-14').totals.central.energyKcal;
+   assert.ok(Math.abs(actual-food.estimate.central.energyKcal*1.21)<0.11);
+ }
+ assert.ok(C.search('brigadeiro com morango').some(f=>f.id==='recipe:brigadeiro-morango'));
+ assert.ok(C.search('fatia de bolo').some(f=>f.id==='taco:2011:16'));
+ const old=C.makeItem('local:doce-cascao-acai-trufado-preto-500ml','custom',121,id);
+ assert.equal(old,null,'volume of açaí without weighed base must not be interpreted as grams');
+});

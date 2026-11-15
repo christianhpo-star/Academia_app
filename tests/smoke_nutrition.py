@@ -39,11 +39,47 @@ with sync_playwright() as p:
     assert page.locator('[data-nd="pick"]').count()>=6, 'Catalogue must open with suggestions, not empty Recentes'
     assert 'Arroz branco' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="search"]').click()
+    # Brazilian everyday foods must be searchable by preparation, not grouped as generic meat.
+    for search_term,food_name in [
+        ('bife de boi','Bife bovino'),
+        ('bife de porco','Bisteca suína'),
+        ('frango empanado','Filé de frango empanado'),
+        ('batata frita','Batata frita em palitos')
+    ]:
+        page.locator('#nd-search').fill(search_term)
+        assert food_name in page.locator('#nd-results').inner_text(),search_term
+    # Peso digitado sem arredondar: 121 g de contrafilé.
+    page.locator('#nd-search').fill('bife de boi')
+    page.locator('[data-nd="pick"][data-id="taco:2011:346"]').click()
+    assert page.locator('#nd-catalog select[name="portion"]').input_value()=='custom'
+    page.locator('#nd-catalog input[name="count"]').fill('121')
+    assert '234,7 kcal' in page.locator('#nd-food-preview').inner_text()
+    assert '43,4 g' in page.locator('#nd-food-preview').inner_text()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==1
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
+    # Doces caseiros por gramas entram como estimativa, não rótulo.
+    page.locator('#nd-search').fill('brigadeiro com morango')
+    page.locator('[data-nd="pick"][data-id="recipe:brigadeiro-morango"]').click()
+    page.locator('#nd-catalog input[name="count"]').fill('121.5')
+    assert 'baixa confiança' in page.locator('#nd-food-preview').inner_text()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==1
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
+    page.locator('#nd-search').fill('batata frita')
+    page.locator('[data-nd="pick"][data-id="taco:2011:93"]').click()
+    page.locator('#nd-catalog select[name="portion"]').select_option('100g')
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==1
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
     page.locator('#nd-search').fill('PRO FORCE')
     page.locator('[data-nd="pick"]').click()
     page.locator('#nd-catalog button[type="submit"]').click()
     page.locator('#nd-search').fill('ovo')
-    page.locator('[data-nd="pick"]').click()
+    page.locator('[data-nd="pick"][data-id="ref:generic-173424"]').click()
     page.locator('#nd-catalog button[type="submit"]').click()
     page.locator('#nd-meal button[type="submit"]').click()
     def state():return json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))

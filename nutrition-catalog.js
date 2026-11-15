@@ -11,6 +11,79 @@
     license:'Referência informativa',
   });
   const p = (id,label,grams,factor=1) => ({id,label,grams,factor});
+
+  // Curated from the TACO/NEPA-Unicamp 4th edition (2011), Table 1, per 100 g of EDIBLE portion.
+  // The source permits partial reproduction with attribution. Household measures below are
+  // heuristics and are NOT measured portions from the TACO study; real recipes vary.
+  const TACO_PORTIONS={
+    bife:[p('small','1 bife pequeno (≈80 g prontos, sem osso)',80),p('medium','1 bife médio (≈120 g prontos, sem osso)',120),p('100g','100 g da parte comestível',100)],
+    fritas:[p('small','1 porção pequena (≈80 g)',80),p('medium','1 porção média (≈120 g)',120),p('100g','100 g preparados',100)],
+    batata:[p('medium','1 porção média (≈120 g)',120),p('100g','100 g preparados',100)],
+    farofa:[p('spoon','1 colher de sopa (≈15 g)',15),p('two','2 colheres de sopa (≈30 g)',30),p('100g','100 g preparados',100)],
+    arroz:[p('spoon','1 colher de servir (≈45 g)',45),p('two','2 colheres de servir (≈90 g)',90),p('100g','100 g cozidos',100)],
+    feijao:[p('ladle','1 concha média (≈100 g)',100),p('half','½ concha média (≈50 g)',50),p('100g','100 g cozidos',100)],
+    prato:[p('small','1 porção menor (≈120 g)',120),p('medium','1 porção média (≈200 g)',200),p('100g','100 g preparados',100)],
+    salgado:[p('small','1 unidade pequena (≈70 g)',70),p('medium','1 unidade média (≈110 g)',110),p('100g','100 g preparados',100)],
+    paoqueijo:[p('one','1 unidade média (≈35 g)',35),p('two','2 unidades médias (≈70 g)',70),p('100g','100 g preparados',100)],
+    pao:[p('one','1 unidade média (≈50 g)',50),p('half','½ unidade (≈25 g)',25),p('100g','100 g',100)],
+    paoforma:[p('slice','1 fatia (≈25 g)',25),p('two','2 fatias (≈50 g)',50),p('100g','100 g',100)],
+    queijo:[p('slice','1 fatia (≈30 g)',30),p('two','2 fatias (≈60 g)',60),p('100g','100 g',100)],
+    legumes:[p('medium','1 porção média (≈100 g)',100),p('small','1 porção menor (≈60 g)',60),p('100g','100 g',100)],
+    salada:[p('small','1 porção pequena (≈40 g)',40),p('medium','1 porção média (≈80 g)',80),p('100g','100 g',100)],
+    fruta:[p('one','1 porção média de polpa (≈100 g)',100),p('large','1 porção maior (≈150 g)',150),p('100g','100 g comestíveis',100)],
+    ovo:[p('one','1 ovo médio preparado (≈50 g)',50),p('two','2 ovos preparados (≈100 g)',100),p('100g','100 g',100)],
+  };
+  const tacoRows = [[346,"Bife bovino — contrafilé sem gordura, grelhado","Carnes bovinas",194,35.9,0,4.5,null,"bife","bife boi bife de boi carne bovina carne de boi contrafile sem gordura"],[344,"Bife bovino — contrafilé com gordura, grelhado","Carnes bovinas",278,32.4,0,15.5,null,"bife","bife boi carne de boi contrafile com gordura"],[377,"Bife bovino — patinho grelhado","Carnes bovinas",219,35.9,0,7.3,null,"bife","bife de boi patinho bife bovino magro"],[381,"Picanha bovina com gordura, grelhada","Carnes bovinas",289,26.4,0,19.5,null,"bife","picanha bife churrasco carne boi"],[340,"Bife bovino à milanesa, frito","Carnes bovinas",352,20.6,12.2,24,0.4,"bife","bife empanado bife frito milanesa boi farinha rosca"],[429,"Bisteca suína grelhada (parte comestível)","Carnes suínas",280,28.9,0,17.4,null,"bife","bife porco bife de porco bisteca suina carne suina porco grelhado"],[428,"Bisteca suína frita (parte comestível)","Carnes suínas",311,33.7,0,18.5,null,"bife","bife porco bife de porco bisteca suina carne suina porco frito"],[432,"Lombo suíno assado","Carnes suínas",210,35.7,0,6.4,null,"bife","carne de porco lombo porco carne suina"],[435,"Pernil suíno assado","Carnes suínas",262,32.1,0,13.9,null,"bife","carne de porco pernil porco carne suina assada"],[410,"Filé de frango grelhado, sem pele","Frango e aves",159,32,0,2.5,null,"bife","frango grelhado peito frango filé frango frango na chapa"],[408,"Peito de frango cozido, sem pele","Frango e aves",163,31.5,0,3.2,null,"bife","frango cozido desfiado peito frango sem pele"],[401,"Filé de frango empanado à milanesa, frito","Frango e aves",221,28.5,7.5,7.8,1.1,"bife","frango empanado frango a milanesa file empanado filé empanado frango frito empanado"],[396,"Coxa de frango assada com pele","Frango e aves",215,28.5,0.1,10.4,null,"bife","coxa frango assado coxa de frango coxa assada"],[490,"Ovo frito","Ovos",240,15.6,1.2,18.6,null,"ovo","ovo frito ovo na frigideira"],[303,"Filé de merluza frito","Peixes",192,26.9,0,8.5,null,"bife","peixe frito merluza file peixe"],[306,"Filé de pescada empanado e frito","Peixes",283,21.4,5,19.1,null,"bife","peixe empanado pescada frita peixe a milanesa"],[93,"Batata frita em palitos (óleo)","Acompanhamentos",267,5,35.6,13.1,8.1,"fritas","batata frita batatas fritas batatinha frita fritas palito batata inglesa"],[91,"Batata inglesa cozida (sem óleo)","Acompanhamentos",52,1.2,11.9,null,1.3,"batata","batata cozida batata inglesa"],[88,"Batata-doce cozida","Acompanhamentos",77,0.6,18.4,0.1,2.2,"batata","batata doce cozida"],[132,"Mandioca frita (aipim)","Acompanhamentos",300,1.4,50.3,11.2,1.9,"fritas","mandioca frita aipim frito macaxeira frita"],[129,"Mandioca cozida (aipim)","Acompanhamentos",125,0.6,30.1,0.3,1.6,"batata","mandioca cozida aipim cozido macaxeira cozida"],[131,"Farofa de mandioca temperada","Acompanhamentos",406,2.1,80.3,9.1,7.8,"farofa","farofa farofa de mandioca farofa temperada"],[1,"Arroz integral cozido","Arroz e feijão",124,2.6,25.8,1,2.7,"arroz","arroz integral arroz cozido integral"],[561,"Feijão carioca cozido","Arroz e feijão",76,4.8,13.6,0.5,8.5,"feijao","feijao carioca feijão carioca feijão marrom feijao marrom"],[567,"Feijão-preto cozido (referência brasileira)","Arroz e feijão",77,4.5,14,0.5,8.4,"feijao","feijao preto feijão preto feijão-preto caldo feijao"],[539,"Feijão tropeiro mineiro","Pratos brasileiros",152,10.2,19.6,6.8,3.6,"prato","tropeiro feijao tropeiro feijão tropeiro mineiro"],[540,"Feijoada (referência TACO)","Pratos brasileiros",117,8.7,11.6,6.5,5.1,"prato","feijoada feijao com carne"],[542,"Macarrão à bolonhesa pronto","Pratos brasileiros",120,4.9,22.5,0.9,0.8,"prato","macarrao macarrão espaguete bolonhesa macarronada massa com carne"],[533,"Cuscuz de milho cozido, com sal","Pratos brasileiros",113,2.2,25.3,0.7,2.1,"prato","cuscuz milho cuscuz nordestino cuscuz de milho"],[537,"Estrogonofe de carne","Pratos brasileiros",173,15,3,10.8,null,"prato","strogonoff stroganoff strogonofe carne estrogonofe"],[538,"Estrogonofe de frango","Pratos brasileiros",157,17.6,2.6,8,null,"prato","strogonoff stroganoff strogonofe frango estrogonofe"],[386,"Coxinha de frango frita","Salgados e lanches",283,9.6,34.5,11.8,5,"salgado","coxinha coxinha frango salgado frito"],[56,"Pastel de carne frito","Salgados e lanches",388,10.1,43.8,20.1,1,"salgado","pastel de carne pastel frito pastelzinho"],[140,"Pão de queijo assado","Salgados e lanches",363,5.1,34.2,24.6,0.6,"paoqueijo","pao de queijo pão queijo pãozinho de queijo"],[53,"Pão francês (pão de sal)","Pães",300,8,58.6,3.1,2.3,"pao","pão francês pão de sal pãozinho pão careca cacetinho pao frances"],[52,"Pão de forma integral","Pães",253,9.4,49.9,3.7,6.9,"paoforma","pão integral pão de forma integral sanduiche"],[461,"Queijo minas frescal","Queijos",264,17.4,3.2,20.2,null,"queijo","queijo minas queijo fresco queijo minas frescal"],[463,"Queijo muçarela (mozarela)","Queijos",330,22.6,3,25.2,null,"queijo","queijo mussarela queijo muçarela mozzarella mozarela fatia queijo"],[100,"Brócolis cozido","Legumes e verduras",25,2.1,4.4,0.5,3.4,"legumes","brocolis brócolis verdura"],[109,"Cenoura cozida","Legumes e verduras",30,0.8,6.7,0.2,2.6,"legumes","cenoura cozida cenoura"],[157,"Tomate cru, com sementes","Legumes e verduras",15,1.1,3.1,0.2,1.2,"salada","tomate salada tomate cru"],[78,"Alface crespa crua","Legumes e verduras",11,1.3,1.7,0.2,1.8,"salada","alface salada alface crespa"],[182,"Banana-prata crua","Frutas",98,1.3,26,0.1,2,"fruta","banana prata banana-prata"],[222,"Maçã Fuji com casca","Frutas",56,0.3,15.2,null,1.3,"fruta","maca maçã fuji fruta"],[225,"Mamão Formosa cru","Frutas",45,0.8,11.6,0.1,1.8,"fruta","mamão mamao formosa"],[545,"Salada de legumes com maionese","Pratos brasileiros",96,1.1,8.9,7,2.2,"prato","salada de maionese maionese de batata"],[546,"Salada de legumes cozidos no vapor","Acompanhamentos",35,2,7.1,0.3,2.5,"legumes","legumes no vapor seleta legumes cozidos"],[547,"Salpicão de frango","Pratos brasileiros",148,13.9,4.6,7.8,0.4,"prato","salpicao salpicão de frango salada frango"],[525,"Acarajé","Pratos brasileiros",289,8.3,19.1,19.9,9.4,"salgado","acaraje acarajé baiano"],[526,"Arroz carreteiro","Pratos brasileiros",154,10.8,11.6,7.1,1.5,"prato","arroz carreteiro arroz com carne"],[527,"Baião de dois","Pratos brasileiros",136,6.2,20.4,3.2,5.1,"prato","baiao baião de dois arroz feijão"],[529,"Bife à cavalo com contrafilé e ovo","Pratos brasileiros",291,23.7,0,21.1,null,"bife","bife cavalo bife com ovo bife a cavalo"],[530,"Bolinho de arroz frito","Salgados e lanches",274,8,41.7,8.3,2.7,"salgado","bolinho arroz bolinho de arroz salgado frito"]];
+  const tacoFoods=tacoRows.map(([number,name,category,kcal,protein,carbs,fat,fiber,measure,aliases])=>({
+    id:'taco:2011:'+number,name,category,aliases:[aliases],
+    preparation:/cru|crua|com casca|banana|maçã|mamão/i.test(name)?'raw':/queijo|pão de forma|pão francês/i.test(name)?'other':'cooked',
+    note:'TACO 4ª ed. (2011), alimento nº '+number+'. Composição por 100 g da parte comestível; preparo e gordura adicionada podem mudar os valores. Porções domésticas são aproximadas.'+
+      (/frit|milanesa|empanad/i.test(name)?' A quantidade de óleo e o empanamento variam em casa e restaurantes.':''),
+    nutrientsPer100g:{energyKcal:kcal,proteinG:protein,carbsG:carbs,fatG:fat,fiberG:fiber},
+    source:{
+      name:'NEPA/UNICAMP — TACO',
+      reference:'Tabela TACO 4ª ed. (2011), item '+number+'; https://nepa.unicamp.br/wp-content/uploads/sites/27/2023/10/taco_4_edicao_ampliada_e_revisada.pdf',
+      license:'Reprodução permitida com citação da fonte (NEPA/UNICAMP).',
+    },
+    portions:TACO_PORTIONS[measure].map(portion=>({...portion})),
+  }));
+
+  // Sweets with reference values and explicitly modelled recipes.
+  // TBCA values are used only to guide rounded, independent estimates (not copied as official branded facts).
+  const sweetFoods=[
+    {
+      id:'taco:2011:16',name:'Bolo de chocolate simples, pronto (sem cobertura)',category:'Doces e bolos',
+      aliases:['bolo chocolate','fatia bolo chocolate','bolo simples de chocolate','fatia de bolo de chocolate','bolo sem cobertura'],preparation:'cooked',
+      note:'Bolo pronto de chocolate sem recheio ou cobertura — TACO item 16. Recheio, calda e cobertura devem ser adicionados separadamente.',
+      nutrientsPer100g:{energyKcal:410,proteinG:6.2,carbsG:54.7,fatG:18.5,fiberG:1.4},
+      source:{name:'NEPA/UNICAMP — TACO',reference:'Tabela TACO 4ª ed. (2011), item 16; https://nepa.unicamp.br/wp-content/uploads/sites/27/2023/10/taco_4_edicao_ampliada_e_revisada.pdf',license:'Reprodução com citação NEPA/UNICAMP'},
+      portions:[p('slice','1 fatia aproximada (≈80 g)',80),p('100g','100 g',100)],
+    },
+    {
+      id:'recipe:brigadeiro-caseiro',name:'Brigadeiro de chocolate caseiro (estimativa)',category:'Doces e bolos',
+      aliases:['brigadeiro','docinho chocolate','brigadeiro tradicional'],preparation:'cooked',
+      note:'Receitas e granulado mudam a composição. Aproximação por 100 g baseada em ingredientes típicos; não é tabela oficial nem receita aferida.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      estimateGramsBase:100,
+      estimate:{confidence:'low',servingLabel:'100 g de brigadeiro',
+        assumptions:'Estimativa de receita tradicional com leite condensado, chocolate e manteiga, usando referências de composição. Varia conforme receita, granulados e tamanho.',
+        low:{energyKcal:330,proteinG:4,carbsG:48,fatG:10},central:{energyKcal:385,proteinG:6.3,carbsG:57.8,fatG:14.6},high:{energyKcal:450,proteinG:8,carbsG:66,fatG:21}},
+      source:{name:'Estimativa de receita tradicional',reference:'Referências TACO de ingredientes e TBCA BRC0190K consultada como parâmetro; não constitui ficha oficial reproduzida',license:'Estimativa independente'},
+      portions:[p('one','1 docinho médio (≈25 g)',25,0.25),p('100g','100 g',100,1)],
+    },
+    {
+      id:'recipe:brigadeiro-morango',name:'Brigadeiro com morango (estimativa)',category:'Doces e bolos',
+      aliases:['brigadeiro com morango','brigadeiro de morango','bombom de morango brigadeiro','brigadeiro morango'],preparation:'cooked',
+      note:'Mistura ilustrativa com 80% brigadeiro de chocolate e 20% morango fresco. Bombom com cobertura de chocolate ou creme branco pode ter valores diferentes.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      estimateGramsBase:100,
+      estimate:{confidence:'low',servingLabel:'100 g de brigadeiro com morango',
+        assumptions:'Hipótese: 80 g de brigadeiro e 20 g de morango em cada 100 g. O recheio/cobertura real varia; cenário não substitui rótulo.',
+        low:{energyKcal:260,proteinG:3.2,carbsG:39,fatG:8},central:{energyKcal:315,proteinG:5.2,carbsG:47,fatG:11.7},high:{energyKcal:390,proteinG:7,carbsG:58,fatG:18}},
+      source:{name:'Estimativa de receita composta',reference:'Hipótese de receita brigadeiro e morango; ver docs/brasilian-food-catalog.md',license:'Estimativa independente'},
+      portions:[p('one','1 unidade estimada (≈35 g)',35,0.35),p('100g','100 g',100,1)],
+    },
+  ];
   const foods = [
     {
       id:'local:doce-cascao-acai-trufado-branco-500ml',
@@ -152,7 +225,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:row.source||source(row.fdc)}));
+  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods);
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -165,12 +238,12 @@
   // Branded products already in the offline catalogue appear before generic foods.
   const mealFirst={
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:whey-unknown','ref:generic-173424','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
-    lunch:['ref:generic-169757','ref:generic-173735','ref:generic-171477','ref:generic-173424'],
-    snack:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:whey-unknown','ref:generic-173944','ref:generic-169705',
+      'growth:whey-unknown','taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
+    lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','ref:generic-171477','taco:2011:429','taco:2011:539'],
+    snack:['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+      'growth:whey-unknown','taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml'],
-    dinner:['ref:generic-169757','ref:generic-173735','ref:generic-171477','ref:generic-173424'],
+    dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','taco:2011:538','taco:2011:429'],
     supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'ref:generic-171265','growth:whey-unknown']
   };
@@ -180,20 +253,20 @@
     return foods.slice().sort((a,b)=>(ranking.get(a.id)??999)-(ranking.get(b.id)??999));
   }
   // Copy estimates into each entry so catalogue updates cannot rewrite past records.
-  function copyEstimate(estimate, factor=1) {
+  function copyEstimate(estimate, factor=1, digits=1) {
     return {
       confidence:estimate.confidence,servingLabel:estimate.servingLabel,
       assumptions:estimate.assumptions,
       ...Object.fromEntries(['low','central','high'].map(group=>[group,
         Object.fromEntries(N.NUTRIENTS.map(key=>[key,
-          Math.round(estimate[group][key]*factor*10)/10]))])),
+          Math.round(estimate[group][key]*factor*(10**digits))/(10**digits)]))])),
     };
   }
   function makeItem(foodId,portionId,count,makeId) {
     const food=find(foodId),qty=Number(count);
     if(!food || !Number.isFinite(qty) || qty<=0 || qty>10000 || typeof makeId!=='function')return null;
     const portion=food.portions.find(row=>row.id===portionId);
-    if(portionId==='custom' && (food.nutrientsPerServing||food.estimate))return null;
+    if(portionId==='custom' && (food.nutrientsPerServing||(food.estimate&&!food.estimateGramsBase)))return null;
     if(portionId!=='custom'&&!portion)return null;
     const grams=portionId==='custom'?qty:(portion.grams==null?null:Math.round(qty*portion.grams*100)/100);
     if(grams!==null && (grams<=0||grams>10000))return null;
@@ -203,7 +276,7 @@
       unit:portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
       ...(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
-      ...(food.estimate?{estimate:copyEstimate(food.estimate,portion?.factor??1)}:{}),
+      ...(food.estimate?{estimate:copyEstimate(food.estimate,portionId==='custom'?1/food.estimateGramsBase:(portion?.factor??1),portionId==='custom'?5:1)}:{}),
       source:{...food.source},
     };
     return N.validEntry({id:'validation',date:'2026-11-14',mealType:'other',items:[item]})?item:null;
