@@ -612,10 +612,10 @@
     const ids=Object.keys(entries);
     const focusIndex=Math.max(0,ids.indexOf(selected));
     return `${headline('Sessão em andamento',p.title,'As cargas preenchidas são referência; registre repetições e RIR após cada série.')}
-      <div class="callout ${ui.draftSaveOk?'good':'warn'}"><strong>${ui.recovered?'Treino recuperado após interrupção.':'Salvamento automático ativo.'}</strong>
+      <div class="callout workout-status-callout ${ui.draftSaveOk?'good':'warn'}"><strong>${ui.recovered?'Treino recuperado após interrupção.':'Salvamento automático ativo.'}</strong>
         <span class="draft-status ${ui.draftSaveOk?'':'save-error'}" id="draft-status" role="status">${esc(draftStatusText())}</span>
-        <p class="small mb-0">Cada edição é salva neste navegador. Você pode sair desta tela e retomar o treino.</p></div>
-      <div class="callout">${p.type==='lower'?'Treino de pernas: registre dor no joelho durante os exercícios e no dia seguinte. Se doer, não aumente a carga.':'Carga por halter significa o peso de cada halter, não a soma do par.'}</div>
+        <p class="small mb-0">Dados salvos neste aparelho.</p></div>
+      <div class="callout workout-guidance-callout">${p.type==='lower'?'Treino de pernas: registre dor no joelho durante os exercícios e no dia seguinte. Se doer, não aumente a carga.':'Halteres: anote o peso de cada um, não a soma.'}</div>
       <section class="workout-focus-bar card" aria-label="Modo de visualização e andamento">
         <div class="row-between focus-mode-row"><div><strong>Seu treino, no seu ritmo</strong><p class="small muted">Séries preenchidas: só contam após registrar carga e repetições.</p></div>
           <button type="button" class="secondary small-button" data-action="focus-toggle" aria-pressed="${ui.focusedMode}">${ui.focusedMode?'Ver ficha completa':'Ativar modo focado'}</button>
@@ -1596,7 +1596,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-diary1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ux12',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
