@@ -125,6 +125,34 @@
       macroDiff();
       previewSuggestion(false);
     }
+    function previewSuggestion(scroll=false){
+      const node=dialog?.querySelector('#nd-suggestion');
+      if(!node)return;
+      const profile=readProfile();
+      suggestion=G.estimate(profile);
+      if(suggestion.error){
+        node.innerHTML='<p class="small muted">Preencha e confirme os dados acima para visualizar uma recomendação. Você também pode configurar metas manuais.</p>';
+        if(scroll)error(suggestion.error);
+        return;
+      }
+      profileDraft=profile;
+      const current=G.active(archive().settings,day);
+      const wearable=BODY?.recentBio(get().bioimpedance||[])[0];
+      const caution=profile.activity>=1.725?'O fator de atividade selecionado é alto; pode superestimar as necessidades se a rotina fora do treino for pouco ativa. Valide por tendências ao longo de 2–4 semanas.':'';
+      node.innerHTML='<section class="nd-goal-recommendation" aria-label="Sugestão nutricional calculada">'+
+        '<p class="eyebrow">SUGESTÃO INICIAL · NÃO APLICADA</p><h3>Metas estimadas para seu objetivo</h3>'+
+        '<div class="nd-goal-energy"><strong>'+fmt(suggestion.values.energyKcal)+' kcal/dia</strong>'+
+        '<span>Energia de partida · manutenção estimada '+fmt(suggestion.maintenance)+' kcal</span></div>'+
+        '<div class="nd-goal-macro-grid">'+G.KEYS.slice(1).map(k=>
+          '<div><span>'+nutrients[k]+'</span><strong>'+fmt(suggestion.values[k])+' g</strong></div>').join('')+'</div>'+
+        '<p class="small muted">Repouso estimado: '+fmt(suggestion.resting)+' kcal. Os valores usam peso, altura, idade, parâmetro da fórmula e atividade informada.</p>'+
+        (current?'<p class="small muted">Meta vigente: '+fmt(current.values.energyKcal)+' kcal ('+esc(current.source)+'). Ela permanece igual até você aceitar outra.</p>':'')+
+        (caution?'<p class="small nd-goal-caution">'+esc(caution)+'</p>':'')+
+        (wearable?'<p class="small muted">Bioimpedância de '+dateBR(wearable.date)+' disponível como tendência, sem ajustar esta estimativa por um resultado isolado.</p>':'')+
+        '<button type="button" class="primary full" data-nd="accept">Aceitar estas metas a partir de hoje</button>'+
+        '<p class="small muted">Ajustes manuais seguem disponíveis abaixo. Nenhuma alteração ocorre sem aceitar.</p></section>';
+      if(scroll)node.scrollIntoView({block:'nearest'});
+    }
     const num=v=>String(v??'').trim()===''?null:Number(String(v).replace(',','.'));
     function readProfile(){const f=new FormData(dialog.querySelector('#nd-profile'));return {heightCm:num(f.get('heightCm')),age:num(f.get('age')),weightKg:num(f.get('weightKg')),activity:num(f.get('activity')),sex:f.get('sex'),goal:f.get('goal'),adultScope:f.get('adultScope')==='on',confirmedAt:today()};}
     function values(){const f=new FormData(dialog.querySelector('#nd-target'));return Object.fromEntries(G.KEYS.map(k=>[k,num(f.get('target-'+k))]));}
