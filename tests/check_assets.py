@@ -52,5 +52,6 @@ assert f'forja-shell-v33-{motion_release}' in worker, 'offline cache not version
 assert f"./sw.js?v={motion_release}" in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'
+assert 'id="motion-dialog"' in index, 'motion viewer dialog must be available before app initialization'
 
 print('All deployment assets are valid.')
