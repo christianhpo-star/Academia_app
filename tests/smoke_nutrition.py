@@ -48,9 +48,29 @@ with sync_playwright() as p:
     ]:
         page.locator('#nd-search').fill(search_term)
         assert food_name in page.locator('#nd-results').inner_text(),search_term
+    # Peso digitado sem arredondar: 121 g de contrafilé.
+    page.locator('#nd-search').fill('bife de boi')
+    page.locator('[data-nd="pick"][data-id="taco:2011:346"]').click()
+    assert page.locator('#nd-catalog select[name="portion"]').input_value()=='custom'
+    page.locator('#nd-catalog input[name="count"]').fill('121')
+    assert '234,7 kcal' in page.locator('#nd-food-preview').inner_text()
+    assert '43,4 g' in page.locator('#nd-food-preview').inner_text()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==1
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
+    # Doces caseiros por gramas entram como estimativa, não rótulo.
+    page.locator('#nd-search').fill('brigadeiro com morango')
+    page.locator('[data-nd="pick"][data-id="recipe:brigadeiro-morango"]').click()
+    page.locator('#nd-catalog input[name="count"]').fill('121.5')
+    assert 'baixa confiança' in page.locator('#nd-food-preview').inner_text()
+    page.locator('#nd-catalog button[type="submit"]').click()
+    assert page.locator('#nd-items .nd-item').count()==1
+    page.locator('#nd-items [data-nd="remove"]').first.click()
+    assert page.locator('#nd-items .nd-item').count()==0
     page.locator('#nd-search').fill('batata frita')
     page.locator('[data-nd="pick"][data-id="taco:2011:93"]').click()
-    page.locator('#nd-portion').select_option('100g')
+    page.locator('#nd-catalog select[name="portion"]').select_option('100g')
     page.locator('#nd-catalog button[type="submit"]').click()
     assert page.locator('#nd-items .nd-item').count()==1
     page.locator('#nd-items [data-nd="remove"]').first.click()
