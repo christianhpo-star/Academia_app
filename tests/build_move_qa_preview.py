@@ -73,7 +73,7 @@ def main():
     sw=(OUT/"sw.js").read_text(encoding="utf-8")
     sw,count=re.subn(r"const CACHE\s*=\s*'forja-shell-[^']+';",f"const CACHE = 'forja-qa-shell-{version}';",sw)
     if count!=1:raise RuntimeError("Unexpected service worker cache name")
-    sw=replace_one(sw,"'./', './index.html',","'./', './index.html', './avaliar-3d.html', './diagnostico.html', './video-teste.mp4',","SW precache")
+    sw=replace_one(sw,"'./', './index.html',","'./', './index.html', './avaliar-3d.html', './diagnostico.html', './video-teste.mp4', './video-teste.webm',","SW precache")
     sw=sw.replace("key.startsWith('forja-shell-')","key.startsWith('forja-qa-shell-')")
     if "forja-shell-" in sw:raise RuntimeError("Production shell references persisted")
     write(OUT/"sw.js",sw)
@@ -84,7 +84,10 @@ def main():
     ffmpeg=shutil.which("ffmpeg")
     if not ffmpeg:raise RuntimeError("ffmpeg required for original, synthetic non-exercise video")
     subprocess.run([ffmpeg,"-nostdin","-v","error","-y","-f","lavfi","-i","testsrc2=size=160x90:rate=12:duration=3","-an","-c:v","libx264","-pix_fmt","yuv420p","-movflags","+faststart",str(OUT/"video-teste.mp4")],check=True,timeout=45)
-    if (OUT/"video-teste.mp4").stat().st_size<1024:raise RuntimeError("Empty video fixture")
+    if (OUT/"video-teste.mp4").stat().st_size<1024:raise RuntimeError("Empty MP4 fixture")
+    # Chromium CI may lack proprietary H.264 codecs; VP8/WebM is an open video smoke fixture.
+    subprocess.run([ffmpeg,"-nostdin","-v","error","-y","-f","lavfi","-i","testsrc2=size=160x90:rate=12:duration=3","-an","-c:v","libvpx","-deadline","realtime","-cpu-used","5","-b:v","160k",str(OUT/"video-teste.webm")],check=True,timeout=45)
+    if (OUT/"video-teste.webm").stat().st_size<1024:raise RuntimeError("Empty WebM fixture")
     for path in OUT.glob("*.js"):
         source=path.read_text(encoding="utf-8")
         if path.name in ("app.js","exercise-video.js"):
