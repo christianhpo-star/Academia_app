@@ -121,6 +121,31 @@
     };
   });
 
+
+  // Liquid-only recipes: per millilitre from a stated serving on the cited source.
+  // No implied mL-to-grams conversion; TACO coffee is explicitly approximate density.
+  const LIQUID_LABELS=[{"id":"itambe-uht-desnatado","name":"Leite desnatado UHT Itambé","aliases":["leite desnatado","leite magro","leite zero gordura","itambe desnatado"],"serving":200,"kcal":65,"protein":6.8,"carbs":9.6,"fat":0,"fiber":0,"url":"https://www.itambe.com.br/portal/produto/leite-uht-desnatado-1l","brand":"Itambé — rótulo oficial","note":"Rótulo UHT Itambé, 200 ml. Este item corresponde ao leite, não ao whey; use volume real. Contém lactose."},{"id":"itambe-uht-integral","name":"Leite integral UHT Itambé","aliases":["leite integral","leite de vaca integral","itambe integral"],"serving":200,"kcal":118,"protein":6.6,"carbs":9.3,"fat":6,"fiber":0,"url":"https://www.itambe.com.br/portal/produto/leite-uht-integral-1l","brand":"Itambé — rótulo oficial","note":"Rótulo UHT Itambé, 200 ml. Este item corresponde ao leite, não ao whey; use volume real. Contém lactose."},{"id":"cafe-coado-sem-acucar","name":"Café coado, sem açúcar (referência TACO)","aliases":["cafe","café","cafe preto","café preto","cafe sem acucar","café sem açúcar","cafe puro","café coado"],"serving":100,"kcal":9,"protein":0.7,"carbs":1.5,"fat":0.1,"fiber":null,"url":"https://nepa.unicamp.br/wp-content/uploads/sites/27/2023/10/taco_4_edicao_ampliada_e_revisada.pdf","brand":"NEPA/UNICAMP — TACO (aproximação por ml)","note":"TACO nº 471: infusão de café 10% sem açúcar, por 100 g. Para facilitar lançamento em ml, adota-se densidade aproximada 1 g/ml, não aferida; preparo mais fraco/forte altera os valores. Açúcar e leite devem ser adicionados separadamente."},{"id":"monster-zero-sugar-473ml","name":"Monster Energy Zero Sugar, lata 473 ml","aliases":["monster zero","monster 0","monster zero sugar","monster preto zero","energético zero"],"serving":200,"kcal":3,"protein":0,"carbs":1.4,"fat":0,"fiber":0,"url":"https://www.paodeacucar.com/produto/1623422/energetico-zero-acucar-monster-lata-473ml","brand":"Tabela do varejista Pão de Açúcar","note":"Monster Zero Sugar 473 ml (não é Ultra White). Tabela do varejista por 200 ml: 3 kcal, 1,4 g carboidratos, sem quantidades significativas de proteína, gordura e fibras. Confira o rótulo da sua lata, pois fórmulas podem variar."},{"id":"monster-ultra-white-473ml","name":"Monster Energy Zero Ultra White, lata 473 ml","aliases":["monster ultra","monster ultra white","monster branco","monster 0 white","monster zero ultra","energetico monster branco"],"serving":473,"kcal":14,"protein":null,"carbs":null,"fat":null,"fiber":null,"url":"https://www.monsterenergy.com/pt-br/energy-drinks/monster-ultra/monster-energy-zero-ultra/","brand":"Monster Energy — página oficial","note":"Marca informa 14 kcal e 0 g de açúcares totais por lata. O site não informa macros completos: proteínas, carboidratos, gorduras e fibras ficam desconhecidos, não zero. Confirmar com rótulo se necessário."}];
+  const drinkFoods=LIQUID_LABELS.map(row=>{
+    const perMl=value=>value==null?null:Math.round(value/row.serving*10000000)/10000000;
+    return {
+      id:'drink:'+row.id,name:row.name,category:'Bebidas e leite',
+      aliases:row.aliases,preparation:'other',
+      note:row.note,
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null,fiberG:null},
+      nutrientsPerMl:{
+        energyKcal:perMl(row.kcal),proteinG:perMl(row.protein),
+        carbsG:perMl(row.carbs),fatG:perMl(row.fat),fiberG:perMl(row.fiber)
+      },
+      source:{name:row.brand,reference:'Informação por '+row.serving+' ml; '+row.url,
+        license:'Informação de referência do rótulo/página, consultar a fonte'},
+      portions:[
+        p('serving',row.serving+' ml',null),
+        p('half',(row.serving/2)+' ml',null),
+        p('100ml','100 ml',null)
+      ]
+    };
+  });
+
   const foods = [
     {
       id:'local:doce-cascao-acai-trufado-branco-500ml',
@@ -262,7 +287,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods);
+  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods,drinkFoods);
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -281,16 +306,17 @@
     'growth:official:daily-baunilha','growth:official:daily-zero-chocolate',
     'growth:official:daily-zero-doce-de-leite','growth:official:gourmet-tiramisu',
     'growth:official:sache-natural'];
+  const DRINK_SUGGESTIONS=['drink:cafe-coado-sem-acucar','drink:itambe-uht-desnatado','drink:itambe-uht-integral','drink:monster-zero-sugar-473ml','drink:monster-ultra-white-473ml'];
   const mealFirst={
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
+      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265',...DRINK_SUGGESTIONS],
     lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','ref:generic-171477','taco:2011:429','taco:2011:539'],
     snack:['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
-      'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml'],
+      'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml',...DRINK_SUGGESTIONS],
     dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','taco:2011:538','taco:2011:429'],
     supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'ref:generic-171265',...GROWTH_TOP_IDS,'growth:whey-unknown']
+      'ref:generic-171265',...GROWTH_TOP_IDS,'growth:whey-unknown',...DRINK_SUGGESTIONS]
   };
   function orderedForMeal(mealType){
     const ids=mealFirst[mealType]||mealFirst.breakfast;
@@ -311,15 +337,19 @@
     const food=find(foodId),qty=Number(count);
     if(!food || !Number.isFinite(qty) || qty<=0 || qty>10000 || typeof makeId!=='function')return null;
     const portion=food.portions.find(row=>row.id===portionId);
-    if(portionId==='custom' && (food.nutrientsPerServing||(food.estimate&&!food.estimateGramsBase)))return null;
-    if(portionId!=='custom'&&!portion)return null;
-    const grams=portionId==='custom'?qty:(portion.grams==null?null:Math.round(qty*portion.grams*100)/100);
+    if(portionId==='custom' && (food.nutrientsPerServing||food.nutrientsPerMl||(food.estimate&&!food.estimateGramsBase)))return null;
+    if(portionId==='customMl'&&!food.nutrientsPerMl)return null;
+    if(!['custom','customMl'].includes(portionId)&&!portion)return null;
+    const liquid=!!food.nutrientsPerMl;
+    const grams=liquid?null:portionId==='custom'?qty:(portion.grams==null?null:Math.round(qty*portion.grams*100)/100);
+    const volume=liquid?(portionId==='customMl'?qty:(portionId==='half'?food.portions[0].label:null)):null;
     if(grams!==null && (grams<=0||grams>10000))return null;
     const item={
       id:makeId('item'),foodId:food.id,label:food.name,
-      quantity:portionId==='custom'?grams:qty,
-      unit:portionId==='custom'?'g':'portion',grams,
+      quantity:liquid?(portionId==='customMl'?qty:portionId==='half'?(Number(food.portions[0].label.split(' ')[0])/2)*qty:portionId==='100ml'?100*qty:Number(food.portions[0].label.split(' ')[0])*qty):portionId==='custom'?grams:qty,
+      unit:liquid?'ml':portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
+      ...(liquid?{nutrientsPerMl:{...food.nutrientsPerMl}}:{}),
       ...(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
       ...(food.estimate?{estimate:copyEstimate(food.estimate,portionId==='custom'?1/food.estimateGramsBase:(portion?.factor??1),portionId==='custom'?5:1)}:{}),
       source:{...food.source},
@@ -337,6 +367,7 @@
         food={
           id:makeId('personal-food'),name:item.label,preparation:'other',
           nutrientsPer100g:{...item.nutrientsPer100g},
+          ...(item.nutrientsPerMl?{nutrientsPerMl:{...item.nutrientsPerMl}}:{}),
           ...(item.estimate?{estimate:copyEstimate(item.estimate)}:{}),
           source:item.source?{...item.source}:{name:'Registro pessoal',reference:'Sem composição nutricional verificada',license:'Uso pessoal'},
         };
@@ -345,6 +376,7 @@
       }
       built.push({id:makeId('preset'),foodId:food.id,
         quantity:item.quantity,unit:item.unit,grams:item.grams,
+        ...(item.nutrientsPerMl?{nutrientsPerMl:{...item.nutrientsPerMl}}:{}),
         ...(item.nutrientsPerServing?{nutrientsPerServing:{...item.nutrientsPerServing}}:{}),
         ...(item.estimate?{estimate:copyEstimate(item.estimate)}:{}),
       });
@@ -361,6 +393,7 @@
         id:makeId('item'),foodId:food.id,label:food.name,
         quantity:item.quantity,unit:item.unit,grams:item.grams,
         nutrientsPer100g:{...food.nutrientsPer100g},
+        ...(item.nutrientsPerMl?{nutrientsPerMl:{...item.nutrientsPerMl}}:(food.nutrientsPerMl?{nutrientsPerMl:{...food.nutrientsPerMl}}:{})),
         ...(item.nutrientsPerServing?{nutrientsPerServing:{...item.nutrientsPerServing}}:(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{})),
         ...(item.estimate?{estimate:copyEstimate(item.estimate)}:{}),
         source:{...food.source},
