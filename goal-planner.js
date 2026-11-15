@@ -103,7 +103,17 @@
      direction==='gain'||mode==='muscle_gain'?
      'Priorize ingestão suficiente para treinar e recuperar, proteína adequada e progressão gradual; ajuste pelo peso e desempenho observados.':
      'Mantenha variedade, refeições adequadas ao treino e acompanhamento de tendência, sem inferir consumo não registrado.';
-   return {mode,label:labelFor(mode),asOf:day,sourceWeight:measured,targetKg:hasTarget?target:null,
+   const trainingOptions=[
+     {id:'continuity',label:'Manter rotina e evoluir',detail:'Manter as sessões habituais registradas, progredir cargas ou repetições gradualmente e respeitar recuperação.'},
+     {id:'recovery',label:'Semana de recuperação',detail:'Quando houver fadiga ou dor, rever volume e intensidade; a meta de peso não exige aumentar séries.'},
+     {id:'conditioning',label:'Condicionamento complementar',detail:'Usar caminhada, atividade aeróbia ou Muay Thai conforme capacidade, sem contabilizar novamente as calorias.'}
+   ];
+   const foodOptions=[
+     {id:'balanced',label:'Distribuição equilibrada',detail:'Ajustar alimentos habituais, porções e frequência; manter registro real dos macros conhecidos.'},
+     {id:'protein',label:'Prioridade à proteína',detail:'Distribuir fontes de proteína ao longo das refeições e verificar a ingestão total; não substituir a avaliação alimentar completa.'},
+     {id:'training',label:'Energia para os treinos',detail:'Planejar refeições com fontes de carboidratos próximas aos treinos conforme tolerância, sem inventar calorias consumidas.'}
+   ];
+   return {trainingOptions,foodOptions,mode,label:labelFor(mode),asOf:day,sourceWeight:measured,targetKg:hasTarget?target:null,
      deadline:dateOK(deadline)?deadline:null,daysRemaining:futureDays,weightDeltaKg:difference,direction,
      paceKgPerWeek:pace==null?null:Math.round(pace*100)/100,
      pacePercentPerWeek:pacePercent==null?null:Math.round(pacePercent*100)/100,
