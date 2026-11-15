@@ -52,7 +52,10 @@
    const sport=trainingWeek(state,day);
    const profile=state?.nutrition?.settings?.profile;
    const calculated=profile&&G?.estimate(profile);
-   const maintenance=calculated&&!calculated.error?calculated.maintenance:null;
+   const profileWeightStale=Boolean(measured&&!measured.reference&&numeric(profile?.weightKg,30,350)&&Math.abs(profile.weightKg-measured.weight)/measured.weight>.05);
+   const lastWeightDays=measured?.date?daysBetween(measured.date,day):null;
+   const measurementStale=lastWeightDays!=null&&lastWeightDays>45;
+   const maintenance=calculated&&!calculated.error&&!profileWeightStale&&!measurementStale?calculated.maintenance:null;
    const warnings=[
      'Peso e prazo indicam apenas o ritmo matemático; não são previsão de resultado.',
      'Não convertemos quilogramas em calorias usando a regra fixa de 7.700 kcal/kg.',
@@ -73,7 +76,9 @@
      status='caution';warnings.push('O ritmo solicitado se aproxima da faixa superior frequentemente usada em contextos esportivos. Priorize adesão e preservação muscular.');
    }
    if(!measured||measured.reference)warnings.push('Peso de referência, não pesagem recente: confirme antes de ajustar metas.');
-   if(maintenance==null)warnings.push('Sem perfil nutricional completo confirmado não calculamos valores calóricos.');
+   if(profileWeightStale)warnings.push('O peso do perfil nutricional difere mais de 5% da última pesagem: revise o perfil antes de estimar energia.');
+   if(measurementStale)warnings.push('Última pesagem com mais de 45 dias: atualize o peso antes de estimar energia.');
+   if(maintenance==null)warnings.push('Sem perfil nutricional atualizado e completo não calculamos valores calóricos.');
    if(profile?.activity>=1.725)warnings.push('Fator de atividade alto: as calorias calculadas podem superestimar o gasto real.');
    // Starting bands are PRODUCT DESIGN HEURISTICS, not NIDDK dynamic simulations.
    // They are intentionally independent of desired deadline.
