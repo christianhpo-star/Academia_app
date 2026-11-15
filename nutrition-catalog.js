@@ -253,13 +253,13 @@
     return foods.slice().sort((a,b)=>(ranking.get(a.id)??999)-(ranking.get(b.id)??999));
   }
   // Copy estimates into each entry so catalogue updates cannot rewrite past records.
-  function copyEstimate(estimate, factor=1) {
+  function copyEstimate(estimate, factor=1, digits=1) {
     return {
       confidence:estimate.confidence,servingLabel:estimate.servingLabel,
       assumptions:estimate.assumptions,
       ...Object.fromEntries(['low','central','high'].map(group=>[group,
         Object.fromEntries(N.NUTRIENTS.map(key=>[key,
-          Math.round(estimate[group][key]*factor*10)/10]))])),
+          Math.round(estimate[group][key]*factor*(10**digits))/(10**digits)]))])),
     };
   }
   function makeItem(foodId,portionId,count,makeId) {
@@ -276,7 +276,7 @@
       unit:portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
       ...(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
-      ...(food.estimate?{estimate:copyEstimate(food.estimate,portionId==='custom'?1/food.estimateGramsBase:(portion?.factor??1))}:{}),
+      ...(food.estimate?{estimate:copyEstimate(food.estimate,portionId==='custom'?1/food.estimateGramsBase:(portion?.factor??1),portionId==='custom'?5:1)}:{}),
       source:{...food.source},
     };
     return N.validEntry({id:'validation',date:'2026-11-14',mealType:'other',items:[item]})?item:null;
