@@ -111,7 +111,7 @@ with sync_playwright() as p:
     page.locator('#nd-label').fill('Falha de armazenamento')
     page.locator('#nd-manual button[type="submit"]').click()
     original=state()['nutrition']['entries']
-    page.evaluate("localStorage.setItem=()=>{throw new Error('quota')}")
+    page.evaluate("() => { localStorage.setItem = () => {throw new Error('quota')}; }")
     page.locator('#nd-meal button[type="submit"]').click()
     assert page.locator('dialog').is_visible()
     assert state()['nutrition']['entries']==original
