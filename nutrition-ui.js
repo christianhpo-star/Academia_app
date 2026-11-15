@@ -17,12 +17,13 @@
     const rows=(archive?.entries||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));
     const edit=rows.find(row=>row.id===editId && row.items.length===1)||null;
     const first=edit?.items[0], summary=N.observedTotals(archive.entries,date);
+    const estimateSummary=N.estimatedTotals(archive.entries,date);
     const selected=CAT.find(selectedFoodId);
     const foodRows=CAT.foods.map(food=>
       '<button type="button" class="nutrition-food" data-action="nutrition-pick" data-food="'+escapeHTML(food.id)+
       '" data-nutrition-name="'+escapeHTML([food.name,...(food.aliases||[])].join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase())+'">'+
       '<strong>'+escapeHTML(food.name)+'</strong><small>'+escapeHTML(food.category)+
-      (food.nutrientsPerServing?' · Dados por embalagem':' · Porção aproximada')+'</small></button>').join('');
+      (food.estimate?' · Estimativa (baixa confiança)':food.nutrientsPerServing?' · Dados por embalagem':' · Porção aproximada')+'</small></button>').join('');
     const favoriteRows=(archive.mealTemplates||[]).slice().reverse().slice(0,8).map(favorite=>
       '<button type="button" class="nutrition-food" data-action="nutrition-use-favorite" data-id="'+escapeHTML(favorite.id)+'">'+
       '<strong>'+escapeHTML(favorite.name)+'</strong><small>Repetir refeição favorita</small></button>').join('');
@@ -30,6 +31,10 @@
       '<option value="'+escapeHTML(portion.id)+'">'+escapeHTML(portion.label)+'</option>').join(''):'';
     const catalogForm=selected?'<form id="nutrition-catalog-form" class="mt-12">'+
       '<strong>'+escapeHTML(selected.name)+'</strong><p class="small muted">'+escapeHTML(selected.note)+'</p>'+
+      (selected.estimate?'<div class="nutrition-estimate"><strong>≈ '+fmt(selected.estimate.central.energyKcal)+' kcal / '+escapeHTML(selected.estimate.servingLabel)+'</strong>'+
+        '<span>Faixa aproximada: '+fmt(selected.estimate.low.energyKcal)+'–'+fmt(selected.estimate.high.energyKcal)+' kcal · confiança baixa</span>'+
+        '<small>Proteínas ≈ '+fmt(selected.estimate.central.proteinG)+' g · Carboidratos ≈ '+fmt(selected.estimate.central.carbsG)+' g · Gorduras ≈ '+fmt(selected.estimate.central.fatG)+' g</small>'+
+        '<details><summary>Como foi estimado?</summary><p>'+escapeHTML(selected.estimate.assumptions)+'</p></details></div>':'')+
       '<div class="field"><label for="nutrition-portion">Porção</label><select name="portionId" id="nutrition-portion">'+selectPortions+'</select></div>'+
       '<div class="field-row mt-12"><div class="field"><label for="nutrition-count">Quantidade de porções</label>'+
       '<input id="nutrition-count" name="quantity" type="number" min="0.001" max="10000" step="any" value="1" required /></div>'+
@@ -47,12 +52,13 @@
     const visible=rows.slice(0,limit).map(entry=>{
       const items=entry.items.map(item=>'<li><span>'+escapeHTML(item.label)+
         '</span><small>'+escapeHTML(fmt(item.quantity))+' '+escapeHTML(units[item.unit])+
-        (item.grams != null?' · '+escapeHTML(fmt(item.grams))+' g':'')+'</small></li>').join('');
+        (item.grams != null?' · '+escapeHTML(fmt(item.grams))+' g':'')+
+        (item.estimate?' · ≈ '+fmt(item.estimate.central.energyKcal*item.quantity)+' kcal (faixa '+fmt(item.estimate.low.energyKcal*item.quantity)+'–'+fmt(item.estimate.high.energyKcal*item.quantity)+', confiança baixa)':'')+'</small></li>').join('');
       return '<details class="card nutrition-entry"><summary><strong>'+escapeHTML(labels[entry.mealType])+
         ' · '+dateBR(entry.date)+'</strong><small>'+escapeHTML(entry.items.map(x=>x.label).join(', '))+
         '</small></summary><div class="mt-12"><ul class="mini-list">'+items+
         '</ul><div class="btnrow mt-12"><button type="button" class="secondary" data-action="nutrition-repeat" data-id="'+escapeHTML(entry.id)+'">Repetir hoje</button>'+
-        (entry.items.length===1&&!entry.items[0].nutrientsPerServing?'<button type="button" class="secondary" data-action="nutrition-edit" data-id="'+escapeHTML(entry.id)+'">Editar</button>':'')+
+        (entry.items.length===1&&!entry.items[0].nutrientsPerServing&&!entry.items[0].estimate?'<button type="button" class="secondary" data-action="nutrition-edit" data-id="'+escapeHTML(entry.id)+'">Editar</button>':'')+
         '<button type="button" class="secondary" data-action="nutrition-save-favorite" data-id="'+escapeHTML(entry.id)+'">Salvar como favorito</button>'+ 
         '<button type="button" class="ghost" data-action="nutrition-delete" data-id="'+escapeHTML(entry.id)+'">Excluir</button></div></div></details>';
     }).join('');
@@ -62,6 +68,10 @@
       '<p class="lead">Registre o que você realmente consumiu. Nenhuma refeição é presumida e o registro não exige contar calorias.</p>'+
       '<section class="card"><div class="row-between"><h2 class="section-title">Registros de '+dateBR(date)+'</h2><span class="pill">'+summary.mealsRecorded+' refeição(ões)</span></div>'+
       '<div class="kpi-row nutrition-summary">'+metrics+'</div>'+
+      (estimateSummary.estimatedItems?'<div class="nutrition-estimate nutrition-estimate-daily">'+
+        '<strong>Alimentos estimados registrados: ≈ '+fmt(estimateSummary.totals.central.energyKcal)+' kcal</strong>'+
+        '<span>Faixa aproximada: '+fmt(estimateSummary.totals.low.energyKcal)+'–'+fmt(estimateSummary.totals.high.energyKcal)+' kcal · baixa confiança</span>'+
+        '<small>Separado dos valores do rótulo; inclui somente os itens estimados. Não representa todas as refeições do dia.</small></div>':'')+
       '<p class="small muted">Valores apenas dos alimentos informados com quantidade em gramas e composição conhecida. Um traço indica informação insuficiente. Não representa o consumo total do dia.</p></section>'+
       '<section class="card"><h2 class="section-title">Catálogo rápido</h2>'+ 
       '<div class="field mt-12"><label for="nutrition-search">Buscar alimentos e produtos</label>'+ 

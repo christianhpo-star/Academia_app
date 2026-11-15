@@ -181,9 +181,22 @@
       observedOnly: true, totals, knownItems: known };
   }
 
+
+  // Low-confidence estimates are never combined into the observed/labelled totals above.
+  function estimatedTotals(entries,date) {
+    if(!dateOk(date)||!Array.isArray(entries)||!entries.every(validEntry))
+      throw new Error('Período ou refeições inválidos.');
+    const items=entries.filter(entry=>entry.date===date).flatMap(entry=>entry.items);
+    const estimated=items.filter(item=>item.estimate);
+    const totals=Object.fromEntries(['low','central','high'].map(group=>[group,
+      Object.fromEntries(NUTRIENTS.map(key=>[key,
+        Math.round(estimated.reduce((sum,item)=>sum+item.estimate[group][key]*item.quantity,0)*10)/10]))]));
+    return {date,estimatedItems:estimated.length,confidence:'low',
+      excludesOtherItems:estimated.length!==items.length,totals};
+  }
   const api = {
     VERSION, NUTRIENTS, MEALS, UNITS, archive, dateOk, nutrientsOk, validFood,
-    validEntry, validTemplate, validArchive, validEstimate, ensureArchive, merge, observedTotals,
+    validEntry, validTemplate, validArchive, validEstimate, ensureArchive, merge, observedTotals, estimatedTotals,
   };
   root.ForjaNutrition = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -1227,7 +1227,7 @@
     }
     if(action==='nutrition-cancel-edit'){ui.nutritionEditId=null;render();return;}
     if(action==='nutrition-edit'){
-      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1&&!row.items[0].nutrientsPerServing))return;
+      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1&&!row.items[0].nutrientsPerServing&&!row.items[0].estimate))return;
       ui.nutritionEditId=btn.dataset.id;render();
       document.querySelector('#nutrition-form')?.scrollIntoView({block:'start'});return;
     }
