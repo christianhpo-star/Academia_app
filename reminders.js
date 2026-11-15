@@ -92,8 +92,20 @@
          'Variações da hidratação podem afetar BIA; 5% e 90 dias são convenções do produto.'));
      }
    }
-   const steps=(state?.activitySteps||[]).filter(x=>dayOK(x?.date)&&x.date<=day).sort((a,b)=>a.date.localeCompare(b.date));
-   if(profile?.adultScope&&profile.activity>=1.725&&steps.length>=7&&diff(day,steps.at(-1).date)>=28){
+   const steps=(state?.activitySteps||[]).filter(x=>dayOK(x?.date)&&x.date<=day&&Number.isFinite(Number(x.steps))).sort((a,b)=>a.date.localeCompare(b.date));
+   const recent=steps.filter(x=>x.date>=addDays(day,-13));
+   const older=steps.filter(x=>x.date>=addDays(day,-27)&&x.date<addDays(day,-13));
+   const average=items=>items.length?items.reduce((n,x)=>n+Number(x.steps),0)/items.length:null;
+   const newAvg=average(recent),oldAvg=average(older);
+   const shift=Boolean(profile?.adultScope&&profile.activity!=null&&recent.length>=7&&older.length>=7&&oldAvg>0&&
+     Math.abs(newAvg-oldAvg)>=2000&&ratio(newAvg,oldAvg)>=30);
+   if(shift){
+     const tier=ratio(newAvg,oldAvg)>=50?'50+':'30+';
+     out.push(make('activity-review',5,'Sua rotina de passos pode ter mudado',
+       'As médias de passos nos dias registrados diferem entre as últimas duas quinzenas. Se a nova rotina for habitual, vale conferir o fator de atividade. Ausências não são passos zero.',
+       'activity',String(profile.confirmedAt)+'|'+profile.activity+'|'+(newAvg>oldAvg?'up':'down')+'|'+tier,
+       'Mudança ≥30% e ≥2.000 passos, com 7 dias observados em cada período: heurística do FORJA, não conversão validada para PAL.'));
+   }else if(profile?.adultScope&&profile.activity>=1.725&&steps.length>=7&&diff(day,steps.at(-1).date)>=28){
      out.push(make('activity-review',5,'Conferir o fator de atividade',
        'Há registros antigos de passos, mas poucos dados recentes para contextualizar o fator selecionado. Ausência de registro não significa sedentarismo.',
        'activity',steps.at(-1).date+'|'+profile.confirmedAt+'|'+profile.activity,
