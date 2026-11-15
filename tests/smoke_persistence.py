@@ -87,6 +87,7 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Salvar treino').click()
     assert 'Seu histórico' in page.locator('#screen').inner_text()
     assert 'forja.academia.draft.v1' not in storage_snapshot(page)
+    page.locator('.history-card > summary').first.click()
     page.locator('.history-details summary').first.click()
     assert '25 kg/halter × 10 rep.' in page.locator('.history-details').first.inner_text()
     page.get_by_role('button', name='Início', exact=True).click()
