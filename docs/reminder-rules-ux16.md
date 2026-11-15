@@ -10,8 +10,8 @@ O painel **Hoje** preserva a primeira ação de treino e mostra no máximo **um 
 
 | ID | Critério observável | Ação **opcional** | Evitar inferências |
 | --- | --- | --- | --- |
-| `weight-check` | Dois pesos registrados, em dias distintos, com diferença ≥3% em até 3 dias | Conferir pesagem antes de interpretar o resultado | Não chamar a diferença de ganho/perda de gordura ou doença; oscilação pode refletir fluidos |
-| `profile-weight` | Última pesagem datada ≥5% diferente do peso do **perfil nutricional** confirmado; suprimir na presença de `weight-check` | Rever peso usado para Mifflin e proteína g/kg | Não modificar macros, calorias nem idade automaticamente |
+| `weight-check` | Dois pesos registrados, em dias distintos, com diferença ≥3% em até 3 dias, sendo o último de até 7 dias atrás | Conferir pesagem antes de interpretar o resultado | Não chamar a diferença de ganho/perda de gordura ou doença; oscilação pode refletir fluidos |
+| `profile-weight` | Última pesagem datada (até 45 dias, posterior à confirmação do perfil) ≥5% diferente do peso do **perfil nutricional** confirmado; suprimir na presença de `weight-check` | Rever peso usado para Mifflin e proteína g/kg | Não modificar macros, calorias nem idade automaticamente |
 | `goal-nutrition` | Objetivo atual difere do objetivo do perfil que gerou uma meta `suggested` já aceita | Revisar metas se desejar | Não substituir metas manuais ou profissionais |
 | `measure-review` | Circunferências registradas há ≥56 dias **ou** peso mudou ≥4% desde uma referência pesagem datada perto da medida e ≥14 dias depois | Considerar medir a mesma região e técnica novamente | Peso ≠ circunferência, gordura ou músculo; não inventar medidas |
 | `bio-review` | Bioimpedância há ≥90 dias **ou** peso mudou ≥5% desde pesagem datada próxima da leitura BIA e ≥14 dias depois | Opcionalmente comparar BIA em condições semelhantes | BIA de consumo é estimativa indireta sensível a hidratação |
