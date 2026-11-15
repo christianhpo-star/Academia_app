@@ -58,6 +58,8 @@ with sync_playwright() as p:
     errors = []
     empty = open_app(context, {}, errors)
     empty.get_by_role('button', name='Evolução', exact=True).click()
+    assert not empty.locator('.progress-advanced-radar').evaluate('(node)=>node.open')
+    empty.locator('.progress-advanced-radar > summary').click()
     assert empty.locator('.radar-axis-button').count() == 4
     assert 'O radar começará a mostrar evolução' in empty.locator('#screen').inner_text()
     empty.locator('[data-action="strength-group"][data-group="C"]').click()
@@ -82,6 +84,7 @@ with sync_playwright() as p:
     }
     page = open_app(context, {'forja.academia.v1':json.dumps(state,ensure_ascii=False)}, errors)
     page.get_by_role('button', name='Evolução', exact=True).click()
+    page.locator('.progress-advanced-radar > summary').click()
     assert page.locator('.radar-axis-button').count() == 4
     assert page.locator('.strength-detail-card').count() == 0
     assert page.locator('svg').count() >= 2

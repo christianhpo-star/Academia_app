@@ -138,7 +138,7 @@
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
-    progressStepDays:14,
+    progressStepDays:14,progressRadarOpen:false,
   };
   const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
     commitSteps(next){
@@ -1073,7 +1073,7 @@
       ${progressMeasuresPanel()}
       ${progressStepsPanel()}
       ${progressStrengthSummary()}
-      <details class="progress-advanced-radar mt-12"><summary>Comparativo muscular avançado · radar</summary>${strengthSection(90)}</details>
+      <details class="progress-advanced-radar mt-12" ${ui.progressRadarOpen?'open':''}><summary>Comparativo muscular avançado · radar</summary>${strengthSection(90)}</details>
       ${renderGoalPlannerSummary(goalPlan)}
       ${renderDosePanel()}
       ${weightForm()}
@@ -1833,6 +1833,7 @@
     else if(action==='strength-group') {
       const group = btn.dataset.group;
       if (!DATA.rotation.includes(group)) return;
+      ui.progressRadarOpen=true;
       ui.strengthGroup = ui.strengthGroup === group ? null : group;
       ui.strengthExercise = null;
       render();
@@ -1841,12 +1842,12 @@
     else if(action==='strength-exercise') {
       const ex = exerciseFor(btn.dataset.ex);
       if (!ex || ex.group !== ui.strengthGroup) return;
-      ui.strengthExercise = ex.id;
+      ui.progressRadarOpen=true;ui.strengthExercise = ex.id;
       render();
       document.getElementById('strength-exercise-panel')?.scrollIntoView({behavior:'smooth', block:'nearest'});
     }
     else if(action==='strength-close') {
-      ui.strengthGroup = null; ui.strengthExercise = null;
+      ui.progressRadarOpen=true;ui.strengthGroup = null; ui.strengthExercise = null;
       render();
       document.getElementById('strength-radar-title')?.scrollIntoView({behavior:'smooth',block:'start'});
     }

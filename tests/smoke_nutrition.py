@@ -30,6 +30,17 @@ with sync_playwright() as p:
     errors=[]
     page=start(context,{},errors)
     page.on('dialog',lambda d:d.accept())
+    # Passos: atalho diário na Home; só o usuário define 0, ausências permanecem ausentes.
+    assert page.locator('#home-steps-form').count()==1
+    assert page.locator('#home-step-count').input_value()==''
+    page.locator('#home-step-count').fill('8750')
+    page.locator('#home-steps-form button[type="submit"]').click()
+    log=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
+    assert len(log['activitySteps'])==1 and log['activitySteps'][0]['steps']==8750
+    page.locator('#home-step-count').fill('9152')
+    page.locator('#home-steps-form button[type="submit"]').click()
+    log=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
+    assert len(log['activitySteps'])==1 and log['activitySteps'][0]['steps']==9152
     page.locator('#nav [data-tab="nutrition"]').click()
     assert page.locator('.nd-meal').count()==5
     assert page.locator('.nd-meal').last.locator('h2').inner_text()=='Ceia'
@@ -38,6 +49,11 @@ with sync_playwright() as p:
     page.locator('.nd-meal [data-nd="add"][data-meal="lunch"]').click()
     assert page.locator('[data-nd="pick"]').count()>=6, 'Catalogue must open with suggestions, not empty Recentes'
     assert 'Arroz branco' in page.locator('#nd-results').inner_text()
+    page.locator('[data-nd="mode"][data-mode="fruits"]').click()
+    assert 'Abacaxi' in page.locator('#nd-results').inner_text()
+    assert 'Morango' in page.locator('#nd-results').inner_text()
+    page.locator('[data-nd="all"]').click()
+    assert 'Manga Tommy Atkins' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="search"]').click()
     # Brazilian everyday foods must be searchable by preparation, not grouped as generic meat.
     for search_term,food_name in [
