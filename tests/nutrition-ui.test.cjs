@@ -1,6 +1,7 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const N=require('../nutrition.js');
+const CAT=require('../nutrition-catalog.js');
 const UI=require('../nutrition-ui.js');
 test('diário vazio não inventa consumo alimentar',()=>{
   const html=UI.render({archive:N.archive(),date:'2026-11-14'});

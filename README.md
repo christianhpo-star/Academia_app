@@ -1,5 +1,12 @@
 # FORJA
 
+
+## Catálogo alimentar rápido (etapa 3, validação pendente)
+
+O módulo de alimentação permite buscar alimentos sem rede, escolher porções, registrar produtos embalados, e salvar refeições registradas como favoritas. As fotos fornecidas pelo usuário permitiram identificar atalhos de exemplo para Itambé morango zero lactose (200 g, 52 kcal, 6 g de proteína, 7 g de carboidratos e 0 g de gordura) e Piracanjuba PRO FORCE Banoffee (250 ml, 170 kcal, 23 g de proteína, 17 g de carboidratos e 1 g de gordura). Os dados de 250 ml são calculados por embalagem, sem converter volume para gramas. A foto não contém garantia de equivalência a embalagens futuras; conferir sempre o rótulo. Whey Growth sem sabor/linha especificados permanece sem estimativa. Não há registro automático de consumo.
+
+As referências genéricas (arroz, feijão, frango, ovo, banana, aveia e leite) usam estimativas ilustrativas, não números de uma ficha FDC individual verificada. As porções em colheres/conchas são aproximações e podem diferir da realidade. Dados incompletos não são convertidos em zero e o acompanhamento não prescreve metas individuais de energia ou macronutrientes.
+
 ## Alimentação (PR de interface, em validação)
 
 - Diário alimentar manual, offline, com data, tipo de refeição, descrição, porção, repetição e edição ou exclusão. A entrada de informações do rótulo por 100 g é opcional, e nenhum valor nutricional é inventado quando faltam dados.
