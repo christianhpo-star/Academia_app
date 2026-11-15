@@ -52,7 +52,7 @@ def wait_video(page):
     }""",timeout=25000)
 
 def clip_record(page,exercise):
-    return page.evaluate("""async id => new Promise((resolve,reject)=>{
+    return page.evaluate("""async id => Promise.race([new Promise((resolve,reject)=>{
       const request=indexedDB.open('forja.exercise.video.v1',1);
       request.onerror=()=>reject(request.error);
       request.onsuccess=()=>{
@@ -65,7 +65,7 @@ def clip_record(page,exercise):
         get.onerror=()=>reject(get.error);
         tx.oncomplete=()=>db.close();
       };
-    })""",exercise)
+    }),new Promise((_,reject)=>setTimeout(()=>reject(new Error('IndexedDB lookup timeout')),12000))])""",exercise)
 
 def main():
   with tempfile.TemporaryDirectory(prefix="forja-video-qa-") as tmp:
@@ -100,13 +100,14 @@ def main():
         assert dialog.locator("a[href*='fitlapse.com']").count()==1
         assert dialog.locator("#exercise-video-preview video").count()==0
         assert "Nenhum vídeo" in dialog.inner_text()
+        print("VIDEO QA: import fixture",flush=True)
         dialog.locator("#exercise-video-picker").set_input_files(str(clip))
         page.locator("#exercise-video-status").get_by_text("Vídeo disponível",exact=False).wait_for(timeout=20000)
         wait_video(page)
         media=clip_record(page,"supino-canadense")
         assert media and media["size"]==clip.stat().st_size and media["name"]==clip.name,media
         assert clip_record(page,"leg-press") is None
-        page.locator("#exercise-video-preview video").evaluate("(v) => v.play()")
+        page.locator("#exercise-video-preview video").evaluate("(v) => { v.play().catch(()=>{}); return true; }")
         page.wait_for_function("document.querySelector('#exercise-video-preview video')?.currentTime > 0.1",timeout=10000)
 
         shots=ROOT/"screenshots"
@@ -120,19 +121,21 @@ def main():
         assert not dialog.is_visible()
 
         # Complete offline PWA navigation in the SAME origin and browser profile.
+        print("VIDEO QA: switch offline",flush=True)
         context.set_offline(True)
         page.reload(wait_until="domcontentloaded",timeout=25000)
         go_catalog(page)
         dialog=open_video(page)
         wait_video(page)
         assert clip_record(page,"supino-canadense")["size"]==clip.stat().st_size
-        page.locator("#exercise-video-preview video").evaluate("(v) => v.play()")
+        page.locator("#exercise-video-preview video").evaluate("(v) => { v.play().catch(()=>{}); return true; }")
         page.wait_for_function("document.querySelector('#exercise-video-preview video')?.currentTime > 0.1",timeout=10000)
         dialog.screenshot(path=str(shots/"video-offline-390.png"))
         dialog.locator('[data-video-action="close"]').click()
         page.close()
 
         # A new tab mimics reopening a PWA with retained IndexedDB data.
+        print("VIDEO QA: offline new tab",flush=True)
         page=context.new_page()
         page.on("pageerror",lambda e:errors.append(str(e)))
         page.goto(origin,wait_until="domcontentloaded",timeout=25000)
