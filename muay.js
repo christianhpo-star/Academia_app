@@ -275,8 +275,9 @@
 
   function renderPage(muay,today,settings={}){
     const last=sortedSessions(muay.sessions).slice(0,1);
-    const recovery='<details class="muay-guidance"><summary>Orientação de recuperação e check-in de hoje</summary>'+
-      readinessCard(readiness(muay.sessions,today,settings))+
+    const guidance=readiness(muay.sessions,today,settings);
+    const recovery='<details class="muay-guidance"><summary><span><strong>Recuperação e próximo treino</strong><small>'+esc(guidance.title)+'</small></span><span aria-hidden="true">⌄</span></summary>'+
+      readinessCard(guidance)+
       '<section class="card muay-today-check"><h2 class="section-title">Como está sua recuperação hoje?</h2>'+
       '<p class="small muted">Não reutilizamos avaliações de outros dias. Este relato não é diagnóstico.</p>'+
       '<div class="field-row mt-12"><div class="field"><label for="muay-today-fatigue">Fadiga atual</label>'+
