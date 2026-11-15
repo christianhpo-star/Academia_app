@@ -1,4 +1,13 @@
-# FORJA — Academia_app
+# FORJA
+
+## Alimentação (PR de interface, em validação)
+
+- Diário alimentar manual, offline, com data, tipo de refeição, descrição, porção, repetição e edição ou exclusão. A entrada de informações do rótulo por 100 g é opcional, e nenhum valor nutricional é inventado quando faltam dados.
+- Acesso secundário pelo Início ou Evolução, sem nova aba de navegação e sem alterar o treino principal. Refeições não ficam no GitHub: permanecem no navegador e são incluídas no backup privado.
+- Totais são apenas de itens observados com dados completos; um traço representa valor desconhecido, não zero nem consumo diário total.
+- Não prescreve metas calóricas/proteicas, não estima gasto de treino e não usa serviços externos.
+
+ — Academia_app
 
 Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de força, acompanhar a evolução das cargas e sugerir quando **manter, repetir ou aumentar** com cautela. Feito sob medida para uma rotina com musculação 5–6 vezes por semana, Muay Thai às segundas, quartas e sextas e meta inicial de 88,3 para 82 kg até 14/01/2027.
 

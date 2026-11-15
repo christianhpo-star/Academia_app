@@ -504,10 +504,10 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 
 
 /* BODY9 — progress subview with illustration and accessible numeric data. */
-.body-quick-card{width:100%;min-height:75px;background:linear-gradient(120deg,#22372f,#1b2b39);border:1px solid #526b55;border-radius:16px;display:flex;justify-content:space-between;align-items:center;gap:15px;color:var(--text);padding:16px 18px;text-align:left;margin:12px 0 20px}
-.body-quick-card strong{display:block;font-size:16px;margin-bottom:5px}
-.body-quick-card small{display:block;color:#bbcfcd;font-size:11px;line-height:1.5}
-.body-quick-card>span:last-child{color:var(--lime);font-size:28px}
+:is(.body-quick-card,.nutrition-quick-card){width:100%;min-height:75px;background:linear-gradient(120deg,#22372f,#1b2b39);border:1px solid #526b55;border-radius:16px;display:flex;justify-content:space-between;align-items:center;gap:15px;color:var(--text);padding:16px 18px;text-align:left;margin:12px 0 20px}
+:is(.body-quick-card,.nutrition-quick-card) strong{display:block;font-size:16px;margin-bottom:5px}
+:is(.body-quick-card,.nutrition-quick-card) small{display:block;color:#bbcfcd;font-size:11px;line-height:1.5}
+:is(.body-quick-card,.nutrition-quick-card)>span:last-child{color:var(--lime);font-size:28px}
 .body-back{min-height:42px;margin-bottom:12px}
 .body-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;border-bottom:2px solid #364b5b;margin:8px 0 19px}
 .body-tabs button{background:none;color:#afc0cf;border:0;border-bottom:3px solid transparent;min-height:55px;padding:11px 6px;font-weight:800;font-size:13px}
@@ -590,3 +590,15 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muay-guidance>summary{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .muay-guidance>summary strong{display:block;font-size:13px;margin-bottom:5px}
 .muay-guidance>summary small{display:block;color:#c0d2dc;font-size:11px;line-height:1.5}
+
+/* Nutrition quick log: visually secondary to the primary workout. */
+.nutrition-screen { display:grid; gap:12px; padding-bottom:20px; }
+.nutrition-screen .nutrition-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.nutrition-screen .nutrition-details { margin-top:14px; padding:12px; border:1px solid var(--line, #344052); border-radius:12px; }
+.nutrition-screen .nutrition-details summary { cursor:pointer; font-weight:600; }
+.nutrition-screen .nutrition-entry summary { cursor:pointer; display:flex; flex-direction:column; gap:4px; }
+.nutrition-screen .nutrition-entry summary small { color:var(--muted, #a7b7c7); overflow-wrap:anywhere; }
+.nutrition-screen .field input,.nutrition-screen .field select { max-width:100%; }
+.nutrition-screen .btnrow { flex-wrap:wrap; }
+
+.nutrition-quick-card {min-height:65px;background:#1d2c37;border-color:#405b6c;margin:0 0 14px;}
