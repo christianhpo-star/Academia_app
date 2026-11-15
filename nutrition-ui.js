@@ -3,6 +3,7 @@
   'use strict';
   const N=root.ForjaNutrition,CAT=root.ForjaNutritionCatalog;
   const G=root.ForjaNutritionGoals||(typeof require==='function'?require('./nutrition-goals.js'):null);
+  const BODY=root.ForjaBodyMeasures||(typeof require==='function'?require('./body-measures.js'):null);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=v=>v==null?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(v);
   const labels={breakfast:'Café da manhã',lunch:'Almoço',snack:'Lanche',dinner:'Jantar',supper:'Ceia',other:'Outros registros'};
@@ -105,6 +106,8 @@
     function goalsBody(){
       const p=profileDraft,current=G.active(archive().settings,day);
       const latest=(get().weights||[]).filter(w=>!w.initial).sort((a,b)=>b.date.localeCompare(a.date))[0];
+      const circumference=BODY?.recent(get().bodyMeasurements||[])[0];
+      const wearable=BODY?.recentBio(get().bioimpedance||[])[0];
       dialog.querySelector('#nd-dialog-body').innerHTML=`<p class="small muted">Altura, idade, peso e atividade ajudam a estimar suas necessidades. Você pode editar as metas.</p><form id="nd-profile"><div class="field-row">${field('heightCm','Altura (cm)',p.heightCm,'inputmode="decimal" placeholder="Ex.: 175,5"')}${field('age','Idade (anos completos)',p.age,'type="number" min="18" max="100" step="1"')}${field('weightKg','Peso atual (kg)',p.weightKg,'inputmode="decimal"')}${select('sex','Parâmetro da fórmula',{'':'Não informado',male:'Masculino (+5)',female:'Feminino (−161)'},p.sex)}</div>
       ${latest?`<p class="small">Última pesagem: ${fmt(latest.weight)} kg em ${dateBR(latest.date)}. ${button('use-weight','Usar este peso','','button-inline')}</p>`:''}
       ${select('goal','Objetivo',{recomposition:'Recomposição corporal',loss:'Redução de gordura',maintain:'Manutenção',gain:'Ganho gradual'},p.goal)}
@@ -112,12 +115,15 @@
       <p class="small muted">Considere trabalho, deslocamentos e frequência/duração dos treinos. Fatores são aproximações; não escolha apenas pela modalidade. Não somamos calorias de exercícios novamente.</p>
       <label class="nd-check"><input type="checkbox" name="adultScope" ${p.adultScope?'checked':''}> Sou adulto e não tenho necessidade clínica específica que exija um plano alimentar individual. Caso contrário, usarei metas profissionais.</label>
       <p class="small muted">Última confirmação: ${dateBR(p.confirmedAt)}. Idade não avança automaticamente; confira ao revisar.</p>
-      <div class="btnrow"><button type="submit" class="secondary">Salvar perfil</button>${button('suggest','Rever sugestão / restaurar')}</div></form><div id="nd-suggestion"></div>
-      <hr class="line"><h3>Metas diárias editáveis</h3><form id="nd-target"><div class="field-row">${G.KEYS.map(k=>field('target-'+k,nutrients[k]+(k==='energyKcal'?' (kcal/dia)':' (g/dia)'),current?.values[k],`type="number" min="1" max="${k==='energyKcal'?10000:1000}" step="any"`)).join('')}</div><p class="small muted">Campos vazios deixam o nutriente sem meta. Fibra: referência mínima, não teto. Valores manuais ficam protegidos.</p>
-      ${select('source','Origem',{manual:'Ajustada por você',professional:'Informada por profissional'},current?.source==='professional'?'professional':'manual')}${field('from','Válida a partir de',today(),`type="date" min="${today()}" required`)}<p id="nd-macro-diff" class="small" aria-live="polite"></p>${button('balance','Recalcular carboidratos pelo saldo','','button-inline')}<button class="primary full mt-12" type="submit">Salvar metas manuais</button></form>
+      <p class="small muted">${circumference?'Circunferências registradas em '+dateBR(circumference.date)+'. ':''}${wearable?'Galaxy Watch: última leitura em '+dateBR(wearable.date)+'. ':''}Medidas corporais e bioimpedância auxiliam a avaliar tendências, mas não substituem o cálculo de gasto nem determinam calorias automaticamente.</p>
+      <div class="btnrow"><button type="submit" class="primary">Salvar perfil e calcular</button>${button('suggest','Recalcular prévia','','secondary')}</div></form>
+      <section id="nd-suggestion" aria-live="polite" class="nd-suggestion-slot"></section>
+      <details class="nd-goals-manual mt-12" ${current?.source==='manual'||current?.source==='professional'?'open':''}><summary>Editar metas manualmente</summary><p class="small muted">Opção para substituir a estimativa. Metas manuais ou profissionais não são alteradas sem sua confirmação.</p><form id="nd-target"><div class="field-row">${G.KEYS.map(k=>field('target-'+k,nutrients[k]+(k==='energyKcal'?' (kcal/dia)':' (g/dia)'),current?.values[k],`type="number" min="1" max="${k==='energyKcal'?10000:1000}" step="any"`)).join('')}</div><p class="small muted">Campos vazios deixam o nutriente sem meta. Fibra: referência mínima, não teto. Valores manuais ficam protegidos.</p>
+      ${select('source','Origem',{manual:'Ajustada por você',professional:'Informada por profissional'},current?.source==='professional'?'professional':'manual')}${field('from','Válida a partir de',today(),`type="date" min="${today()}" required`)}<p id="nd-macro-diff" class="small" aria-live="polite"></p>${button('balance','Recalcular carboidratos pelo saldo','','button-inline')}<button class="primary full mt-12" type="submit">Salvar metas manuais</button></form></details>
       <details class="mt-16"><summary>Como calculamos · fontes e limites</summary><p class="small">Mifflin–St Jeor: 10 × peso + 6,25 × altura − 5 × idade + constante. Repouso × atividade estima manutenção. Recomposição/manutenção começam na manutenção; redução de gordura em −10%; ganho em +5%. São pontos de partida, não garantia de resultado.</p><p class="small">Proteína: referência 1,6–2,2 g/kg com treino resistido, sugestão inicial 1,8. Gordura: referência 20–35% da energia, início em 25%. Carboidratos: saldo energético após proteína e gordura. Fibras: referência mínima 25 g/dia. Constantes de início são escolhas do produto, ajustáveis.</p><p class="small">Circunferências não viram gordura corporal estimada. Sem dados completos não inferimos baixa ingestão. Metas não mudam por uma pesagem ou sessão. Revisão de tendências em 2–4 semanas é uma janela operacional.</p><ul class="small"><li><a href="https://pubmed.ncbi.nlm.nih.gov/2305711/" target="_blank" rel="noopener">Mifflin et al., 1990</a></li><li><a href="https://pubmed.ncbi.nlm.nih.gov/42867412/" target="_blank" rel="noopener">ISSN, 2026</a></li><li><a href="https://pubmed.ncbi.nlm.nih.gov/28698222/" target="_blank" rel="noopener">Morton et al., 2018</a></li><li><a href="https://pubmed.ncbi.nlm.nih.gov/26920240/" target="_blank" rel="noopener">AND/DC/ACSM, 2016</a></li><li><a href="https://www.who.int/publications/b/69157" target="_blank" rel="noopener">OMS: carboidratos e fibras</a></li></ul></details>
       <details class="mt-16"><summary>Histórico de metas (${(archive().settings.targets||[]).length})</summary>${(archive().settings.targets||[]).slice().sort((a,b)=>b.from.localeCompare(a.from)).map(t=>`<p class="small">${dateBR(t.from)} · ${esc(t.source)} · ${fmt(t.values.energyKcal)} kcal · ${esc(t.formula)}</p>`).join('')||'Nenhuma meta salva.'}</details>`;
       macroDiff();
+      previewSuggestion(false);
     }
     const num=v=>String(v??'').trim()===''?null:Number(String(v).replace(',','.'));
     function readProfile(){const f=new FormData(dialog.querySelector('#nd-profile'));return {heightCm:num(f.get('heightCm')),age:num(f.get('age')),weightKg:num(f.get('weightKg')),activity:num(f.get('activity')),sex:f.get('sex'),goal:f.get('goal'),adultScope:f.get('adultScope')==='on',confirmedAt:today()};}
@@ -144,13 +150,13 @@
         if(!N.validEntry({...draft.entry,items:[item]}))return error('Revise quantidade e composição.');delete draft.pending;addItems([item]);
       }else if(form.id==='nd-profile'){
         const p=readProfile();if(!G.validProfile(p))return error('Revise altura (100–250 cm), idade adulta inteira (18–100), peso (30–350 kg) e atividade. Campos podem ficar vazios para metas manuais.');
-        if(transact(a=>{a.settings.profile=p;})){profileDraft=p;error('Perfil salvo. Suas metas não foram alteradas.');}else error('Perfil não salvo. Tente novamente.');
+        if(transact(a=>{a.settings.profile=p;})){profileDraft=p;previewSuggestion(true);notify('Perfil salvo. Confira a sugestão e aceite se desejar.');}else error('Perfil não salvo. Tente novamente.');
       }else if(form.id==='nd-target'){saveTarget({id:id('target'),from:f.get('from'),source:f.get('source'),values:values(),profile:archive().settings.profile||null,formula:'manual-v1'});}
     }
     function input(event){const el=event.target;
       if(draft&&el.closest('#nd-manual')){draft.pending=draft.pending||{};draft.pending[el.name]=el.value;if(Object.values(draft.pending).every(v=>!String(v).trim()))delete draft.pending;saveDraft();}
       if(el.id==='nd-search'){search=el.value;all=false;results();return;}
-      if(el.closest('#nd-profile')){suggestion=null;dialog.querySelector('#nd-suggestion').innerHTML='';}
+      if(el.closest('#nd-profile'))previewSuggestion(false);
       if(el.closest('#nd-target'))macroDiff();
       if(!draft)return;
       if(el.dataset.index!==undefined){const i=draft.entry.items[Number(el.dataset.index)];if(!i)return;
@@ -173,13 +179,8 @@
       if(a==='recent'){const item=archive().entries.find(e=>e.id===b.dataset.entry)?.items.find(i=>i.id===b.dataset.id);if(item)addItems([{...clone(item),id:id('item')}]);}
       if(a==='use-favorite'){const f=archive().mealTemplates.find(f=>f.id===b.dataset.id),e=f&&CAT.fromFavorite(f,draft.entry.date,archive(),id);if(e)addItems(e.items);else error('Favorito incompatível.');}
       if(a==='discard'&&confirm('Descartar este rascunho? O registro original não será alterado.')){if(transact(a=>{delete a.draft;})){close(true);refresh();}else error('Não foi possível descartar.');}
-      if(a==='use-weight'){const w=(get().weights||[]).filter(w=>!w.initial).sort((a,b)=>b.date.localeCompare(a.date))[0];if(w){dialog.querySelector('#nd-weightKg').value=w.weight;suggestion=null;dialog.querySelector('#nd-suggestion').innerHTML='';}}
-      if(a==='suggest'){
-        profileDraft=readProfile();suggestion=G.estimate(profileDraft);if(suggestion.error)return error(suggestion.error);
-        const current=G.active(archive().settings,day);
-        dialog.querySelector('#nd-suggestion').innerHTML=`<section class="callout"><h3>Prévia · nada aplicado ainda</h3><p>Repouso estimado: ${suggestion.resting} kcal. Manutenção: ${suggestion.maintenance} kcal.</p><ul>${G.KEYS.map(k=>`<li>${nutrients[k]}: ${fmt(current?.values[k])} → ${fmt(suggestion.values[k])} ${k==='energyKcal'?'kcal':'g'}</li>`).join('')}</ul>${suggestion.warnings.map(w=>`<p>${esc(w)}</p>`).join('')}${button('accept','Aceitar sugestão a partir de hoje')}</section>`;
-        dialog.querySelector('#nd-suggestion').scrollIntoView({block:'nearest'});
-      }
+      if(a==='use-weight'){const w=(get().weights||[]).filter(w=>!w.initial).sort((a,b)=>b.date.localeCompare(a.date))[0];if(w){dialog.querySelector('#nd-weightKg').value=w.weight;previewSuggestion(false);}}
+      if(a==='suggest'){profileDraft=readProfile();previewSuggestion(true);}
       if(a==='accept'&&suggestion?.values){saveTarget({id:id('target'),from:today(),source:'suggested',values:suggestion.values,profile:profileDraft,formula:suggestion.formula});}
       if(a==='balance'){const v=values();if([v.energyKcal,v.proteinG,v.fatG].some(x=>x==null||!Number.isFinite(x)))return error('Preencha energia, proteína e gordura.');const carbs=Math.round((v.energyKcal-4*v.proteinG-9*v.fatG)/4);if(carbs<=0)return error('Energia insuficiente para esses macros. Revise as metas.');dialog.querySelector('#nd-target-carbsG').value=carbs;macroDiff();}
     }
