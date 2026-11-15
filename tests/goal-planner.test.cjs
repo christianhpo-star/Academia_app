@@ -65,3 +65,16 @@ test('reference weight is explicitly marked and never called a measured trend',(
  assert.ok(P.dateOK('2026-11-15'));
  assert.equal(P.dateOK('2026-11-31'),false);
 });
+
+test('do not offer energy with stale bodyweight or discrepant profile without confirmation',()=>{
+  const mismatched=state('weight',82);
+  mismatched.nutrition.settings.profile={...profile,weightKg:74};
+  const p=P.plan(mismatched,'2026-11-15');
+  assert.equal(p.energyBand,null);
+  assert.ok(p.warnings.some(w=>w.includes('5%')));
+  const old=state('weight',82);
+  old.weights=[{date:'2026-08-01',weight:88.8}];
+  const a=P.plan(old,'2026-11-15');
+  assert.equal(a.energyBand,null);
+  assert.ok(a.warnings.some(w=>w.includes('45 dias')));
+});
