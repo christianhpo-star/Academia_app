@@ -9,6 +9,7 @@
   const DOSE = window.ForjaDose;
   const FOCUS = window.ForjaFocus;
   const BODY = window.ForjaBodyMeasures;
+  const ACT = window.ForjaActivity;
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
   const NCAT = window.ForjaNutritionCatalog;
@@ -35,7 +36,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[], nutrition:NUTRITION.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[], nutrition:NUTRITION.archive(),
     };
   }
   function load() {
@@ -61,7 +62,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
-      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && NUTRITION.validArchive(value.nutrition) &&
+      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && NUTRITION.validArchive(value.nutrition) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -135,6 +136,11 @@
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
   };
   const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
+    commitSteps(next){
+      if(!ACT.validSteps(next))return false;
+      const old=state.activitySteps;state.activitySteps=next;
+      if(!save()){state.activitySteps=old;return false;}return true;
+    },
     commit(next){
       if(!NUTRITION.validArchive(next)){notify('Dados incompatíveis; revise os campos e limites.');return false;}
       const previous=state.nutrition;state.nutrition=next;
@@ -1020,7 +1026,7 @@
       <div class="field mt-12"><label for="goal-date">Data-alvo</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
-      <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, alimentação, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
+      <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, passos diários, alimentação, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
         <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
       <section class="card"><h2 class="section-title">Sobre as sugestões</h2><p class="small muted">O app diferencia aquecimento e séries efetivas. Para sugerir aumento, exige duas sessões consistentes dentro da faixa de repetições e RIR informado. Em exercícios de joelho, também exige ausência de sintomas durante e no dia seguinte.</p>
       <div class="callout warn">Não é um diagnóstico. Dor recorrente abaixo da patela deve ser avaliada por profissional de saúde; uma joelheira não garante segurança para aumentar a carga.</div>
@@ -1144,11 +1150,13 @@
         'Valores de nutrientes ausentes (null) são desconhecidos, não zero. Não supor consumo de refeições não registradas.',
         'Estimativas alimentares de baixa confiança devem permanecer separadas de rótulos ou medidas observadas.',
         'Bioimpedância do Galaxy Watch é estimativa indireta; utilizar tendências, sem diagnóstico e sem cálculo automático de gasto.',
+        'Passos diários informados manualmente são contagens observadas de dias específicos; dias sem registro não equivalem a zero.',
+        'Sugestões de fator de atividade são heurísticas categóricas, não PAL medido e não somam calorias de exercícios.',
         'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
       ],
       counts:{strengthSessions:state.sessions.length,muaySessions:state.muay.sessions.length,
         weightRecords:state.weights.length,bodyMeasurements:(state.bodyMeasurements||[]).length,
-        watchBioimpedance:(state.bioimpedance||[]).length,meals:(state.nutrition?.entries||[]).length},
+        watchBioimpedance:(state.bioimpedance||[]).length,stepDays:(state.activitySteps||[]).length,meals:(state.nutrition?.entries||[]).length},
       state:copy(state),strengthDraft,
     };
     download('forja-todos-dados-para-ia-'+today()+'.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8');
@@ -1185,6 +1193,7 @@
       sessions:unionById(current.sessions,incoming.sessions),
       bodyMeasurements:BODY.merge(current.bodyMeasurements,incoming.bodyMeasurements),
       bioimpedance:BODY.mergeBio(current.bioimpedance,incoming.bioimpedance),
+      activitySteps:ACT.mergeSteps(current.activitySteps,incoming.activitySteps),
       nutrition:NUTRITION.merge(current.nutrition,incoming.nutrition),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
@@ -1207,7 +1216,7 @@
       const existing=state.sessions.length+state.muay.sessions.length+
         state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length+
         (state.nutrition?.entries||[]).length+(state.nutrition?.foods||[]).length+
-        (state.nutrition?.mealTemplates||[]).length+(state.bioimpedance||[]).length;
+        (state.nutrition?.mealTemplates||[]).length+(state.bioimpedance||[]).length+(state.activitySteps||[]).length;
       const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft)||Boolean(state.nutrition.draft)||Boolean(state.nutrition.settings.profile)||(state.nutrition.settings.targets||[]).length>0;
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
