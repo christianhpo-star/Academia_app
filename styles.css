@@ -747,3 +747,20 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .bio-history-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);gap:10px}
 .bio-panel .field input{min-width:0;width:100%}
 @media(max-width:350px){.bio-field-grid{grid-template-columns:1fr}.nd-goal-macro-grid{gap:6px}}
+
+/* FORJA activity history: compact manual Samsung Health step entry, no measured PAL claim. */
+.nd-activity-advice{border:1px solid #536879;border-radius:12px;background:#192d3a;padding:12px;margin:12px 0}
+.nd-activity-advice>strong{display:block;color:var(--text);font-size:14px;line-height:1.4}
+.nd-activity-advice .small{margin:7px 0;color:var(--muted);font-size:12px;line-height:1.5}
+.nd-activity-advice .button-inline{min-height:44px;font-size:13px;text-align:left;white-space:normal}
+.nd-steps-panel{margin:14px 0;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--card2)}
+.nd-steps-panel>summary{cursor:pointer;display:flex;align-items:center;min-height:44px;font-size:14px;font-weight:800;color:var(--blue);line-height:1.4}
+.nd-steps-panel .small{font-size:12px;line-height:1.55;color:var(--muted)}
+.nd-step-overview{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:13px 0}
+.nd-step-overview>div{padding:10px 7px;border:1px solid var(--line);background:var(--card);border-radius:11px;display:flex;flex-direction:column;gap:5px;min-width:0}
+.nd-step-overview strong{font-size:13px}
+.nd-step-overview span{font-size:11px;line-height:1.4;overflow-wrap:anywhere;color:var(--muted)}
+.nd-step-history-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line);flex-wrap:wrap;font-size:12px}
+.nd-step-history-row .button-inline{font-size:12px;min-height:44px}
+#nd-steps-form .field input{font-size:14px}
+@media(max-width:350px){.nd-step-overview{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.nd-step-overview>div{padding:7px 5px}.nd-step-overview span{font-size:10px}}
