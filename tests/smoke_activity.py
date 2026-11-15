@@ -52,7 +52,7 @@ with sync_playwright() as p:
     state=lambda: json.loads(page.evaluate('localStorage.getItem("forja.academia.v1")'))
     assert state()['nutrition']['settings']['targets']==[]
     assert state()['nutrition']['settings']['profile']['activity']==1.725
-    page.locator('#nd-steps-panel > summary').click()
+    page.locator('[data-nd="show-steps"]').click()
     assert page.locator('#nd-steps-panel').get_attribute('open') is not None
     today=datetime.strptime(page.locator('#nd-step-date').get_attribute('max'),'%Y-%m-%d').date()
     for offset in range(6,-1,-1):
