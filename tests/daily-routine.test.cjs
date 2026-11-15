@@ -87,3 +87,19 @@ test('save of an empty configuration leaves reminders disabled, no false positiv
  assert.equal(d.archive.enabled,false);
  assert.equal(d.archive.records.length,0);
 });
+
+test('changing the tracked name cannot relabel a confirmed medication on the same day',()=>{
+ const confirmed=R.toggleRecord(configure(),'medication',DAY,at).archive;
+ assert.equal(confirmed.records[0].label,'Medicamento de teste');
+ const changed={
+  medication:{label:'Medicamento diferente',time:'08:00',active:true},
+  supplement:{label:'Suplemento de teste',time:'09:30',active:true}
+ };
+ const blocked=R.configure(confirmed,changed,DAY);
+ assert.ok(blocked.error);
+ assert.equal(confirmed.slots[0].label,'Medicamento de teste');
+ const tomorrow=R.configure(confirmed,changed,'2026-11-16');
+ assert.ok(tomorrow.archive);
+ assert.equal(tomorrow.archive.records[0].label,'Medicamento de teste');
+ assert.equal(R.status(tomorrow.archive,DAY).items[0].confirmed,false);
+});
