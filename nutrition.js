@@ -66,7 +66,8 @@
     return isObject(food) && idOk(food.id) && textOk(food.name) &&
       (food.preparation === null || food.preparation === undefined ||
         PREPARATIONS.includes(food.preparation)) &&
-      nutrientsOk(food.nutrientsPer100g) && sourceOk(food.source) &&
+      nutrientsOk(food.nutrientsPer100g) &&
+      (food.nutrientsPerMl === undefined || nutrientsOk(food.nutrientsPerMl)) && sourceOk(food.source) &&
       (food.estimate === undefined || validEstimate(food.estimate));
   }
 
@@ -76,6 +77,7 @@
         !optionalNumber(item.grams, 0.001, 10000)) return false;
 
     if (item.nutrientsPerServing !== undefined && !nutrientsOk(item.nutrientsPerServing)) return false;
+    if (item.nutrientsPerMl !== undefined && (!nutrientsOk(item.nutrientsPerMl)||item.unit!=='ml')) return false;
     if (item.estimate !== undefined && !validEstimate(item.estimate)) return false;
     if (!withSnapshot) return idOk(item.foodId);
     if (!textOk(item.label) ||
@@ -168,6 +170,13 @@
       for (const key of ALL_NUTRIENTS) {
         let total = 0, complete = true;
         for (const item of items) {
+          // Volume-labelled items use per-mL composition, never an mL→g assumption.
+          if (item.nutrientsPerMl) {
+            const nutrient=item.nutrientsPerMl[key];
+            if(nutrient==null||item.unit!=='ml'){complete=false;break;}
+            total+=nutrient*item.quantity;
+            continue;
+          }
           // Verified per-package facts work for liquids without assuming millilitres equal grams.
           if (item.nutrientsPerServing) {
             const nutrient = item.nutrientsPerServing[key];
@@ -225,7 +234,13 @@
           high+=item.estimate.high[key]*item.quantity;
           continue;
         }
-        const perServing=item.nutrientsPerServing;
+        const perServing=item.nutrientsPerServing,perMl=item.nutrientsPerMl;
+        if(perMl){
+          if(item.unit!=='ml'||perMl[key]==null){count.unknown++;continue;}
+          count.confirmed++;
+          confirmed+=perMl[key]*item.quantity;
+          continue;
+        }
         const grams=item.unit==='g'?item.quantity:item.grams;
         const nutrient=perServing?perServing[key]:item.nutrientsPer100g[key];
         if(nutrient==null||(perServing?item.unit!=='portion':grams==null)) {
