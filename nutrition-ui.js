@@ -5,6 +5,7 @@
   const G=root.ForjaNutritionGoals||(typeof require==='function'?require('./nutrition-goals.js'):null);
   const BODY=root.ForjaBodyMeasures||(typeof require==='function'?require('./body-measures.js'):null);
   const ACT=root.ForjaActivity||(typeof require==='function'?require('./activity.js'):null);
+  const HEALTH=root.ForjaHealthImport||(typeof require==='function'?require('./health-import.js'):null);
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=v=>v==null?'—':new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(v);
   const labels={breakfast:'Café da manhã',lunch:'Almoço',snack:'Lanche',dinner:'Jantar',supper:'Ceia',other:'Outros registros'};
@@ -104,6 +105,8 @@
     function activityAdvice(){
       const a=ACT.assess(get(),today());
       const w=a.windows.last28;
+      const monthly=HEALTH?.averages(get().healthMonthly||[])||[];
+      const latestMonthly=monthly.slice(-3);
       const label=a.suggestedFactor==null?'Ainda sem sugestão numérica':'Fator sugerido: '+String(a.suggestedFactor).replace('.',',')+' (provisório)';
       return '<section class="nd-activity-advice" aria-label="Atividade observada">'+
         '<strong>'+esc(label)+'</strong>'+
@@ -114,6 +117,9 @@
         '<p class="small muted">Cobertura '+esc(a.coverage)+'. Faixa heurística '+a.range.map(v=>String(v).replace('.',',')).join('–')+'. Não é gasto medido.</p>'+
         button('apply-activity','Usar fator sugerido no perfil','data-factor="'+a.suggestedFactor+'"','button-inline'))+
         button('show-steps','Registrar passos / consultar histórico','','button-inline')+
+        (latestMonthly.length?'<details class="nd-health-context"><summary>Histórico mensal do Samsung Health ('+latestMonthly.length+')</summary>'+latestMonthly.map(m=>
+          '<p class="small muted">'+esc(m.month)+' · '+fmt(m.stepsPerCalendarDay)+' passos/dia no período ('+(m.complete?'mês completo':'mês parcial')+').</p>').join('')+
+          '<p class="small muted">Médias de totais mensais não viram registros diários e não determinam o fator automaticamente.</p></details>':'')+
         '<p class="small muted">O fator escolhido e as metas só mudam depois de sua confirmação.</p></section>';
     }
     function activityPanel(open=false){

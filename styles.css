@@ -764,3 +764,9 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .nd-step-history-row .button-inline{font-size:12px;min-height:44px}
 #nd-steps-form .field input{font-size:14px}
 @media(max-width:350px){.nd-step-overview{grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.nd-step-overview>div{padding:7px 5px}.nd-step-overview span{font-size:10px}}
+
+/* Samsung Health imported snapshots, stored only on the user's device */
+.health-month-row{display:flex;flex-direction:column;gap:4px;border-bottom:1px solid var(--line);padding:12px 2px}
+.health-month-row strong{font-size:14px;color:var(--text)}
+.health-month-row span{font-size:13px;line-height:1.5;color:var(--text)}
+.health-month-row small{font-size:12px;color:var(--muted)}
