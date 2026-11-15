@@ -60,8 +60,9 @@ with sync_playwright() as p:
  assert stored()['reminderPrefs']['items']['profile-weight']['dismissed'] is False
  assert stored()['weights']==baseline['weights']
  assert page.locator('.reminder-panel').count()==0
+ persisted=stored()
  page.close()
- page=launch(context,{KEY:json.dumps(stored())},errors)
+ page=launch(context,{KEY:json.dumps(persisted)},errors)
  assert page.locator('.reminder-panel').count()==0, 'Snooze should persist across page reload'
  page.locator('.top-settings').click()
  assert page.locator('.reminder-settings').count()==1
