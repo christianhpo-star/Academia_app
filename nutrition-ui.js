@@ -33,7 +33,7 @@
       '<strong>'+escapeHTML(selected.name)+'</strong><p class="small muted">'+escapeHTML(selected.note)+'</p>'+
       (selected.estimate?'<div class="nutrition-estimate"><strong>≈ '+fmt(selected.estimate.central.energyKcal)+' kcal / '+escapeHTML(selected.estimate.servingLabel)+'</strong>'+
         '<span>Faixa aproximada: '+fmt(selected.estimate.low.energyKcal)+'–'+fmt(selected.estimate.high.energyKcal)+' kcal · confiança baixa</span>'+
-        '<small>Proteínas ≈ '+fmt(selected.estimate.central.proteinG)+' g · Carboidratos ≈ '+fmt(selected.estimate.central.carbsG)+' g · Gorduras ≈ '+fmt(selected.estimate.central.fatG)+' g</small>'+
+        '<small>Proteínas ≈ '+fmt(selected.estimate.central.proteinG)+' g · Carboidratos ≈ '+fmt(selected.estimate.central.carbsG)+' g · Gorduras ≈ '+fmt(selected.estimate.central.fatG)+' g</small>'+ '<small>Valores do copo inteiro; meia porção e quantidades múltiplas são ajustadas ao salvar.</small>'+
         '<details><summary>Como foi estimado?</summary><p>'+escapeHTML(selected.estimate.assumptions)+'</p></details></div>':'')+
       '<div class="field"><label for="nutrition-portion">Porção</label><select name="portionId" id="nutrition-portion">'+selectPortions+'</select></div>'+
       '<div class="field-row mt-12"><div class="field"><label for="nutrition-count">Quantidade de porções</label>'+
@@ -72,7 +72,7 @@
         '<strong>Alimentos estimados registrados: ≈ '+fmt(estimateSummary.totals.central.energyKcal)+' kcal</strong>'+
         '<span>Faixa aproximada: '+fmt(estimateSummary.totals.low.energyKcal)+'–'+fmt(estimateSummary.totals.high.energyKcal)+' kcal · baixa confiança</span>'+
         '<small>Separado dos valores do rótulo; inclui somente os itens estimados. Não representa todas as refeições do dia.</small></div>':'')+
-      '<p class="small muted">Valores apenas dos alimentos informados com quantidade em gramas e composição conhecida. Um traço indica informação insuficiente. Não representa o consumo total do dia.</p></section>'+
+      '<p class="small muted">Valores apenas de alimentos registrados com rótulo ou composição informada e porção suficiente. Estimativas de sobremesas aparecem separadas abaixo. Um traço indica informação insuficiente, não zero ou consumo total do dia.</p></section>'+
       '<section class="card"><h2 class="section-title">Catálogo rápido</h2>'+ 
       '<div class="field mt-12"><label for="nutrition-search">Buscar alimentos e produtos</label>'+ 
       '<input type="search" id="nutrition-search" placeholder="Ex.: iogurte, PRO FORCE, arroz, whey" autocomplete="off" /></div>'+ 
