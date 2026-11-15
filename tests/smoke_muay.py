@@ -48,7 +48,7 @@ with sync_playwright() as p:
     page.locator('[data-muay-prop="sets"]').last.fill('3')
     page.locator('[data-muay-prop="quantity"]').last.fill('20')
     page.locator('[data-muay-field="duration"]').fill('35')
-    page.locator('[data-muay-field="intensity"]').select_option('7')
+    page.locator('[data-action="muay-effort"][data-value="7"]').click()
     shots=ROOT/'screenshots'
     shots.mkdir(exist_ok=True)
     page.screenshot(path=str(shots/'muay-editor-390.png'),full_page=True)
@@ -64,6 +64,7 @@ with sync_playwright() as p:
     assert page.locator('[data-muay-prop="side"]').first.input_value()=='each'
     assert page.locator('[data-muay-field="duration"]').input_value()=='35'
     page.get_by_role('button',name='Salvar treino').click()
+    page.locator('.muay-record > summary').first.click()
     assert 'Polichinelos' in page.locator('#screen').inner_text()
     assert '50 repetições por lado' in page.locator('#screen').inner_text()
     assert '3 minutos' in page.locator('#screen').inner_text()
@@ -79,6 +80,7 @@ with sync_playwright() as p:
     assert page.locator('.muay-readiness').count()==1
     page.get_by_role('button',name='Histórico',exact=True).click()
     page.screenshot(path=str(shots/'muay-history-390.png'),full_page=True)
+    page.locator('.muay-record > summary').first.click()
     page.locator('[data-action="muay-edit"]').click()
     assert page.locator('[data-muay-prop="quantity"]').last.input_value()=='20'
     page.locator('[data-muay-prop="quantity"]').last.fill('25')
