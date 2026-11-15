@@ -13,6 +13,22 @@
   const p = (id,label,grams) => ({id,label,grams});
   const foods = [
     {
+      id:'growth:whey-unknown',name:'Whey da Growth — confirmar versão e sabor',category:'Suplementos',
+      aliases:['whey','growth','proteina','suplemento'],preparation:'other',
+      note:'Atalho pessoal: não atribui proteína nem calorias sem conferir a linha, o sabor e a embalagem.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      source:{name:'Registro pessoal',reference:'Produto a identificar',license:'Uso pessoal'},
+      portions:[p('dose','1 dose habitual (≈30 g; confirmar no rótulo)',30),p('100g','100 g',100)],
+    },
+    {
+      id:'growth:whey-concentrado-natural-30g',name:'Growth Whey Concentrado 80% natural (rótulo de referência)',category:'Suplementos',
+      aliases:['whey','growth','whey natural','concentrado','proteina'],preparation:'other',
+      note:'Referência do sachê concentrado natural: 30 g = 124 kcal e 24 g de proteína. Confirme se corresponde à embalagem e ao sabor utilizados.',
+      nutrientsPer100g:{energyKcal:413.333333,proteinG:80,carbsG:7.666667,fatG:7},
+      source:{name:'Growth Supplements',reference:'Rótulo natural, https://www.gsuplementos.com.br/dose-whey-protein-concentrado-30gr',license:'Dados públicos do rótulo'},
+      portions:[p('dose','1 dose (30 g)',30),p('half','meia dose (15 g)',15),p('100g','100 g',100)],
+    },
+    {
       id:'fdc:169757',name:'Arroz branco cozido (sem óleo)',category:'Refeição',
       aliases:['arroz','arroz branco','rice'],preparation:'cooked',fdc:169757,
       note:'Arroz cozido em água, sem sal e sem óleo. Preparações caseiras podem variar.',
@@ -61,7 +77,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:source(row.fdc)}));
+  ].map(row=>({...row,source:row.source||source(row.fdc)}));
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -84,23 +100,31 @@
     };
     return N.validEntry({id:'validation',date:'2026-11-14',mealType:'other',items:[item]})?item:null;
   }
-  function makeFavorite(entry,name,makeId) {
-    if(!N.validEntry(entry)||typeof makeId!=='function')return null;
-    if(!entry.items.every(item=>find(item.foodId)))return null;
-    const title=String(name??'').trim()||entry.items.map(item=>item.label).join(' + ').slice(0,120);
-    const favorite={
-      id:makeId('favorite'),name:title,mealType:entry.mealType,
-      items:entry.items.map(item=>({
-        id:makeId('preset'),foodId:item.foodId,
-        quantity:item.quantity,unit:item.unit,grams:item.grams,
-      })),
-    };
-    return N.validTemplate(favorite)?favorite:null;
+  function makeFavorite(entry,archive,name,makeId) {
+    if(!N.validEntry(entry)||!N.validArchive(archive)||typeof makeId!=='function')return null;
+    const built=[],foodsToAdd=[];
+    for(const item of entry.items) {
+      let food=find(item.foodId)||archive.foods.find(f=>f.id===item.foodId);
+      if(!food) {
+        food={
+          id:makeId('personal-food'),name:item.label,preparation:'other',
+          nutrientsPer100g:{...item.nutrientsPer100g},
+          source:item.source?{...item.source}:{name:'Registro pessoal',reference:'Sem composição nutricional verificada',license:'Uso pessoal'},
+        };
+        if(!N.validFood(food))return null;
+        foodsToAdd.push(food);
+      }
+      built.push({id:makeId('preset'),foodId:food.id,
+        quantity:item.quantity,unit:item.unit,grams:item.grams});
+    }
+    const title=(String(name??'').trim()||entry.items.map(item=>item.label).join(' + ')).slice(0,120);
+    const favorite={id:makeId('favorite'),name:title,mealType:entry.mealType,items:built};
+    return N.validTemplate(favorite)?{favorite,foodsToAdd}:null;
   }
-  function fromFavorite(favorite,date,makeId) {
-    if(!N.validTemplate(favorite)||!N.dateOk(date)||typeof makeId!=='function')return null;
+  function fromFavorite(favorite,date,archive,makeId) {
+    if(!N.validTemplate(favorite)||!N.validArchive(archive)||!N.dateOk(date)||typeof makeId!=='function')return null;
     const items=favorite.items.map(item=>{
-      const food=find(item.foodId);
+      const food=find(item.foodId)||archive.foods.find(f=>f.id===item.foodId);
       return food?{
         id:makeId('item'),foodId:food.id,label:food.name,
         quantity:item.quantity,unit:item.unit,grams:item.grams,
