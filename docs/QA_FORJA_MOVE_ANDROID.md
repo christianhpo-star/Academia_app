@@ -2,6 +2,16 @@
 
 **Estado:** procedimento para o PR #27. O teste automatizado simula um celular Chromium, mas **não substitui** o teste físico no aparelho. Não é necessário apagar nem desinstalar a versão atual. Antes de atualizar uma PWA real, exporte seu backup em **Ajustes**.
 
+## Prévia HTTPS separada do aplicativo instalado
+
+1. Entre no [GitHub Actions do PR #27](https://github.com/christianhpo-star/Academia_app/pull/27/checks) e abra a execução **Validate FORJA** bem-sucedida mais recente.
+2. Em **Artifacts**, baixe `forja-pr27-preview-android` (ZIP do site estático, validade de 7 dias). Extraia-o; confirme que `index.html`, `sw.js`, `manifest.webmanifest`, scripts, CSS e pasta `icons/` estão na raiz do pacote.
+3. No computador, abra [Netlify Drop](https://app.netlify.com/drop) e arraste **a pasta extraída** para a área de publicação. Use um site de testes novo, nunca o endereço oficial do FORJA. Uma URL separada `*.netlify.app` será criada.
+4. No Chrome do Android, abra **a URL dessa prévia**. Não instale a prévia por cima do FORJA atual. Seu histórico real no domínio anterior não aparece na prévia, pois os dados do navegador são separados por origem.
+5. Execute o roteiro abaixo com vídeo autoral/de teste. Guarde a URL e informe apenas o resultado dos testes. O vídeo local fica no armazenamento daquela prévia, não no app original.
+
+**Nota:** esta é uma publicação *manual* de prévia. O repositório e o PR não criam automaticamente um endereço Netlify; não é preciso mudar a configuração GitHub Pages do FORJA.
+
 ## Pré-condições
 
 - A versão com **FORJA MOVE v5** deve estar disponível em **HTTPS**. O código em PR de rascunho **não está automaticamente publicado no GitHub Pages**.

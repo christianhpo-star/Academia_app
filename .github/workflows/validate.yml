@@ -82,6 +82,19 @@ jobs:
             tests/*.cjs
             icons/*.png
           retention-days: 1
+      - name: Upload isolated Android HTTPS preview (static site)
+        if: success() && github.event_name == 'pull_request' && github.head_ref == 'feature/forja-exercise-3d-references-v5'
+        uses: actions/upload-artifact@v4
+        with:
+          name: forja-pr27-preview-android
+          path: |
+            *.html
+            *.js
+            *.css
+            *.webmanifest
+            icons/*.png
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload Muay screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
