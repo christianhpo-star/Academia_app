@@ -206,3 +206,39 @@ test('porções caseiras aproximadas não substituem peso escolhido; histórico 
  assert.notEqual(repeat.id,meal.id);
  assert.equal(C.find('growth:whey-unknown').nutrientsPer100g.proteinG,null);
 });
+
+
+test('peso exato de 121 g e 121,5 g calcula nutrientes automaticamente sem arredondar a porções fixas',()=>{
+ const beef=C.makeItem('taco:2011:346','custom',121,id);
+ assert.equal(beef.unit,'g');assert.equal(beef.quantity,121);assert.equal(beef.grams,121);
+ assert.equal(N.observedTotals([entry(beef)],'2026-11-14').totals.energyKcal,234.7);
+ assert.equal(N.observedTotals([entry(beef)],'2026-11-14').totals.proteinG,43.4);
+ const pork=C.makeItem('taco:2011:429','custom',121.5,id);
+ assert.equal(pork.grams,121.5);
+ assert.equal(N.observedTotals([entry(pork)],'2026-11-14').totals.energyKcal,340.2);
+ assert.equal(C.makeItem('taco:2011:346','custom',0,id),null);
+ assert.equal(C.makeItem('taco:2011:346','custom',10001,id),null);
+});
+test('brigadeiro, morango e bolo de chocolate aceitam gramagem livre e origem da composição',()=>{
+ const cake=C.find('taco:2011:16');
+ assert.equal(cake.nutrientsPer100g.energyKcal,410);
+ assert.equal(cake.source.name,'NEPA/UNICAMP — TACO');
+ const slice=C.makeItem(cake.id,'custom',121,id);
+ assert.equal(N.observedTotals([entry(slice)],'2026-11-14').totals.energyKcal,496.1);
+ for(const key of ['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango']){
+   const food=C.find(key);
+   assert.equal(food.estimate.confidence,'low');
+   assert.equal(food.nutrientsPer100g.energyKcal,null);
+   const item=C.makeItem(key,'custom',121,id);
+   assert.equal(item.unit,'g');assert.equal(item.quantity,121);assert.equal(item.grams,121);
+   const e=entry(item);
+   assert.equal(N.validEntry(e),true);
+   assert.equal(N.observedTotals([e],'2026-11-14').totals.energyKcal,null);
+   const actual=N.estimatedTotals([e],'2026-11-14').totals.central.energyKcal;
+   assert.ok(Math.abs(actual-food.estimate.central.energyKcal*1.21)<0.11);
+ }
+ assert.ok(C.search('brigadeiro com morango').some(f=>f.id==='recipe:brigadeiro-morango'));
+ assert.ok(C.search('fatia de bolo').some(f=>f.id==='taco:2011:16'));
+ const old=C.makeItem('local:doce-cascao-acai-trufado-preto-500ml','custom',121,id);
+ assert.equal(old,null,'volume of açaí without weighed base must not be interpreted as grams');
+});
