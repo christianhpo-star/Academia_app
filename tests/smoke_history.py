@@ -48,9 +48,18 @@ with sync_playwright() as p:
       }
       localStorage.setItem('forja.academia.v1',JSON.stringify(v));
     }""")
-    page.reload()
-    # set_content pages do not preserve handwritten markup on reload; reconstruct via set_content.
+    snapshot=page.evaluate('structuredClone(window.__storage)')
+    page.close()
+    page=context.new_page()
+    page.on('pageerror',lambda error:errors.append(str(error)))
     page.set_content(html)
+    page.evaluate("""seed => {
+      window.__storage={...seed};
+      Object.defineProperty(window,'localStorage',{configurable:true,value:{
+        getItem(k){return window.__storage[k]??null},setItem(k,v){window.__storage[k]=String(v)},
+        removeItem(k){delete window.__storage[k]}
+      }});
+    }""",snapshot)
     page.add_style_tag(path=str(ROOT/'styles.css'))
     for script in scripts:page.add_script_tag(path=str(ROOT/script))
     page.get_by_role('button',name='Histórico',exact=True).click()
