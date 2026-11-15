@@ -113,6 +113,7 @@
         '<p class="small muted">Precisamos de passos distribuídos por pelo menos 7 dias, incluindo dias sem treino, para propor uma faixa inicial.</p>':
         '<p class="small muted">Cobertura '+esc(a.coverage)+'. Faixa heurística '+a.range.map(v=>String(v).replace('.',',')).join('–')+'. Não é gasto medido.</p>'+
         button('apply-activity','Usar fator sugerido no perfil','data-factor="'+a.suggestedFactor+'"','button-inline'))+
+        button('show-steps','Registrar passos / consultar histórico','','button-inline')+
         '<p class="small muted">O fator escolhido e as metas só mudam depois de sua confirmação.</p></section>';
     }
     function activityPanel(open=false){
@@ -266,6 +267,11 @@
       if(a==='recent'){const item=archive().entries.find(e=>e.id===b.dataset.entry)?.items.find(i=>i.id===b.dataset.id);if(item)addItems([{...clone(item),id:id('item')}]);}
       if(a==='use-favorite'){const f=archive().mealTemplates.find(f=>f.id===b.dataset.id),e=f&&CAT.fromFavorite(f,draft.entry.date,archive(),id);if(e)addItems(e.items);else error('Favorito incompatível.');}
       if(a==='discard'&&confirm('Descartar este rascunho? O registro original não será alterado.')){if(transact(a=>{delete a.draft;})){close(true);refresh();}else error('Não foi possível descartar.');}
+      if(a==='show-steps'){
+        const panel=dialog.querySelector('#nd-steps-panel');
+        if(panel){panel.open=true;panel.scrollIntoView({block:'start'});panel.querySelector('#nd-step-count')?.focus({preventScroll:true});}
+        return;
+      }
       if(a==='apply-activity'){
         const factor=Number(b.dataset.factor);
         const current=ACT.assess(get(),today()).suggestedFactor;
