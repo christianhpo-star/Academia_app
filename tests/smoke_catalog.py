@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
 HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
+FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','exercise-motion.js','app.js']
 def start(context,stored,errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
@@ -34,6 +34,18 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
     assert page.locator('.catalog-browser-item').count()>=40
+    # Movement illustrations are static in lists and animate only on demand.
+    first=page.locator('.catalog-browser-item').first
+    assert first.locator('.motion-thumb .motion-svg').count()==1
+    assert first.locator('svg animate').count()==0
+    first.locator('[data-action="motion-open"]').click()
+    assert page.locator('#motion-dialog').is_visible()
+    assert page.locator('#motion-dialog svg animate').count()>0
+    page.locator('#motion-dialog [data-action="motion-pause"]').click()
+    assert page.locator('#motion-dialog [aria-pressed="true"]').count()==1
+    page.locator('#motion-dialog [data-action="motion-close"]').click()
+    assert not page.locator('#motion-dialog').is_visible()
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     assert page.locator('#catalog-search').count()==1
     assert page.locator('#catalog-count').count()==1
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
