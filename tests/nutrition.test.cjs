@@ -63,3 +63,43 @@ test('estimativas só são exibidas quando cada alimento tem valor e porção em
   assert.equal(partial.totals.proteinG,null);
   assert.equal(partial.totals.energyKcal,180);
 });
+
+
+test('resumo indicativo combina valores conferidos e estimados sem ocultar o almoço',()=>{
+  const C=require('../nutrition-catalog.js');
+  let index=0;const id=kind=>kind+'-'+(++index);
+  const date='2026-11-15';
+  const known=C.makeItem('taco:2011:346','custom',121,id);
+  const sweet=C.makeItem('recipe:brigadeiro-morango','custom',80,id);
+  const meals=[
+    {id:'lunch-check',date,mealType:'lunch',items:[known]},
+    {id:'snack-check',date,mealType:'snack',items:[sweet]},
+  ];
+  const strict=N.observedTotals(meals,date);
+  assert.equal(strict.totals.energyKcal,null,'modo estrito deve manter a separação');
+  const summary=N.recordedBreakdown(meals,date);
+  assert.equal(summary.counts.energyKcal.confirmed,1);
+  assert.equal(summary.counts.energyKcal.estimated,1);
+  assert.equal(summary.counts.energyKcal.unknown,0);
+  assert.ok(Math.abs(summary.totals.energyKcal-(234.74+315*0.8))<0.12);
+  assert.ok(summary.ranges.energyKcal.low<summary.totals.energyKcal);
+  assert.ok(summary.ranges.energyKcal.high>summary.totals.energyKcal);
+  assert.equal(N.recordedBreakdown(meals,'2026-11-14').totals.energyKcal,null);
+});
+test('composição desconhecida não zera subtotal e continua explicitamente incompleta',()=>{
+  const C=require('../nutrition-catalog.js');
+  let n=0,id=k=>k+'-'+(++n),date='2026-11-15';
+  const known=C.makeItem('photo:itambe-zero-morango-200g','pack',1,id);
+  const unknown=C.makeItem('growth:whey-unknown','dose',1,id);
+  const meals=[{id:'m-aggregate',date,mealType:'breakfast',items:[known,unknown]}];
+  const out=N.recordedBreakdown(meals,date);
+  assert.equal(out.totals.energyKcal,52);
+  assert.equal(out.totals.proteinG,6);
+  assert.equal(out.totals.fiberG,null);
+  assert.equal(out.counts.energyKcal.unknown,1);
+  assert.equal(out.counts.fiberG.unknown,2);
+  assert.equal(N.observedTotals(meals,date).totals.energyKcal,null);
+  assert.equal(N.recordedBreakdown([],date).totals.energyKcal,null);
+  assert.equal(N.recordedBreakdown([{id:'m-zero',date,mealType:'snack',
+    items:[{...known,id:'zero',nutrientsPerServing:{...known.nutrientsPerServing,energyKcal:0}}]}],date).totals.energyKcal,0);
+});
