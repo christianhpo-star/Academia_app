@@ -76,7 +76,6 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Início',exact=True).click()
     # Recuperação detalhada é exibida no Muay Thai, mantendo a Home enxuta.
     page.get_by_role('button',name='Treinos',exact=True).click()
-    page.locator('[data-action="mode-muay"]').click()
     assert page.locator('.muay-readiness').count()==1
     page.get_by_role('button',name='Histórico',exact=True).click()
     page.screenshot(path=str(shots/'muay-history-390.png'),full_page=True)
