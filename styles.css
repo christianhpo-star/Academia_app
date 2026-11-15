@@ -530,3 +530,63 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .body-delta{display:block;font-size:10px;color:#b5cfda;padding-top:4px}
 @media(min-width:720px){.body-history-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.body-field-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:355px){.body-figure-card{padding:8px}.body-measure-pin{font-size:10px;min-width:42px;padding:3px 4px}.body-field-grid{gap:7px}}
+
+
+/* UX10: reduced Muay friction and progressively revealed history */
+.history-overview{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px}
+.history-overview>span{padding:15px;background:#1b2b3a;border:1px solid #384e60;border-radius:14px;color:#bcd1dc;font-size:12px}
+.history-overview strong{display:block;font-size:22px;color:var(--text);margin-bottom:3px}
+.history-calendar-fold{margin:6px 0 25px;border:1px solid #405366;border-radius:15px;overflow:hidden;background:#162433}
+.history-calendar-fold>summary{list-style:none;cursor:pointer;padding:16px;font-size:13px;font-weight:850;display:flex;align-items:center;justify-content:space-between;min-height:54px}
+.history-calendar-fold>summary::-webkit-details-marker{display:none}
+.history-calendar-content{padding:0 10px 13px}
+.history-calendar-content>.card{margin:0}
+.history-entry{display:block;margin:0 0 10px;border:1px solid #3a5062;background:#172536;border-radius:15px;overflow:hidden}
+.history-entry>summary{list-style:none;cursor:pointer}
+.history-entry>summary::-webkit-details-marker{display:none}
+.history-summary{padding:15px 15px;display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:82px}
+.history-summary-main{display:flex;flex-direction:column;gap:4px;min-width:0}
+.history-summary-main small{font-size:10px;letter-spacing:.04em;color:#b9d6e7;font-weight:750}
+.history-summary-main strong{font-size:15px;color:#f1f8fc;overflow-wrap:anywhere}
+.history-summary-main>span{font-size:11px;line-height:1.5;color:#aebfcd}
+.history-chevron{color:var(--lime);font-size:22px;transition:transform .15s ease}
+.history-entry[open]>.history-summary{border-bottom:1px solid #344a5a;background:#203341}
+.history-entry[open] .history-chevron{transform:rotate(180deg)}
+.history-content{padding:12px 15px 16px}
+.history-content>.mini-list{margin-top:0}
+.history-more{margin:6px 0 18px}
+.history-skipped{margin-top:14px}
+.history-skipped summary{cursor:pointer;font-weight:800;font-size:12px}
+.history-skipped ul{margin-top:10px}
+.muay-fast-card{margin-bottom:12px;background:linear-gradient(155deg,#203b34,#172736)}
+.muay-fast-card .muay-quick-grid{margin-top:16px}
+.muay-quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.muay-quick-grid>*{min-width:0}
+.muay-quick-question{border-top:1px solid #374e50;padding-top:14px;margin-top:15px}
+.muay-quick-question>strong{display:block;font-size:13px;margin-bottom:8px}
+.muay-quick-question>p{font-size:11px;color:#b6c9ce;line-height:1.5;margin:0 0 10px}
+.muay-quick-choices{display:flex;flex-wrap:wrap;gap:7px}
+.muay-quick-chip{border:1px solid #465d6c;border-radius:11px;background:#203240;color:#d4e1e7;min-height:46px;padding:9px 12px;font-size:12px;font-weight:800;flex:1 1 auto}
+.muay-quick-chip.selected{background:var(--lime);border-color:var(--lime);color:#18251a}
+.muay-advanced,.muay-extra-presets,.muay-activity-more,.muay-guidance{margin-top:14px}
+.muay-advanced>summary,.muay-extra-presets>summary,.muay-activity-more>summary,.muay-guidance>summary{cursor:pointer;padding:12px;border:1px solid #405868;border-radius:11px;background:#1f3040;color:#d5e5ed;font-size:12px;font-weight:800;min-height:46px}
+.muay-guidance{margin:12px 0 22px}
+.muay-guidance>.card,.muay-guidance>.muay-readiness{margin-top:10px}
+.muay-featured{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.muay-preset{min-height:54px;white-space:normal;line-height:1.35;min-width:0;overflow-wrap:anywhere}
+.muay-compact-activity{margin:10px 0;padding:15px 13px;background:#172635;border:1px solid #3c5365;border-radius:15px}
+.muay-compact-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}
+.muay-compact-head>div{min-width:0}
+.muay-compact-head span{display:block;font-size:9px;letter-spacing:.1em;color:#a7c8d7;font-weight:850;margin-bottom:5px}
+.muay-activity-title{display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere}
+.muay-compact-head button{min-height:42px;flex-shrink:0}
+.muay-save-actions{margin-top:20px;display:grid;gap:7px;text-align:center}
+.muay-save-actions>.primary{min-height:55px;font-size:15px}
+.muay-save-actions>.button-inline{min-height:44px}
+.muay-activity-more{margin-top:11px}
+.muay-extra-presets .muay-presets{margin-bottom:0}
+@media(max-width:350px){.muay-quick-grid{grid-template-columns:1fr}.muay-featured{grid-template-columns:1fr}.history-content{padding:11px}.history-summary{padding:12px}}
+
+.muay-guidance>summary{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.muay-guidance>summary strong{display:block;font-size:13px;margin-bottom:5px}
+.muay-guidance>summary small{display:block;color:#c0d2dc;font-size:11px;line-height:1.5}

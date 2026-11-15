@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = re.sub(r'<script defer src="\./[^\"]+"></script>', '', (ROOT / 'index.html').read_text())
-INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261114-body9" />', '')
+INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261114-ux10" />', '')
 
 
 def open_app(context, storage, errors):
@@ -87,6 +87,7 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Salvar treino').click()
     assert 'Seu histórico' in page.locator('#screen').inner_text()
     assert 'forja.academia.draft.v1' not in storage_snapshot(page)
+    page.locator('.history-card > summary').first.click()
     page.locator('.history-details summary').first.click()
     assert '25 kg/halter × 10 rep.' in page.locator('.history-details').first.inner_text()
     page.get_by_role('button', name='Início', exact=True).click()
@@ -120,6 +121,7 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Cancelar').click()
     assert 'forja.academia.draft.v1' not in storage_snapshot(page)
     page.get_by_role('button', name='Histórico', exact=True).click()
+    page.locator('.history-card > summary').first.click()
     assert 'Supino reto com halteres' in page.locator('#screen').inner_text()
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     page.set_viewport_size({'width': 320, 'height': 720})

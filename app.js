@@ -127,6 +127,7 @@
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,homeRecoveryOpen:false,
+    historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
   };
   let toastTimeout;
   function draftStatusText() {
@@ -895,33 +896,55 @@
   }
 
   function renderHistory() {
-    const sessions=latestSessions();
+    const sessions=latestSessions(), muaySessions=M.sortedSessions(state.muay.sessions);
+    const shown=sessions.slice(0,ui.historyStrengthLimit);
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
-    const muayHistory=M.historySection(state.muay.sessions);
-    return `${headline('Diário','Seu histórico.','Veja cargas e repetições reais. Treinos registrados neste aparelho ficam disponíveis mesmo sem internet.')}
-      ${calendar}
-      <div class="section-row"><h2 class="section-title">Histórico de musculação</h2></div>
-      ${sessions.length ? sessions.map(session=>{
-        const needsDay= session.entries.some(en=>exerciseFor(en.id)?.knee && E.workSets(en).length) && session.kneeNextDay == null;
+    return `${headline('Diário','Seu histórico.','Consulte suas sessões recentes. Abra somente a que deseja analisar.')}
+      <div class="history-overview" role="group" aria-label="Resumo dos registros">
+        <span><strong>${sessions.length}</strong> musculação</span>
+        <span><strong>${muaySessions.length}</strong> Muay Thai</span>
+      </div>
+      <details class="history-calendar-fold" ${ui.historyCalendarOpen?'open':''}>
+        <summary>Calendário de treinos <span aria-hidden="true">⌄</span></summary>
+        <div class="history-calendar-content">${calendar}</div>
+      </details>
+      <div class="section-row"><h2 class="section-title">Musculação</h2><small>Mostrando ${shown.length} de ${sessions.length}</small></div>
+      ${shown.length?shown.map(session=>{
+        const needsDay=session.entries.some(en=>exerciseFor(en.id)?.knee&&E.workSets(en).length)&&session.kneeNextDay==null;
         const canAssess=Date.now()-new Date(session.timestamp).getTime()>=86400000;
-        return `<article class="card history-card"><div class="card-row"><div><strong class="session-date">${esc(planFor(session.planId).title)}</strong><p class="small muted mt-8">${dateBR(session.day)} · ${session.entries.length} exercícios · ${esc(session.energy||'Esforço não informado')}</p></div>${tag(`Bloco ${session.planId}`,'green')}</div>
-        <ul class="mini-list">${session.entries.map(en=>{
-          const ex=exerciseFor(en.id), top=E.topSet(en);
-          return `<li><div class="history-exercise"><strong>${esc(ex?.name||en.id)}</strong><br><span>${E.workSets(en).length} séries efetivas${en.pain!=null?' · dor joelho '+en.pain+'/5+':''}</span>
-            <details class="history-details"><summary>Ver todas as séries</summary><ol>${en.sets.map(set=>
-              `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${fmt(set.load)} ${esc(ex?.unit||'kg')} × ${set.reps} rep.${set.rir == null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
-          </div><div class="text-right"><strong>${top?`${fmt(top.load)} ${esc(ex?.unit||'kg')}`:'—'}</strong><br><span>${top?`${top.reps} rep.`:''}</span></div></li>`;
-        }).join('')}</ul>
-        ${session.skipped?.length?`<div class="history-skipped"><strong>Pulados nesta sessão · ${session.skipped.length}</strong><ul>${session.skipped.map(item=>
-          `<li>${esc(exerciseFor(item.id)?.name||item.id)}<span>${item.reason==='sem-registro'?'Sem registro':esc(F.reasons[item.reason]||'Motivo não informado')}</span></li>`).join('')}</ul></div>`:''}
-        ${session.notes?`<p class="small muted">Observações: ${esc(session.notes)}</p>`:''}
-        ${needsDay?(canAssess?`<div class="callout warn"><strong>Como ficou o joelho no dia seguinte?</strong><div class="field-row mt-8"><div class="field"><label for="after-${esc(session.id)}">Dor após 24 h</label><select id="after-${esc(session.id)}" data-after-day="${esc(session.id)}">${painOptions('')}</select></div><div style="display:flex;align-items:end"><button class="secondary full" data-action="save-knee" data-id="${esc(session.id)}">Salvar</button></div></div></div>`:
-          `<p class="small muted mt-12">Amanhã, informe se houve dor ou rigidez no joelho antes de progredir cargas de pernas.</p>`):
-          session.kneeNextDay!=null?`<p class="small muted mt-12">Joelho no dia seguinte: ${session.kneeNextDay}/5+</p>`:''}
-        </article>`;
-      }).join(''):`<div class="empty"><span class="empty-icon" aria-hidden="true">↗</span>Nenhum treino de musculação registrado ainda.<br>Inicie um bloco para criar seu primeiro histórico.</div>`}
-      ${muayHistory}
-      <button class="secondary full" data-action="export-json">Exportar backup do histórico</button>`;
+        const kneePrompt=needsDay&&canAssess;
+        const count=session.entries.length;
+        return `<details class="history-entry history-card" data-history-id="${esc(session.id)}" ${kneePrompt?'open':''}>
+          <summary class="history-summary">
+            <span class="history-summary-main"><small>${dateBR(session.day)} · Bloco ${esc(session.planId)}</small>
+              <strong>${esc(planFor(session.planId).title)}</strong>
+              <span>${count} exercício(s) · ${esc(session.energy||'Esforço não informado')}${kneePrompt?' · Avaliar joelho':''}</span></span>
+            <span class="history-chevron" aria-hidden="true">⌄</span>
+          </summary>
+          <div class="history-content">
+            <ul class="mini-list">${session.entries.map(en=>{
+              const ex=exerciseFor(en.id),top=E.topSet(en);
+              return `<li><div class="history-exercise"><strong>${esc(ex?.name||en.id)}</strong><br>
+                <span>${E.workSets(en).length} séries efetivas${en.pain!=null?' · joelho '+en.pain+'/5+':''}</span>
+                <details class="history-details"><summary>Ver todas as séries</summary><ol>${en.sets.map(set=>
+                  `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${fmt(set.load)} ${esc(ex?.unit||'kg')} × ${set.reps} rep.${set.rir==null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
+              </div><div class="text-right"><strong>${top?`${fmt(top.load)} ${esc(ex?.unit||'kg')}`:'—'}</strong><br><span>${top?`${top.reps} rep.`:''}</span></div></li>`;
+            }).join('')}</ul>
+            ${session.skipped?.length?`<details class="history-skipped"><summary>Pulados nesta sessão · ${session.skipped.length}</summary><ul>${session.skipped.map(item=>
+              `<li>${esc(exerciseFor(item.id)?.name||item.id)}<span>${item.reason==='sem-registro'?'Sem registro':esc(F.reasons[item.reason]||'Motivo não informado')}</span></li>`).join('')}</ul></details>`:''}
+            ${session.notes?`<p class="small muted">Observações: ${esc(session.notes)}</p>`:''}
+            ${needsDay?(canAssess?`<div class="callout warn"><strong>Como ficou o joelho no dia seguinte?</strong>
+              <div class="field-row mt-8"><div class="field"><label for="after-${esc(session.id)}">Dor após 24 h</label>
+                <select id="after-${esc(session.id)}" data-after-day="${esc(session.id)}">${painOptions('')}</select></div>
+                <div style="display:flex;align-items:end"><button class="secondary full" data-action="save-knee" data-id="${esc(session.id)}">Salvar</button></div></div></div>`:
+              `<p class="small muted mt-12">Amanhã, informe como ficou o joelho antes de progredir cargas de pernas.</p>`):
+              session.kneeNextDay!=null?`<p class="small muted mt-12">Joelho no dia seguinte: ${session.kneeNextDay}/5+</p>`:''}
+          </div></details>`;
+      }).join(''):`<div class="empty">Nenhum treino de musculação registrado ainda.</div>`}
+      ${sessions.length>ui.historyStrengthLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="strength">Ver mais ${Math.min(5,sessions.length-ui.historyStrengthLimit)} treinos de musculação</button>`:''}
+      ${M.historySection(state.muay.sessions,ui.historyMuayLimit)}
+      ${muaySessions.length>ui.historyMuayLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="muay">Ver mais ${Math.min(5,muaySessions.length-ui.historyMuayLimit)} treinos de Muay Thai</button>`:''}
+      <button class="secondary full mt-16" data-action="export-json">Exportar backup do histórico</button>`;
   }
   function renderEditor() {
     const edit=ui.editor;
@@ -1130,6 +1153,24 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='history-more'){
+      if(btn.dataset.kind==='strength')ui.historyStrengthLimit=Math.min(state.sessions.length,ui.historyStrengthLimit+5);
+      else if(btn.dataset.kind==='muay')ui.historyMuayLimit=Math.min(state.muay.sessions.length,ui.historyMuayLimit+5);
+      else return;
+      const scroll=window.scrollY;render();window.scrollTo(0,scroll);return;
+    }
+    if(action==='muay-effort'||action==='muay-fatigue'){
+      const d=state.muay.draft;if(!d)return;
+      const value=btn.dataset.value;
+      if(action==='muay-effort'){
+        if(!['5','7','9'].includes(value))return;
+        d.intensity=String(d.intensity)===value?'':value;
+      }else{
+        if(!['normal','moderada','alta'].includes(value))return;
+        d.fatigue=d.fatigue===value?'':value;
+      }
+      if(!save())return;render();return;
+    }
     if(action==='focus-toggle'){if(!ui.draft)return;ui.focusedMode=!ui.focusedMode;render();return;}
     if(action==='focus-select' || action==='focus-next' || action==='focus-prev'){
       if(!ui.draft)return;
@@ -1431,6 +1472,7 @@
   const screen=document.getElementById('screen');
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
+    if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
   },true);
   screen.addEventListener('click',event=>{
     const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
@@ -1521,7 +1563,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-body9',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-ux10',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
