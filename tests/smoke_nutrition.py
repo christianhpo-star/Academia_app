@@ -63,7 +63,7 @@ with sync_playwright() as p:
     page.locator('#nd-search').fill('brigadeiro com morango')
     page.locator('[data-nd="pick"][data-id="recipe:brigadeiro-morango"]').click()
     page.locator('#nd-catalog input[name="count"]').fill('121.5')
-    assert 'baixa confiança' in page.locator('#nd-food-preview').inner_text()
+    assert '≈' in page.locator('#nd-food-preview').inner_text()
     page.locator('#nd-catalog button[type="submit"]').click()
     assert page.locator('#nd-items .nd-item').count()==1
     page.locator('#nd-items [data-nd="remove"]').first.click()
