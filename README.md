@@ -2,6 +2,14 @@
 
 ## FORJA MOVE v5 — referências 3D oficiais
 
+### Reprodução de vídeos locais — piloto
+- Botão **Ver demonstração** abre modal sem alterar cargas ou séries.
+- O usuário pode consultar a referência 3D do autor ou escolher vídeo autorizado MP4/WebM de até 48 MB, armazenado somente neste navegador por exercício via IndexedDB, sem upload ou sincronização.
+- O arquivo pode ser reproduzido, pausado e removido. Limpeza de dados do navegador pode apagar a mídia. O service worker inclui apenas o módulo, não vídeos externos.
+- A biblioteca embutida continua vazia até haver vídeo próprio ou licença de integração adequada.
+
+
+
 - Substituir a proposta de silhuetas SVG imprecisas pela integração **gradual** de demonstrações reais em 3D.
 - Primeira etapa conservadora: links diretos às páginas oficiais de exercícios no [Fitlapse](https://fitlapse.com/), por ID estável. São referências externas que requerem internet; o aplicativo NÃO copia ou incorpora imagens/vídeos protegidos e não usa servidores proxy.
 - O fluxo apresenta **Ver referência 3D** no catálogo, ficha e exercício em andamento. Abre em outra aba, preservando o rascunho e sem mexer nas séries.

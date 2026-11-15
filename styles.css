@@ -849,3 +849,22 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .forja-ref3d-actions .plan-exercise-edit{margin-top:0;min-height:44px}
 .ref3d-arrow{font-size:15px;color:#80beff}
 @media(max-width:365px){.forja-ref3d-actions{align-items:stretch}.forja-ref3d-actions>*{flex:1 1 140px}.forja-ref3d-link{min-width:0}}
+
+/* FORJA MOVE: on-device video demonstration. No third-party video embeds. */
+.exercise-video-dialog{width:min(94vw,540px);max-width:540px;max-height:min(90dvh,800px);overflow:auto;background:#151e2c;border:1px solid #5d758a;border-radius:20px;color:#f3f6fb;padding:0;box-shadow:0 24px 85px #000b}
+.exercise-video-dialog::backdrop{background:#050a11dd}
+.exercise-video-sheet{display:grid;gap:13px;padding:16px;max-width:100%;overflow-wrap:anywhere}
+.exercise-video-header{display:flex;justify-content:space-between;align-items:flex-start;gap:14px}
+.exercise-video-header h2{font-size:clamp(17px,5vw,22px);line-height:1.25;margin:4px 0 0}
+.exercise-video-header button{min-height:44px;min-width:68px;flex-shrink:0}
+.exercise-video-subtitle,.exercise-video-legal,.exercise-video-status{font-size:12px;line-height:1.5;color:#b6cada;margin:0}
+.exercise-video-status[data-error="true"]{color:#ffe0a3}
+#exercise-video-preview{width:100%;border:1px solid #5d758a;border-radius:14px;overflow:hidden;background:#0b111a}
+#exercise-video-preview video{display:block;width:100%;max-height:48dvh;aspect-ratio:4 / 3;object-fit:contain;background:#0b111a}
+.exercise-video-empty{min-height:148px;display:flex;flex-direction:column;gap:9px;align-items:center;justify-content:center;text-align:center;padding:24px 14px;color:#f3f6fb}
+.exercise-video-empty p{font-size:12px;line-height:1.5;color:#b6cada;margin:0}
+.exercise-video-actions{display:flex;flex-direction:column;gap:9px}
+.exercise-video-actions a,.exercise-video-actions button{min-height:44px;width:100%;margin:0}
+.exercise-video-actions [hidden]{display:none}
+.forja-ref3d-region .forja-video-open{flex-shrink:0}
+@media(max-width:355px){.exercise-video-dialog{width:96vw;border-radius:14px}.exercise-video-sheet{padding:10px;gap:10px}.exercise-video-header{gap:7px}}

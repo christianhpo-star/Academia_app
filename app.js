@@ -17,9 +17,12 @@
   const NUI = window.ForjaNutritionUI;
   const NCAT = window.ForjaNutritionCatalog;
   const REFS = window.ForjaExerciseReferences || {has:()=>false,link:()=>'',get:()=>null};
+  const VIDEOS = window.ForjaExerciseVideos || {open:async()=>false};
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+  const videoAction = ex => '<button type="button" class="forja-ref3d-link forja-video-open" data-action="video-open" data-ex="'+esc(ex.id)+
+    '" aria-label="Abrir demonstração em vídeo de '+esc(ex.name)+'"><span aria-hidden="true">▶</span> Ver demonstração</button>';
   const fmt = E.formatWeight;
   const today = () => {
     const d = new Date();
@@ -589,7 +592,7 @@
             </div>
             <h3>${esc(ex.name)}</h3>
             <p class="catalog-browser-description">${esc(description)}</p>
-            <div class="forja-ref3d-region">${REFS.link(ex.id,ex.name)}${REFS.has(ex.id)?'<small>Referência externa · requer internet</small>':''}</div>
+            <div class="forja-ref3d-region">${videoAction(ex)}<small>${REFS.has(ex.id)?'Referência 3D externa ou vídeo local':'Adicione um vídeo MP4/WebM autorizado'}</small></div>
             <div class="catalog-browser-bottom">
               <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
               ${existing?
@@ -645,7 +648,7 @@
           <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
             <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
             <p class="plan-exercise-submeta">Progressão: +${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Atenção ao joelho':''}</p>
-            <div class="forja-ref3d-actions">${REFS.link(ex.id,ex.name)}
+            <div class="forja-ref3d-actions">${videoAction(ex)}
               <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div></div>
           <div class="plan-exercise-state"><span>${ex.active?'Na ficha':'Inativo'}</span><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
         </article>`).join('')}</div>
@@ -846,7 +849,7 @@
       <div class="workout-exercise-heading"><span class="workout-exercise-number">${String(index+1).padStart(2,'0')} <small>/ ${String(total).padStart(2,'0')}</small></span>
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
         <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p>
-        ${REFS.link(ex.id,ex.name)}</div>
+        ${videoAction(ex)}</div>
         <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
       <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
       <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
@@ -1376,6 +1379,12 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='video-open'){
+      const id=btn.dataset.ex;
+      const exercise=F.options(state.exercises,null).find(x=>x.id===id);
+      if(exercise)VIDEOS.open(id,exercise.name,REFS.get(id)).catch(err=>console.warn('Vídeo local indisponível',err));
+      return;
+    }
     if(action==='reminder-manage'){ui.tab='settings';render();document.querySelector('.reminder-settings')?.scrollIntoView({block:'start'});return;}
     if(action==='reminder-open'||action==='reminder-snooze'||action==='reminder-dismiss'||action==='reminder-toggle'){
       handleReminderAction(btn);return;
@@ -1820,7 +1829,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ref3d2',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ref3d3',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
