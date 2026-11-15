@@ -41,6 +41,7 @@
     for(const r of archive.records){
       if(!r||typeof r!=='object'||!IDS.includes(r.slotId)||!dayOK(r.date)||
          r.id!==recordId(r.slotId,r.date)||r.status!=='confirmed'||
+         (r.label!==undefined&&(!labelOK(r.label)||!r.label.trim()))||
          typeof r.recordedAt!=='string'||!Number.isFinite(Date.parse(r.recordedAt))||
          r.recordedAt.length>40||seenDays.has(r.id))return false;
       seenDays.add(r.id);
@@ -57,12 +58,12 @@
       configured:current.enabled&&hasConfiguredSlots(current),
       items:current.enabled?current.slots.filter(s=>s.active&&s.label.trim()).map(s=>({
         ...s,kind:meta[s.id].kind,title:meta[s.id].title,
-        confirmed:current.records.some(r=>r.id===recordId(s.id,date))
+        confirmed:current.records.some(r=>r.id===recordId(s.id,date)&&(!r.label||r.label===s.label))
       })):[],
       totalRecords:current.records.length
     };
   }
-  function configure(archive,settings){
+  function configure(archive,settings,day){
     if(!valid(archive))return {error:'Dados de rotina incompatíveis.'};
     const current=normalize(archive),next=JSON.parse(JSON.stringify(current));
     const hadConfigured=hasConfiguredSlots(current);
@@ -74,6 +75,9 @@
       const time=String(row.time??'');
       if(!labelOK(label)||!timeOK(time)||typeof row.active!=='boolean')
         return {error:'Confira nome (até 80 caracteres) e horário.'};
+      if(dayOK(day)&&label!==current.slots.find(s=>s.id===id).label&&
+         current.records.some(r=>r.id===recordId(id,day)))
+        return {error:'Antes de mudar o nome, desfaça a confirmação de hoje desse item para não atribuí-la a outro produto.'};
       rows.push({id,label,time,active:row.active});
     }
     next.slots=rows;
@@ -99,12 +103,14 @@
     const next=JSON.parse(JSON.stringify(current)),id=recordId(slotId,date);
     const index=next.records.findIndex(row=>row.id===id);
     if(index>=0){
+      if(next.records[index].label&&next.records[index].label!==slot.label)
+        return {error:'Registro associado a outro nome. Revise o histórico antes de continuar.'};
       next.records.splice(index,1);
       return {archive:next,confirmed:false};
     }
     const at=typeof recordedAt==='string'&&Number.isFinite(Date.parse(recordedAt))?
       recordedAt:new Date().toISOString();
-    next.records.push({id,date,slotId,status:'confirmed',recordedAt:at});
+    next.records.push({id,date,slotId,label:slot.label,status:'confirmed',recordedAt:at});
     return valid(next)?{archive:next,confirmed:true}:{error:'Histórico cheio ou incompatível.'};
   }
   function merge(current,incoming){
