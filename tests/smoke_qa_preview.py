@@ -15,7 +15,7 @@ def run():
     subprocess.run(["python3",str(ROOT/"tests"/"build_move_qa_preview.py")],check=True,timeout=60)
     server=ThreadingHTTPServer(("127.0.0.1",0),partial(Quiet,directory=str(OUT)))
     thread=Thread(target=server.serve_forever,daemon=True);thread.start()
-    origin=f"http://127.0.0.1:{server.server_port}/"
+    origin=f"http://localhost:{server.server_port}/"
     try:
       with sync_playwright() as p:
         exe=os.environ.get("CHROMIUM_PATH") or shutil.which("chromium") or shutil.which("google-chrome")
