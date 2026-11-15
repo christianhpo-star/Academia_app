@@ -13,6 +13,9 @@ test('weight goal computes arithmetic pace but never deadline-derived calorie de
  assert.ok(s.paceKgPerWeek>0);assert.ok(s.energyBand.low<s.maintenanceKcal);
  assert.equal(s.energyBand.provenance.includes('não prescrição'),true);
  assert.equal(s.sourceWeight.reference,false);
+ assert.equal(s.trainingOptions.length,3);
+ assert.equal(s.foodOptions.length,3);
+ assert.ok(s.trainingOptions.every(x=>x.id&&x.label&&x.detail));
 });
 test('short unrealistic deadline returns warning rather than imposing an extreme deficit',()=>{
  const s=P.plan(state('weight',72,'2026-11-22'),'2026-11-15');
