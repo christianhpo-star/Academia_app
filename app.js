@@ -10,6 +10,7 @@
   const FOCUS = window.ForjaFocus;
   const BODY = window.ForjaBodyMeasures;
   const NUTRITION = window.ForjaNutrition;
+  const NUI = window.ForjaNutritionUI;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -129,6 +130,7 @@
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,homeRecoveryOpen:false,
+    nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
   };
   let toastTimeout;
@@ -399,7 +401,7 @@
     const main = document.getElementById('screen');
     main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
-      ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
+      ui.tab === 'progress' ? (ui.nutritionOpen ? NUI.render({archive:state.nutrition,date:today(),editId:ui.nutritionEditId,limit:ui.nutritionLimit}) : ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
       const active=btn.dataset.tab===ui.tab;
       btn.classList.toggle('active',active);
@@ -467,6 +469,7 @@
           <span><small>ÚLTIMO TREINO · ${dateBR(last.day)}</small><strong>${esc(planFor(last.planId).title)}</strong></span><span aria-hidden="true">›</span>
         </button>`:''}
         <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
+        <button class="home-muay-link" data-action="nutrition-open"><span>Registrar alimentação</span><span aria-hidden="true">›</span></button>
       </div>
       <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
   }
@@ -800,6 +803,7 @@
     const points=items.map((it,i)=>`${x(i)},${y(it.weight)}`).join(' ');
     const bm=BODY.recent(state.bodyMeasurements||[])[0];
     return `${headline('Acompanhe seu processo','Sua evolução.','Olhe a tendência do peso junto da força, recuperação e circunferência abdominal.')}
+      <button type="button" class="body-quick-card" data-action="nutrition-open"><span><strong>Alimentação</strong><small>Refeições registradas e estimativas opcionais</small></span><span aria-hidden="true">›</span></button>
       <button type="button" class="body-quick-card" data-action="body-open">
         <span><strong>Medidas corporais</strong><small>${bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':'Circunferências por região e histórico'}</small></span>
         <span aria-hidden="true">›</span>
@@ -1157,8 +1161,55 @@
       notify('Não foi possível importar: verifique o backup FORJA e os registros informados.');}
     document.getElementById('import-file').value='';
   }
+  function saveNutrition(form){
+    const old=state.nutrition.entries;
+    const editing=old.find(row=>row.id===ui.nutritionEditId)||null;
+    const result=NUI.fromForm(form,editing);
+    if(result.error)return notify(result.error);
+    if(result.entry.date>today())return notify('A data da refeição não pode ser futura.');
+    if(!NUTRITION.validEntry(result.entry))return notify('Registro incompatível.');
+    state.nutrition.entries=editing?old.map(row=>row.id===editing.id?result.entry:row):[...old,result.entry];
+    if(!save()){state.nutrition.entries=old;return notify('Não foi possível salvar. Os dados anteriores foram preservados.');}
+    ui.nutritionEditId=null;render();notify(editing?'Refeição atualizada.':'Refeição salva neste aparelho.');
+  }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='nutrition-open'){
+      ui.nutritionOpen=true;ui.bodyOpen=false;ui.nutritionEditId=null;ui.tab='progress';
+      render();window.scrollTo(0,0);return;
+    }
+    if(action==='nutrition-back'){
+      ui.nutritionOpen=false;ui.nutritionEditId=null;render();window.scrollTo(0,0);return;
+    }
+    if(action==='nutrition-more'){
+      ui.nutritionLimit=Math.min(state.nutrition.entries.length,ui.nutritionLimit+5);render();return;
+    }
+    if(action==='nutrition-cancel-edit'){ui.nutritionEditId=null;render();return;}
+    if(action==='nutrition-edit'){
+      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1))return;
+      ui.nutritionEditId=btn.dataset.id;render();
+      document.querySelector('#nutrition-form')?.scrollIntoView({block:'start'});return;
+    }
+    if(action==='nutrition-repeat'){
+      const original=state.nutrition.entries.find(row=>row.id===btn.dataset.id);
+      if(!original)return;
+      const again={...copy(original),id:NUI.newId('meal'),date:today(),
+        items:original.items.map(item=>({...copy(item),id:NUI.newId('item')}))};
+      if(!NUTRITION.validEntry(again))return notify('Refeição incompatível.');
+      state.nutrition.entries.push(again);
+      if(!save()){state.nutrition.entries.pop();return;}
+      ui.nutritionEditId=null;render();notify('Refeição repetida hoje.');return;
+    }
+    if(action==='nutrition-delete'){
+      const exists=state.nutrition.entries.some(row=>row.id===btn.dataset.id);
+      if(!exists||!confirm('Excluir esta refeição do histórico?'))return;
+      const previous=state.nutrition.entries;
+      state.nutrition.entries=previous.filter(row=>row.id!==btn.dataset.id);
+      if(!save()){state.nutrition.entries=previous;return;}
+      if(ui.nutritionEditId===btn.dataset.id)ui.nutritionEditId=null;
+      render();notify('Refeição excluída.');return;
+    }
+
     if(action==='history-more'){
       if(btn.dataset.kind==='strength')ui.historyStrengthLimit=Math.min(state.sessions.length,ui.historyStrengthLimit+5);
       else if(btn.dataset.kind==='muay')ui.historyMuayLimit=Math.min(state.muay.sessions.length,ui.historyMuayLimit+5);
@@ -1412,7 +1463,7 @@
       state.muay.sessions=backup.filter(x=>x.id!==btn.dataset.id);
       if(!save()){state.muay.sessions=backup;return;}render();notify('Registro excluído.');return;
     }
-    if(action==='navigate') {ui.tab=btn.dataset.to;ui.editor=null;render();window.scrollTo(0,0);}
+    if(action==='navigate') {ui.tab=btn.dataset.to;ui.editor=null;ui.nutritionOpen=false;render();window.scrollTo(0,0);}
     else if(action==='select-plan') {ui.plan=btn.dataset.plan;render();}
     else if(action==='start') startWorkout(btn.dataset.plan);
     else if(action==='add-set') {const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length<12){en.sets.push({load:'',reps:'',rir:'',warmup:false});persistDraft();render();}}
@@ -1472,7 +1523,7 @@
   document.getElementById('nav').addEventListener('click',event=>{
     const btn=event.target.closest('[data-tab]');if(!btn)return;
     ui.editor=null;ui.tab=btn.dataset.tab;
-    if(ui.tab==='progress')ui.bodyOpen=false;
+    if(ui.tab==='progress'){ui.bodyOpen=false;ui.nutritionOpen=false;ui.nutritionEditId=null;}
     render();window.scrollTo(0,0);
   });
   const screen=document.getElementById('screen');
@@ -1556,6 +1607,7 @@
     else if(event.target.id==='goal-form')setGoal(event.target);
     else if(event.target.id==='exercise-form')saveExercise(event.target);
     else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
+    else if(event.target.id==='nutrition-form')saveNutrition(event.target);
   });
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   render();
@@ -1569,7 +1621,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-nutrition1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261114-nutrition2',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

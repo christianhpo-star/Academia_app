@@ -10,7 +10,7 @@
   const fmt = n => new Intl.NumberFormat('pt-BR',{maximumFractionDigits:1}).format(n);
   const option = (values,current) => Object.entries(values).map(pair =>
     '<option value="'+escapeHTML(pair[0])+'"'+(pair[0]===current?' selected':'')+'>'+escapeHTML(pair[1])+'</option>').join('');
-  const dateBR = value => /^\\d{4}-\\d{2}-\\d{2}$/.test(value) ?
+  const dateBR = value => /^\d{4}-\d{2}-\d{2}$/.test(value) ?
     value.slice(8,10)+'/'+value.slice(5,7)+'/'+value.slice(0,4) : 'Sem data';
   function render({archive,date,editId=null,limit=3}) {
     const rows=(archive?.entries||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id));

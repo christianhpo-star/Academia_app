@@ -590,3 +590,13 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muay-guidance>summary{display:flex;justify-content:space-between;align-items:center;gap:12px}
 .muay-guidance>summary strong{display:block;font-size:13px;margin-bottom:5px}
 .muay-guidance>summary small{display:block;color:#c0d2dc;font-size:11px;line-height:1.5}
+
+/* Nutrition quick log: visually secondary to the primary workout. */
+.nutrition-screen { display:grid; gap:12px; padding-bottom:20px; }
+.nutrition-screen .nutrition-summary { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin-top:12px; }
+.nutrition-screen .nutrition-details { margin-top:14px; padding:12px; border:1px solid var(--line, #344052); border-radius:12px; }
+.nutrition-screen .nutrition-details summary { cursor:pointer; font-weight:600; }
+.nutrition-screen .nutrition-entry summary { cursor:pointer; display:flex; flex-direction:column; gap:4px; }
+.nutrition-screen .nutrition-entry summary small { color:var(--muted, #a7b7c7); overflow-wrap:anywhere; }
+.nutrition-screen .field input,.nutrition-screen .field select { max-width:100%; }
+.nutrition-screen .btnrow { flex-wrap:wrap; }
