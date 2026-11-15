@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
 SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js',
- 'catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js',
+ 'catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js',
  'nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
 def start(ctx,seed,errors):
     page=ctx.new_page()
