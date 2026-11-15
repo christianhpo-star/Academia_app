@@ -251,7 +251,20 @@
     }
     function portion(){
       const food=CAT.find(picked),el=dialog.querySelector('#nd-portion-panel');
-      el.innerHTML=food?`<form id="nd-catalog" class="panel-soft mt-12"><div class="nd-item-head">${foodVisual(food)}<strong>${esc(food.name)}</strong></div><p class="small">${esc(food.note)}</p>${food.estimate?`<p class="small">Faixa aproximada: ${fmt(food.estimate.low.energyKcal)}–${fmt(food.estimate.high.energyKcal)} kcal; confiança baixa.</p>`:''}${select('portion','Porção',Object.fromEntries(food.portions.map(p=>[p.id,p.label]).concat(!food.nutrientsPerServing&&!food.estimate?[['custom','Peso em gramas']]:[])),food.portions[0].id)}${field('count','Quantidade de porções (ou gramas)',1,'type="number" min="0.001" max="10000" step="any" required')}<button class="secondary full mt-12" type="submit">Adicionar à refeição</button></form>`:'';
+      el.innerHTML=food?`<form id="nd-catalog" class="panel-soft mt-12"><div class="nd-item-head">${foodVisual(food)}<strong>${esc(food.name)}</strong></div><p class="small">${esc(food.note)}</p>${food.estimate?`<p class="small">Faixa aproximada: ${fmt(food.estimate.low.energyKcal)}–${fmt(food.estimate.high.energyKcal)} kcal; confiança baixa.</p>`:''}${select('portion','Porção',Object.fromEntries([...(!food.nutrientsPerServing&&(!food.estimate||food.estimateGramsBase)?[['custom','Peso exato em gramas (recomendado)']]:[]),...food.portions.map(p=>[p.id,p.label])]),!food.nutrientsPerServing&&(!food.estimate||food.estimateGramsBase)?'custom':food.portions[0].id)}${field('count','Peso em gramas ou quantidade de porções',!food.nutrientsPerServing&&(!food.estimate||food.estimateGramsBase)?100:1,'type="number" inputmode="decimal" min="0.001" max="10000" step="any" required')}<p id="nd-food-preview" class="small" role="status" aria-live="polite"></p><p class="small muted">Digite o peso realmente consumido (ex.: 121 ou 121,5 g). As porções são opcionais.</p><button class="secondary full mt-12" type="submit">Adicionar à refeição</button></form>`:'';
+      updatePortionPreview();
+    }
+    function updatePortionPreview(){
+      const form=dialog?.querySelector('#nd-catalog');if(!form)return;
+      const selector=form.elements.namedItem('portion'),amount=form.elements.namedItem('count');
+      const fieldLabel=form.querySelector('label[for="nd-count"]');
+      if(fieldLabel)fieldLabel.textContent=selector.value==='custom'?'Peso exato em gramas':'Quantidade de porções';
+      const item=CAT.makeItem(picked,selector.value,num(amount.value),()=> 'preview-item');
+      const node=form.querySelector('#nd-food-preview');if(!node)return;
+      if(!item){node.textContent='Informe peso ou quantidade válida.';return;}
+      if(item.estimate){node.textContent='Estimativa de baixa confiança: ≈'+fmt(item.estimate.central.energyKcal*item.quantity)+' kcal (faixa '+fmt(item.estimate.low.energyKcal*item.quantity)+'–'+fmt(item.estimate.high.energyKcal*item.quantity)+' kcal).';return;}
+      const values=N.observedTotals([{id:'preview-meal',date:day,mealType:'snack',items:[item]}],day).totals;
+      node.textContent=fmt(item.grams)+' g · '+fmt(values.energyKcal)+' kcal · Proteínas '+fmt(values.proteinG)+' g · Carboidratos '+fmt(values.carbsG)+' g · Gorduras '+fmt(values.fatG)+' g.';
     }
     function addItems(items){if(draft.entry.items.length+items.length>30)return error('Limite de 30 alimentos por refeição.');draft.entry.items.push(...items);saveDraft();picked=null;mealBody();}
 
@@ -395,6 +408,7 @@
     function input(event){const el=event.target;
       if(draft&&el.closest('#nd-manual')){draft.pending=draft.pending||{};draft.pending[el.name]=el.value;if(Object.values(draft.pending).every(v=>!String(v).trim()))delete draft.pending;saveDraft();}
       if(el.id==='nd-search'){search=el.value;all=false;results();return;}
+      if(el.closest('#nd-catalog')){updatePortionPreview();return;}
       if(el.closest('#nd-profile'))previewSuggestion(false);
       if(el.closest('#nd-target'))macroDiff();
       if(!draft)return;
@@ -415,6 +429,7 @@
         if(count)count.value=row?String(row.steps):'';
         return;
       }
+      if(e.target.closest('#nd-catalog')){if(e.target.name==='portion')e.target.form.elements.namedItem('count').value=e.target.value==='custom'?'100':'1';updatePortionPreview();return;}
       if(e.target.tagName==='SELECT'||e.target.type==='date')input(e);
     }
     function modalClick(event){const b=event.target.closest('[data-nd]');if(!b)return;const a=b.dataset.nd;
