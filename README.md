@@ -172,3 +172,9 @@ As referências são mostradas apenas ao iniciar o exercício **sem histórico a
 - O catálogo global lista todos os exercícios (ativos, inativos e alternativas), busca por nome/equipamento/músculo, filtra por grupo e mostra o status da ficha.
 - Incluir uma opção do catálogo na ficha é uma ação explícita, **não inicia sessão** e não registra séries imaginárias. Filtrar e consultar não alteram histórico ou rascunho.
 - O protótipo foi preparado para revisão visual no Figma; publicação no site depende de CI verde.
+
+## Circunferências corporais (14/11/2026)
+- Aba Evolução → Medidas corporais: desenho vetorial ilustrativo, valores sobrepostos por região (pescoço, peitoral, braços e antebraços por lado, abdômen no umbigo, quadril, coxas e panturrilhas por lado), abas de medidas atuais e histórico.
+- Cada aferição pode ser salva e corrigida com data e valores parciais, validando unidades em centímetros. Comparações indicam diferenças absolutas, não inferências de gordura ou massa muscular.
+- Registros ficam em `bodyMeasurements` no backup pessoal local, não em código público; BACKUPS v1 antigos continuam válidos. O importador mescla aferições pela data, preservando as existentes no celular.
+- O backup pessoal aferido em 14/11/2026 é um artefato privado compartilhado à parte, nunca incluído no repositório. Abrir uma versão nova do app não injeta medições pessoais automaticamente.
