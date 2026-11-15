@@ -95,10 +95,11 @@
   }
   const portionLabel=i=>fmt(i.quantity)+' '+(units[i.unit]||i.unit)+(i.grams!=null&&i.unit!=='g'?' · '+fmt(i.grams)+' g':'');
 
-  function ring(key,value,target){
+  function ring(key,value,target,count={confirmed:0,estimated:0,unknown:0}){
     const isEnergy=key==='energyKcal',hasTarget=target!=null&&target>0;
     const pct=value!=null&&hasTarget?Math.min(100,Math.max(0,value/target*100)):0;
-    const display=value==null?'—':!isEnergy&&value>=1000?fmt(Math.round(value/100)/10)+'k':fmt(value);
+    const approximated=count.estimated>0||count.unknown>0;
+    const display=value==null?'—':(approximated?'≈':'')+(!isEnergy&&value>=1000?fmt(Math.round(value/100)/10)+'k':fmt(value));
     const description=isEnergy?
       '<span class="nd-ring-goal">'+(hasTarget?'Meta: '+fmt(target)+' kcal':'Meta não informada')+'</span>'+
       (hasTarget&&value!=null?'<span class="nd-ring-percent">'+fmt(Math.round(value/target*100))+'% da meta</span>':''):
@@ -108,19 +109,21 @@
       ')"><span class="nd-ring-inner"><strong>'+display+'</strong>'+
       (isEnergy?'<small class="nd-ring-unit">kcal</small>':'')+'</span></span>'+
       '<span class="nd-ring-description"><span class="nd-ring-title">'+nutrients[key]+'</span>'+description+'</span>';
-    return button('goals',content,'aria-label="'+nutrients[key]+': '+fmt(value)+' de '+fmt(target)+
+    return button('goals',content,'aria-label="'+nutrients[key]+': '+(approximated?'Subtotal aproximado ':'')+fmt(value)+' de '+fmt(target)+
       (isEnergy?' kcal':' gramas')+'. Ver metas"','nd-ring-button');
   }
   // Meal rings reference the daily target; there is no invented per-meal quota.
-  function mealMacroRing(key,value,dailyTarget){
+  function mealMacroRing(key,value,dailyTarget,count={confirmed:0,estimated:0,unknown:0}){
     const pct=value!=null&&dailyTarget>0?Math.max(0,Math.min(100,value/dailyTarget*100)):0;
     const color={proteinG:'red',carbsG:'blue',fatG:'orange'}[key];
     const label={proteinG:'Proteínas',carbsG:'Carboidratos',fatG:'Gorduras'}[key];
     const short={proteinG:'Proteína',carbsG:'Carbo',fatG:'Gordura'}[key];
-    const aria=value==null?'Informação incompleta':fmt(value)+' gramas registradas'+(dailyTarget>0?' de '+fmt(dailyTarget)+' gramas da meta diária':' (sem meta diária)');
+    const approximate=count.estimated>0||count.unknown>0;
+    const shown=value==null?'—':(approximate?'≈':'')+fmt(value);
+    const aria=value==null?'Informação incompleta':(approximate?'Subtotal aproximado: ':'')+fmt(value)+' gramas registradas'+(dailyTarget>0?' de '+fmt(dailyTarget)+' gramas da meta diária':' (sem meta diária)');
     return '<div class="nd-meal-macro" aria-label="'+esc(label)+': '+esc(aria)+'">'+
       '<span class="nd-meal-macro-ring" style="--progress:'+pct+'%;--ring-color:var(--'+color+')">'+
-      '<span>'+fmt(value)+'</span></span><span class="nd-meal-macro-name">'+short+'</span><small>g</small></div>';
+      '<span>'+shown+'</span></span><span class="nd-meal-macro-name">'+short+'</span><small>g</small></div>';
   }
   function shortFoodLabel(label){
     const name=String(label||'');
@@ -130,7 +133,8 @@
     return name.split(/[,()]/)[0].trim();
   }
   function foodRow(item,entryDate){
-    const row=N.observedTotals([{id:'render-entry',date:entryDate,mealType:'other',items:[item]}],entryDate).totals;
+    const detail=N.recordedBreakdown([{id:'render-entry',date:entryDate,mealType:'other',items:[item]}],entryDate);
+    const row=detail.totals;
     const label=String(item.label);
     const portion=fmt(item.quantity)+' '+String(units[item.unit]||item.unit)+(item.grams!=null&&item.unit!=='g'?' · '+fmt(item.grams)+' g':'');
     return '<tr><th scope="row"><span class="nd-food-id">'+
@@ -138,13 +142,17 @@
       '<span class="nd-food-copy"><span class="nd-food-short" title="'+esc(label)+'">'+esc(shortFoodLabel(label))+
       '</span><small>'+esc(portion)+'</small></span></span></th>'+
       ['proteinG','carbsG','fiberG'].map(key=>'<td aria-label="'+esc(nutrients[key])+': '+
-        (row[key]===null?'não informado':fmt(row[key])+' gramas')+'">'+fmt(row[key])+'</td>').join('')+'</tr>';
+        (row[key]===null?'não informado':(item.estimate?'estimado: ':'')+fmt(row[key])+' gramas')+'">'+
+        (row[key]===null?'—':(item.estimate?'≈':'')+fmt(row[key]))+'</td>').join('')+'</tr>';
   }
   function entryHTML(e,index=0){
-    const total=N.observedTotals([e],e.date).totals.energyKcal;
+    const breakdown=N.recordedBreakdown([e],e.date);
+    const total=breakdown.totals.energyKcal;
+    const energyMeta=breakdown.counts.energyKcal;
+    const approximate=energyMeta.estimated>0||energyMeta.unknown>0;
     const estimate=N.estimatedTotals([e],e.date);
     return '<section class="nd-entry" aria-label="Registro '+(index+1)+'">'+
-      '<div class="nd-entry-caption"><strong>Registro '+(index+1)+'</strong><span>'+fmt(total)+' kcal · '+e.items.length+' alimento(s)</span></div>'+
+      '<div class="nd-entry-caption"><strong>Registro '+(index+1)+'</strong><span>'+(approximate&&total!=null?'≈':'')+fmt(total)+' kcal'+(total!=null&&energyMeta.unknown?' (parcial)':'')+' · '+e.items.length+' alimento(s)</span></div>'+
       '<div class="nd-food-table-wrap"><table class="nd-food-table">'+
       '<colgroup><col class="nd-food-col-name"><col span="3" class="nd-food-col-number"></colgroup>'+
       '<thead><tr><th scope="col">Alimento</th><th scope="col"><abbr title="Proteínas em gramas">P (g)</abbr></th>'+
@@ -154,7 +162,7 @@
       '<p class="nd-food-legend">— = valor não informado. Nome completo disponível ao consultar cada alimento.</p>'+
       (estimate.estimatedItems?'<div class="callout warn">Estimativa de confiança baixa: '+fmt(estimate.totals.central.energyKcal)+
         ' kcal (faixa '+fmt(estimate.totals.low.energyKcal)+'–'+fmt(estimate.totals.high.energyKcal)+
-        '). Separada dos totais registrados.<details><summary>Como foi estimado</summary>'+
+        '). Incluída com ressalva no subtotal indicativo; não é valor de rótulo.<details><summary>Como foi estimado</summary>'+
         e.items.filter(i=>i.estimate).map(i=>'<p class="small">'+esc(i.estimate.assumptions)+'</p>').join('')+'</details></div>':'')+
       '<div class="btnrow mt-12">'+button('edit','Editar','data-id="'+esc(e.id)+'"')+
       button('repeat','Repetir nesta data','data-id="'+esc(e.id)+'"')+
@@ -162,14 +170,17 @@
       button('delete','Excluir','data-id="'+esc(e.id)+'"','ghost')+'</div></section>';
   }
   function mealCardHTML(type,label,rows,total,target,date){
-    const macros=rows.length?N.observedTotals(rows,date).totals:null;
+    const detail=rows.length?N.recordedBreakdown(rows,date):null;
+    const macros=detail?.totals;
+    const calorieCount=detail?.counts.energyKcal;
+    const approximate=calorieCount&&(calorieCount.estimated>0||calorieCount.unknown>0);
     const foodCount=rows.reduce((n,row)=>n+row.items.length,0);
     const dailyTarget=target&&target.values||{};
     const main='<div class="row-between"><div><h2 class="section-title">'+esc(label)+
-      '</h2><p class="small muted mb-0">'+(rows.length?fmt(total)+' kcal registradas':'Sem registros')+'</p></div>'+
+      '</h2><p class="small muted mb-0">'+(rows.length?(total==null?'— kcal · dados insuficientes':(approximate?'≈':'')+fmt(total)+' kcal registradas'+(calorieCount.unknown?' (parcial)':'')):'Sem registros')+'</p></div>'+
       button('add','+','data-meal="'+esc(type)+'" aria-label="Adicionar ao '+esc(label)+'"','nd-add')+'</div>';
     const macro=rows.length?
-      '<div class="nd-meal-macro-row">'+['proteinG','carbsG','fatG'].map(k=>mealMacroRing(k,macros[k],dailyTarget[k])).join('')+'</div>'+
+      '<div class="nd-meal-macro-row">'+['proteinG','carbsG','fatG'].map(k=>mealMacroRing(k,macros[k],dailyTarget[k],detail.counts[k])).join('')+'</div>'+
       '<p class="nd-meal-macro-hint">Anéis = parcela da meta diária, não meta por refeição.</p>':'';
     const details=rows.length?
       '<details class="nd-meal-details"><summary>Ver '+foodCount+' alimento(s)<span class="nd-meal-chevron" aria-hidden="true">⌄</span></summary>'+
@@ -177,18 +188,27 @@
     return '<section class="card nd-meal">'+main+macro+details+'</section>';
   }
   function render({archive,date,limit=3,state={}}){
-    const totals=N.observedTotals(archive.entries,date),target=G.active(archive.settings,date);
+    const totals=N.recordedBreakdown(archive.entries,date),target=G.active(archive.settings,date);
+    const energyMeta=totals.counts.energyKcal;
+    const hasEstimated=Object.values(totals.counts).some(v=>v.estimated>0);
+    const hasUnknown=Object.values(totals.counts).some(v=>v.unknown>0);
     const daily=archive.entries.filter(e=>e.date===date);
     const days=[...new Set(archive.entries.filter(e=>e.date!==date).map(e=>e.date))].sort().reverse();
     const context=G.context(state,date);
     return `<div class="nutrition-screen"><div class="row-between"><div><p class="eyebrow">SEU DIÁRIO</p><h1 class="page-title">Alimentação.</h1></div>${button('goals','Minhas metas','','ghost')}</div>
       <div class="nd-date">${button('previous','‹','aria-label="Dia anterior"')}<div class="field"><label for="nd-date">${new Date(date+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long'})}</label><input id="nd-date" type="date" value="${date}" aria-label="Data do diário"></div>${button('next','›','aria-label="Próximo dia"')}</div><div class="nd-date-footer">${button('today','Hoje','','button-inline')}<span>${daily.length} registro(s)</span></div>
-      <section class="card nd-summary" aria-label="Consumo registrado e metas"><div class="nd-energy">${ring('energyKcal',totals.totals.energyKcal,target?.values.energyKcal)}<div><strong>Energia registrada</strong><p class="small muted">${target?'Meta '+({manual:'ajustada por você',suggested:'sugerida e aceita',professional:'informada por profissional'}[target.source]):'Configure seu perfil ou informe suas metas.'}</p>${button('goals',target?'Rever metas':'Configurar metas','','button-inline')}</div></div><div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k])).join('')}</div>
-      <p class="small muted">Somente alimentos registrados. Traço = dados insuficientes. Não representa o consumo total do dia.</p></section>
+      <section class="card nd-summary" aria-label="Consumo registrado e metas"><div class="nd-energy">${ring('energyKcal',totals.totals.energyKcal,target?.values.energyKcal,totals.counts.energyKcal)}<div><strong>Energia registrada</strong><p class="small muted">${target?'Meta '+({manual:'ajustada por você',suggested:'sugerida e aceita',professional:'informada por profissional'}[target.source]):'Configure seu perfil ou informe suas metas.'}</p>${button('goals',target?'Rever metas':'Configurar metas','','button-inline')}</div></div><div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k],totals.counts[k])).join('')}</div>
+      <p class="small muted">Subtotal dos alimentos registrados. ≈ indica estimativa e/ou composição incompleta; — significa sem valor disponível, não zero. Não representa o consumo total do dia.</p>
+      ${(hasEstimated||hasUnknown)?'<div class="nd-data-quality">'+
+        (hasEstimated?'<span>Inclui '+energyMeta.estimated+' alimento(s) com calorias estimadas, exibidas separadamente de valores confirmados.</span>':'')+
+        (energyMeta.unknown?'<span>'+energyMeta.unknown+' alimento(s) sem calorias disponíveis; subtotal pode estar abaixo do consumo registrado.</span>':'')+
+        '<details><summary>Detalhes e incerteza</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+
+        (energyMeta.estimated?'Energia estimada somada: ≈ '+fmt(N.estimatedTotals(archive.entries,date).totals.central.energyKcal)+' kcal. ':'')+
+        'Valores estimados não são rótulos; refeições não registradas não entram nesta soma.</p></details></div>':''}</section>
       ${archive.draft?`<div class="callout">Há um rascunho de refeição salvo. ${button('resume','Continuar rascunho','','button-inline')}</div>`:''}
       ${button('add','+ Registrar refeição','data-meal="lunch"','primary full')}
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{
-        const rows=daily.filter(e=>e.mealType===type),total=N.observedTotals(rows,date).totals.energyKcal;
+        const rows=daily.filter(e=>e.mealType===type),total=N.recordedBreakdown(rows,date).totals.energyKcal;
         return mealCardHTML(type,label,rows,total,target,date);
       }).join('')}</div>
       ${!archive.entries.length?'<p class="small muted">Ainda não há refeições registradas. Comece pelo que consumiu hoje.</p>':''}
