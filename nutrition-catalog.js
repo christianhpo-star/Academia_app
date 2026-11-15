@@ -84,6 +84,43 @@
       portions:[p('one','1 unidade estimada (≈35 g)',35,0.35),p('100g','100 g',100,1)],
     },
   ];
+
+  // Rótulos Growth consultados em 2026-11-15, fonte oficial por linha/sabor.
+  // O catálogo registra SOMENTE o pó; líquido e acompanhamentos são itens independentes.
+  // Composição por 100 g convertida linearmente da dose de 30 ou 40 g da tabela oficial.
+  const GROWTH_OFFICIAL_ROWS=[{"id":"top-natural","line":"Whey Protein Concentrado (TOP)","flavor":"Natural","g":30,"k":126,"p":24,"c":3.1,"f":2,"fi":0,"url":"https://www.gsuplementos.com.br/whey-protein/","reference":"Comparativo oficial Growth: Whey Concentrado, sabor natural, porção de 30 g"},{"id":"isolate-natural","line":"Whey Protein Isolado","flavor":"Natural","g":30,"k":112,"p":27,"c":1,"f":0,"fi":0,"url":"https://www.gsuplementos.com.br/whey-protein/","reference":"Comparativo oficial Growth: Whey Isolado, sabor natural, porção de 30 g"},{"id":"hydro-natural","line":"Whey Protein Hidrolisado","flavor":"Natural","g":30,"k":115,"p":27,"c":0.6,"f":0.5,"fi":0,"url":"https://www.gsuplementos.com.br/whey-protein-hidrolisado-1kg-sabor-natural-growth-supplements-p985872"},{"id":"medium-natural","line":"Medium Whey","flavor":"Natural","g":30,"k":121,"p":17,"c":8.7,"f":2,"fi":0,"url":"https://www.gsuplementos.com.br/medium-whey-protein-1kg-growth-supplements-p986001"},{"id":"basic-natural","line":"Basic Whey","flavor":"Natural","g":30,"k":118,"p":10,"c":15,"f":2,"fi":0,"url":"https://www.gsuplementos.com.br/basic-whey-protein-1kg-natural"},{"id":"100-chocolate","line":"100% Whey Protein Concentrado","flavor":"Chocolate","g":30,"k":121,"p":21,"c":4.5,"f":2.1,"fi":0,"url":"https://www.gsuplementos.com.br/100-whey-protein-concentrado-chocolate"},{"id":"100-baunilha","line":"100% Whey Protein Concentrado","flavor":"Baunilha","g":30,"k":120,"p":21,"c":4.6,"f":2,"fi":0,"url":"https://www.gsuplementos.com.br/100-whey-protein-concentrado-baunilha"},{"id":"100-morango","line":"100% Whey Protein Concentrado","flavor":"Morango","g":30,"k":121,"p":21,"c":4.7,"f":2,"fi":0,"url":"https://www.gsuplementos.com.br/100-whey-protein-concentrado-morango"},{"id":"3w-chocolate","line":"3W Whey Protein","flavor":"Chocolate","g":30,"k":118,"p":24,"c":2.5,"f":1.3,"fi":0,"url":"https://www.gsuplementos.com.br/3-whey-protein-1kg-growth-supplements-p985944"},{"id":"zero-natural","line":"Whey Protein Zero Lactose","flavor":"Natural","g":30,"k":120,"p":23,"c":2.3,"f":2.1,"fi":0,"url":"https://www.gsuplementos.com.br/whey-protein-zero-lactose"},{"id":"daily-doce-de-leite","line":"Daily Whey","flavor":"Doce de Leite","g":40,"k":149,"p":22,"c":11,"f":1.9,"fi":0,"url":"https://www.gsuplementos.com.br/daily-whey-doce-de-leite"},{"id":"daily-baunilha","line":"Daily Whey","flavor":"Baunilha","g":40,"k":153,"p":22,"c":12,"f":1.9,"fi":0,"url":"https://www.gsuplementos.com.br/daily-whey-baunilha"},{"id":"daily-zero-chocolate","line":"Daily Whey Zero Lactose","flavor":"Chocolate","g":40,"k":172,"p":25,"c":9.6,"f":2.3,"fi":6.6,"url":"https://www.gsuplementos.com.br/daily-whey-zero-lactose-chocolate"},{"id":"daily-zero-doce-de-leite","line":"Daily Whey Zero Lactose","flavor":"Doce de Leite","g":40,"k":169,"p":24,"c":10,"f":2.2,"fi":6.4,"url":"https://www.gsuplementos.com.br/daily-whey-zero-lactose-doce-de-leite"},{"id":"gourmet-tiramisu","line":"Whey Gourmet","flavor":"Tiramisù","g":40,"k":153,"p":22,"c":12,"f":1.9,"fi":0,"url":"https://www.gsuplementos.com.br/kit-whey-gourmet-400g-e-creatina-monohidratada-250g","reference":"Tabela Whey Gourmet, sabor Tiramisù, no kit oficial da Growth, porção 40 g"},{"id":"sache-natural","line":"Whey Protein Concentrado Sachê","flavor":"Natural","g":30,"k":124,"p":24,"c":2.3,"f":2.1,"fi":0,"url":"https://www.gsuplementos.com.br/dose-whey-protein-concentrado-30gr"}];
+  const growthFoods=GROWTH_OFFICIAL_ROWS.map(row=>{
+    const per100=value=>Math.round(value*100/row.g*10000)/10000;
+    const safeFlavor=row.flavor.toLowerCase();
+    return {
+      id:'growth:official:'+row.id,
+      name:'Growth — '+row.line+' ('+row.flavor+')',
+      category:'Suplementos',
+      aliases:['growth whey','whey growth',row.line,row.flavor,'growth '+row.line+' '+row.flavor,
+        ...(row.id==='top-natural'?['whey concentrado top 80','whey 80 natural']:[]),
+        ...(row.id==='isolate-natural'?['whey isolado']:[]),
+        ...(row.id==='hydro-natural'?['whey hidrolisado']:[])],
+      preparation:'other',
+      note:'Tabela nutricional oficial da Growth consultada em 15/11/2026: '+row.g+' g de pó = '+
+        row.k+' kcal, '+row.p+' g proteínas, '+row.c+' g carboidratos, '+row.f+' g gorduras. '+
+        'Este é o sabor '+row.flavor+'. Confira o rótulo do seu lote; água não adiciona nutrientes, leite e misturas devem ser registrados separadamente.',
+      nutrientsPer100g:{
+        energyKcal:per100(row.k),proteinG:per100(row.p),
+        carbsG:per100(row.c),fatG:per100(row.f),fiberG:per100(row.fi)
+      },
+      source:{
+        name:'Growth Supplements — tabela nutricional oficial',
+        reference:(row.reference||'Tabela Growth de '+row.line+', '+row.flavor+', '+row.g+' g')+'; '+row.url,
+        license:'Valores factuais do rótulo oficial; conferir atualizações na fonte'
+      },
+      portions:[
+        p('dose','1 dose do rótulo ('+row.g+' g de pó)',row.g),
+        p('half','½ dose ('+(row.g/2)+' g de pó)',row.g/2),
+        p('100g','100 g de pó',100),
+      ],
+    };
+  });
+
   const foods = [
     {
       id:'local:doce-cascao-acai-trufado-branco-500ml',
@@ -225,7 +262,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods);
+  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods);
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -236,16 +273,24 @@
 
   // Display order, not a dietary recommendation or a user-specific consumption log.
   // Branded products already in the offline catalogue appear before generic foods.
+  const GROWTH_TOP_IDS=[
+    'growth:official:top-natural','growth:official:100-chocolate','growth:official:100-baunilha',
+    'growth:official:100-morango','growth:official:isolate-natural','growth:official:hydro-natural',
+    'growth:official:3w-chocolate','growth:official:zero-natural','growth:official:medium-natural',
+    'growth:official:basic-natural','growth:official:daily-doce-de-leite',
+    'growth:official:daily-baunilha','growth:official:daily-zero-chocolate',
+    'growth:official:daily-zero-doce-de-leite','growth:official:gourmet-tiramisu',
+    'growth:official:sache-natural'];
   const mealFirst={
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:whey-unknown','taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
+      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
     lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','ref:generic-171477','taco:2011:429','taco:2011:539'],
     snack:['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:whey-unknown','taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
+      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml'],
     dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','taco:2011:538','taco:2011:429'],
     supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'ref:generic-171265','growth:whey-unknown']
+      'ref:generic-171265',...GROWTH_TOP_IDS,'growth:whey-unknown']
   };
   function orderedForMeal(mealType){
     const ids=mealFirst[mealType]||mealFirst.breakfast;

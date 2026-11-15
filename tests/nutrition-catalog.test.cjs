@@ -242,3 +242,74 @@ test('brigadeiro, morango e bolo de chocolate aceitam gramagem livre e origem da
  const old=C.makeItem('local:doce-cascao-acai-trufado-preto-500ml','custom',121,id);
  assert.equal(old,null,'volume of açaí without weighed base must not be interpreted as grams');
 });
+
+
+test('Growth: 16 produtos oficiais têm sabores e origem independentes por tabela nutricional',()=>{
+ const whey=C.foods.filter(food=>food.id.startsWith('growth:official:'));
+ assert.equal(whey.length,16);
+ assert.equal(new Set(whey.map(food=>food.id)).size,16);
+ for(const food of whey){
+   assert.equal(N.validFood(food),true,food.name);
+   assert.equal(food.source.name,'Growth Supplements — tabela nutricional oficial');
+   assert.ok(food.source.reference.includes('https://www.gsuplementos.com.br/'));
+   assert.ok(food.portions.some(portion=>portion.id==='dose'),food.id);
+   assert.ok(food.portions.some(portion=>portion.id==='half'),food.id);
+   assert.equal(food.nutrientsPer100g.fiberG!==null,true);
+ }
+ const examples=[
+ ['growth:official:top-natural',30,126,24,3.1,2],
+ ['growth:official:isolate-natural',30,112,27,1,0],
+ ['growth:official:hydro-natural',30,115,27,0.6,0.5],
+ ['growth:official:medium-natural',30,121,17,8.7,2],
+ ['growth:official:basic-natural',30,118,10,15,2],
+ ['growth:official:100-chocolate',30,121,21,4.5,2.1],
+ ['growth:official:3w-chocolate',30,118,24,2.5,1.3],
+ ['growth:official:zero-natural',30,120,23,2.3,2.1],
+ ['growth:official:daily-doce-de-leite',40,149,22,11,1.9],
+ ['growth:official:daily-zero-chocolate',40,172,25,9.6,2.3],
+ ['growth:official:gourmet-tiramisu',40,153,22,12,1.9]
+ ];
+ for(const [key,g,kcal,protein,carbs,fat] of examples){
+   const food=C.find(key);
+   assert.ok(food,key);
+   const dose=C.makeItem(key,'dose',1,id);
+   assert.equal(dose.grams,g,key);
+   assert.ok(N.validEntry(entry(dose)),key);
+   const totals=N.observedTotals([entry(dose)],'2026-11-14').totals;
+   for(const [name,value] of [['energyKcal',kcal],['proteinG',protein],['carbsG',carbs],['fatG',fat]]){
+     assert.ok(Math.abs(totals[name]-value)<0.011,key+' '+name+': '+totals[name]+' vs '+value);
+   }
+ }
+});
+test('Growth: gramagem fracionada, dose do rótulo e meia dose preservam totais e snapshots',()=>{
+ const key='growth:official:100-chocolate';
+ const custom=C.makeItem(key,'custom',35.5,id);
+ const base=C.find(key);
+ assert.equal(custom.unit,'g');assert.equal(custom.quantity,35.5);
+ assert.equal(custom.grams,35.5);
+ assert.equal(custom.source.name,'Growth Supplements — tabela nutricional oficial');
+ const total=N.observedTotals([entry(custom)],'2026-11-14').totals;
+ assert.ok(Math.abs(total.energyKcal-(121/30*35.5))<0.011);
+ assert.ok(Math.abs(total.proteinG-(21/30*35.5))<0.011);
+ const half=C.makeItem(key,'half',1,id);
+ const halfTotal=N.observedTotals([entry(half)],'2026-11-14').totals;
+ assert.equal(half.grams,15);
+ assert.ok(Math.abs(halfTotal.energyKcal-60.5)<0.011);
+ const initial=entry(custom);
+ const favorite=C.makeFavorite(initial,N.archive(),'Growth depois do treino',id);
+ assert.ok(favorite);
+ const archive=N.archive();archive.mealTemplates.push(favorite.favorite);
+ assert.equal(N.validArchive(archive),true);
+ const restored=C.fromFavorite(favorite.favorite,'2026-11-15',archive,id);
+ assert.equal(restored.items[0].grams,35.5);
+ assert.equal(restored.items[0].source.reference,custom.source.reference);
+ assert.equal(N.recordedBreakdown([restored],'2026-11-15').totals.energyKcal,total.energyKcal);
+ assert.equal(base.nutrientsPer100g.proteinG,70);
+});
+test('Growth: tipos sem rótulo oficial continuam desconhecidos, sem falso zero',()=>{
+ const fallback=C.makeItem('growth:whey-unknown','dose',1,id);
+ assert.equal(N.observedTotals([entry(fallback)],'2026-11-14').totals.energyKcal,null);
+ assert.ok(C.search('growth whey').length>=16);
+ assert.ok(C.search('whey isolado').some(f=>f.id==='growth:official:isolate-natural'));
+ assert.ok(C.orderedForMeal('breakfast').slice(0,5).some(f=>f.id==='growth:official:top-natural'));
+});

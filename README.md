@@ -1,5 +1,15 @@
 # FORJA
 
+## Whey Growth — tabelas oficiais por linha e sabor (15/11/2026)
+
+- Adicionados **16 produtos Growth com tabela oficial identificada**, incluindo Concentrado TOP, 100% Concentrado (chocolate/baunilha/morango), Isolado natural, Hidrolisado natural, 3W chocolate, Zero Lactose natural, Medium natural, Basic natural, Daily (doce de leite/baunilha), Daily Zero Lactose (chocolate/doce de leite), Gourmet Tiramisù e sachê concentrado natural.
+- **Peso livre em gramas de pó é o padrão**. É possível registrar 25, 30, 35,5 ou 40 g. As doses oficiais de 30 g e 40 g e as meias doses continuam como atalhos opcionais. Não presumir que uma colher medidora tem sempre o mesmo peso.
+- Nutrientes por 100 g são **conversões matemáticas da dose no rótulo**, não análises laboratoriais independentes. Nomes de linha e sabor são vinculados à fonte específica na ficha do alimento; não emprestar os valores de um sabor a outro. Revalidar em caso de mudança de embalagem/formulação.
+- O produto cadastrado representa **apenas o pó**. A água adicionada não muda os macros; leite, bebida vegetal, frutas e outros ingredientes devem ser registrados à parte.
+- O item anterior `growth:whey-unknown` continua disponível para produtos sem linha/sabor verificados, **sem preencher macros falsos**.
+- Catálogo oficial: https://www.gsuplementos.com.br/whey-protein/ e fontes de cada rótulo nos registros. Dados do usuário não foram alterados no repositório.
+
+
 ## Catálogo brasileiro ampliado — TACO/Unicamp (2026-11-15)
 
 - O catálogo offline ganhou **54 entradas da TACO 4ª edição (2011)** (incluindo bolo pronto de chocolate), incluindo cortes bovinos e suínos, batata frita, frango empanado à milanesa, peixe, ovo frito, arroz integral, feijão carioca, feijão tropeiro, feijoada, macarrão, pão francês, coxinha, pastel, salpicão, frutas e legumes.
