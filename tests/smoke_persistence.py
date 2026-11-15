@@ -164,7 +164,7 @@ with sync_playwright() as p:
     incoming['sessions'].append(inherited)
     incoming['migrationAudit'] = {'schema':'FORJA v1 compatible / UX7'}
     page.locator('.top-settings').click()
-    page.on('dialog', lambda dialog: dialog.accept())
+    page.once('dialog', lambda dialog: dialog.accept())
     page.locator('#import-file').set_input_files({
         'name':'forja-test-merge.json',
         'mimeType':'application/json',
