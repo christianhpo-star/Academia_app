@@ -17,7 +17,7 @@
   const dateBR=d=>d.split('-').reverse().join('/');
   function ring(key,value,target){
     const pct=value!=null&&target>0?Math.min(100,value/target*100):0;
-    return button('goals',`<span class="nd-ring" style="--progress:${pct}%;--ring-color:var(--${{energyKcal:'lime',proteinG:'red',carbsG:'blue',fatG:'orange',fiberG:'lime'}[key]})"><span><strong>${fmt(value)}</strong><small>/ ${fmt(target)} ${key==='energyKcal'?'kcal':'g'}</small></span></span><span>${nutrients[key]}</span>`, `aria-label="${nutrients[key]}: ${fmt(value)} de ${fmt(target)} ${key==='energyKcal'?'kcal':'gramas'}. Ver metas"`,'nd-ring-button');
+    return button('goals',`<span class="nd-ring" style="--progress:${pct}%;--ring-color:var(--${{energyKcal:'lime',proteinG:'red',carbsG:'blue',fatG:'orange',fiberG:'lime'}[key]})"><span><strong>${fmt(value)}</strong><small>/ ${fmt(target)} ${key==='energyKcal'?'kcal':'g'}</small></span></span><span class="nd-ring-description">${nutrients[key]}${key==='energyKcal'?'':`<small class="nd-ring-readable-total" aria-hidden="true">${fmt(value)} / ${fmt(target)} g</small>`}</span>`, `aria-label="${nutrients[key]}: ${fmt(value)} de ${fmt(target)} ${key==='energyKcal'?'kcal':'gramas'}. Ver metas"`,'nd-ring-button');
   }
   function entryHTML(e){
     const total=N.observedTotals([e],e.date).totals.energyKcal;
