@@ -170,6 +170,8 @@ with sync_playwright() as p:
         'mimeType':'application/json',
         'buffer':json.dumps(incoming,ensure_ascii=False).encode('utf-8'),
     })
+    # File.text() is asynchronous; wait for the import handler to finish before reading storage.
+    page.wait_for_function("document.getElementById('import-file').value === ''", timeout=10000)
     merged = json.loads(storage_snapshot(page)['forja.academia.v1'])
     assert len(merged['sessions']) == len(original['sessions'])+1
     assert len({x['id'] for x in merged['sessions']}) == len(merged['sessions'])
@@ -183,6 +185,7 @@ with sync_playwright() as p:
         'mimeType':'application/json',
         'buffer':json.dumps(incoming,ensure_ascii=False).encode('utf-8'),
     })
+    page.wait_for_function("document.getElementById('import-file').value === ''", timeout=10000)
     again = json.loads(storage_snapshot(page)['forja.academia.v1'])
     assert len(again['sessions']) == len(merged['sessions'])
     assert len(again['weights']) == len(merged['weights'])
