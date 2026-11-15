@@ -1,0 +1,102 @@
+(function installMotion(root, PROFILES, MEMBERS){
+'use strict';
+const JOINTS=['H','S','E','W','P','K','A','S2','E2','W2','P2','K2','A2'];
+const EXERCISES=Object.fromEntries(Object.entries(MEMBERS).flatMap(([family,ids])=>ids.map(id=>[id,family])));
+const TITLES={supino:'Supino',puxada:'Puxada alta',remada:'Remada',rosca:'Rosca de bíceps',lateral:'Elevação lateral',desenvolvimento:'Desenvolvimento de ombro',triceps:'Extensão de tríceps',agachamento:'Agachamento',legpress:'Leg press',hinge:'Terra romeno / stiff',ponte:'Elevação pélvica',afundo:'Afundo / passada',extensora:'Cadeira extensora',flexora:'Flexão de joelho',panturrilha:'Elevação de panturrilha',crucifixo:'Crucifixo / voador',abdutora:'Abertura de quadril',coice:'Extensão de quadril',soco:'Soco reto'};
+const EQUIPMENT={
+ supino:'<path d="M75 146H190M93 146V170M179 146V166" class="m-equipment"/>',
+ puxada:'<path d="M113 41H250V193M113 41V88M152 146H206M169 145V181" class="m-equipment"/>',
+ remada:'<path d="M150 147H227V155H150M277 103V171L300 180M288 102V161" class="m-equipment"/>',
+ triceps:'<path d="M276 42V181M252 44H290M272 44L243 103" class="m-equipment"/>',
+ legpress:'<path d="M60 105L139 169H192M259 63L295 123M251 86L281 101" class="m-equipment"/>',
+ ponte:'<path d="M50 193H300M82 182H133" class="m-floor"/>',
+ crucifixo:'<path d="M74 146H194M94 146V171M180 146V166" class="m-equipment"/>',
+ extensora:'<path d="M129 139H206V153M168 142V190M122 137V98" class="m-equipment"/>',
+ flexora:'<path d="M125 142H217M156 143V192M127 142V97" class="m-equipment"/>',
+ abdutora:'<path d="M127 145H225M154 145V188M127 145V104" class="m-equipment"/>',
+ coice:'<path d="M96 53V193M97 144L184 193" class="m-equipment"/>'
+};
+const CUES={
+ supino:'Movimento de empurrar à frente do tórax. Banco e pegadas variam entre os tipos de supino.',
+ puxada:'Padrão vertical de puxar. Pegada e trajetória dependem da variação utilizada.',
+ remada:'Padrão horizontal de puxar. Equipamentos e apoio podem alterar a posição do tronco.',
+ rosca:'Flexão de cotovelo para trabalhar os bíceps; o apoio e a pegada variam.',
+ lateral:'Elevação dos braços para os lados. Ajuste a amplitude segundo a orientação recebida.',
+ desenvolvimento:'Empurrar a carga acima da cabeça. A representação não mostra todos os detalhes de controle.',
+ triceps:'Extensão de cotovelo. Tríceps testa e francês utilizam posições diferentes da polia.',
+ agachamento:'Flexão e extensão de quadril e joelhos; amplitude não é personalizada.',
+ legpress:'Empurrar o trenó com as pernas; a posição real depende do equipamento.',
+ hinge:'Movimento com predominância de quadril; a postura é representada de modo simplificado.',
+ ponte:'Elevar o quadril a partir do apoio; variações usam banco, solo ou carga.',
+ afundo:'Flexão e extensão de pernas em posição assimétrica. Búlgaro, passada e step-up diferem.',
+ extensora:'Extensão de joelho na máquina, representada esquematicamente.',
+ flexora:'Flexão de joelho; máquina sentada e mesa flexora não têm a mesma posição.',
+ panturrilha:'Flexão plantar do tornozelo. Versões sentadas e no leg press diferem.',
+ crucifixo:'Aproximação dos braços; cabo, peck deck e halteres têm trajetórias diferentes.',
+ abdutora:'Abertura de quadril. Para a cadeira adutora, o sentido é oposto (fechamento).',
+ coice:'Extensão de quadril; polia e apoios variam.',
+ soco:'Soco reto ilustrativo, sem substituir as orientações do treinador.'
+};
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const point=(arr,key)=>{const i=JOINTS.indexOf(key)*2;return [arr[i],arr[i+1]];};
+const xy=(arr,key)=>point(arr,key).join(',');
+function ani(attr,a,b,enabled){
+ return enabled&&a!==b?`<animate attributeName="${attr}" values="${a};${b};${a}" keyTimes="0;0.5;1" dur="2.4s" repeatCount="indefinite"/>`:'';
+}
+function segment(a,b,u,v,cls,width,animated){
+ const s=`${xy(a,u)} ${xy(a,v)}`,t=`${xy(b,u)} ${xy(b,v)}`;
+ return `<polyline class="${cls}" stroke-width="${width}" points="${s}">${ani('points',s,t,animated)}</polyline>`;
+}
+function svg(id, animated=false){
+ const fam=EXERCISES[id];if(!fam)return '';
+ const p=PROFILES[fam];if(!p)return '';
+ const a=p.a,b=p.b, title=TITLES[fam];
+ const parts=[
+  segment(a,b,'S','P','m-body',13,animated),
+  segment(a,b,'S','E','m-arms',10,animated),
+  segment(a,b,'E','W','m-arms',10,animated),
+  segment(a,b,'P','K','m-legs',11,animated),
+  segment(a,b,'K','A','m-legs',11,animated),
+  segment(a,b,'S2','E2','m-muted',9,animated),
+  segment(a,b,'E2','W2','m-muted',9,animated),
+  segment(a,b,'P2','K2','m-muted',9,animated),
+  segment(a,b,'K2','A2','m-muted',9,animated),
+ ];
+ const h=point(a,'H'),hh=point(b,'H');
+ parts.push(`<circle class="m-head" cx="${h[0]}" cy="${h[1]}" r="15">${ani('cx',h[0],hh[0],animated)}${ani('cy',h[1],hh[1],animated)}</circle>`);
+ const hands=p.w==='wrist2'?['W','W2']:p.w==='wrist'?['W']:[];
+ for(const hand of hands){
+  const [x,y]=point(a,hand),[xx,yy]=point(b,hand);
+  parts.push(`<rect class="m-weight" x="${x-13}" y="${y-5}" width="26" height="10" rx="4">${ani('x',x-13,xx-13,animated)}${ani('y',y-5,yy-5,animated)}</rect>`);
+ }
+ if(p.w==='bar'){
+  const [w1,w2]=['W','W2'].map(key=>point(a,key)),[v1,v2]=['W','W2'].map(key=>point(b,key));
+  const y=Math.min(w1[1],w2[1]),yy=Math.min(v1[1],v2[1]);
+  parts.push(`<line class="m-bar" x1="${w1[0]-13}" y1="${y}" x2="${w2[0]+13}" y2="${y}">${ani('x1',w1[0]-13,v1[0]-13,animated)}${ani('x2',w2[0]+13,v2[0]+13,animated)}${ani('y1',y,yy,animated)}${ani('y2',y,yy,animated)}</line>`);
+ }
+ if(p.w==='ankle'){
+  const [x,y]=point(a,'A'),[xx,yy]=point(b,'A');
+  parts.push(`<rect class="m-weight" x="${x-11}" y="${y-6}" width="22" height="12" rx="5">${ani('x',x-11,xx-11,animated)}${ani('y',y-6,yy-6,animated)}</rect>`);
+ }
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="motion-svg" viewBox="0 0 360 220" role="img" aria-label="${esc(title)}: ilustração ${animated?'animada':'estática'} do movimento">
+ <title>${esc(title)} — representação ilustrativa</title>
+ <style>.m-equipment{fill:none;stroke:#84a0b2;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.m-floor{fill:none;stroke:#324a59;stroke-width:3}.m-body{fill:none;stroke:#a8cbd4;stroke-linecap:round}.m-arms{fill:none;stroke:#c5f56b;stroke-linecap:round}.m-legs{fill:none;stroke:#d3e4e9;stroke-linecap:round}.m-muted{fill:none;stroke:#96b1c1;opacity:.68;stroke-linecap:round}.m-head{fill:#adced2;stroke:#d3e8e8;stroke-width:2}.m-weight{fill:#80beff}.m-bar{stroke:#80beff;stroke-width:7;stroke-linecap:round}</style>
+ <rect width="360" height="220" fill="#101b27" rx="24"/><circle cx="182" cy="112" r="94" fill="#192a39"/><path d="M30 197H330" stroke="#324a59" stroke-width="2" stroke-dasharray="6 8"/>
+ ${EQUIPMENT[fam]||''}${parts.join('')}
+ <rect x="16" y="13" width="89" height="22" rx="11" fill="#253d45"/><text x="29" y="28" fill="#c5f56b" font-size="10" font-family="system-ui,sans-serif" font-weight="800">FORJA · MOVE</text>
+ </svg>`;
+}
+function has(id){return Object.hasOwn(EXERCISES,id);}
+function thumb(id){return has(id)?`<span class="motion-thumb" aria-hidden="true">${svg(id,false)}</span>`:'';}
+function viewer(id,name,animated=true){
+ if(!has(id))return '';
+ const fam=EXERCISES[id];
+ return `<div class="motion-sheet"><div class="motion-sheet-header"><div><p class="section-eyebrow">FORJA MOVE · DEMONSTRAÇÃO</p><h2 id="motion-dialog-title">${esc(name)}</h2></div><button type="button" class="secondary motion-close" data-action="motion-close">Fechar</button></div>
+ <div class="motion-stage">${svg(id,animated)}</div><p class="motion-tip">${esc(CUES[fam])}</p>
+ <p class="motion-disclaimer">Ilustração de um padrão de movimento, não uma demonstração técnica exata. Confira a posição do equipamento e peça orientação presencial.</p>
+ <div class="motion-controls">${animated?'<button type="button" class="secondary" data-action="motion-pause" aria-pressed="false">Pausar animação</button>':'<span class="motion-reduced">Movimento desativado conforme preferência de acessibilidade.</span>'}</div></div>`;
+}
+const api={has,thumb,viewer,svg,EXERCISES,CUES,TITLES};
+root.ForjaExerciseMotion=api;
+if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(typeof globalThis!=='undefined'?globalThis:this,{"supino":{"a":[84,130,115,126,148,116,147,103,171,130,204,153,215,191,112,135,110,116,110,103,165,134,204,158,224,191],"b":[84,130,115,126,145,87,147,58,171,130,204,153,215,191,112,135,111,88,111,58,165,134,204,158,224,191],"w":"wrist2"},"puxada":{"a":[180,56,181,83,150,104,131,55,181,139,211,147,213,184,172,83,211,104,234,55,176,139,157,148,160,184],"b":[180,56,181,83,150,117,151,105,181,139,211,147,213,184,172,83,211,117,213,105,176,139,157,148,160,184],"w":"bar"},"remada":{"a":[180,56,181,83,235,110,272,112,181,139,211,147,213,184,172,83,228,120,272,120,176,139,157,148,160,184],"b":[180,56,181,83,223,111,201,117,181,139,211,147,213,184,172,83,216,120,201,124,176,139,157,148,160,184],"w":"wrist"},"rosca":{"a":[182,47,181,76,210,120,223,148,181,130,186,162,181,193,177,76,147,120,136,147,177,130,172,163,169,193],"b":[182,47,181,76,213,119,208,90,181,130,186,162,181,193,177,76,145,119,152,90,177,130,172,163,169,193],"w":"wrist2"},"lateral":{"a":[182,47,181,76,213,108,221,151,181,130,186,162,181,193,177,76,145,108,136,151,177,130,172,163,169,193],"b":[182,47,181,76,232,80,266,81,181,130,186,162,181,193,177,76,128,80,96,81,177,130,172,163,169,193],"w":"wrist2"},"desenvolvimento":{"a":[182,47,181,76,207,76,220,90,181,130,186,162,181,193,177,76,152,76,141,90,177,130,172,163,169,193],"b":[182,47,181,76,198,53,200,22,181,130,186,162,181,193,177,76,162,53,160,22,177,130,172,163,169,193],"w":"wrist2"},"triceps":{"a":[182,47,181,76,218,108,241,103,181,130,186,162,181,193,177,76,145,105,150,104,177,130,172,163,169,193],"b":[182,47,181,76,218,108,225,159,181,130,186,162,181,193,177,76,145,105,145,159,177,130,172,163,169,193],"w":"wrist2"},"agachamento":{"a":[166,48,167,76,202,86,206,80,177,131,196,159,182,194,177,76,138,86,132,80,170,131,152,160,159,194],"b":[178,83,177,110,210,120,214,114,187,158,213,157,182,194,177,76,146,119,141,114,182,158,153,156,159,194],"w":"none"},"legpress":{"a":[107,112,123,130,131,163,144,164,154,151,227,112,251,89,118,132,130,164,146,166,159,155,232,119,252,98],"b":[107,112,123,130,131,163,144,164,154,151,198,134,246,93,118,132,130,164,146,166,159,155,202,138,251,103],"w":"none"},"hinge":{"a":[191,44,190,73,211,102,222,141,182,129,186,162,181,193,177,76,168,107,167,142,177,130,172,163,169,193],"b":[237,91,224,102,235,122,230,167,181,126,191,166,181,193,177,76,210,124,207,167,177,130,164,168,169,193],"w":"wrist2"},"ponte":{"a":[91,166,120,168,135,177,145,180,188,168,223,144,243,191,116,173,135,180,150,184,184,168,222,150,257,191],"b":[91,166,120,162,135,177,145,180,188,124,223,135,243,191,118,167,135,180,150,184,184,126,222,141,257,191],"w":"none"},"afundo":{"a":[182,47,181,76,210,111,215,144,172,130,196,159,211,192,177,76,148,111,146,142,172,133,149,162,128,192],"b":[178,76,178,102,210,111,215,144,180,149,215,167,229,192,177,76,148,111,146,142,175,150,147,168,128,192],"w":"wrist2"},"extensora":{"a":[180,56,181,83,207,109,218,117,176,134,218,148,215,188,172,83,148,109,143,118,170,134,208,152,205,188],"b":[180,56,181,83,207,109,218,117,176,134,218,148,281,155,172,83,148,109,143,118,170,134,208,152,273,159],"w":"ankle"},"flexora":{"a":[180,56,181,83,207,109,218,117,181,140,218,153,223,191,172,83,148,109,143,118,174,140,203,153,208,191],"b":[180,56,181,83,207,109,218,117,181,140,218,153,194,167,172,83,148,109,143,118,174,140,203,153,185,170],"w":"ankle"},"panturrilha":{"a":[182,47,181,76,210,111,215,144,181,130,186,162,181,193,177,76,148,111,146,142,177,130,172,163,169,193],"b":[182,40,181,69,210,104,215,137,181,123,186,155,184,186,177,69,148,104,146,135,177,123,172,157,170,186],"w":"none"},"crucifixo":{"a":[84,130,115,126,80,90,67,100,171,130,204,153,215,191,112,135,154,87,179,100,165,134,204,158,224,191],"b":[84,130,115,126,117,81,117,57,171,130,204,153,215,191,112,135,113,81,114,57,165,134,204,158,224,191],"w":"wrist2"},"abdutora":{"a":[180,56,181,83,207,109,218,117,181,139,214,158,232,190,172,83,148,109,143,118,176,139,150,158,131,190],"b":[180,56,181,83,207,109,218,117,181,139,259,163,272,190,172,83,148,109,143,118,176,139,112,163,98,190],"w":"none"},"coice":{"a":[182,47,181,76,210,111,215,144,177,129,184,164,185,194,177,76,148,111,146,142,169,132,162,166,160,194],"b":[182,47,181,76,210,111,215,144,177,129,216,165,239,157,177,76,148,111,146,142,169,132,162,166,160,194],"w":"none"},"soco":{"a":[182,47,181,82,218,98,210,77,181,130,186,162,181,193,177,76,148,103,154,81,177,130,172,163,169,193],"b":[182,47,181,82,232,79,267,79,181,130,186,162,181,193,177,76,149,102,151,81,177,130,172,163,169,193],"w":"none"}},{"puxada":["pulley-aberto","pulley-fechado","puxada-neutra","pullover-polia"],"remada":["remada-baixa","remada-cavalinho","remada-unilateral-halter","remada-articulada","face-pull","remada-alta"],"rosca":["rosca-w","rosca-martelo","rosca-inversa","rosca-scott"],"supino":["supino-halteres","supino-barra","supino-inclinado","supino-maquina","supino-canadense"],"crucifixo":["voador","crucifixo-cabo","crossover-polia"],"lateral":["elevacao-lateral"],"desenvolvimento":["desenvolvimento-halter"],"triceps":["triceps-testa","triceps-corda","triceps-maquina","triceps-frances"],"agachamento":["agachamento-hack","agachamento-livre","agachamento-goblet","sumo-maquina"],"legpress":["leg-press"],"afundo":["bulgaro","passada-reversa","step-up-baixo"],"extensora":["extensora","extensora-d"],"flexora":["flexora-c","flexora-d","flexora-sentada"],"panturrilha":["panturrilha-leg","panturrilha-banco","panturrilha-em-pe"],"hinge":["stiff","terra-romeno-halter"],"ponte":["elevacao-pelvica","ponte-gluteo"],"abdutora":["abdutora","cadeira-adutora"],"coice":["gluteo-cabo"],"soco":[]});
