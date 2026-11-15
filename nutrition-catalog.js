@@ -53,7 +53,7 @@
   const sweetFoods=[
     {
       id:'taco:2011:16',name:'Bolo de chocolate simples, pronto (sem cobertura)',category:'Doces e bolos',
-      aliases:['bolo chocolate','fatia bolo chocolate','bolo simples de chocolate','bolo sem cobertura'],preparation:'cooked',
+      aliases:['bolo chocolate','fatia bolo chocolate','bolo simples de chocolate','fatia de bolo de chocolate','bolo sem cobertura'],preparation:'cooked',
       note:'Bolo pronto de chocolate sem recheio ou cobertura — TACO item 16. Recheio, calda e cobertura devem ser adicionados separadamente.',
       nutrientsPer100g:{energyKcal:410,proteinG:6.2,carbsG:54.7,fatG:18.5,fiberG:1.4},
       source:{name:'NEPA/UNICAMP — TACO',reference:'Tabela TACO 4ª ed. (2011), item 16; https://nepa.unicamp.br/wp-content/uploads/sites/27/2023/10/taco_4_edicao_ampliada_e_revisada.pdf',license:'Reprodução com citação NEPA/UNICAMP'},
