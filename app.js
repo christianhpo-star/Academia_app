@@ -533,10 +533,10 @@
           ${!ui.draft&&!next.rest?`<details class="home-reason"><summary>Por que este treino?</summary><p>${esc(next.reason)}</p></details>`:''}
         </div>
       </section>
-      ${renderReminderPanel('home')}
       ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
         <p>Há ${pending.length} treino(s) aguardando registro após 24h.
         <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
+      ${renderReminderPanel('home')}
       <details class="home-recovery" ${ui.homeRecoveryOpen?'open':''}>
         <summary><span><strong>Como está sua recuperação hoje?</strong><small>${esc(checkLabel)}</small></span>
           <span class="home-recovery-action">${check?'Atualizar':'Informar'} <span aria-hidden="true">⌄</span></span></summary>
