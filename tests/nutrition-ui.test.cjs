@@ -99,7 +99,7 @@ test('tela diária soma almoço conhecido e brigadeiro estimado com sinalizaçã
   assert.equal(N.observedTotals(archive.entries,date).totals.energyKcal,null);
 });
 test('dados desconhecidos mantêm subtotais por nutriente sem assumir ingestão zero',()=>{
- const date='2026-11-15', id=k=>k+'-test';
+ const date='2026-11-15';let i=0;const id=k=>k+'-test-'+(++i);
  const archive=N.archive();
  const yogurt=CAT.makeItem('photo:itambe-zero-morango-200g','pack',1,id);
  const whey=CAT.makeItem('growth:whey-unknown','dose',1,id);
