@@ -112,7 +112,7 @@
         (a.suggestedFactor==null?
         '<p class="small muted">Precisamos de passos distribuídos por pelo menos 7 dias, incluindo dias sem treino, para propor uma faixa inicial.</p>':
         '<p class="small muted">Cobertura '+esc(a.coverage)+'. Faixa heurística '+a.range.map(v=>String(v).replace('.',',')).join('–')+'. Não é gasto medido.</p>'+
-        button('apply-activity','Usar fator sugerido no perfil','class="button-inline" data-factor="'+a.suggestedFactor+'"','button-inline'))+
+        button('apply-activity','Usar fator sugerido no perfil','data-factor="'+a.suggestedFactor+'"','button-inline'))+
         '<p class="small muted">O fator escolhido e as metas só mudam depois de sua confirmação.</p></section>';
     }
     function activityPanel(open=false){
