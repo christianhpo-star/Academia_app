@@ -10,6 +10,7 @@
   const FOCUS = window.ForjaFocus;
   const BODY = window.ForjaBodyMeasures;
   const ACT = window.ForjaActivity;
+  const REM = window.ForjaReminders;
   const PLANNER = window.ForjaGoalPlanner;
   const HEALTH = window.ForjaHealthImport;
   const NUTRITION = window.ForjaNutrition;
@@ -38,7 +39,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[], nutrition:NUTRITION.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}}, nutrition:NUTRITION.archive(),
     };
   }
   function load() {
@@ -64,7 +65,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
-      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && HEALTH.validMonthlyList(value.healthMonthly) && HEALTH.validWeightReports(value.healthWeightReports) && NUTRITION.validArchive(value.nutrition) &&
+      BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && HEALTH.validMonthlyList(value.healthMonthly) && HEALTH.validWeightReports(value.healthWeightReports) && REM.validPrefs(value.reminderPrefs) && NUTRITION.validArchive(value.nutrition) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -453,6 +454,65 @@
       <p class="small mb-8">${esc(planFor(ui.draft.planId).title)} · ${esc(draftStatusText())}</p>
       <button class="button-inline" data-action="resume">Continuar treino salvo</button></div>`;
   }
+  function renderReminderPanel(context='home'){
+    const report=REM.assess(state,today());
+    const suggestions=report.visible;
+    if(report.disabled||suggestions.length===0)return '';
+    const focus=suggestions[0],rest=suggestions.slice(1);
+    const actionButton=(item,label,kind,days)=>'<button type="button" class="button-inline reminder-action" data-action="'+kind+
+      '" data-reminder="'+esc(item.id)+'" data-signature="'+esc(item.signature)+'"'+(days?' data-days="'+days+'"':'')+'>'+label+'</button>';
+    const cards=item=>'<div class="reminder-secondary"><strong>'+esc(item.headline)+'</strong><p>'+esc(item.reason)+'</p>'+
+      '<div class="reminder-actions">'+actionButton(item,'Conferir','reminder-open')+
+      actionButton(item,'Lembrar depois','reminder-snooze',14)+actionButton(item,'Dispensar','reminder-dismiss')+'</div></div>';
+    return '<aside class="reminder-panel" aria-labelledby="reminders-title"><span class="reminder-subtle-badge">Revisão sugerida</span>'+
+      '<h2 id="reminders-title">'+esc(focus.headline)+'</h2><p class="small">'+esc(focus.reason)+'</p>'+
+      '<div class="reminder-actions">'+actionButton(focus,'Conferir','reminder-open')+
+      actionButton(focus,'Lembrar em 14 dias','reminder-snooze',14)+actionButton(focus,'Dispensar','reminder-dismiss')+'</div>'+
+      '<details class="reminder-why"><summary>Por que apareceu?</summary><p>'+esc(focus.footnote)+
+      ' É um lembrete de qualidade dos dados, não uma exigência ou diagnóstico.</p></details>'+
+      (rest.length?'<details class="reminder-more"><summary>Outras sugestões ('+rest.length+')</summary>'+
+        rest.map(cards).join('')+'</details>':'')+
+      '<button type="button" class="reminder-manage" data-action="reminder-manage">Gerenciar lembretes</button></aside>';
+  }
+  function renderReminderPreferences(){
+    const report=REM.assess(state,today());
+    const current=state.reminderPrefs?.enabled!==false;
+    return '<section class="card reminder-settings" aria-label="Preferências dos lembretes">'+
+      '<div class="row-between"><div><h2 class="section-title">Lembretes opcionais</h2>'+
+      '<p class="small muted">Sugestões discretas de revisar dados. Sem notificações automáticas e sem bloquear treinos.</p></div>'+
+      '<span class="reminder-pref-state">'+(current?'Ativados':'Desativados')+'</span></div>'+
+      '<button type="button" class="secondary full mt-12" data-action="reminder-toggle">'+
+      (current?'Desativar lembretes de revisão':'Ativar lembretes de revisão')+'</button>'+
+      (report.suppressed?'<p class="small muted mt-12">'+report.suppressed+' sugestão(ões) adiada(s) ou dispensada(s).</p>':'')+
+      '<p class="tiny muted">Você pode dispensar cada sugestão individualmente. Ela volta apenas se a condição mudar de forma relevante.</p></section>';
+  }
+  function handleReminderAction(btn){
+    const action=btn.dataset.action;
+    if(action==='reminder-toggle'){
+      const result=REM.setEnabled(state.reminderPrefs,state.reminderPrefs?.enabled===false);
+      if(result.error)return notify(result.error);
+      const old=state.reminderPrefs;state.reminderPrefs=result.prefs;
+      if(!save()){state.reminderPrefs=old;return;}
+      render();notify('Preferência de lembretes salva.');return;
+    }
+    if(action==='reminder-open'){
+      const current=REM.assess(state,today()).visible.find(x=>x.id===btn.dataset.reminder&&x.signature===btn.dataset.signature);
+      if(!current)return render();
+      if(current.action==='weight'){ui.tab='progress';ui.bodyOpen=false;render();document.getElementById('weight-form')?.scrollIntoView({block:'start'});}
+      else if(current.action==='body'){ui.tab='progress';ui.bodyOpen=true;ui.bodyView='current';render();document.getElementById('body-measures-form')?.scrollIntoView({block:'start'});}
+      else if(current.action==='bio'){ui.tab='progress';ui.bodyOpen=true;ui.bodyView='current';ui.bioOpen=true;render();document.querySelector('.bio-panel')?.scrollIntoView({block:'start'});}
+      else{ui.tab='nutrition';render();diary.goals();if(current.action==='activity')document.querySelector('#nd-steps-panel')?.setAttribute('open','');}
+      return;
+    }
+    const current=REM.assess(state,today()).visible.find(x=>x.id===btn.dataset.reminder&&x.signature===btn.dataset.signature);
+    if(!current)return render();
+    const kind=action==='reminder-dismiss'?'dismiss':'snooze';
+    const result=REM.changePreference(state.reminderPrefs,current.id,current.signature,kind,today(),Number(btn.dataset.days)||14);
+    if(result.error)return notify(result.error);
+    const old=state.reminderPrefs;state.reminderPrefs=result.prefs;
+    if(!save()){state.reminderPrefs=old;return;}
+    render();notify(kind==='dismiss'?'Sugestão dispensada.':'Sugestão adiada.');return;
+  }
   function renderHome() {
     const next=getNext(),plan=next.id?planFor(next.id):null;
     const pending=dueKnee(),last=latestSessions()[0],check=checkin();
@@ -473,6 +533,7 @@
           ${!ui.draft&&!next.rest?`<details class="home-reason"><summary>Por que este treino?</summary><p>${esc(next.reason)}</p></details>`:''}
         </div>
       </section>
+      ${renderReminderPanel('home')}
       ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
         <p>Há ${pending.length} treino(s) aguardando registro após 24h.
         <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
@@ -1076,6 +1137,7 @@
   function renderSettings() {
     return `${headline('Preferências','Seus ajustes.','Dados no próprio aparelho. Sem login, mensalidade ou envio para servidores.')}
       <button class="secondary full mb-8" data-action="nutrition-goals">Perfil e metas de alimentação · altura e idade</button>
+      ${renderReminderPreferences()}
       <form id="goal-form" class="card"><h2 class="section-title">Objetivo e prazo</h2>
       <div class="field mt-12"><label for="goal-mode">Meu objetivo</label><select id="goal-mode" name="goalMode">${Object.entries(PLANNER.MODES).map(([key,label])=>`<option value="${esc(key)}" ${(state.settings.goalMode||'weight')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></div>
       <div class="field-row mt-12"><div class="field"><label for="initial-weight">Peso inicial (kg)</label><input id="initial-weight" name="startWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.startWeight}" required /></div>
@@ -1264,6 +1326,7 @@
       activitySteps:ACT.mergeSteps(current.activitySteps,incoming.activitySteps),
       healthMonthly:HEALTH.mergeMonthly(current.healthMonthly,incoming.healthMonthly),
       healthWeightReports:HEALTH.mergeWeightReports(current.healthWeightReports,incoming.healthWeightReports),
+      reminderPrefs:current.reminderPrefs||incoming.reminderPrefs||{enabled:true,items:{}},
       nutrition:NUTRITION.merge(current.nutrition,incoming.nutrition),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
@@ -1309,6 +1372,10 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='reminder-manage'){ui.tab='settings';render();document.querySelector('.reminder-settings')?.scrollIntoView({block:'start'});return;}
+    if(action==='reminder-open'||action==='reminder-snooze'||action==='reminder-dismiss'||action==='reminder-toggle'){
+      handleReminderAction(btn);return;
+    }
     if(action==='goal-open'){ui.tab='settings';ui.editor=null;render();window.scrollTo(0,0);document.getElementById('goal-form')?.scrollIntoView({block:'start'});return;}
     if(action==='nutrition-open'||action==='nutrition-goals'){
       ui.tab='nutrition';ui.editor=null;render();window.scrollTo(0,0);
