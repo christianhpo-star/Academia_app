@@ -1,5 +1,44 @@
 # FORJA
 
+## FORJA MOVE v4 — equipamentos reconhecíveis
+
+- Supino com barra e anilhas/colares, bancos reto/inclinado/declinado e supino em máquina sentada com encosto, pivô e pilha de pesos.
+- Mesa flexora, cadeira flexora e extensora exibem rolos móveis; leg press e hack apresentam trilhos e plataformas; abdutora e adutora exibem suportes próximos aos joelhos.
+- Puxada na polia usa puxador sem anilhas de barra olímpica. Miniaturas permanecem estáticas; as partes móveis acompanham a animação.
+- Homologação em 320/390px permite **rolagem vertical interna** no modal e testa a acessibilidade do rodapé.
+- Ilustrações são esquemáticas para reconhecimento, não orientações técnicas individualizadas. Nenhum dado de treino ou alimentação foi modificado.
+
+## FORJA MOVE v3 — anatomia esquemática e trajetórias
+
+- Homologação de layout: 320, 390 e 768 px no Chromium; modo de movimento reduzido usa poses estáticas empilhadas até 420px para manter legibilidade. Controles Início, Fim e Pausar/Retomar ocupam a largura do painel no mobile; borda do visualizador utiliza #5D758A para contraste. QA em aparelho Android real ainda necessária.
+
+
+- Ilustração vetorial em tela cheia/modo ampliado, com conexão cabeça-pescoço, ombros, tronco e pelve, além de marcações de articulações envolvidas e trilha pontilhada ciano que representa a direção principal do movimento.
+- O modal dispõe de **Início**, **Fim**, **Pausar/Retomar** com controles reais do relógio SVG (SMIL nativo); selecionar uma posição pausa o movimento no instante correspondente.
+- Na preferência **Reduzir animações**, dois quadros estáticos de início/fim substituem a animação — sem elementos `<animate>` no modal. Miniaturas do catálogo continuam estáticas e leves.
+- Os 51 IDs e as 18 variantes da v2 são preservados; sem alterações no histórico ou na gravação dos dados. Recursos animados permanecem locais para o uso offline.
+- As trajetórias são curvas esquemáticas de identificação do padrão motor, não análise biomecânica ou prescrição técnica individual. Ao interpretar variações, confira posição do aparelho e a orientação profissional.
+
+
+## FORJA MOVE v2 — identificação de variações
+
+- Os 51 IDs do catálogo continuam associados a 19 famílias, com **18 variantes de geometria, equipamento, direção ou etiqueta**.
+- Banco inclinado/declinado, supino com barra ou em máquina, mesa e cadeira flexora, adutora/abdutora, panturrilha sentada/no leg press, hack, búlgaro, step-up, puxadas fechada/neutra e pullover na polia possuem apresentações próprias.
+- As miniaturas permanecem estáticas; no visualizador os movimentos têm interpolação suave em 2,8 segundos, controles de pausa e respeito a `prefers-reduced-motion`. O cache offline foi atualizado.
+- O item ambíguo **Mesa ou cadeira flexora** indica explicitamente que o desenho representa somente a versão sentada. Nada aqui altera as séries, o histórico nem o backup do usuário.
+- Ilustrações esquemáticas para identificação de equipamento/padrão, não prescrição técnica ou amplitude de movimento. Conferir detalhes com instrutor presencial.
+- Bases de diferenciação: [NASM — lying leg curl](https://www.nasm.org/resource-center/exercise-library/lying-leg-curl), [NSCA — leg curl and adduction](https://www.nsca.com/education/articles/ptq/are-the-seated-leg-extension-leg-curl-and-adduction-machine-exercises-non-functional-or-risky/), [EGYM — machine guide](https://storage.googleapis.com/egym-b2b-website/downloads/operation_manual_for_egym_strength_machines_EN.pdf).
+
+
+## FORJA MOVE — biblioteca de movimentos ilustrativos
+
+- Catálogo, fichas e sessão de musculação oferecem **Ver movimento**, sem alterar registros.
+- `exercise-motion.js` apresenta 19 famílias vetoriais; 51 IDs de exercícios do catálogo estão mapeados. Miniaturas são estáticas e o modal oferece animação SVG local com pausar/retomar.
+- Com `prefers-reduced-motion`, o modal mostra imagem estática. O recurso não utiliza serviços externos, localização ou armazenamento.
+- Variações de exercício compartilham ilustrações de padrões gerais. O visual **não corresponde à execução técnica exata** de inclinações, máquinas e pegadas. A posição do equipamento deve ser conferida presencialmente.
+- Validação: `node --test tests/exercise-motion.test.cjs` e testes de interface existentes.
+
+
 ## FORJA UX16 — revisão de dados sem cobrança
 
 - Um aviso opcional na Início, após o próximo treino; sugestões adicionais recolhidas por padrão.

@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
 HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
+FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','exercise-motion.js','app.js']
 def start(context,stored,errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
@@ -34,12 +34,75 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
     assert page.locator('.catalog-browser-item').count()>=40
+    # Movement illustrations are static in lists and animate only on demand.
+    first=page.locator('.catalog-browser-item').first
+    assert first.locator('.motion-thumb .motion-svg').count()==1
+    assert first.locator('svg animate').count()==0
+    first.locator('[data-action="motion-open"]').click()
+    assert page.locator('#motion-dialog').is_visible()
+    assert page.locator('#motion-dialog svg animate').count()>0
+    page.locator('#motion-dialog [data-action="motion-pause"]').click()
+    assert page.locator('#motion-dialog [aria-pressed="true"]').count()==1
+    page.locator('#motion-dialog [data-action="motion-close"]').click()
+    assert not page.locator('#motion-dialog').is_visible()
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     assert page.locator('#catalog-search').count()==1
     assert page.locator('#catalog-count').count()==1
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
     initial_count=page.locator('.catalog-browser-item').count()
     page.locator('#catalog-search').fill('canadense')
     assert page.locator('.catalog-browser-item:visible').count()==1
+    # Variant preview describes a decline bench, not a generic horizontal one.
+    before_motion=page.evaluate('localStorage.getItem("forja.academia.draft.v1")')
+    page.locator('[data-action="motion-open"][data-ex="supino-canadense"]').click()
+    assert page.locator('#motion-dialog').is_visible()
+    assert page.locator('#motion-dialog .motion-variant-chip').inner_text()=='Banco declinado · barra'
+    assert page.locator('#motion-dialog svg').get_attribute('data-motion-id')=='supino-canadense'
+    assert page.locator('#motion-dialog svg animate').count()>0
+    assert page.locator('#motion-dialog .m-joint-active').count()>0
+    assert page.locator('#motion-dialog .m-motion-track').count()>0
+    page.locator('#motion-dialog [data-action="motion-phase"][data-phase="end"]').click()
+    assert page.locator('#motion-dialog [data-action="motion-phase"][data-phase="end"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('#motion-dialog [data-action="motion-pause"]').inner_text()=='Retomar animação'
+    assert page.evaluate('document.querySelector("#motion-dialog .motion-svg").animationsPaused()')
+    page.locator('#motion-dialog [data-action="motion-pause"]').click()
+    assert not page.evaluate('document.querySelector("#motion-dialog .motion-svg").animationsPaused()')
+    assert page.locator('#motion-dialog [data-action="motion-pause"]').inner_text()=='Pausar animação'
+    for width in [320,390]:
+        page.set_viewport_size({'width':width,'height':844})
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'modal overflow {width}'
+        assert page.locator('#motion-dialog .motion-phase-controls').evaluate(
+            "(el)=>el.clientWidth >= el.closest('.motion-sheet').querySelector('.motion-stage').clientWidth-2"
+        ),f'phase controls not full width {width}'
+        assert page.locator('#motion-dialog .motion-phase-button').first.evaluate(
+            "el=>el.getBoundingClientRect().width>=100"
+        ),f'phase control too narrow {width}'
+    shots=ROOT/'screenshots';shots.mkdir(exist_ok=True)
+    page.locator('#motion-dialog').screenshot(path=str(shots/'catalog-motion-390.png'))
+    page.locator('#motion-dialog [data-action="motion-close"]').click()
+    assert not page.locator('#motion-dialog').is_visible()
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==before_motion
+    page.emulate_media(reduced_motion="reduce")
+    page.locator('[data-action="motion-open"][data-ex="supino-canadense"]').click()
+    assert page.locator('#motion-dialog .motion-static-pair .motion-svg').count()==2
+    assert page.locator('#motion-dialog svg animate').count()==0
+    assert page.locator('#motion-dialog .motion-static-pair figcaption').all_text_contents()==['Início','Fim']
+    assert page.locator('#motion-dialog [data-action="motion-pause"]').count()==0
+    for width in [320,390]:
+        page.set_viewport_size({'width':width,'height':844})
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        dialog=page.locator('#motion-dialog')
+        footer=page.locator('#motion-dialog .motion-reduced')
+        footer.scroll_into_view_if_needed()
+        bbox=footer.bounding_box()
+        frame=dialog.bounding_box()
+        assert bbox and frame and bbox['y']+bbox['height']<=frame['y']+frame['height']+2, \
+            f'reduced-motion footer unreachable by modal scroll {width}'
+        assert dialog.evaluate("el=>el.scrollWidth<=el.clientWidth+2"), \
+            f'horizontal overflow inside modal {width}'
+        dialog.screenshot(path=str(shots/f'catalog-motion-reduced-{width}.png'))
+    page.locator('#motion-dialog [data-action="motion-close"]').click()
+    page.emulate_media(reduced_motion="no-preference")
     assert 'canadense' in page.locator('.catalog-browser-item:visible').inner_text().lower()
     page.locator('#catalog-search').fill('nao-existe-exercicio')
     assert page.locator('.catalog-browser-item:visible').count()==0

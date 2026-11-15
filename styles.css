@@ -799,3 +799,78 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .reminder-settings p{margin:6px 0;line-height:1.55}
 .reminder-pref-state{border:1px solid var(--line);border-radius:20px;font-size:11px;padding:7px 9px;white-space:nowrap;color:var(--muted)}
 @media(max-width:350px){.reminder-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.reminder-panel .reminder-action{min-width:0}.reminder-panel .reminder-action:first-child{grid-column:1/-1}}
+
+
+/* FORJA MOVE v1 — accessible previews for exercise patterns. */
+.catalog-browser-main{display:flex;gap:12px;align-items:center;margin:13px 0}
+.catalog-browser-summary{min-width:0;flex:1}
+.catalog-browser-main .catalog-browser-summary h3{margin:0 0 6px;font-size:15px;line-height:1.35}
+.catalog-browser-main .catalog-browser-description{margin:0 0 4px}
+.motion-thumb{display:block;width:100px;flex:0 0 100px;aspect-ratio:360/220;overflow:hidden;background:#101b27;border:1px solid #385160;border-radius:12px}
+.motion-thumb .motion-svg{display:block;width:100%;height:100%}
+.motion-inline-trigger{border:0;background:transparent;color:var(--lime);font-weight:800;font-size:12px;min-height:44px;padding:7px 0;text-align:left;cursor:pointer;display:inline-flex;align-items:center}
+.motion-inline-trigger:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:4px}
+.motion-plan-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px 18px;margin-top:3px}
+.motion-plan-actions .plan-exercise-edit{margin-top:0;min-height:44px}
+.motion-dialog{width:min(94vw,530px);max-height:min(88dvh,760px);margin:auto;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;border:1px solid #4b6374;border-radius:23px;background:var(--card);color:var(--text);padding:0;box-shadow:0 22px 65px #000a}
+.motion-dialog::backdrop{background:#05080dc7;backdrop-filter:blur(5px)}
+.motion-sheet{padding:19px;display:grid;gap:12px}
+.motion-sheet-header{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+.motion-sheet-header>div{min-width:0}
+.motion-sheet-header h2{font-size:clamp(19px,4.8vw,24px);line-height:1.25;letter-spacing:-.025em;margin:4px 0 0;overflow-wrap:anywhere}
+.motion-sheet-header .section-eyebrow{margin:0;color:var(--lime)}
+.motion-sheet-header .motion-close{min-height:44px;flex-shrink:0;padding:8px 12px}
+.motion-stage{background:#101b27;border:1px solid #3b5666;border-radius:17px;overflow:hidden}
+.motion-stage .motion-svg{display:block;width:100%;max-height:340px}
+.motion-tip{font-size:14px;line-height:1.55;color:#eff6fb;margin:0}
+.motion-disclaimer{font-size:12px;line-height:1.6;color:#b4c9d8;margin:0}
+.motion-controls{display:flex;justify-content:flex-start;align-items:center;gap:9px}
+.motion-controls .secondary{min-height:44px}
+.motion-reduced{font-size:11px;color:#c4d6e2}
+@media(max-width:360px){.motion-thumb{width:75px;flex-basis:75px}.catalog-browser-main{gap:9px}.motion-sheet{padding:13px}.motion-dialog{width:96vw}}
+@media(prefers-reduced-motion:reduce){.motion-dialog,.motion-dialog::backdrop{transition:none!important}}
+
+.motion-flex-actions{display:flex;gap:7px 12px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.flex-catalog-row{flex-wrap:wrap}
+.catalog-suggestion .motion-flex-actions{justify-content:space-between}
+@media(max-width:360px){.motion-flex-actions{justify-content:stretch;width:100%}.motion-flex-actions .secondary{flex:1;min-width:0}}
+
+/* FORJA MOVE v2: clarify equipment without overloading mobile cards. */
+.motion-variant-label{display:inline-flex;max-width:100%;font-size:10px;line-height:1.3;font-weight:800;color:#d9f2b6;background:#263d34;border:1px solid #4a6b53;border-radius:999px;padding:4px 8px;overflow-wrap:anywhere}
+.motion-variant-chip{display:inline-flex;justify-self:start;color:#e2f6c2;background:#243a30;border:1px solid #49694e;border-radius:999px;font-size:12px;line-height:1.4;font-weight:800;padding:6px 11px}
+.motion-dialog .motion-variant-chip{margin-top:-2px}
+
+/* FORJA MOVE v3: legible trajectories, selectable start/end positions and reduced motion. */
+.motion-legend{display:flex;flex-wrap:wrap;align-items:center;gap:7px 16px;padding:1px 2px;font-size:11px;line-height:1.4;color:#c6dce6}
+.motion-legend span{display:inline-flex;gap:7px;align-items:center}
+.motion-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#c5f56b;box-shadow:0 0 0 2px #284a36}
+.motion-dash{display:inline-block;width:20px;border-top:3px dashed #80beff}
+.motion-controls{display:grid;gap:9px}
+.motion-phase-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.motion-phase-controls button{min-width:0;min-height:44px;font-size:13px}
+.motion-phase-controls .motion-play-button{grid-column:1 / -1}
+.motion-phase-button[aria-pressed="true"]{background:#29432f;border-color:#c5f56b;color:#edffd2}
+.motion-state{display:block;color:#b9d8e3;font-size:11px;min-height:17px}
+.motion-static-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:10px}
+.motion-static-pair figure{display:flex;flex-direction:column;gap:5px;margin:0;min-width:0}
+.motion-static-pair .motion-svg{aspect-ratio:360 / 220;width:100%;min-height:0}
+.motion-static-pair figcaption{font-weight:800;text-align:center;font-size:12px;color:#e4f8c5}
+@media(max-width:355px){.motion-static-pair{gap:5px;padding:5px}.motion-legend{font-size:10px;gap:6px 10px}}
+
+/* FORJA MOVE v3 mobile QA: accessible frames, full-width controls, legible static poses. */
+.motion-dialog{border-color:#5D758A}
+.motion-stage{border-color:#5D758A}
+.motion-controls{justify-content:stretch;justify-items:stretch;width:100%}
+.motion-phase-controls{width:100%}
+.motion-phase-controls button{width:100%}
+@media(max-width:420px){
+ .motion-static-pair{grid-template-columns:minmax(0,1fr);gap:8px;padding:7px}
+ .motion-static-pair figure{background:#162737;border:1px solid #5D758A;border-radius:12px;padding:6px}
+ .motion-static-pair .motion-svg{height:142px;max-height:142px}
+ .motion-static-pair figcaption{font-size:13px}
+}
+@media(max-width:355px){
+ .motion-static-pair{gap:6px;padding:5px}
+ .motion-static-pair figure{padding:4px}
+ .motion-static-pair .motion-svg{height:126px;max-height:126px}
+}

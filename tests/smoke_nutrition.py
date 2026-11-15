@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','exercise-motion.js','app.js']
 
 def start(context,stored,errors):
     page=context.new_page()
@@ -117,9 +117,9 @@ with sync_playwright() as p:
     original=state()['nutrition']['entries']
     page.evaluate("() => { localStorage.setItem = () => {throw new Error('quota')}; }")
     page.locator('#nd-meal button[type="submit"]').click()
-    assert page.locator('dialog').is_visible()
+    assert page.locator('.nd-dialog').is_visible()
     assert state()['nutrition']['entries']==original
-    assert 'Não foi possível salvar' in page.locator('dialog [role="alert"]').inner_text()
+    assert 'Não foi possível salvar' in page.locator('.nd-dialog [role="alert"]').inner_text()
     assert errors==[],errors
     browser.close()
     print('PASS nutrition: dated compound meals, favorites, draft recovery, editable profile/goals, quota, responsive')

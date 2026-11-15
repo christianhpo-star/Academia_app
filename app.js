@@ -16,6 +16,8 @@
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
   const NCAT = window.ForjaNutritionCatalog;
+  // Graceful fallback if an old cached shell loads without the optional visual module.
+  const MOTION = window.ForjaExerciseMotion || {has:()=>false,thumb:()=>'',viewer:()=>''};
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -579,6 +581,7 @@
           const existing=known.get(ex.id);
           const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
           const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
+          const visualTag=MOTION.variantLabel?.(ex.id)||'';
           const searchable=[ex.name,ex.muscle,ex.equipment].join(' ').toLocaleLowerCase('pt-BR');
           return `<article class="catalog-browser-item" data-catalog-item
                    data-search="${esc(searchable)}" ${searchable.includes(term)?'':'hidden'}>
@@ -586,8 +589,12 @@
               <span class="catalog-group-code">BLOCO ${esc(ex.group)}</span>
               <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
             </div>
-            <h3>${esc(ex.name)}</h3>
-            <p class="catalog-browser-description">${esc(description)}</p>
+            <div class="catalog-browser-main">${MOTION.thumb(ex.id)}
+              <div class="catalog-browser-summary"><h3>${esc(ex.name)}</h3>
+              <p class="catalog-browser-description">${esc(description)}</p>
+              ${visualTag?`<span class="motion-variant-label">${esc(visualTag)}</span>`:""}
+              ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}" aria-label="Ver movimento: ${esc(ex.name)}">▶ Ver movimento</button>`:''}</div>
+            </div>
             <div class="catalog-browser-bottom">
               <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
               ${existing?
@@ -643,7 +650,9 @@
           <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
             <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
             <p class="plan-exercise-submeta">Progressão: +${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Atenção ao joelho':''}</p>
-            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div>
+            <div class="motion-plan-actions">
+              ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}">▶ Ver movimento</button>`:''}
+              <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div></div>
           <div class="plan-exercise-state"><span>${ex.active?'Na ficha':'Inativo'}</span><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
         </article>`).join('')}</div>
       </section>
@@ -751,12 +760,17 @@
         </div>
         <p class="small muted">${esc(ex.muscle||'Grupo muscular')} · ${esc(ex.equipment||'Equipamento não informado')}</p>
         <p class="small">${esc(ex.reason)}</p>
-        <button type="button" class="secondary small-button" data-action="${ex.kind==='extra-set'?'dose-add-one':ex.kind==='extra-exercise'?'catalog-extra-add':'flex-add'}" data-ex="${esc(ex.id)}" ${ex.sourceId?'data-source="'+esc(ex.sourceId)+'"':''}>${ex.kind==='extra-set'?'Acrescentar uma série':ex.kind==='extra-exercise'?'Adicionar exercício opcional':'Adicionar para substituir'}</button>
+        <div class="motion-flex-actions">
+          ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}" aria-label="Ver movimento: ${esc(ex.name)}">▶ Ver movimento</button>`:''}
+          <button type="button" class="secondary small-button" data-action="${ex.kind==='extra-set'?'dose-add-one':ex.kind==='extra-exercise'?'catalog-extra-add':'flex-add'}" data-ex="${esc(ex.id)}" ${ex.sourceId?'data-source="'+esc(ex.sourceId)+'"':''}>${ex.kind==='extra-set'?'Acrescentar uma série':ex.kind==='extra-exercise'?'Adicionar exercício opcional':'Adicionar para substituir'}</button>
+        </div>
       </article>`).join('');
     const full=choices.map(ex=>
       '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
       '<div><strong>' + esc(ex.name) + '</strong><small>' + esc(ex.muscle) + ' · ' + esc(ex.equipment) + '</small></div>' +
-      '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
+      '<div class="motion-flex-actions">' +
+      (MOTION.has(ex.id)?'<button class="motion-inline-trigger" data-action="motion-open" data-ex="' + esc(ex.id) + '">▶ Ver movimento</button>':'') +
+      '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div></div>'
     ).join('');
     return `<div class="flex-catalog mt-12">
       <div class="catalog-mode-switch" role="group" aria-label="Tipo de recomendação">
@@ -842,7 +856,8 @@
     return `<section class="exercise-card workout-exercise-card" data-exercise="${esc(ex.id)}" aria-label="Exercício ${index+1} de ${total}: ${esc(ex.name)}">
       <div class="workout-exercise-heading"><span class="workout-exercise-number">${String(index+1).padStart(2,'0')} <small>/ ${String(total).padStart(2,'0')}</small></span>
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
-        <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p></div>
+        <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p>
+        ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}">▶ Ver movimento</button>`:''}</div>
         <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
       <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
       <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
@@ -1377,6 +1392,57 @@
       handleReminderAction(btn);return;
     }
     if(action==='goal-open'){ui.tab='settings';ui.editor=null;render();window.scrollTo(0,0);document.getElementById('goal-form')?.scrollIntoView({block:'start'});return;}
+    if(action==='motion-open'){
+      const id=btn.dataset.ex, exercise=exerciseFor(id)||F.catalog.find(item=>item.id===id);
+      const dialog=document.getElementById('motion-dialog');
+      if(!exercise||!dialog||!MOTION.has(id))return;
+      const shouldAnimate=!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      dialog.querySelector('.motion-dialog-content').innerHTML=MOTION.viewer(id,exercise.name,shouldAnimate);
+      if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
+      return;
+    }
+    if(action==='motion-close'){
+      const dialog=document.getElementById('motion-dialog');
+      if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');
+      return;
+    }
+    if(action==='motion-phase'){
+      const dialog=document.getElementById('motion-dialog');
+      const svg=dialog?.querySelector('.motion-stage > .motion-svg');
+      const phase=btn.dataset.phase;
+      if(!svg||!['start','end'].includes(phase)||typeof svg.pauseAnimations!=='function'
+         ||typeof svg.setCurrentTime!=='function')return;
+      svg.pauseAnimations();
+      svg.setCurrentTime(phase==='end'?1.4:0);
+      dialog.querySelectorAll('.motion-phase-button').forEach(button=>
+        button.setAttribute('aria-pressed',String(button===btn)));
+      const play=dialog.querySelector('.motion-play-button');
+      if(play){play.textContent='Retomar animação';play.setAttribute('aria-pressed','true');}
+      const status=dialog.querySelector('#motion-state');
+      if(status)status.textContent=phase==='end'?'Posição final':'Posição inicial';
+      return;
+    }
+    if(action==='motion-pause'){
+      const dialog=document.getElementById('motion-dialog');
+      const svg=dialog?.querySelector('.motion-stage > .motion-svg');
+      if(!svg||typeof svg.pauseAnimations!=='function')return;
+      const paused=btn.getAttribute('aria-pressed')==='true';
+      const status=dialog.querySelector('#motion-state');
+      if(paused){
+        svg.setCurrentTime(0);
+        svg.unpauseAnimations();
+        btn.textContent='Pausar animação';
+        btn.setAttribute('aria-pressed','false');
+        dialog.querySelectorAll('.motion-phase-button').forEach(button=>button.setAttribute('aria-pressed','false'));
+        if(status)status.textContent='Movimento em repetição';
+      }else{
+        svg.pauseAnimations();
+        btn.textContent='Retomar animação';
+        btn.setAttribute('aria-pressed','true');
+        if(status)status.textContent='Animação pausada';
+      }
+      return;
+    }
     if(action==='nutrition-open'||action==='nutrition-goals'){
       ui.tab='nutrition';ui.editor=null;render();window.scrollTo(0,0);
       if(action==='nutrition-goals')diary.goals();return;
@@ -1714,6 +1780,11 @@
     render();window.scrollTo(0,0);
   });
   const screen=document.getElementById('screen');
+  const motionDialog=document.getElementById('motion-dialog');
+  motionDialog.addEventListener('click',event=>{
+    const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
+  });
+  motionDialog.addEventListener('close',()=>{motionDialog.querySelector('.motion-dialog-content').replaceChildren();});
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
@@ -1816,7 +1887,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ux16',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-motion6',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
