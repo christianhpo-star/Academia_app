@@ -99,3 +99,34 @@ test('v3 bar endpoints span both wrists in side-view supino without inversion',(
   assert.ok(Number(match[1]) < Number(match[2]),'bar segment must not be inverted');
   assert.ok(Number(match[2]) - Number(match[1]) >= 50,'bar must be visually identifiable');
 });
+
+test('v4 equipment distinguishes free weights and machines',()=>{
+ const decline=motion.svg('supino-canadense',false), flat=motion.svg('supino-barra',false),machine=motion.svg('supino-maquina',false);
+ assert.match(decline,/class="m-bench-pad"/);assert.match(decline,/class="m-barbell"/);
+ assert.equal((decline.match(/class="m-bar-plate"/g)||[]).length,2);
+ assert.match(flat,/class="m-barbell"/);assert.match(machine,/class="m-stack"/);
+ assert.doesNotMatch(machine,/class="m-barbell"/);assert.notEqual(decline,flat);
+});
+test('v4 leg machines use support rollers and sled platforms',()=>{
+ for(const id of ['flexora-c','flexora-sentada','extensora']){
+  assert.match(motion.svg(id,false),/class="m-machine-roller"/,id);
+  assert.match(motion.svg(id,false),/class="m-bench-pad"/,id);
+ }
+ assert.match(motion.svg('leg-press',false),/class="m-sled-platform"/);
+ assert.match(motion.svg('leg-press',false),/class="m-machine-plate"/);
+ assert.match(motion.svg('agachamento-hack',false),/class="m-machine-plate"/);
+ for(const id of ['abdutora','cadeira-adutora'])
+  assert.equal((motion.svg(id,false).match(/class="m-knee-pad"/g)||[]).length,2,id);
+});
+test('v4 pulldown uses cable grips instead of barbell plates',()=>{
+ const svg=motion.svg('pulley-fechado',false);
+ assert.match(svg,/class="m-pulley-grip"/);
+ assert.match(svg,/class="m-grip-cap"/);
+ assert.doesNotMatch(svg,/class="m-bar-plate"/);
+});
+test('v4 equipment animation remains optional',()=>{
+ assert.match(motion.svg('flexora-c',true),/class="m-machine-roller"[^>]*><animate attributeName="x"/);
+ assert.match(motion.svg('supino-canadense',true),/class="m-bar-plate"[^>]*><animate attributeName="y"/);
+ assert.doesNotMatch(motion.thumb('supino-canadense'),/<animate\b/);
+ assert.doesNotMatch(motion.viewer('supino-canadense','Canadense',false),/<animate\b/);
+});

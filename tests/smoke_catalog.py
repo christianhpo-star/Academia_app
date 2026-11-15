@@ -91,10 +91,16 @@ with sync_playwright() as p:
     for width in [320,390]:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-        assert page.locator('#motion-dialog').evaluate(
-            "el=>el.scrollHeight<=el.clientHeight+2"
-        ),f'reduced-motion content clipped {width}'
-        page.locator('#motion-dialog').screenshot(path=str(shots/f'catalog-motion-reduced-{width}.png'))
+        dialog=page.locator('#motion-dialog')
+        footer=page.locator('#motion-dialog .motion-reduced')
+        footer.scroll_into_view_if_needed()
+        bbox=footer.bounding_box()
+        frame=dialog.bounding_box()
+        assert bbox and frame and bbox['y']+bbox['height']<=frame['y']+frame['height']+2, \
+            f'reduced-motion footer unreachable by modal scroll {width}'
+        assert dialog.evaluate("el=>el.scrollWidth<=el.clientWidth+2"), \
+            f'horizontal overflow inside modal {width}'
+        dialog.screenshot(path=str(shots/f'catalog-motion-reduced-{width}.png'))
     page.locator('#motion-dialog [data-action="motion-close"]').click()
     page.emulate_media(reduced_motion="no-preference")
     assert 'canadense' in page.locator('.catalog-browser-item:visible').inner_text().lower()

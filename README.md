@@ -1,5 +1,13 @@
 # FORJA
 
+## FORJA MOVE v4 — equipamentos reconhecíveis
+
+- Supino com barra e anilhas/colares, bancos reto/inclinado/declinado e supino em máquina sentada com encosto, pivô e pilha de pesos.
+- Mesa flexora, cadeira flexora e extensora exibem rolos móveis; leg press e hack apresentam trilhos e plataformas; abdutora e adutora exibem suportes próximos aos joelhos.
+- Puxada na polia usa puxador sem anilhas de barra olímpica. Miniaturas permanecem estáticas; as partes móveis acompanham a animação.
+- Homologação em 320/390px permite **rolagem vertical interna** no modal e testa a acessibilidade do rodapé.
+- Ilustrações são esquemáticas para reconhecimento, não orientações técnicas individualizadas. Nenhum dado de treino ou alimentação foi modificado.
+
 ## FORJA MOVE v3 — anatomia esquemática e trajetórias
 
 - Homologação de layout: 320, 390 e 768 px no Chromium; modo de movimento reduzido usa poses estáticas empilhadas até 420px para manter legibilidade. Controles Início, Fim e Pausar/Retomar ocupam a largura do painel no mobile; borda do visualizador utiliza #5D758A para contraste. QA em aparelho Android real ainda necessária.
