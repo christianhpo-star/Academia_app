@@ -28,6 +28,14 @@
 - Validação: `node --test tests/exercise-motion.test.cjs` e testes de interface existentes.
 
 
+## FORJA UX15 — objetivos e auditoria científica
+
+- Em **Ajustes → Objetivo e prazo**, escolha entre peso-alvo por data, recomposição, redução de gordura, ganho de massa ou manutenção.
+- Em **Evolução → Plano por objetivo**, confira ritmo matemático exigido, faixas de energia de partida e opções de treino e alimentação. **Nenhuma sugestão altera automaticamente sua ficha ou suas metas nutricionais.**
+- O algoritmo não prevê o peso em uma data nem calcula as calorias necessárias para cumprir o prazo; essas possibilidades exigem modelos dinâmicos e calibração longitudinal.
+- [Auditoria documental e científica](docs/evidence-audit-goals-ux15.md) · [Registro estruturado de evidências e heurísticas](docs/evidence-register.json).
+- Referências genéricas de alimentos não são declaradas como valores TBCA/TACO/USDA sem verificação por item.
+
 ## FORJA UX13 — histórico de atividade e recomendações
 
 - **Alimentação > Minhas metas**: após salvar um perfil completo, uma prévia com energia e macronutrientes é apresentada; os valores só se tornam metas quando o usuário aceita. Ajustes manuais e profissionais são preservados.

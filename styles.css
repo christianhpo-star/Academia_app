@@ -771,6 +771,15 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .health-month-row span{font-size:13px;line-height:1.5;color:var(--text)}
 .health-month-row small{font-size:12px;color:var(--muted)}
 
+/* FORJA UX15: transparent planning without false precision */
+.goal-plan-card{display:grid;gap:10px}
+.goal-plan-card .row-between{align-items:center;flex-wrap:wrap;gap:8px}
+.goal-plan-card .goal-status{font-size:12px;color:var(--lime);border:1px solid var(--line);padding:6px 9px;border-radius:8px}
+.goal-plan-card p{margin:2px 0;line-height:1.5}
+.goal-plan-card details>summary{min-height:44px;cursor:pointer;color:var(--blue);padding:10px 0}
+.goal-plan-card ul{padding-left:22px}
+#goal-mode{min-height:48px}
+
 
 /* FORJA MOVE v1 — accessible previews for exercise patterns. */
 .catalog-browser-main{display:flex;gap:12px;align-items:center;margin:13px 0}
