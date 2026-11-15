@@ -836,3 +836,21 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .motion-static-pair .motion-svg{aspect-ratio:360 / 220;width:100%;min-height:0}
 .motion-static-pair figcaption{font-weight:800;text-align:center;font-size:12px;color:#e4f8c5}
 @media(max-width:355px){.motion-static-pair{gap:5px;padding:5px}.motion-legend{font-size:10px;gap:6px 10px}}
+
+/* FORJA MOVE v3 mobile QA: accessible frames, full-width controls, legible static poses. */
+.motion-dialog{border-color:#5D758A}
+.motion-stage{border-color:#5D758A}
+.motion-controls{justify-content:stretch;justify-items:stretch;width:100%}
+.motion-phase-controls{width:100%}
+.motion-phase-controls button{width:100%}
+@media(max-width:420px){
+ .motion-static-pair{grid-template-columns:minmax(0,1fr);gap:8px;padding:7px}
+ .motion-static-pair figure{background:#162737;border:1px solid #5D758A;border-radius:12px;padding:6px}
+ .motion-static-pair .motion-svg{height:142px;max-height:142px}
+ .motion-static-pair figcaption{font-size:13px}
+}
+@media(max-width:355px){
+ .motion-static-pair{gap:6px;padding:5px}
+ .motion-static-pair figure{padding:4px}
+ .motion-static-pair .motion-svg{height:126px;max-height:126px}
+}

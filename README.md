@@ -2,6 +2,9 @@
 
 ## FORJA MOVE v3 — anatomia esquemática e trajetórias
 
+- Homologação de layout: 320, 390 e 768 px no Chromium; modo de movimento reduzido usa poses estáticas empilhadas até 420px para manter legibilidade. Controles Início, Fim e Pausar/Retomar ocupam a largura do painel no mobile; borda do visualizador utiliza #5D758A para contraste. QA em aparelho Android real ainda necessária.
+
+
 - Ilustração vetorial em tela cheia/modo ampliado, com conexão cabeça-pescoço, ombros, tronco e pelve, além de marcações de articulações envolvidas e trilha pontilhada ciano que representa a direção principal do movimento.
 - O modal dispõe de **Início**, **Fim**, **Pausar/Retomar** com controles reais do relógio SVG (SMIL nativo); selecionar uma posição pausa o movimento no instante correspondente.
 - Na preferência **Reduzir animações**, dois quadros estáticos de início/fim substituem a animação — sem elementos `<animate>` no modal. Miniaturas do catálogo continuam estáticas e leves.

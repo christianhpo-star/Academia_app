@@ -68,6 +68,17 @@ with sync_playwright() as p:
     page.locator('#motion-dialog [data-action="motion-pause"]').click()
     assert not page.evaluate('document.querySelector("#motion-dialog .motion-svg").animationsPaused()')
     assert page.locator('#motion-dialog [data-action="motion-pause"]').inner_text()=='Pausar animação'
+    for width in [320,390]:
+        page.set_viewport_size({'width':width,'height':844})
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'modal overflow {width}'
+        assert page.locator('#motion-dialog .motion-phase-controls').evaluate(
+            "(el)=>el.clientWidth >= el.closest('.motion-sheet').querySelector('.motion-stage').clientWidth-2"
+        ),f'phase controls not full width {width}'
+        assert page.locator('#motion-dialog .motion-phase-button').first.evaluate(
+            "el=>el.getBoundingClientRect().width>=100"
+        ),f'phase control too narrow {width}'
+    shots=ROOT/'screenshots';shots.mkdir(exist_ok=True)
+    page.locator('#motion-dialog').screenshot(path=str(shots/'catalog-motion-390.png'))
     page.locator('#motion-dialog [data-action="motion-close"]').click()
     assert not page.locator('#motion-dialog').is_visible()
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==before_motion
@@ -77,6 +88,13 @@ with sync_playwright() as p:
     assert page.locator('#motion-dialog svg animate').count()==0
     assert page.locator('#motion-dialog .motion-static-pair figcaption').all_text_contents()==['Início','Fim']
     assert page.locator('#motion-dialog [data-action="motion-pause"]').count()==0
+    for width in [320,390]:
+        page.set_viewport_size({'width':width,'height':844})
+        assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+        assert page.locator('#motion-dialog').evaluate(
+            "el=>el.scrollHeight<=el.clientHeight+2"
+        ),f'reduced-motion content clipped {width}'
+        page.locator('#motion-dialog').screenshot(path=str(shots/f'catalog-motion-reduced-{width}.png'))
     page.locator('#motion-dialog [data-action="motion-close"]').click()
     page.emulate_media(reduced_motion="no-preference")
     assert 'canadense' in page.locator('.catalog-browser-item:visible').inner_text().lower()

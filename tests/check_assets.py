@@ -43,15 +43,16 @@ for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
     assert expected in worker, f'missing asset version in offline worker: {asset}'
-motion_release = '20261115-motion3'
+motion_release = '20261115-motion4'
 for asset in ['styles.css', 'app.js', 'exercise-motion.js']:
     expected = f'./{asset}?v={motion_release}'
     assert expected in index, f'missing updated asset version in HTML: {asset}'
     assert expected in worker, f'missing updated asset version in offline worker: {asset}'
-assert f'forja-shell-v33-{motion_release}' in worker, 'offline cache not version-bumped'
+assert f'forja-shell-v34-{motion_release}' in worker, 'offline cache not version-bumped'
 assert f"./sw.js?v={motion_release}" in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'
 assert 'id="motion-dialog"' in index, 'motion viewer dialog must be available before app initialization'
+assert 'FORJA MOVE v3 mobile QA' in (root / 'styles.css').read_text(encoding='utf-8'), 'mobile motion visual adjustments missing'
 
 print('All deployment assets are valid.')
