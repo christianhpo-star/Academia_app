@@ -272,8 +272,8 @@
     if(grams!==null && (grams<=0||grams>10000))return null;
     const item={
       id:makeId('item'),foodId:food.id,label:food.name,
-      quantity:portionId==='custom'?grams:qty,
-      unit:portionId==='custom'?'g':'portion',grams,
+      quantity:portionId==='custom'&&food.estimate?1:portionId==='custom'?grams:qty,
+      unit:portionId==='custom'&&food.estimate?'portion':portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
       ...(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
       ...(food.estimate?{estimate:copyEstimate(food.estimate,portionId==='custom'?grams/food.estimateGramsBase:(portion?.factor??1))}:{}),
