@@ -52,6 +52,16 @@ with sync_playwright() as p:
     initial_count=page.locator('.catalog-browser-item').count()
     page.locator('#catalog-search').fill('canadense')
     assert page.locator('.catalog-browser-item:visible').count()==1
+    # Variant preview describes a decline bench, not a generic horizontal one.
+    before_motion=page.evaluate('localStorage.getItem("forja.academia.draft.v1")')
+    page.locator('[data-action="motion-open"][data-ex="supino-canadense"]').click()
+    assert page.locator('#motion-dialog').is_visible()
+    assert page.locator('#motion-dialog .motion-variant-chip').inner_text()=='Banco declinado · barra'
+    assert page.locator('#motion-dialog svg').get_attribute('data-motion-id')=='supino-canadense'
+    assert page.locator('#motion-dialog svg animate').count()>0
+    page.locator('#motion-dialog [data-action="motion-close"]').click()
+    assert not page.locator('#motion-dialog').is_visible()
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==before_motion
     assert 'canadense' in page.locator('.catalog-browser-item:visible').inner_text().lower()
     page.locator('#catalog-search').fill('nao-existe-exercicio')
     assert page.locator('.catalog-browser-item:visible').count()==0
