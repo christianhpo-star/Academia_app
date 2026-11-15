@@ -99,6 +99,7 @@
     const food=find(foodId),qty=Number(count);
     if(!food || !Number.isFinite(qty) || qty<=0 || qty>10000 || typeof makeId!=='function')return null;
     const portion=food.portions.find(row=>row.id===portionId);
+    if(portionId==='custom' && food.nutrientsPerServing)return null;
     if(portionId!=='custom'&&!portion)return null;
     const grams=portionId==='custom'?qty:(portion.grams==null?null:Math.round(qty*portion.grams*100)/100);
     if(grams!==null && (grams<=0||grams>10000))return null;
