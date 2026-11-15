@@ -586,3 +586,7 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muay-activity-more{margin-top:11px}
 .muay-extra-presets .muay-presets{margin-bottom:0}
 @media(max-width:350px){.muay-quick-grid{grid-template-columns:1fr}.muay-featured{grid-template-columns:1fr}.history-content{padding:11px}.history-summary{padding:12px}}
+
+.muay-guidance>summary{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.muay-guidance>summary strong{display:block;font-size:13px;margin-bottom:5px}
+.muay-guidance>summary small{display:block;color:#c0d2dc;font-size:11px;line-height:1.5}
