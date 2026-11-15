@@ -50,6 +50,14 @@ with sync_playwright() as p:
     saved=state();entry=saved['nutrition']['entries'][0]
     assert entry['date']==day and entry['mealType']=='lunch'
     assert len(entry['items'])==2 and entry['items'][0]['grams'] is None
+    assert page.locator('.nd-food-thumb').count()>=2
+    assert page.locator('.nd-food-row').count()>=2
+    assert page.locator('.nd-food-macros').count()>=2
+    assert page.locator('.nd-food-macros').first.get_attribute('aria-label').startswith('Proteínas:')
+    assert page.locator('.nd-ring-goal').count()==1, 'Calorie target must be outside the ring'
+    assert page.locator('.nd-energy .nd-ring-inner strong').count()==1
+    assert page.locator('.nd-energy .nd-ring-inner').inner_text().count('de ')==0
+
     assert entry['items'][0]['nutrientsPerServing']['proteinG']==23
     # Compound editing keeps packaged units and IDs.
     page.locator('.nd-entry summary').first.click()
@@ -113,6 +121,14 @@ with sync_playwright() as p:
     for width in [320,390,768]:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+        assert page.evaluate("""() => {
+          const ring=document.querySelector('.nd-energy .nd-ring');
+          const value=ring?.querySelector('strong');
+          if(!ring||!value)return false;
+          const r=ring.getBoundingClientRect(),v=value.getBoundingClientRect();
+          return v.left>=r.left&&v.right<=r.right&&v.top>=r.top&&v.bottom<=r.bottom;
+        }"""), f'energy label overflows circular ring at {width}px'
+
         if width in (320,390):
             assert page.evaluate("document.querySelector('.nd-meal').getBoundingClientRect().top < document.querySelector('.bottom-nav').getBoundingClientRect().top"),f'first meal below visible viewport at {width}px'
             assert page.evaluate("[...document.querySelectorAll('#nav .nav-link span')].every(el => el.scrollWidth <= el.clientWidth)"),f'bottom nav label clipped at {width}px'
