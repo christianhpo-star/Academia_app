@@ -133,7 +133,9 @@ function svg(id, animated=false, phase='start', detail=false){
  if(p.w==='bar'){
   const [w1,w2]=['W','W2'].map(key=>point(a,key)),[v1,v2]=['W','W2'].map(key=>point(b,key));
   const y=Math.min(w1[1],w2[1]),yy=Math.min(v1[1],v2[1]);
-  parts.push(`<line class="m-bar" x1="${w1[0]-13}" y1="${y}" x2="${w2[0]+13}" y2="${y}">${ani('x1',w1[0]-13,v1[0]-13,animated)}${ani('x2',w2[0]+13,v2[0]+13,animated)}${ani('y1',y,yy,animated)}${ani('y2',y,yy,animated)}</line>`);
+  const x0=Math.min(w1[0],w2[0])-20,x1=Math.max(w1[0],w2[0])+20;
+  const xx0=Math.min(v1[0],v2[0])-20,xx1=Math.max(v1[0],v2[0])+20;
+  parts.push(`<line class="m-bar" x1="${x0}" y1="${y}" x2="${x1}" y2="${y}">${ani('x1',x0,xx0,animated)}${ani('x2',x1,xx1,animated)}${ani('y1',y,yy,animated)}${ani('y2',y,yy,animated)}</line>`);
  }
  if(p.w==='ankle'){
   const [x,y]=point(a,'A'),[xx,yy]=point(b,'A');

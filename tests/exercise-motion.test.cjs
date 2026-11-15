@@ -66,7 +66,7 @@ test('v3 renders labeled articulated body and movement trajectories only in deta
   assert.match(svg,/m-joint-active/);
   assert.match(svg,/m-motion-track/);
   assert.match(svg,/marker-end=/);
-  assert.doesNotMatch(motion.thumb('supino-canadense'),/m-motion-track/);
+  assert.doesNotMatch(motion.thumb('supino-canadense'),/<path class="m-motion-track"/);
 });
 test('v3 start and final poses are distinct static vector illustrations with different markers',()=>{
   const a=motion.svg('flexora-c',false,'start',true),b=motion.svg('flexora-c',false,'end',true);
@@ -90,4 +90,12 @@ test('v3 animated viewer has explicit stage, accessible phase selection and lege
   assert.match(v,/data-action="motion-pause"/);
   assert.match(v,/motion-legend/);
   assert.match(v,/m-motion-track/);
+});
+
+test('v3 bar endpoints span both wrists in side-view supino without inversion',()=>{
+  const svg=motion.svg('supino-canadense',false);
+  const match=svg.match(/<line class="m-bar" x1="([\d.]+)" y1="[^"]+" x2="([\d.]+)"/);
+  assert.ok(match,'bar is present');
+  assert.ok(Number(match[1]) < Number(match[2]),'bar segment must not be inverted');
+  assert.ok(Number(match[2]) - Number(match[1]) >= 50,'bar must be visually identifiable');
 });
