@@ -89,8 +89,8 @@ def main():
         page.on("pageerror",lambda e:errors.append(str(e)))
         page.goto(origin,wait_until="domcontentloaded")
         go_catalog(page)
-        page.evaluate("() => navigator.serviceWorker.ready.then(() => true)")
-        page.wait_for_function("navigator.serviceWorker.controller !== null",timeout=25000)
+        # Never wait on an unbounded serviceWorker.ready promise: fail with a clear timeout.
+        page.wait_for_function("navigator.serviceWorker && navigator.serviceWorker.controller !== null",timeout=30000)
 
         state_before=page.evaluate("""() => ({
           state:localStorage.getItem('forja.academia.v1'),
