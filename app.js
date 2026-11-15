@@ -841,7 +841,7 @@
   function renderBodyMeasures(){
     const records=BODY.recent(state.bodyMeasurements||[]);
     const current=records[0]||null, history=ui.bodyView==='history';
-    const edit=ui.bodyEditDate?BODY.findDay(records,ui.bodyEditDate):current;
+    const edit=BODY.findDay(records,ui.bodyEditDate||today());
     const formDay=ui.bodyEditDate||today();
     return '<div class="body-page">'+
       '<button type="button" class="button-inline body-back" data-action="body-back">← Voltar à evolução</button>'+
