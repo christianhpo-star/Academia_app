@@ -59,9 +59,26 @@ with sync_playwright() as p:
     assert page.locator('#motion-dialog .motion-variant-chip').inner_text()=='Banco declinado · barra'
     assert page.locator('#motion-dialog svg').get_attribute('data-motion-id')=='supino-canadense'
     assert page.locator('#motion-dialog svg animate').count()>0
+    assert page.locator('#motion-dialog .m-joint-active').count()>0
+    assert page.locator('#motion-dialog .m-motion-track').count()>0
+    page.locator('#motion-dialog [data-action="motion-phase"][data-phase="end"]').click()
+    assert page.locator('#motion-dialog [data-action="motion-phase"][data-phase="end"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('#motion-dialog [data-action="motion-pause"]').inner_text()=='Retomar animação'
+    assert page.evaluate('document.querySelector("#motion-dialog .motion-svg").animationsPaused()')
+    page.locator('#motion-dialog [data-action="motion-pause"]').click()
+    assert not page.evaluate('document.querySelector("#motion-dialog .motion-svg").animationsPaused()')
+    assert page.locator('#motion-dialog [data-action="motion-pause"]').inner_text()=='Pausar animação'
     page.locator('#motion-dialog [data-action="motion-close"]').click()
     assert not page.locator('#motion-dialog').is_visible()
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==before_motion
+    page.emulate_media(reduced_motion="reduce")
+    page.locator('[data-action="motion-open"][data-ex="supino-canadense"]').click()
+    assert page.locator('#motion-dialog .motion-static-pair .motion-svg').count()==2
+    assert page.locator('#motion-dialog svg animate').count()==0
+    assert page.locator('#motion-dialog .motion-static-pair figcaption').all_text_contents()==['Início','Fim']
+    assert page.locator('#motion-dialog [data-action="motion-pause"]').count()==0
+    page.locator('#motion-dialog [data-action="motion-close"]').click()
+    page.emulate_media(reduced_motion="no-preference")
     assert 'canadense' in page.locator('.catalog-browser-item:visible').inner_text().lower()
     page.locator('#catalog-search').fill('nao-existe-exercicio')
     assert page.locator('.catalog-browser-item:visible').count()==0

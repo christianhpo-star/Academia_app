@@ -90,12 +90,13 @@ function arcBetween(start,end,pivot){
  const cy=Math.min(207,Math.max(13,2*my-(sy+ey)/2));
  return `M ${round1(sx)} ${round1(sy)} Q ${round1(cx)} ${round1(cy)} ${round1(ex)} ${round1(ey)}`;
 }
-function detailLayers(id,fam,a,b,animated){
+function detailLayers(id,fam,a,b,animated,phase='start'){
  const config=MOVEMENT_FOCUS[fam];
  if(!config)return {paths:"",joints:""};
  const active=new Set(config.mark);
- const markerId="m-arrow-"+id;
- const curves=config.trace.map(([end,pivot])=>arcBetween(point(a,end),point(b,end),point(a,pivot))).filter(Boolean);
+ const markerId="m-arrow-"+id+"-"+phase;
+ const original=profileFor(id,fam);
+ const curves=config.trace.map(([end,pivot])=>arcBetween(point(original.a,end),point(original.b,end),point(original.a,pivot))).filter(Boolean);
  const paths=curves.length?`<defs><marker id="${markerId}" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto" viewBox="0 0 6 6"><path d="M0 0L6 3L0 6" fill="none" stroke="#80beff" stroke-width="1.5" stroke-linecap="round"/></marker></defs><g class="m-trajectory-layer" aria-hidden="true">${curves.map(d=>`<path class="m-motion-track" d="${d}" marker-end="url(#${markerId})"/>`).join("")}</g>`:"";
  const nodes=JOINTS.filter(j=>j!=="H").map(j=>{
   const [x,y]=point(a,j),[xx,yy]=point(b,j),selected=active.has(j);
@@ -107,7 +108,7 @@ function svg(id, animated=false, phase='start', detail=false){
  const fam=EXERCISES[id];if(!fam)return '';
  const p=profileFor(id,fam);if(!p)return '';
  const a=phase==='end'&&!animated?p.b:p.a,b=p.b, title=variantLabel(id)||TITLES[fam];
- const overlay=detail?detailLayers(id,fam,a,b,animated):{paths:'',joints:''};
+ const overlay=detail?detailLayers(id,fam,a,b,animated,phase):{paths:'',joints:''};
  const parts=[
   segment(a,b,'H','S','m-neck',7,animated),
   segment(a,b,'S','S2','m-shoulder-band',8,animated),

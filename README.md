@@ -1,5 +1,14 @@
 # FORJA
 
+## FORJA MOVE v3 — anatomia esquemática e trajetórias
+
+- Ilustração vetorial em tela cheia/modo ampliado, com conexão cabeça-pescoço, ombros, tronco e pelve, além de marcações de articulações envolvidas e trilha pontilhada ciano que representa a direção principal do movimento.
+- O modal dispõe de **Início**, **Fim**, **Pausar/Retomar** com controles reais do relógio SVG (SMIL nativo); selecionar uma posição pausa o movimento no instante correspondente.
+- Na preferência **Reduzir animações**, dois quadros estáticos de início/fim substituem a animação — sem elementos `<animate>` no modal. Miniaturas do catálogo continuam estáticas e leves.
+- Os 51 IDs e as 18 variantes da v2 são preservados; sem alterações no histórico ou na gravação dos dados. Recursos animados permanecem locais para o uso offline.
+- As trajetórias são curvas esquemáticas de identificação do padrão motor, não análise biomecânica ou prescrição técnica individual. Ao interpretar variações, confira posição do aparelho e a orientação profissional.
+
+
 ## FORJA MOVE v2 — identificação de variações
 
 - Os 51 IDs do catálogo continuam associados a 19 famílias, com **18 variantes de geometria, equipamento, direção ou etiqueta**.

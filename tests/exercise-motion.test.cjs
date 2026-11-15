@@ -57,3 +57,37 @@ test('smooth loop remains optional for reduced motion and never changes exercise
   assert.doesNotMatch(motion.viewer('supino-canadense','Canadense',false),/<animate\b/);
   assert.match(motion.viewer('flexora-d','Flexora',true),/confirme a máquina escolhida/);
 });
+
+test('v3 renders labeled articulated body and movement trajectories only in detail views',()=>{
+  const svg=motion.svg('supino-canadense',true,'start',true);
+  assert.match(svg,/m-neck/);
+  assert.match(svg,/m-shoulder-band/);
+  assert.match(svg,/data-joint="E"/);
+  assert.match(svg,/m-joint-active/);
+  assert.match(svg,/m-motion-track/);
+  assert.match(svg,/marker-end=/);
+  assert.doesNotMatch(motion.thumb('supino-canadense'),/m-motion-track/);
+});
+test('v3 start and final poses are distinct static vector illustrations with different markers',()=>{
+  const a=motion.svg('flexora-c',false,'start',true),b=motion.svg('flexora-c',false,'end',true);
+  assert.notEqual(a,b);
+  assert.match(a,/id="m-arrow-flexora-c-start"/);
+  assert.match(b,/id="m-arrow-flexora-c-end"/);
+  assert.match(a,/m-motion-track/);
+  assert.match(b,/m-motion-track/);
+  assert.doesNotMatch(a,/<animate\b/);
+  assert.doesNotMatch(b,/<animate\b/);
+  const staticViewer=motion.viewer('flexora-c','Mesa flexora',false);
+  assert.match(staticViewer,/motion-static-pair/);
+  assert.match(staticViewer,/>Início</);
+  assert.match(staticViewer,/>Fim</);
+  assert.doesNotMatch(staticViewer,/data-action="motion-pause"/);
+});
+test('v3 animated viewer has explicit stage, accessible phase selection and legend',()=>{
+  const v=motion.viewer('supino-canadense','Supino canadense',true);
+  assert.match(v,/data-action="motion-phase" data-phase="start"/);
+  assert.match(v,/data-action="motion-phase" data-phase="end"/);
+  assert.match(v,/data-action="motion-pause"/);
+  assert.match(v,/motion-legend/);
+  assert.match(v,/m-motion-track/);
+});

@@ -1307,12 +1307,41 @@
       if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');
       return;
     }
+    if(action==='motion-phase'){
+      const dialog=document.getElementById('motion-dialog');
+      const svg=dialog?.querySelector('.motion-stage > .motion-svg');
+      const phase=btn.dataset.phase;
+      if(!svg||!['start','end'].includes(phase)||typeof svg.pauseAnimations!=='function'
+         ||typeof svg.setCurrentTime!=='function')return;
+      svg.pauseAnimations();
+      svg.setCurrentTime(phase==='end'?1.4:0);
+      dialog.querySelectorAll('.motion-phase-button').forEach(button=>
+        button.setAttribute('aria-pressed',String(button===btn)));
+      const play=dialog.querySelector('.motion-play-button');
+      if(play){play.textContent='Retomar animação';play.setAttribute('aria-pressed','true');}
+      const status=dialog.querySelector('#motion-state');
+      if(status)status.textContent=phase==='end'?'Posição final':'Posição inicial';
+      return;
+    }
     if(action==='motion-pause'){
-      const svg=document.querySelector('#motion-dialog .motion-svg');
+      const dialog=document.getElementById('motion-dialog');
+      const svg=dialog?.querySelector('.motion-stage > .motion-svg');
       if(!svg||typeof svg.pauseAnimations!=='function')return;
       const paused=btn.getAttribute('aria-pressed')==='true';
-      if(paused){svg.unpauseAnimations();btn.textContent='Pausar animação';btn.setAttribute('aria-pressed','false');}
-      else{svg.pauseAnimations();btn.textContent='Retomar animação';btn.setAttribute('aria-pressed','true');}
+      const status=dialog.querySelector('#motion-state');
+      if(paused){
+        svg.setCurrentTime(0);
+        svg.unpauseAnimations();
+        btn.textContent='Pausar animação';
+        btn.setAttribute('aria-pressed','false');
+        dialog.querySelectorAll('.motion-phase-button').forEach(button=>button.setAttribute('aria-pressed','false'));
+        if(status)status.textContent='Movimento em repetição';
+      }else{
+        svg.pauseAnimations();
+        btn.textContent='Retomar animação';
+        btn.setAttribute('aria-pressed','true');
+        if(status)status.textContent='Animação pausada';
+      }
       return;
     }
     if(action==='nutrition-open'||action==='nutrition-goals'){
@@ -1759,7 +1788,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-motion2',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-motion3',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

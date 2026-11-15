@@ -810,3 +810,20 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .motion-variant-label{display:inline-flex;max-width:100%;font-size:10px;line-height:1.3;font-weight:800;color:#d9f2b6;background:#263d34;border:1px solid #4a6b53;border-radius:999px;padding:4px 8px;overflow-wrap:anywhere}
 .motion-variant-chip{display:inline-flex;justify-self:start;color:#e2f6c2;background:#243a30;border:1px solid #49694e;border-radius:999px;font-size:12px;line-height:1.4;font-weight:800;padding:6px 11px}
 .motion-dialog .motion-variant-chip{margin-top:-2px}
+
+/* FORJA MOVE v3: legible trajectories, selectable start/end positions and reduced motion. */
+.motion-legend{display:flex;flex-wrap:wrap;align-items:center;gap:7px 16px;padding:1px 2px;font-size:11px;line-height:1.4;color:#c6dce6}
+.motion-legend span{display:inline-flex;gap:7px;align-items:center}
+.motion-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#c5f56b;box-shadow:0 0 0 2px #284a36}
+.motion-dash{display:inline-block;width:20px;border-top:3px dashed #80beff}
+.motion-controls{display:grid;gap:9px}
+.motion-phase-controls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.motion-phase-controls button{min-width:0;min-height:44px;font-size:13px}
+.motion-phase-controls .motion-play-button{grid-column:1 / -1}
+.motion-phase-button[aria-pressed="true"]{background:#29432f;border-color:#c5f56b;color:#edffd2}
+.motion-state{display:block;color:#b9d8e3;font-size:11px;min-height:17px}
+.motion-static-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;padding:10px}
+.motion-static-pair figure{display:flex;flex-direction:column;gap:5px;margin:0;min-width:0}
+.motion-static-pair .motion-svg{aspect-ratio:360 / 220;width:100%;min-height:0}
+.motion-static-pair figcaption{font-weight:800;text-align:center;font-size:12px;color:#e4f8c5}
+@media(max-width:355px){.motion-static-pair{gap:5px;padding:5px}.motion-legend{font-size:10px;gap:6px 10px}}
