@@ -89,8 +89,21 @@ def main():
         page.on("pageerror",lambda e:errors.append(str(e)))
         page.goto(origin,wait_until="domcontentloaded")
         go_catalog(page)
-        # Never wait on an unbounded serviceWorker.ready promise: fail with a clear timeout.
-        page.wait_for_function("navigator.serviceWorker && navigator.serviceWorker.controller !== null",timeout=30000)
+        print("VIDEO QA: first online load",flush=True)
+        page.wait_for_load_state("load",timeout=25000)
+        # A fresh PWA install may need one online reload to become controlled.
+        ready=page.evaluate("""async () => {
+          if(!navigator.serviceWorker)throw Error('Service worker unavailable');
+          const r=await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise((_,reject)=>setTimeout(()=>reject(Error('Service worker activation timeout')),15000))
+          ]);
+          return {scope:r.scope,state:r.active?.state};
+        }""")
+        print("VIDEO QA: service worker",ready,flush=True)
+        page.reload(wait_until="load",timeout=25000)
+        go_catalog(page)
+        page.wait_for_function("navigator.serviceWorker && navigator.serviceWorker.controller !== null",timeout=15000)
 
         state_before=page.evaluate("""() => ({
           state:localStorage.getItem('forja.academia.v1'),
