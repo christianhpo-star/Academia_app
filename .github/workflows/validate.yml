@@ -46,6 +46,7 @@ jobs:
           python3 tests/smoke_focus.py
           python3 tests/smoke_catalog.py
           python3 tests/smoke_body.py
+          python3 tests/smoke_history.py
       - name: Upload isolated PR source for diagnostics
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
