@@ -67,7 +67,7 @@
       '<th scope="col"><abbr title="Fibras em gramas">Fib (g)</abbr></th></tr></thead>'+
       '<tbody>'+e.items.map(item=>foodRow(item,e.date)).join('')+'</tbody></table></div>'+
       '<p class="nd-food-legend">— = valor não informado. Nome completo disponível ao consultar cada alimento.</p>'+
-      (estimate.estimatedItems?'<div class="callout warn">Estimativa de baixa confiança: '+fmt(estimate.totals.central.energyKcal)+
+      (estimate.estimatedItems?'<div class="callout warn">Estimativa de confiança baixa: '+fmt(estimate.totals.central.energyKcal)+
         ' kcal (faixa '+fmt(estimate.totals.low.energyKcal)+'–'+fmt(estimate.totals.high.energyKcal)+
         '). Separada dos totais registrados.<details><summary>Como foi estimado</summary>'+
         e.items.filter(i=>i.estimate).map(i=>'<p class="small">'+esc(i.estimate.assumptions)+'</p>').join('')+'</details></div>':'')+
