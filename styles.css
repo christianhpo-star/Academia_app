@@ -799,3 +799,14 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .reminder-settings p{margin:6px 0;line-height:1.55}
 .reminder-pref-state{border:1px solid var(--line);border-radius:20px;font-size:11px;padding:7px 9px;white-space:nowrap;color:var(--muted)}
 @media(max-width:350px){.reminder-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.reminder-panel .reminder-action{min-width:0}.reminder-panel .reminder-action:first-child{grid-column:1/-1}}
+
+/* FORJA MOVE v5: verified external 3D references, no unlicensed media copied. */
+.forja-ref3d-region{display:flex;flex-wrap:wrap;gap:5px 12px;align-items:center;margin:8px 0 3px}
+.forja-ref3d-region small{color:#b6cada;font-size:11px;line-height:1.4}
+.forja-ref3d-link{display:inline-flex;gap:7px;align-items:center;justify-content:center;min-height:44px;padding:8px 12px;border-radius:12px;color:#dfffab;background:#1d302c;border:1px solid #668e75;font-size:12px;font-weight:800;text-decoration:none;line-height:1.25;text-align:center}
+.forja-ref3d-link:focus-visible{outline:3px solid #80beff;outline-offset:3px}
+.forja-ref3d-link:active{transform:translateY(1px)}
+.forja-ref3d-actions{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin-top:8px}
+.forja-ref3d-actions .plan-exercise-edit{margin-top:0;min-height:44px}
+.ref3d-arrow{font-size:15px;color:#80beff}
+@media(max-width:365px){.forja-ref3d-actions{align-items:stretch}.forja-ref3d-actions>*{flex:1 1 140px}.forja-ref3d-link{min-width:0}}

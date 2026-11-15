@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
 HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
+FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','exercise-references.js','app.js']
 def start(context,stored,errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
@@ -35,6 +35,11 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
     assert page.locator('.catalog-browser-item').count()>=40
     assert page.locator('#catalog-search').count()==1
+    ref=page.locator('.catalog-browser-item [href="https://fitlapse.com/en/exercise/barbell-decline-bench-press/"]')
+    assert ref.count()==1
+    assert ref.get_attribute('target')=='_blank'
+    assert 'noopener noreferrer' in ref.get_attribute('rel')
+    assert page.locator('.catalog-browser-item video, .catalog-browser-item iframe').count()==0
     assert page.locator('#catalog-count').count()==1
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
     initial_count=page.locator('.catalog-browser-item').count()
