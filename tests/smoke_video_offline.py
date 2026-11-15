@@ -87,10 +87,20 @@ def main():
         errors=[]
         page=context.new_page()
         page.on("pageerror",lambda e:errors.append(str(e)))
+        page.on("console",lambda msg: print("VIDEO QA browser console:",msg.type,msg.text,flush=True) if msg.type in ["warning","error"] else None)
+        page.on("requestfailed",lambda req: print("VIDEO QA request failed:",req.url,req.failure,flush=True))
+        context.on("serviceworker",lambda worker: print("VIDEO QA registered worker:",worker.url,flush=True))
         page.goto(origin,wait_until="domcontentloaded")
         go_catalog(page)
         print("VIDEO QA: first online load",flush=True)
         page.wait_for_load_state("load",timeout=25000)
+        diagnostics=page.evaluate("""async () => {
+          const regs=await navigator.serviceWorker.getRegistrations();
+          return {origin:location.origin,secure:isSecureContext,
+            workers:regs.map(r=>({scope:r.scope,installing:r.installing?.state,waiting:r.waiting?.state,active:r.active?.state})),
+            controller:navigator.serviceWorker.controller?.state||null};
+        }""")
+        print("VIDEO QA: before readiness",diagnostics,flush=True)
         # A fresh PWA install may need one online reload to become controlled.
         ready=page.evaluate("""async () => {
           if(!navigator.serviceWorker)throw Error('Service worker unavailable');
