@@ -104,11 +104,52 @@ function detailLayers(id,fam,a,b,animated,phase='start'){
  }).join("");
  return {paths,joints:`<g class="m-joints" aria-hidden="true">${nodes}</g>`};
 }
+const BENCHES={"supino-canadense":"<path class=\"m-bench-pad\" d=\"M 92 166 L 197 115 L 202 125 L 97 176 Z\"/><path class=\"m-bench-frame\" d=\"M 116 166 L 112 197 M 180 132 L 188 192 M 92 196 L 225 196\"/><rect class=\"m-foam\" x=\"221\" y=\"179\" width=\"29\" height=\"12\" rx=\"6\"/>","supino-inclinado":"<path class=\"m-bench-pad\" d=\"M 98 105 L 182 167 L 175 175 L 91 113 Z\"/><path class=\"m-bench-frame\" d=\"M 180 168 L 181 197 M 119 126 L 101 185 M 99 196 L 226 196\"/>","supino-barra":"<rect class=\"m-bench-pad\" x=\"78\" y=\"141\" width=\"132\" height=\"12\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 95 151 L 91 197 M 188 152 L 193 197 M 79 197 H 211\"/>","supino-halteres":"<rect class=\"m-bench-pad\" x=\"78\" y=\"141\" width=\"132\" height=\"12\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 95 151 L 91 197 M 188 152 L 193 197 M 79 197 H 211\"/>","supino-maquina":"<path class=\"m-bench-pad\" d=\"M 144 85 L 153 84 L 153 146 L 143 146 Z\"/><rect class=\"m-bench-pad\" x=\"152\" y=\"138\" width=\"67\" height=\"10\" rx=\"4\"/><path class=\"m-bench-frame\" d=\"M 159 146 V 195 H 235 M 290 39 V 195 H 264 M 247 76 H 285\"/><circle class=\"m-pivot\" cx=\"268\" cy=\"91\" r=\"11\"/><rect class=\"m-stack\" x=\"282\" y=\"120\" width=\"18\" height=\"46\" rx=\"5\"/><path class=\"m-stack-line\" d=\"M 284 134 H 298 M 284 145 H 298 M 284 156 H 298\"/>","flexora-c":"<rect class=\"m-bench-pad\" x=\"70\" y=\"134\" width=\"166\" height=\"14\" rx=\"7\"/><path class=\"m-bench-frame\" d=\"M 93 148 V 197 M 219 147 V 197 M 72 197 H 250 M 306 65 V 194 H 277 M 275 99 H 307\"/>","flexora-sentada":"<rect class=\"m-bench-pad\" x=\"123\" y=\"95\" width=\"12\" height=\"56\" rx=\"5\"/><rect class=\"m-bench-pad\" x=\"127\" y=\"143\" width=\"103\" height=\"12\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 144 155 V 196 H 239 M 285 70 V 195 H 269 M 204 155 V 185\"/><circle class=\"m-pivot\" cx=\"219\" cy=\"152\" r=\"9\"/>","flexora-d":"<rect class=\"m-bench-pad\" x=\"123\" y=\"95\" width=\"12\" height=\"56\" rx=\"5\"/><rect class=\"m-bench-pad\" x=\"127\" y=\"143\" width=\"103\" height=\"12\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 144 155 V 196 H 239 M 285 70 V 195 H 269 M 204 155 V 185\"/><circle class=\"m-pivot\" cx=\"219\" cy=\"152\" r=\"9\"/>","extensora":"<rect class=\"m-bench-pad\" x=\"123\" y=\"97\" width=\"12\" height=\"52\" rx=\"5\"/><rect class=\"m-bench-pad\" x=\"128\" y=\"143\" width=\"98\" height=\"11\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 142 154 V 195 H 255 M 292 88 V 195 H 276\"/><circle class=\"m-pivot\" cx=\"214\" cy=\"150\" r=\"9\"/>","extensora-d":"<rect class=\"m-bench-pad\" x=\"123\" y=\"97\" width=\"12\" height=\"52\" rx=\"5\"/><rect class=\"m-bench-pad\" x=\"128\" y=\"143\" width=\"98\" height=\"11\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 142 154 V 195 H 255 M 292 88 V 195 H 276\"/><circle class=\"m-pivot\" cx=\"214\" cy=\"150\" r=\"9\"/>","leg-press":"<path class=\"m-bench-pad\" d=\"M 80 112 L 126 155 L 138 147 L 93 104 Z\"/><path class=\"m-bench-frame\" d=\"M 120 148 L 154 176 L 198 176 M 205 197 L 312 42 M 229 197 L 333 49 M 222 195 H 299\"/><circle class=\"m-machine-plate\" cx=\"295\" cy=\"113\" r=\"17\"/><circle class=\"m-machine-plate-inner\" cx=\"295\" cy=\"113\" r=\"6\"/>","agachamento-hack":"<path class=\"m-bench-frame\" d=\"M 125 196 L 240 34 M 154 196 L 269 34 M 122 196 H 273 M 203 59 H 266\"/><path class=\"m-bench-pad\" d=\"M 151 84 L 207 131 L 216 121 L 160 74 Z\"/><circle class=\"m-machine-plate\" cx=\"250\" cy=\"94\" r=\"17\"/><circle class=\"m-machine-plate-inner\" cx=\"250\" cy=\"94\" r=\"6\"/>","abdutora":"<rect class=\"m-bench-pad\" x=\"120\" y=\"96\" width=\"13\" height=\"52\" rx=\"5\"/><rect class=\"m-bench-pad\" x=\"123\" y=\"141\" width=\"108\" height=\"12\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 148 155 V 197 H 253 M 291 78 V 197 H 277\"/><circle class=\"m-pivot\" cx=\"182\" cy=\"149\" r=\"8\"/>","cadeira-adutora":"<rect class=\"m-bench-pad\" x=\"120\" y=\"96\" width=\"13\" height=\"52\" rx=\"5\"/><rect class=\"m-bench-pad\" x=\"123\" y=\"141\" width=\"108\" height=\"12\" rx=\"6\"/><path class=\"m-bench-frame\" d=\"M 148 155 V 197 H 253 M 291 78 V 197 H 277\"/><circle class=\"m-pivot\" cx=\"182\" cy=\"149\" r=\"8\"/>"};
+function machineHardware(id,fam,a,b,animated){
+ let background=BENCHES[id]||'';
+ if(fam==='puxada')background='<path class="m-bench-frame" d="M 110 38 V 201 M 110 40 H 264 V 200 M 149 151 H 212 M 163 152 V 195"/><rect class="m-bench-pad" x="148" y="148" width="67" height="10" rx="5"/>';
+ if(fam==='remada'&&id==='remada-articulada')background='<rect class="m-bench-pad" x="142" y="144" width="75" height="11" rx="5"/><path class="m-bench-frame" d="M 162 153 V 195 M 280 64 V 192 M 276 92 H 245"/>';
+ const dynamic=[];
+ if(['flexora-c','flexora-sentada','flexora-d','extensora','extensora-d'].includes(id)){
+  const [x,y]=point(a,'A'),[xx,yy]=point(b,'A');
+  dynamic.push(`<rect class="m-machine-roller" x="${x-14}" y="${y-10}" width="28" height="20" rx="10">${ani('x',x-14,xx-14,animated)}${ani('y',y-10,yy-10,animated)}</rect>`);
+ }
+ if(['abdutora','cadeira-adutora'].includes(id)){
+  for(const joint of ['K','K2']){
+   const [x,y]=point(a,joint),[xx,yy]=point(b,joint);
+   dynamic.push(`<rect class="m-knee-pad" x="${x-8}" y="${y-7}" width="16" height="14" rx="5">${ani('x',x-8,xx-8,animated)}${ani('y',y-7,yy-7,animated)}</rect>`);
+  }
+ }
+ if(['leg-press','panturrilha-leg'].includes(id)){
+  const [x,y]=point(a,'A'),[xx,yy]=point(b,'A');
+  dynamic.push(`<line class="m-sled-platform" x1="${x-13}" y1="${y+24}" x2="${x+13}" y2="${y-24}">${ani('x1',x-13,xx-13,animated)}${ani('y1',y+24,yy+24,animated)}${ani('x2',x+13,xx+13,animated)}${ani('y2',y-24,yy-24,animated)}</line>`);
+ }
+ return `<g class="m-hardware" aria-hidden="true">${background}${dynamic.join('')}</g>`;
+}
+function renderBarGrip(id,fam,p,a,b,animated){
+ if(p.w!=='bar')return '';
+ const [w1,w2]=['W','W2'].map(key=>point(a,key)),[v1,v2]=['W','W2'].map(key=>point(b,key));
+ const y=Math.min(w1[1],w2[1]),yy=Math.min(v1[1],v2[1]);
+ const center=(w1[0]+w2[0])/2, centerB=(v1[0]+v2[0])/2;
+ const span=fam==='supino'?144:Math.max(106,Math.abs(w1[0]-w2[0])+48);
+ const x0=Math.max(12,center-span/2),x1=Math.min(348,center+span/2);
+ const x0b=Math.max(12,centerB-span/2),x1b=Math.min(348,centerB+span/2);
+ const bar=`<line class="m-bar" x1="${x0}" y1="${y}" x2="${x1}" y2="${y}">${ani('x1',x0,x0b,animated)}${ani('x2',x1,x1b,animated)}${ani('y1',y,yy,animated)}${ani('y2',y,yy,animated)}</line>`;
+ const endcaps=[x0,x1];
+ if(fam!=='supino')return `<g class="m-pulley-grip" aria-hidden="true">${bar}${endcaps.map((x,i)=>`<circle class="m-grip-cap" cx="${x}" cy="${y}" r="5">${ani('cx',x,i?x1b:x0b,animated)}${ani('cy',y,yy,animated)}</circle>`).join('')}</g>`;
+ const discs=endcaps.map((x,i)=>{
+  const endX=i?x1b:x0b, edge=i?x-18:x+18,edgeB=i?endX-18:endX+18;
+  const plateX=i?x-27:x+8, plateXB=i?endX-27:endX+8;
+  return `<g class="m-plate-set"><rect class="m-bar-plate" x="${plateX}" y="${y-15}" width="19" height="30" rx="5">${ani('x',plateX,plateXB,animated)}${ani('y',y-15,yy-15,animated)}</rect><rect class="m-bar-collar" x="${edge-2}" y="${y-9}" width="4" height="18" rx="1.5">${ani('x',edge-2,edgeB-2,animated)}${ani('y',y-9,yy-9,animated)}</rect></g>`;
+ }).join('');
+ return `<g class="m-barbell" aria-hidden="true">${bar}${discs}</g>`;
+}
 function svg(id, animated=false, phase='start', detail=false){
  const fam=EXERCISES[id];if(!fam)return '';
  const p=profileFor(id,fam);if(!p)return '';
  const a=phase==='end'&&!animated?p.b:p.a,b=p.b, title=variantLabel(id)||TITLES[fam];
  const overlay=detail?detailLayers(id,fam,a,b,animated,phase):{paths:'',joints:''};
+ const hardware=machineHardware(id,fam,a,b,animated);
  const parts=[
   segment(a,b,'H','S','m-neck',7,animated),
   segment(a,b,'S','S2','m-shoulder-band',8,animated),
@@ -130,22 +171,16 @@ function svg(id, animated=false, phase='start', detail=false){
   const [x,y]=point(a,hand),[xx,yy]=point(b,hand);
   parts.push(`<rect class="m-weight" x="${x-13}" y="${y-5}" width="26" height="10" rx="4">${ani('x',x-13,xx-13,animated)}${ani('y',y-5,yy-5,animated)}</rect>`);
  }
- if(p.w==='bar'){
-  const [w1,w2]=['W','W2'].map(key=>point(a,key)),[v1,v2]=['W','W2'].map(key=>point(b,key));
-  const y=Math.min(w1[1],w2[1]),yy=Math.min(v1[1],v2[1]);
-  const x0=Math.min(w1[0],w2[0])-20,x1=Math.max(w1[0],w2[0])+20;
-  const xx0=Math.min(v1[0],v2[0])-20,xx1=Math.max(v1[0],v2[0])+20;
-  parts.push(`<line class="m-bar" x1="${x0}" y1="${y}" x2="${x1}" y2="${y}">${ani('x1',x0,xx0,animated)}${ani('x2',x1,xx1,animated)}${ani('y1',y,yy,animated)}${ani('y2',y,yy,animated)}</line>`);
- }
- if(p.w==='ankle'){
+ if(p.w==='bar')parts.push(renderBarGrip(id,fam,p,a,b,animated));
+ if(p.w==='ankle'&&!['flexora-c','flexora-sentada','flexora-d','extensora','extensora-d'].includes(id)){
   const [x,y]=point(a,'A'),[xx,yy]=point(b,'A');
   parts.push(`<rect class="m-weight" x="${x-11}" y="${y-6}" width="22" height="12" rx="5">${ani('x',x-11,xx-11,animated)}${ani('y',y-6,yy-6,animated)}</rect>`);
  }
  return `<svg xmlns="http://www.w3.org/2000/svg" class="motion-svg" data-motion-id="${esc(id)}" viewBox="0 0 360 220" role="img" aria-label="${esc(title)}: ilustração ${animated?'animada':'estática'} do movimento">
  <title>${esc(title)} — representação ilustrativa</title>
- <style>.m-equipment{fill:none;stroke:#84a0b2;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.m-floor{fill:none;stroke:#324a59;stroke-width:3}.m-body{fill:none;stroke:#a8cbd4;stroke-linecap:round}.m-arms{fill:none;stroke:#c5f56b;stroke-linecap:round}.m-legs{fill:none;stroke:#d3e4e9;stroke-linecap:round}.m-muted{fill:none;stroke:#96b1c1;opacity:.68;stroke-linecap:round}.m-head{fill:#adced2;stroke:#d3e8e8;stroke-width:2}.m-weight{fill:#80beff}.m-bar{stroke:#80beff;stroke-width:7;stroke-linecap:round}.m-neck{fill:none;stroke:#abc8d2;stroke-linecap:round}.m-shoulder-band,.m-pelvis-band{fill:none;stroke:#92b3c6;stroke-linecap:round}.m-joint{stroke:#101b27;stroke-width:2}.m-joint-neutral{fill:#8eacb9;opacity:.85}.m-joint-active{fill:#c5f56b;stroke:#1a3326;stroke-width:2.2}.m-motion-track{fill:none;stroke:#80beff;stroke-width:2.5;stroke-dasharray:5 6;stroke-linecap:round;opacity:.93}</style>
+ <style>.m-equipment{fill:none;stroke:#84a0b2;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.m-floor{fill:none;stroke:#324a59;stroke-width:3}.m-body{fill:none;stroke:#a8cbd4;stroke-linecap:round}.m-arms{fill:none;stroke:#c5f56b;stroke-linecap:round}.m-legs{fill:none;stroke:#d3e4e9;stroke-linecap:round}.m-muted{fill:none;stroke:#96b1c1;opacity:.68;stroke-linecap:round}.m-head{fill:#adced2;stroke:#d3e8e8;stroke-width:2}.m-weight{fill:#80beff}.m-bar{stroke:#80beff;stroke-width:7;stroke-linecap:round}.m-machine-plate{fill:#263e54;stroke:#80beff;stroke-width:3}.m-machine-plate-inner{fill:#101b27;stroke:#9bcde9;stroke-width:2}.m-bench-pad{fill:#31495b;stroke:#98bbcd;stroke-width:2.4;stroke-linejoin:round}.m-foam{fill:#5e8191}.m-bench-frame{fill:none;stroke:#748fa5;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}.m-stack{fill:#233849;stroke:#80beff;stroke-width:2}.m-stack-line{fill:none;stroke:#84adca;stroke-width:2}.m-pivot{fill:#1a3243;stroke:#80beff;stroke-width:3}.m-machine-roller{fill:#27465d;stroke:#80beff;stroke-width:3}.m-knee-pad{fill:#27465d;stroke:#80beff;stroke-width:2}.m-sled-platform{stroke:#a6cddd;stroke-width:11;stroke-linecap:round}.m-bar-plate{fill:#335772;stroke:#80beff;stroke-width:2.5}.m-bar-collar{fill:#c5f56b}.m-grip-cap{fill:#80beff}.m-neck{fill:none;stroke:#abc8d2;stroke-linecap:round}.m-shoulder-band,.m-pelvis-band{fill:none;stroke:#92b3c6;stroke-linecap:round}.m-joint{stroke:#101b27;stroke-width:2}.m-joint-neutral{fill:#8eacb9;opacity:.85}.m-joint-active{fill:#c5f56b;stroke:#1a3326;stroke-width:2.2}.m-motion-track{fill:none;stroke:#80beff;stroke-width:2.5;stroke-dasharray:5 6;stroke-linecap:round;opacity:.93}</style>
  <rect width="360" height="220" fill="#101b27" rx="24"/><circle cx="182" cy="112" r="94" fill="#192a39"/><path d="M30 197H330" stroke="#324a59" stroke-width="2" stroke-dasharray="6 8"/>
- ${overlay.paths}${movementGear(id,fam)}${parts.join('')}${overlay.joints}
+ ${overlay.paths}${movementGear(id,fam)}${hardware}${parts.join('')}${overlay.joints}
  <rect x="16" y="13" width="89" height="22" rx="11" fill="#253d45"/><text x="29" y="28" fill="#c5f56b" font-size="10" font-family="system-ui,sans-serif" font-weight="800">FORJA · MOVE</text>
  </svg>`;
 }
