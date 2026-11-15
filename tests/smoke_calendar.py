@@ -4,7 +4,7 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-home-catalog6" />','')
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261114-body9" />','')
 with sync_playwright() as p:
     executable=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or shutil.which('google-chrome')
     options={'headless':True,'args':['--no-sandbox']}
@@ -24,7 +24,7 @@ with sync_playwright() as p:
       }});
     }""")
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']:
+    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','app.js']:
         page.add_script_tag(path=str(ROOT/script))
     page.locator('#screen h1').wait_for()
     # Seed only synthetic completed records, preserving valid app defaults.
@@ -62,7 +62,7 @@ with sync_playwright() as p:
       }});
     }""",snapshot)
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','app.js']:
+    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','app.js']:
         page.add_script_tag(path=str(ROOT/script))
     page.get_by_role('button',name='Histórico',exact=True).click()
     assert page.get_by_role('heading',name='Calendário de treinos').count()==1
