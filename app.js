@@ -517,20 +517,20 @@
   function renderDailyRoutine(){
     if(ui.routineHidden)return '';
     const report=ROUTINE.status(state.dailyRoutine,today());
-    const configured=report.configured;
-    const actions=configured?report.items.map(slot=>{
+    if(!report.configured)return '';
+    const actions=report.items.map(slot=>{
       const label=slot.confirmed?'Registrado hoje':'A confirmar';
       return '<div class="routine-row"><span class="routine-icon" aria-hidden="true">'+(slot.kind==='medication'?'◈':'◇')+'</span>'+
         '<div class="routine-details"><strong>'+esc(slot.label)+'</strong><small>'+esc(slot.title)+(slot.time?' · '+slot.time:' · sem horário')+'</small></div>'+
         '<span class="routine-status">'+label+'</span>'+
         '<button type="button" class="'+(slot.confirmed?'secondary':'primary')+' routine-confirm" data-action="routine-confirm" data-slot="'+slot.id+'" aria-pressed="'+String(slot.confirmed)+'">'+
         (slot.confirmed?'Desfazer':'Registrei')+'</button></div>';
-    }).join(''):'<p class="small muted">Configure um medicamento prescrito ou suplemento para ter um lembrete discreto ao abrir o FORJA. Nenhuma tomada será presumida.</p>';
+    }).join('');
     return '<section class="daily-routine card" aria-label="Rotina diária opcional">'+
       '<div class="row-between"><div><p class="eyebrow">ROTINA DO DIA</p><h2 class="section-title">Cuidados diários</h2></div>'+
       '<button type="button" class="button-inline" data-action="routine-hide">Ocultar nesta abertura</button></div>'+
       actions+'<div class="routine-footer"><button type="button" class="button-inline" data-action="routine-manage">'+
-      (configured?'Editar rotina e horários':'Configurar rotina')+'</button><p class="tiny muted">Registro voluntário. Sem alertas externos ou mudanças automáticas nos treinos e metas.</p></div></section>';
+      'Editar rotina e horários'+'</button><p class="tiny muted">Registro voluntário. Sem alertas externos ou mudanças automáticas nos treinos e metas.</p></div></section>';
   }
   function renderDailyRoutineSettings(){
     const archive=ROUTINE.normalize(state.dailyRoutine);
@@ -621,6 +621,7 @@
         </button>`:''}
         <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
         <button class="home-muay-link" data-action="nutrition-open"><span>Registrar alimentação</span><span aria-hidden="true">›</span></button>
+        ${!ROUTINE.status(state.dailyRoutine,today()).configured?`<button class="home-muay-link" data-action="routine-manage"><span>Configurar rotina diária (opcional)</span><span aria-hidden="true">›</span></button>`:''}
       </div>
       <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
   }
@@ -1221,7 +1222,7 @@
       <section class="card"><h2 class="section-title">Samsung Health · histórico importado</h2>${renderHealthSummary()}</section>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
       <button class="secondary full mt-12" data-action="import-health">Importar histórico do Samsung Health (JSON)</button><p class="small muted">Importe um arquivo de transcrição dos seus registros. Os totais mensais ficam separados dos dias observados. Importação local, sem substituir treinos, refeições ou pesagens existentes.</p>
-      <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, passos diários, alimentação, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
+      <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, passos diários, alimentação, rotina diária de saúde, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
         <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
       <section class="card"><h2 class="section-title">Sobre as sugestões</h2><p class="small muted">O app diferencia aquecimento e séries efetivas. Para sugerir aumento, exige duas sessões consistentes dentro da faixa de repetições e RIR informado. Em exercícios de joelho, também exige ausência de sintomas durante e no dia seguinte.</p>
       <div class="callout warn">Não é um diagnóstico. Dor recorrente abaixo da patela deve ser avaliada por profissional de saúde; uma joelheira não garante segurança para aumentar a carga.</div>
@@ -1355,7 +1356,7 @@
         'healthMonthly contém somatórios mensais do Samsung Health, que não equivalem a séries de dados diários e não devem alimentar médias de passos de dias não observados.',
         'healthWeightReports conserva o IMC relatado pelo Samsung Health como indicador calculado, distinto de medidas de gordura corporal.',
         'Meses parciais (complete:false) não podem ser comparados diretamente a meses completos sem ressalvas.',
-        'state.dailyRoutine contém apenas confirmações manuais opcionais de rotina; ausência não significa dose esquecida e não fundamenta inferências clínicas.',
+        'state.dailyRoutine contém somente confirmações manuais opcionais de medicamento/suplemento; ausência não indica dose esquecida, não demonstra efeito no desempenho e não fundamenta conclusões clínicas.',
         'Sugestões de fator de atividade são heurísticas categóricas, não PAL medido e não somam calorias de exercícios.',
         'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
       ],
