@@ -8,6 +8,7 @@
   const ADVICE = window.ForjaCatalogAdvice;
   const DOSE = window.ForjaDose;
   const FOCUS = window.ForjaFocus;
+  const BODY = window.ForjaBodyMeasures;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -31,7 +32,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],
     };
   }
   function load() {
@@ -56,6 +57,7 @@
       /^\d{4}-\d{2}-\d{2}$/.test(value.settings.goalDate || '') &&
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
+      BODY.validRecords(value.bodyMeasurements) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -124,6 +126,7 @@
     catalogGroup:'all',catalogSearch:'',
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
+    bodyOpen:false,bodyView:'current',bodyEditDate:null,
   };
   let toastTimeout;
   function draftStatusText() {
@@ -393,7 +396,7 @@
     const main = document.getElementById('screen');
     main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
-      ui.tab === 'progress' ? renderProgress() : ui.tab === 'history' ? renderHistory() : renderSettings();
+      ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
       const active=btn.dataset.tab===ui.tab;
       btn.classList.toggle('active',active);
@@ -792,7 +795,12 @@
     const x=i=>items.length===1?160:24+i*(272/(items.length-1));
     const y=val=>122-((val-min)/Math.max(.1,max-min))*100;
     const points=items.map((it,i)=>`${x(i)},${y(it.weight)}`).join(' ');
+    const bm=BODY.recent(state.bodyMeasurements||[])[0];
     return `${headline('Acompanhe seu processo','Sua evolução.','Olhe a tendência do peso junto da força, recuperação e circunferência abdominal.')}
+      <button type="button" class="body-quick-card" data-action="body-open">
+        <span><strong>Medidas corporais</strong><small>${bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':'Circunferências por região e histórico'}</small></span>
+        <span aria-hidden="true">›</span>
+      </button>
       <div class="kpi-row"><div class="kpi"><strong>${fmt(p.current)}</strong><span>kg atuais</span></div><div class="kpi"><strong>${p.lost>=0?'−':'+'}${fmt(Math.abs(p.lost))}</strong><span>kg de variação</span></div><div class="kpi"><strong>${days>0?days:'—'}</strong><span>dias até a meta</span></div></div>
       <div class="card"><div class="row-between"><h2 class="section-title">Histórico de peso</h2>${tag(`${items.length} registro(s)`,'green')}</div>
       <div class="chart-wrap mt-12"><svg viewBox="0 0 320 160" role="img" aria-label="Gráfico de peso registrado. Atual ${fmt(p.current)} quilos, meta ${fmt(state.settings.targetWeight)} quilos.">
@@ -809,6 +817,83 @@
       ${weightForm()}
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
   }
+  function bodyFigure(current){
+    const values=current?.values||{};
+    // Responsive, original vector silhouette; values are DOM labels, not baked into an image.
+    const labels=BODY.FIELDS.filter(f=>values[f.id]!==undefined).map(f=>{
+      return '<span class="body-measure-pin" style="--pin-x:'+f.x+'%;--pin-y:'+f.y+'%" title="'+
+        esc(f.label)+'" aria-label="'+esc(f.label)+': '+esc(BODY.fmt(values[f.id]))+'">'+
+        esc(BODY.fmt(values[f.id]))+'</span>';
+    }).join('');
+    return '<div class="body-figure" role="group" aria-label="Mapa ilustrativo das circunferências corporais">'+
+     '<svg viewBox="0 0 260 460" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Silhueta corporal humana, vista de frente">'+
+     '<defs><linearGradient id="forja-body-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#93a8b7"/><stop offset=".52" stop-color="#556f83"/><stop offset="1" stop-color="#293f53"/></linearGradient></defs>'+
+     '<g fill="url(#forja-body-gradient)" stroke="#b0c3c9" stroke-opacity=".25" stroke-width="1.2">'+
+     '<ellipse cx="130" cy="43" rx="26" ry="34"/>'+
+     '<path d="M119 71L116 84 102 89 88 100 92 159 107 208 151 208 169 159 173 100 156 89 144 84 142 71Z"/>'+
+     '<path d="M97 94Q75 93 69 112L48 190 38 249Q35 262 44 266 53 264 56 252L77 193 96 139Z"/>'+
+     '<path d="M163 94Q185 93 191 112L212 190 222 249Q225 262 216 266 207 264 204 252L183 193 164 139Z"/>'+
+     '<path d="M107 205L104 240 95 313 95 360 91 404 86 429Q83 441 102 441L111 432 122 355 128 287 130 255 131 287 138 355 149 432 158 441Q177 441 174 429L169 404 165 360 165 313 156 240 152 205Z"/>'+
+     '</g><g stroke="#d6e4e7" stroke-opacity=".18" fill="none" stroke-width="2">'+
+     '<path d="M130 104V174M111 133Q130 144 148 133M105 185Q130 191 155 185M130 215V245"/>'+
+     '</g></svg>'+labels+'</div>';
+  }
+  function renderBodyMeasures(){
+    const records=BODY.recent(state.bodyMeasurements||[]);
+    const current=records[0]||null, history=ui.bodyView==='history';
+    const edit=ui.bodyEditDate?BODY.findDay(records,ui.bodyEditDate):current;
+    const formDay=ui.bodyEditDate||today();
+    return '<div class="body-page">'+
+      '<button type="button" class="button-inline body-back" data-action="body-back">← Voltar à evolução</button>'+
+      headline('Acompanhamento corporal','Medidas corporais.','Circunferências em centímetros, registradas por data.')+
+      '<div class="body-tabs" role="group" aria-label="Visualizar medidas">'+
+        '<button class="'+(!history?'selected':'')+'" data-action="body-view" data-view="current" aria-pressed="'+(!history)+'">Medidas atuais</button>'+
+        '<button class="'+(history?'selected':'')+'" data-action="body-view" data-view="history" aria-pressed="'+history+'">Histórico</button>'+
+      '</div>'+
+      (history?
+        (records.length?'<div class="body-history-list">'+records.map((entry,i)=>{
+          const older=records[i+1];return '<article class="card body-history-entry"><div class="row-between"><h2 class="section-title">'+
+          dateBR(entry.date)+'</h2><button class="button-inline" data-action="body-edit" data-date="'+esc(entry.date)+'">Editar</button></div>'+
+          '<div class="body-history-grid">'+BODY.FIELDS.filter(field=>entry.values[field.id]!==undefined).map(field=>{
+            const delta=BODY.diff(entry,older,field.id);return '<div class="body-history-cell"><span>'+esc(field.label)+'</span><strong>'+
+            esc(BODY.fmt(entry.values[field.id]))+'</strong>'+
+            (delta!==null?'<small class="body-delta">'+(delta>0?'+':'')+delta.toLocaleString('pt-BR')+' cm</small>':'')+'</div>';
+          }).join('')+'</div></article>';
+        }).join('')+'</div>':'<div class="empty">Nenhuma aferição salva até o momento.</div>')+
+        '<p class="small muted">As diferenças mostram apenas variação de circunferência, não uma estimativa de gordura ou massa muscular.</p>'
+      :
+      '<section class="body-figure-card"><div class="row-between"><strong>Vista frontal</strong><span class="pill">'+(current?dateBR(current.date):'Sem aferição')+'</span></div>'+
+       bodyFigure(current)+
+       '<p class="tiny muted body-side-note">Direita e esquerda correspondem aos lados da pessoa representada. Silhueta ilustrativa, sem proporções clínicas.</p></section>'+
+       '<form class="card body-form" id="body-measures-form">'+
+       '<div class="row-between"><h2 class="section-title">'+(ui.bodyEditDate?'Editar aferição':'Registrar aferição')+'</h2><span class="pill">cm</span></div>'+
+       '<div class="field mt-12"><label for="body-date">Data da medição</label><input id="body-date" name="date" type="date" value="'+esc(formDay)+'" required /></div>'+
+       '<div class="body-field-grid">'+BODY.FIELDS.map(field=>
+         '<div class="field"><label for="measure-'+esc(field.id)+'">'+esc(field.label)+'</label>'+
+         '<input id="measure-'+esc(field.id)+'" name="'+esc(field.id)+'" type="number" inputmode="decimal" min=".1" max="300" step=".1" placeholder="—" value="'+
+         esc(edit?.values?.[field.id]??'')+'"/></div>').join('')+'</div>'+
+       '<button type="submit" class="primary full mt-16">Salvar medidas</button>'+
+       '<p class="tiny muted mt-12">Deixe vazias as regiões não medidas. O registro pode ser complementado depois, e fica guardado neste aparelho e no backup JSON.</p></form>')+
+      '</div>';
+  }
+  function saveBodyMeasures(form){
+    const fd=new FormData(form),date=String(fd.get('date')||'');
+    const values={};
+    for(const field of BODY.FIELDS){
+      const value=String(fd.get(field.id)||'').trim();
+      if(value)values[field.id]=value;
+    }
+    const result=BODY.upsert(state.bodyMeasurements||[],date,values);
+    if(result.error)return notify(result.error);
+    const before=state.bodyMeasurements;
+    state.bodyMeasurements=result.items;
+    if(!save()){
+      state.bodyMeasurements=before;
+      return notify('Não foi possível salvar as medidas. Seus registros anteriores continuam preservados.');
+    }
+    ui.bodyEditDate=null;render();notify('Medidas de '+dateBR(date)+' salvas.');
+  }
+
   function renderHistory() {
     const sessions=latestSessions();
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
@@ -1003,6 +1088,7 @@
       weights:[...current.weights,...newWeights],
       exercises:unionById(current.exercises,incoming.exercises),
       sessions:unionById(current.sessions,incoming.sessions),
+      bodyMeasurements:BODY.merge(current.bodyMeasurements,incoming.bodyMeasurements),
       muay:{...incoming.muay,...current.muay,
         sessions:unionById(current.muay.sessions,incoming.muay.sessions),
         draft:current.muay.draft||incoming.muay.draft||null},
@@ -1021,12 +1107,13 @@
       if(parsed.sessions.some(session=>session.entries.some(entry=>!importedIds.has(entry.id))))
         throw new Error('Treinos importados referenciam exercícios ausentes.');
       const existing=state.sessions.length+state.muay.sessions.length+
-        state.weights.filter(item=>!item.initial).length;
+        state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length;
       const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft);
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
       const counts=parsed.sessions.length+' musculação, '+parsed.muay.sessions.length+
-        ' Muay Thai e '+parsed.weights.length+' pesagem(ns)';
+        ' Muay Thai, '+parsed.weights.length+' pesagem(ns) e '+
+        (parsed.bodyMeasurements||[]).length+' medição(ões) corporais';
       if(!confirm('Importar '+counts+'? Os registros serão '+action+'. '+
         'A FORJA preserva as informações legadas sem completar dados antigos. '+
         'Se houver treinos novos no aparelho, recomendamos exportar um backup antes.'))return;
@@ -1095,6 +1182,22 @@
       if(!copied)return notify('Nenhuma carga pendente disponível para copiar.');
       if(!persistDraft()){en.sets=original;return notify('Não foi possível salvar as cargas preparadas.');}
       render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
+    }
+    if(action==='body-open'){
+      ui.bodyOpen=true;ui.bodyView='current';ui.bodyEditDate=null;ui.tab='progress';
+      render();window.scrollTo(0,0);return;
+    }
+    if(action==='body-back'){
+      ui.bodyOpen=false;ui.bodyEditDate=null;render();window.scrollTo(0,0);return;
+    }
+    if(action==='body-view'){
+      if(!['current','history'].includes(btn.dataset.view))return;
+      ui.bodyView=btn.dataset.view;ui.bodyEditDate=null;render();return;
+    }
+    if(action==='body-edit'){
+      if(!BODY.validDate(btn.dataset.date))return;
+      ui.bodyEditDate=btn.dataset.date;ui.bodyView='current';render();
+      document.querySelector('#body-measures-form')?.scrollIntoView({block:'start',behavior:'smooth'});return;
     }
     if(action==='catalog-filter'){
       if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
@@ -1397,6 +1500,7 @@
     if(event.target.id==='weight-form')setWeight(event.target);
     else if(event.target.id==='goal-form')setGoal(event.target);
     else if(event.target.id==='exercise-form')saveExercise(event.target);
+    else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
   });
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   render();
