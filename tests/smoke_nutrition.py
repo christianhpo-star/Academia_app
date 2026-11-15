@@ -57,6 +57,12 @@ with sync_playwright() as p:
     lunch.locator('.nd-meal-details > summary').click()
     assert lunch.locator('.nd-food-table').is_visible()
     assert lunch.locator('.nd-food-table tbody tr').count()==2
+    assert lunch.locator('.nd-food-thumb').count()==2
+    assert lunch.locator('[data-food-icon="drink"]').count()==1
+    assert lunch.locator('[data-food-icon="egg"]').count()==1
+    assert page.locator('.nd-energy .nd-ring-goal').count()==1
+    assert page.locator('.nd-energy .nd-ring-inner').inner_text().count(' de ')==0
+
     assert 'P (g)' in lunch.locator('.nd-food-table thead').inner_text()
     assert 'Fib (g)' in lunch.locator('.nd-food-table thead').inner_text()
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
@@ -124,6 +130,14 @@ with sync_playwright() as p:
     for width in [320,390,768]:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+        assert page.evaluate("""() => {
+          const ring=document.querySelector('.nd-energy .nd-ring');
+          const value=ring?.querySelector('strong');
+          if(!ring||!value)return false;
+          const r=ring.getBoundingClientRect(),v=value.getBoundingClientRect();
+          return v.left>=r.left&&v.right<=r.right&&v.top>=r.top&&v.bottom<=r.bottom;
+        }"""),f'Energy ring text overflow at {width}px'
+
         if width in (320,390):
             assert page.evaluate("document.querySelector('.nd-meal').getBoundingClientRect().top < document.querySelector('.bottom-nav').getBoundingClientRect().top"),f'first meal below visible viewport at {width}px'
             assert page.evaluate("[...document.querySelectorAll('#nav .nav-link span')].every(el => el.scrollWidth <= el.clientWidth)"),f'bottom nav label clipped at {width}px'
