@@ -77,3 +77,36 @@ test('renderização de alimentos antigos mantém nutrientes e usa ilustrações
  assert.match(html,/class="nd-meal-details"/);
  assert.deepEqual(meal,original);
 });
+
+
+test('tela diária soma almoço conhecido e brigadeiro estimado com sinalização',()=>{
+  let n=0;const id=k=>k+'-'+(++n),date='2026-11-15';
+  const a=CAT.makeItem('taco:2011:346','custom',121,id);
+  const b=CAT.makeItem('recipe:brigadeiro-morango','custom',80,id);
+  const archive=N.archive();archive.entries=[
+    {id:'meal-lunch-approx',date,mealType:'lunch',items:[a]},
+    {id:'meal-snack-approx',date,mealType:'snack',items:[b]},
+  ];
+  const html=UI.render({archive,date});
+  assert.match(html,/Subtotal dos alimentos registrados/);
+  assert.match(html,/nd-data-quality/);
+  assert.match(html,/Inclui 1 alimento\(s\) com calorias estimadas/);
+  assert.match(html,/≈486,7/);
+  assert.match(html,/≈252 kcal registradas/);
+  assert.match(html,/234,7 kcal registradas/);
+  assert.match(html,/Detalhes e incerteza/);
+  assert.match(html,/≈315/); // exact per 100g recipe: central reference
+  assert.equal(N.observedTotals(archive.entries,date).totals.energyKcal,null);
+});
+test('dados desconhecidos mantêm subtotais por nutriente sem assumir ingestão zero',()=>{
+ const date='2026-11-15', id=k=>k+'-test';
+ const archive=N.archive();
+ const yogurt=CAT.makeItem('photo:itambe-zero-morango-200g','pack',1,id);
+ const whey=CAT.makeItem('growth:whey-unknown','dose',1,id);
+ archive.entries.push({id:'mix-unknown',date,mealType:'breakfast',items:[yogurt,whey]});
+ const html=UI.render({archive,date});
+ assert.match(html,/≈52/);
+ assert.match(html,/1 alimento\(s\) sem calorias disponíveis/);
+ assert.match(html,/Informação incompleta/);
+ assert.match(html,/não zero/);
+});
