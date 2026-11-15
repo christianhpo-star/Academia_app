@@ -1,0 +1,175 @@
+{
+  "schema": "FORJA_EVIDENCE_REGISTER_V1",
+  "lastReviewed": "2026-11-15",
+  "purpose": "Documentar o suporte e os limites de recomendações do app, sem inferir validação individual.",
+  "entries": [
+    {
+      "id": "mifflin-1990",
+      "domain": "energy",
+      "title": "A new predictive equation for resting energy expenditure in healthy individuals",
+      "year": 1990,
+      "type": "prediction-equation",
+      "locator": "https://pubmed.ncbi.nlm.nih.gov/2305711/",
+      "supports": [
+        "resting_metabolic_rate_estimate"
+      ],
+      "doesNotSupport": [
+        "measured_expenditure",
+        "step_count_to_pal",
+        "deadline_calories"
+      ],
+      "confidence": "conditional"
+    },
+    {
+      "id": "hall-2011",
+      "domain": "weight-trajectory",
+      "title": "Quantification of the effect of energy imbalance on bodyweight",
+      "year": 2011,
+      "type": "dynamic-energy-model",
+      "locator": "https://pubmed.ncbi.nlm.nih.gov/21872751/",
+      "supports": [
+        "bodyweight_dynamics_are_adaptive"
+      ],
+      "doesNotSupport": [
+        "forja_calorie_target_predicts_deadline"
+      ],
+      "confidence": "general-principle"
+    },
+    {
+      "id": "niddd-bwp",
+      "domain": "weight-trajectory",
+      "title": "NIDDK Body Weight Planner",
+      "year": 2026,
+      "type": "research-tool",
+      "locator": "https://www.niddk.nih.gov/bwp",
+      "supports": [
+        "conceptual_dynamic_weight_planning"
+      ],
+      "doesNotSupport": [
+        "forja_implements_niddk_model"
+      ],
+      "confidence": "reference"
+    },
+    {
+      "id": "morton-2018",
+      "domain": "nutrition",
+      "title": "Protein supplementation and resistance training: systematic review meta-analysis",
+      "year": 2018,
+      "type": "systematic-review-meta-analysis",
+      "locator": "https://pubmed.ncbi.nlm.nih.gov/28698222/",
+      "supports": [
+        "protein_and_resistance_training_adaptation"
+      ],
+      "doesNotSupport": [
+        "single_optimal_dose_for_every_user"
+      ],
+      "confidence": "conditional"
+    },
+    {
+      "id": "jager-2017",
+      "domain": "nutrition",
+      "title": "ISSN position stand: protein and exercise",
+      "year": 2017,
+      "type": "position-stand",
+      "locator": "https://pubmed.ncbi.nlm.nih.gov/28642676/",
+      "supports": [
+        "protein_guidance_for_active_adults"
+      ],
+      "doesNotSupport": [
+        "clinical_diet_prescription"
+      ],
+      "confidence": "conditional"
+    },
+    {
+      "id": "who-2020",
+      "domain": "training",
+      "title": "WHO guidelines on physical activity and sedentary behaviour",
+      "year": 2020,
+      "type": "guideline",
+      "locator": "https://www.who.int/publications/i/item/9789240015128",
+      "supports": [
+        "aerobic_and_strength_activity_guidance"
+      ],
+      "doesNotSupport": [
+        "individual_training_volume_prescription"
+      ],
+      "confidence": "general-principle"
+    },
+    {
+      "id": "tbca-usp",
+      "domain": "food-composition",
+      "title": "Tabela Brasileira de Composição de Alimentos (TBCA)",
+      "year": null,
+      "type": "food-composition-database",
+      "locator": "https://www.tbca.net.br/",
+      "supports": [
+        "potential_food_nutrient_source"
+      ],
+      "doesNotSupport": [
+        "license_permission_to_redistribute",
+        "unverified_current_catalog_values"
+      ],
+      "confidence": "requires-record-verification"
+    },
+    {
+      "id": "taco-nepa",
+      "domain": "food-composition",
+      "title": "Tabela Brasileira de Composição de Alimentos (TACO), NEPA UNICAMP",
+      "year": null,
+      "type": "food-composition-database",
+      "locator": "https://www.nepa.unicamp.br/taco/",
+      "supports": [
+        "potential_food_nutrient_source"
+      ],
+      "doesNotSupport": [
+        "unverified_current_catalog_values"
+      ],
+      "confidence": "requires-record-verification"
+    },
+    {
+      "id": "usda-fdc",
+      "domain": "food-composition",
+      "title": "USDA FoodData Central",
+      "year": null,
+      "type": "food-composition-database",
+      "locator": "https://fdc.nal.usda.gov/",
+      "supports": [
+        "source_identifiers_and_nutrient_records"
+      ],
+      "doesNotSupport": [
+        "automated_mapping_for_brazilian_brands"
+      ],
+      "confidence": "requires-record-verification"
+    }
+  ],
+  "productHeuristics": [
+    {
+      "id": "steps-factor",
+      "location": "activity.js",
+      "basis": "nonvalidated product categories",
+      "requiresLabel": "heuristic",
+      "mustNeverClaim": "validated step-to-PAL conversion"
+    },
+    {
+      "id": "energy-bands",
+      "location": "goal-planner.js",
+      "basis": "illustrative initial percentage bands of estimated maintenance",
+      "requiresLabel": "non-prescriptive starting point",
+      "mustNeverClaim": "date-specific weight prediction"
+    },
+    {
+      "id": "time-horizon",
+      "location": "goal-planner.js",
+      "basis": "arithmetic kg per week to requested date",
+      "requiresLabel": "not a weight prediction",
+      "mustNeverClaim": "automatic necessary caloric deficit"
+    },
+    {
+      "id": "macro-split",
+      "location": "nutrition-goals.js",
+      "basis": "editable percentage and grams per kg defaults",
+      "requiresLabel": "product starting defaults",
+      "mustNeverClaim": "precise individual nutrient prescription"
+    }
+  ]
+}
