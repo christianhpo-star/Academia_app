@@ -45,6 +45,7 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Salvar treino').click()
     assert 'Seu histórico' in page.locator('#screen').inner_text()
     # Última carga fica no histórico/evolução, não na home de ação rápida.
+    page.locator('.history-card > summary').first.click()
     assert '25 kg/halter' in page.locator('#screen').inner_text()
     page.get_by_role('button',name='Início',exact=True).click()
     assert page.locator('.home-primary').count()==1
