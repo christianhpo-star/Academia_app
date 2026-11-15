@@ -180,6 +180,32 @@ with sync_playwright() as p:
     page.set_viewport_size({'width':390,'height':844})
     (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots/nutrition-390.png'),full_page=True)
+    # Regression: a mixed day must show recorded subtotals even with estimated sweets.
+    synthetic=page.evaluate("""date => {
+      const state=JSON.parse(localStorage.getItem('forja.academia.v1'));
+      let i=0;const uid=prefix=>prefix+'-mix-'+(++i);
+      const beef=window.ForjaNutritionCatalog.makeItem('taco:2011:346','custom',121,uid);
+      const candy=window.ForjaNutritionCatalog.makeItem('recipe:brigadeiro-morango','custom',80,uid);
+      const unknown=window.ForjaNutritionCatalog.makeItem('growth:whey-unknown','dose',1,uid);
+      state.nutrition.entries=[
+        {id:'mixed-lunch',date,mealType:'lunch',items:[beef]},
+        {id:'mixed-snack',date,mealType:'snack',items:[candy,unknown]}
+      ];
+      delete state.nutrition.draft;
+      return JSON.stringify(state);
+    }""",day)
+    mixed=start(context,{'forja.academia.v1':synthetic},errors)
+    mixed.locator('#nav [data-tab="nutrition"]').click()
+    mixed.locator('#nd-date').fill(day)
+    mixed.locator('#nd-date').dispatch_event('change')
+    assert '≈486,7' in mixed.locator('.nd-energy .nd-ring-inner').inner_text()
+    assert '≈252 kcal registradas' in mixed.locator('.nd-meal').filter(has=mixed.get_by_role('heading',name='Lanche')).inner_text()
+    assert 'alimento(s) sem calorias disponíveis' in mixed.locator('.nd-summary').inner_text()
+    assert 'Detalhes e incerteza' in mixed.locator('.nd-summary').inner_text()
+    for width in (320,390):
+        mixed.set_viewport_size({'width':width,'height':844})
+        assert mixed.evaluate('document.documentElement.scrollWidth <= innerWidth')
+    mixed.close()
     # Quota errors preserve original history and form.
     page.locator('[data-nd="add"][data-meal="snack"]').click()
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()

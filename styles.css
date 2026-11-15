@@ -936,3 +936,10 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .routine-check{display:flex;align-items:center;gap:9px;min-height:44px;color:var(--text)!important}
 .routine-check input{width:18px;height:18px}
 @media(max-width:350px){.routine-row{grid-template-columns:29px minmax(0,1fr) auto;gap:6px}.routine-icon{width:29px;height:29px}.daily-routine .routine-confirm{padding:8px;font-size:11px}.routine-details strong{font-size:12px}}
+
+/* Daily nutrition: a subtotal with recipe estimates must remain legible on small screens. */
+.nd-data-quality{display:grid;gap:5px;margin-top:10px;padding:10px;border:1px dashed #8290a3;border-radius:10px;font-size:11px;line-height:1.45;color:var(--muted);}
+.nd-data-quality summary{cursor:pointer;min-height:30px;padding-top:6px;font-weight:700;color:var(--text);}
+.nd-data-quality p{margin:7px 0 3px;}
+.nd-ring-inner strong{overflow-wrap:normal;letter-spacing:-.04em;}
+@media(max-width:390px){.nutrition-screen .nd-energy .nd-ring strong{font-size:14px}.nutrition-screen .nd-macros .nd-ring strong{font-size:11px}}

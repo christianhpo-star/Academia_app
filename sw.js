@@ -1,8 +1,8 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v36-20261115-ux21-catalog';
+const CACHE = 'forja-shell-v37-20261115-daily22-catalog';
 const APP_FILES = [
-  './', './index.html', './styles.css?v=20261115-ux21', './body-measures.js?v=20261115-ux21', './activity.js?v=20261115-ux21', './health-import.js?v=20261115-ux21', './nutrition-goals.js?v=20261115-ux21', './goal-planner.js?v=20261115-ux21', './reminders.js?v=20261115-ux21', './daily-routine.js?v=20261115-ux21', './nutrition.js?v=20261115-ux21', './nutrition-catalog.js?v=20261115-ux21', './nutrition-ui.js?v=20261115-ux21', './app.js?v=20261115-ux21', './data.js?v=20261115-ux21',
-  './engine.js?v=20261115-ux21', './muay.js?v=20261115-ux21', './calendar.js?v=20261115-ux21', './flex.js?v=20261115-ux21', './dose.js?v=20261115-ux21', './focus.js?v=20261115-ux21', './catalog-advice.js?v=20261115-ux21', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=20261115-daily22', './body-measures.js?v=20261115-daily22', './activity.js?v=20261115-daily22', './health-import.js?v=20261115-daily22', './nutrition-goals.js?v=20261115-daily22', './goal-planner.js?v=20261115-daily22', './reminders.js?v=20261115-daily22', './daily-routine.js?v=20261115-daily22', './nutrition.js?v=20261115-daily22', './nutrition-catalog.js?v=20261115-daily22', './nutrition-ui.js?v=20261115-daily22', './app.js?v=20261115-daily22', './data.js?v=20261115-daily22',
+  './engine.js?v=20261115-daily22', './muay.js?v=20261115-daily22', './calendar.js?v=20261115-daily22', './flex.js?v=20261115-daily22', './dose.js?v=20261115-daily22', './focus.js?v=20261115-daily22', './catalog-advice.js?v=20261115-daily22', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
