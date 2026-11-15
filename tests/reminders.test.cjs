@@ -116,3 +116,10 @@ test('step routine shift needs adequate coverage and avoids false precision from
  state.activitySteps=state.activitySteps.slice(0,9);
  assert.ok(!R.assess(state,day).visible.some(x=>x.id==='activity-review'));
 });
+
+test('older weigh-in never contradicts a profile confirmed after that measurement',()=>{
+ const state=base();
+ state.weights=[weigh('2026-10-01',80)];
+ state.nutrition.settings.profile={...profile,confirmedAt:'2026-11-10',weightKg:90};
+ assert.equal(R.assess(state,day).visible.some(x=>x.id==='profile-weight'),false);
+});
