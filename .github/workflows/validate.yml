@@ -28,13 +28,14 @@ jobs:
           node --check activity.js
           node --check health-import.js
           node --check nutrition-goals.js
+          node --check goal-planner.js
           node --check nutrition.js
           node --check nutrition-catalog.js
           node --check nutrition-ui.js
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
+        run: node --test tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
