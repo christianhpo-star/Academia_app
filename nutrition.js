@@ -204,9 +204,54 @@
     return {date,estimatedItems:estimated.length,confidence:'low',
       excludesOtherItems:estimated.length!==items.length,totals};
   }
+  // UI-only view: preserve certified/known values, recipe estimates and missing fields
+  // as separate quantities. Never overwrite observedTotals or stored snapshots.
+  function recordedBreakdown(entries,date) {
+    if(!dateOk(date)||!Array.isArray(entries)||!entries.every(validEntry))
+      throw new Error('Período ou refeições inválidos.');
+    const daily=entries.filter(entry=>entry.date===date);
+    const items=daily.flatMap(entry=>entry.items);
+    const totals={},confirmedTotals={},ranges={},counts={};
+    const rounded=n=>Math.round((n+Number.EPSILON)*100)/100;
+    for(const key of ALL_NUTRIENTS) {
+      let confirmed=0,low=0,central=0,high=0;
+      const count={confirmed:0,estimated:0,unknown:0};
+      for(const item of items) {
+        if(item.estimate) {
+          if(!NUTRIENTS.includes(key)){count.unknown++;continue;}
+          count.estimated++;
+          low+=item.estimate.low[key]*item.quantity;
+          central+=item.estimate.central[key]*item.quantity;
+          high+=item.estimate.high[key]*item.quantity;
+          continue;
+        }
+        const perServing=item.nutrientsPerServing;
+        const grams=item.unit==='g'?item.quantity:item.grams;
+        const nutrient=perServing?perServing[key]:item.nutrientsPer100g[key];
+        if(nutrient==null||(perServing?item.unit!=='portion':grams==null)) {
+          count.unknown++;continue;
+        }
+        count.confirmed++;
+        confirmed+=perServing?nutrient*item.quantity:nutrient*grams/100;
+      }
+      const hasValue=count.confirmed+count.estimated>0;
+      confirmedTotals[key]=count.confirmed?rounded(confirmed):null;
+      totals[key]=hasValue?rounded(confirmed+central):null;
+      ranges[key]=hasValue?{
+        low:rounded(confirmed+low),central:totals[key],high:rounded(confirmed+high)
+      }:null;
+      counts[key]=count;
+    }
+    return {
+      date,mealsRecorded:daily.length,itemsRecorded:items.length,
+      totals,confirmedTotals,ranges,counts,
+      // This is a subtotal of RECORDED items, not a declaration that the day is complete.
+      recordedOnly:true,
+    };
+  }
   const api = {
     VERSION, NUTRIENTS, ALL_NUTRIENTS, validDraft, MEALS, UNITS, archive, dateOk, nutrientsOk, validFood,
-    validEntry, validTemplate, validArchive, validEstimate, ensureArchive, merge, observedTotals, estimatedTotals,
+    validEntry, validTemplate, validArchive, validEstimate, ensureArchive, merge, observedTotals, estimatedTotals, recordedBreakdown,
   };
   root.ForjaNutrition = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
