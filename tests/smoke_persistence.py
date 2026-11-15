@@ -121,6 +121,7 @@ with sync_playwright() as p:
     page.get_by_role('button', name='Cancelar').click()
     assert 'forja.academia.draft.v1' not in storage_snapshot(page)
     page.get_by_role('button', name='Histórico', exact=True).click()
+    page.locator('.history-card > summary').first.click()
     assert 'Supino reto com halteres' in page.locator('#screen').inner_text()
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     page.set_viewport_size({'width': 320, 'height': 720})
