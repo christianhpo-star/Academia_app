@@ -805,3 +805,8 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .flex-catalog-row{flex-wrap:wrap}
 .catalog-suggestion .motion-flex-actions{justify-content:space-between}
 @media(max-width:360px){.motion-flex-actions{justify-content:stretch;width:100%}.motion-flex-actions .secondary{flex:1;min-width:0}}
+
+/* FORJA MOVE v2: clarify equipment without overloading mobile cards. */
+.motion-variant-label{display:inline-flex;max-width:100%;font-size:10px;line-height:1.3;font-weight:800;color:#d9f2b6;background:#263d34;border:1px solid #4a6b53;border-radius:999px;padding:4px 8px;overflow-wrap:anywhere}
+.motion-variant-chip{display:inline-flex;justify-self:start;color:#e2f6c2;background:#243a30;border:1px solid #49694e;border-radius:999px;font-size:12px;line-height:1.4;font-weight:800;padding:6px 11px}
+.motion-dialog .motion-variant-chip{margin-top:-2px}

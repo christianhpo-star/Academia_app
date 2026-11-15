@@ -104,7 +104,7 @@ function svg(id, animated=false){
   const [x,y]=point(a,'A'),[xx,yy]=point(b,'A');
   parts.push(`<rect class="m-weight" x="${x-11}" y="${y-6}" width="22" height="12" rx="5">${ani('x',x-11,xx-11,animated)}${ani('y',y-6,yy-6,animated)}</rect>`);
  }
- return `<svg xmlns="http://www.w3.org/2000/svg" class="motion-svg" viewBox="0 0 360 220" role="img" aria-label="${esc(title)}: ilustração ${animated?'animada':'estática'} do movimento">
+ return `<svg xmlns="http://www.w3.org/2000/svg" class="motion-svg" data-motion-id="${esc(id)}" viewBox="0 0 360 220" role="img" aria-label="${esc(title)}: ilustração ${animated?'animada':'estática'} do movimento">
  <title>${esc(title)} — representação ilustrativa</title>
  <style>.m-equipment{fill:none;stroke:#84a0b2;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.m-floor{fill:none;stroke:#324a59;stroke-width:3}.m-body{fill:none;stroke:#a8cbd4;stroke-linecap:round}.m-arms{fill:none;stroke:#c5f56b;stroke-linecap:round}.m-legs{fill:none;stroke:#d3e4e9;stroke-linecap:round}.m-muted{fill:none;stroke:#96b1c1;opacity:.68;stroke-linecap:round}.m-head{fill:#adced2;stroke:#d3e8e8;stroke-width:2}.m-weight{fill:#80beff}.m-bar{stroke:#80beff;stroke-width:7;stroke-linecap:round}</style>
  <rect width="360" height="220" fill="#101b27" rx="24"/><circle cx="182" cy="112" r="94" fill="#192a39"/><path d="M30 197H330" stroke="#324a59" stroke-width="2" stroke-dasharray="6 8"/>

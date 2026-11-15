@@ -1,5 +1,15 @@
 # FORJA
 
+## FORJA MOVE v2 — identificação de variações
+
+- Os 51 IDs do catálogo continuam associados a 19 famílias, com **18 variantes de geometria, equipamento, direção ou etiqueta**.
+- Banco inclinado/declinado, supino com barra ou em máquina, mesa e cadeira flexora, adutora/abdutora, panturrilha sentada/no leg press, hack, búlgaro, step-up, puxadas fechada/neutra e pullover na polia possuem apresentações próprias.
+- As miniaturas permanecem estáticas; no visualizador os movimentos têm interpolação suave em 2,8 segundos, controles de pausa e respeito a `prefers-reduced-motion`. O cache offline foi atualizado.
+- O item ambíguo **Mesa ou cadeira flexora** indica explicitamente que o desenho representa somente a versão sentada. Nada aqui altera as séries, o histórico nem o backup do usuário.
+- Ilustrações esquemáticas para identificação de equipamento/padrão, não prescrição técnica ou amplitude de movimento. Conferir detalhes com instrutor presencial.
+- Bases de diferenciação: [NASM — lying leg curl](https://www.nasm.org/resource-center/exercise-library/lying-leg-curl), [NSCA — leg curl and adduction](https://www.nsca.com/education/articles/ptq/are-the-seated-leg-extension-leg-curl-and-adduction-machine-exercises-non-functional-or-risky/), [EGYM — machine guide](https://storage.googleapis.com/egym-b2b-website/downloads/operation_manual_for_egym_strength_machines_EN.pdf).
+
+
 ## FORJA MOVE — biblioteca de movimentos ilustrativos
 
 - Catálogo, fichas e sessão de musculação oferecem **Ver movimento**, sem alterar registros.

@@ -519,6 +519,7 @@
           const existing=known.get(ex.id);
           const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
           const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
+          const visualTag=MOTION.variantLabel?.(ex.id)||'';
           const searchable=[ex.name,ex.muscle,ex.equipment].join(' ').toLocaleLowerCase('pt-BR');
           return `<article class="catalog-browser-item" data-catalog-item
                    data-search="${esc(searchable)}" ${searchable.includes(term)?'':'hidden'}>
@@ -529,6 +530,7 @@
             <div class="catalog-browser-main">${MOTION.thumb(ex.id)}
               <div class="catalog-browser-summary"><h3>${esc(ex.name)}</h3>
               <p class="catalog-browser-description">${esc(description)}</p>
+              ${visualTag?`<span class="motion-variant-label">${esc(visualTag)}</span>`:""}
               ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}" aria-label="Ver movimento: ${esc(ex.name)}">▶ Ver movimento</button>`:''}</div>
             </div>
             <div class="catalog-browser-bottom">
@@ -1757,7 +1759,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-motion1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-motion2',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
