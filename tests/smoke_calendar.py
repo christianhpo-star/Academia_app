@@ -67,6 +67,7 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Histórico',exact=True).click()
     assert page.get_by_role('heading',name='Calendário de treinos').count()==1
     assert 'Nenhum treino salvo neste mês' in page.locator('#training-calendar').inner_text()
+    page.locator('.history-calendar-fold > summary').click()
     page.locator('[data-action="calendar-shift"][data-delta="-1"]').click()
     # From November 2026 to October 2026.
     assert 'outubro de 2026' in page.locator('.calendar-month').inner_text().lower()
