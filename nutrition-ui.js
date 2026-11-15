@@ -261,7 +261,7 @@
         const seen=new Set();rows=archive().entries.slice().reverse().flatMap(e=>e.items.map(i=>({i,e}))).filter(({i})=>{const key=i.foodId||i.label;if(seen.has(key))return false;seen.add(key);return true;}).map(({i,e})=>button('recent',foodVisual(i)+'<span class="nd-result-copy"><strong>'+esc(i.label)+'</strong></span>',`data-entry="${esc(e.id)}" data-id="${esc(i.id)}"`,'nd-result nd-food-result'));
       }else {
         const found=search?CAT.search(search):CAT.orderedForMeal(draft.entry.mealType);
-        rows=found.map(f=>button('pick',foodVisual(f)+'<span class="nd-result-copy"><strong>'+esc(f.name)+'</strong><small>'+esc(f.category)+(f.estimate?' · estimativa':'')+(f.nutrientsPerServing?' · rótulo por porção':'')+'</small></span>',`data-id="${esc(f.id)}"`,'nd-result nd-food-result'));
+        rows=found.map(f=>button('pick',foodVisual(f)+'<span class="nd-result-copy"><strong>'+esc(f.name)+'</strong><small>'+esc(f.category)+(f.estimate?' · estimativa':'')+(f.nutrientsPerServing?' · rótulo por porção':'')+(f.source?.name==='Growth Supplements — tabela nutricional oficial'?' · tabela oficial Growth':'')+'</small></span>',`data-id="${esc(f.id)}"`,'nd-result nd-food-result'));
       }
       const empty=mode==='recent'&&!search?'Você ainda não registrou alimentos. Abra Buscar para ver todo o catálogo.':
         mode==='favorites'&&!search?'Sem favoritos ainda. Abra Buscar e escolha um alimento para começar.':
