@@ -95,6 +95,31 @@ with sync_playwright() as p:
     assert sum(row['items'][0]['nutrientsPerServing']['proteinG']==23 for row in repeated['nutrition']['entries'] if row['items'][0].get('nutrientsPerServing'))==2
     assert restored.evaluate('document.documentElement.scrollWidth<=innerWidth')
 
+    # Doce Cascão — estimates remain approximate, independent of packaged facts.
+    restored.locator('[data-action="nutrition-pick"][data-food="local:doce-cascao-acai-trufado-branco-500ml"]').click()
+    assert 'Faixa aproximada' in restored.locator('#nutrition-catalog-form').inner_text()
+    restored.locator('#nutrition-portion').select_option('half')
+    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
+    archive_half=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
+    half=next(row for row in archive_half['nutrition']['entries'] if row['items'][0]['foodId']=='local:doce-cascao-acai-trufado-branco-500ml')
+    assert half['items'][0]['estimate']['central']['energyKcal']==407.2
+    assert half['items'][0]['nutrientsPer100g']['energyKcal'] is None
+    assert half['items'][0]['grams'] is None
+    assert 'baixa confiança' in restored.locator('#screen').inner_text()
+    restored.locator('[data-action="nutrition-pick"][data-food="local:doce-cascao-acai-trufado-preto-500ml"]').click()
+    restored.locator('#nutrition-catalog-form button[type="submit"]').click()
+    archive_whole=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
+    preto=next(row for row in archive_whole['nutrition']['entries'] if row['items'][0]['foodId']=='local:doce-cascao-acai-trufado-preto-500ml')
+    assert preto['items'][0]['estimate']['central']['energyKcal']==1003.4
+    assert all(row['items'][0]['foodId'] not in ('local:doce-cascao-adicional-avela','local:doce-cascao-adicional-ninho') for row in archive_whole['nutrition']['entries'])
+    card=restored.locator('.nutrition-entry').filter(has=restored.locator('[data-action="nutrition-save-favorite"][data-id="'+preto['id']+'"]'))
+    card.locator('summary').click()
+    card.locator('[data-action="nutrition-save-favorite"]').click()
+    restored.locator('[data-action="nutrition-use-favorite"]').first.click()
+    saved=json.loads(restored.evaluate("window.__testStorage['forja.academia.v1']"))
+    assert sum(row['items'][0].get('estimate',{}).get('central',{}).get('energyKcal',0)==1003.4 for row in saved['nutrition']['entries'])==2
+    assert restored.evaluate('document.documentElement.scrollWidth <= innerWidth')
+
     assert errors==[],errors
     context.close();browser.close()
     print('PASS nutrition: quick log, repeat, edit, delete, reload, 320/390px and no invented macros')

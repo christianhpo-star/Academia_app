@@ -40,6 +40,21 @@
     );
   }
 
+
+  // An estimate is separate from measured or labelled nutrients and never populates daily exact totals.
+  function validEstimate(estimate) {
+    if (!isObject(estimate) || estimate.confidence !== 'low' ||
+        !textOk(estimate.servingLabel, 120) ||
+        !textOk(estimate.assumptions, 500)) return false;
+    for (const group of ['low', 'central', 'high']) {
+      if (!isObject(estimate[group]) || !NUTRIENTS.every(key =>
+        Object.hasOwn(estimate[group], key) &&
+        numberOk(estimate[group][key], 0, key === 'energyKcal' ? 5000 : 1000))) return false;
+    }
+    return NUTRIENTS.every(key =>
+      estimate.low[key] <= estimate.central[key] &&
+      estimate.central[key] <= estimate.high[key]);
+  }
   function sourceOk(value) {
     return isObject(value) && textOk(value.name, 80) &&
       optionalString(value.reference, 200) && optionalString(value.license, 100);
@@ -49,7 +64,8 @@
     return isObject(food) && idOk(food.id) && textOk(food.name) &&
       (food.preparation === null || food.preparation === undefined ||
         PREPARATIONS.includes(food.preparation)) &&
-      nutrientsOk(food.nutrientsPer100g) && sourceOk(food.source);
+      nutrientsOk(food.nutrientsPer100g) && sourceOk(food.source) &&
+      (food.estimate === undefined || validEstimate(food.estimate));
   }
 
   function validPortion(item, withSnapshot) {
@@ -58,6 +74,7 @@
         !optionalNumber(item.grams, 0.001, 10000)) return false;
 
     if (item.nutrientsPerServing !== undefined && !nutrientsOk(item.nutrientsPerServing)) return false;
+    if (item.estimate !== undefined && !validEstimate(item.estimate)) return false;
     if (!withSnapshot) return idOk(item.foodId);
     if (!textOk(item.label) ||
         !(item.foodId === undefined || item.foodId === null || idOk(item.foodId)) ||
@@ -164,9 +181,22 @@
       observedOnly: true, totals, knownItems: known };
   }
 
+
+  // Low-confidence estimates are never combined into the observed/labelled totals above.
+  function estimatedTotals(entries,date) {
+    if(!dateOk(date)||!Array.isArray(entries)||!entries.every(validEntry))
+      throw new Error('Período ou refeições inválidos.');
+    const items=entries.filter(entry=>entry.date===date).flatMap(entry=>entry.items);
+    const estimated=items.filter(item=>item.estimate);
+    const totals=Object.fromEntries(['low','central','high'].map(group=>[group,
+      Object.fromEntries(NUTRIENTS.map(key=>[key,
+        Math.round(estimated.reduce((sum,item)=>sum+item.estimate[group][key]*item.quantity,0)*10)/10]))]));
+    return {date,estimatedItems:estimated.length,confidence:'low',
+      excludesOtherItems:estimated.length!==items.length,totals};
+  }
   const api = {
     VERSION, NUTRIENTS, MEALS, UNITS, archive, dateOk, nutrientsOk, validFood,
-    validEntry, validTemplate, validArchive, ensureArchive, merge, observedTotals,
+    validEntry, validTemplate, validArchive, validEstimate, ensureArchive, merge, observedTotals, estimatedTotals,
   };
   root.ForjaNutrition = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

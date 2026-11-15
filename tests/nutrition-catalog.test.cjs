@@ -58,3 +58,57 @@ test('busca aceita grafias com e sem acento sem alterar os registros',()=>{
   assert.ok(C.search('arroz').length>0);
   assert.equal(C.makeItem('unknown','pack',1,id),null);
 });
+
+test('açaí trufado branco e preto têm intervalo explícito, sem kcal verificadas',()=>{
+  const branco=C.find('local:doce-cascao-acai-trufado-branco-500ml');
+  const preto=C.find('local:doce-cascao-acai-trufado-preto-500ml');
+  assert.equal(branco.estimate.confidence,'low');
+  assert.equal(preto.estimate.central.energyKcal,1003.4);
+  assert.equal(branco.estimate.central.energyKcal,814.4);
+  assert.equal(branco.nutrientsPer100g.energyKcal,null);
+  assert.equal(C.search('açaí trufado').filter(f=>f.category==='Sobremesas').length,2);
+  const first=C.makeItem(branco.id,'whole',1,id);
+  const second=C.makeItem(preto.id,'whole',1,id);
+  assert.equal(N.validEntry(entry(first)),true);
+  assert.equal(first.grams,null);
+  assert.equal(second.grams,null);
+  const date='2026-11-14';
+  const records=[entry(first,date),entry(second,date)];
+  assert.equal(N.observedTotals(records,date).totals.energyKcal,null);
+  const estimated=N.estimatedTotals(records,date);
+  assert.equal(estimated.estimatedItems,2);
+  assert.equal(estimated.totals.central.energyKcal,1817.8);
+  assert.equal(estimated.totals.low.energyKcal,1356.8);
+  assert.equal(estimated.totals.high.energyKcal,2333);
+});
+test('meio copo, 2 copos e adicional não são confundidos',()=>{
+  const foodId='local:doce-cascao-acai-trufado-branco-500ml';
+  const half=C.makeItem(foodId,'half',1,id);
+  const double=C.makeItem(foodId,'whole',2,id);
+  assert.equal(half.estimate.central.energyKcal,407.2);
+  assert.equal(double.estimate.central.energyKcal,814.4);
+  assert.equal(N.estimatedTotals([entry(half)],'2026-11-14').totals.central.energyKcal,407.2);
+  assert.equal(N.estimatedTotals([entry(double)],'2026-11-14').totals.central.energyKcal,1628.8);
+  const extra=C.makeItem('local:doce-cascao-adicional-ninho','extra',1,id);
+  assert.equal(extra.estimate.central.energyKcal,66);
+  const mixed=entry(half);mixed.items.push(extra);
+  assert.equal(N.validEntry(mixed),true);
+  assert.equal(N.estimatedTotals([mixed],'2026-11-14').totals.central.energyKcal,473.2);
+  assert.equal(N.validEntry({...mixed,items:[{...half,estimate:{...half.estimate,high:{...half.estimate.high,energyKcal:-1}}}]}),false);
+});
+test('favoritos de sobremesas mantêm faixa e não inventam outros consumos',()=>{
+  const a=C.makeItem('local:doce-cascao-acai-trufado-preto-500ml','half',1,id);
+  const initial=entry(a);const snap=structuredClone(initial);
+  const group=C.makeFavorite(initial,N.archive(),'Açaí de meia porção',id);
+  assert.ok(group);
+  const arch=N.archive();arch.mealTemplates.push(group.favorite);
+  assert.equal(N.validArchive(arch),true);
+  const copy=C.fromFavorite(group.favorite,'2026-11-15',arch,id);
+  assert.equal(N.validEntry(copy),true);
+  assert.equal(copy.items[0].estimate.central.energyKcal,501.7);
+  assert.deepEqual(initial,snap);
+  assert.equal(N.observedTotals([copy],'2026-11-15').totals.energyKcal,null);
+  assert.equal(N.estimatedTotals([copy],'2026-11-15').totals.central.energyKcal,501.7);
+  const restored=N.merge(arch,{...N.archive(),entries:[copy]});
+  assert.equal(restored.entries[0].items[0].estimate.confidence,'low');
+});

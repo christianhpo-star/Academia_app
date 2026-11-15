@@ -611,3 +611,19 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .nutrition-food:focus-visible {outline:2px solid #b4e5a7;outline-offset:2px;}
 .nutrition-screen #nutrition-catalog-form .field-row {margin-top:10px;}
 .nutrition-screen .nutrition-entry .btnrow {display:flex;flex-wrap:wrap;gap:6px;}
+
+/* Açaí nutrition: estimated nutrients must never look like verified label totals. */
+.nutrition-estimate {
+  margin-top:12px; padding:13px; border-radius:12px;
+  background:#222c39; border:1px dashed #a08f62;
+  color:var(--text); display:flex; flex-direction:column; gap:6px;
+  overflow-wrap:anywhere;
+}
+.nutrition-estimate strong{font-size:14px;line-height:1.45;}
+.nutrition-estimate span{font-size:12px;color:#e8d9b9;}
+.nutrition-estimate small{font-size:11px;line-height:1.55;color:#c7d1db;}
+.nutrition-estimate details{font-size:12px;line-height:1.55;}
+.nutrition-estimate details summary{cursor:pointer;min-height:34px;padding:6px 0;}
+.nutrition-estimate details p{margin:5px 0;}
+.nutrition-estimate-daily{margin-top:10px;}
+@media (max-width:360px){.nutrition-estimate{padding:11px;}}

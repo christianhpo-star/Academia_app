@@ -10,8 +10,73 @@
     reference:'Estimativas aproximadas de alimentos padrão; valores ainda não vinculados a FDC ID verificado',
     license:'Referência informativa',
   });
-  const p = (id,label,grams) => ({id,label,grams});
+  const p = (id,label,grams,factor=1) => ({id,label,grams,factor});
   const foods = [
+    {
+      id:'local:doce-cascao-acai-trufado-branco-500ml',
+      name:'Doce Cascão — Açaí trufado Branco 500 ml',category:'Sobremesas',
+      aliases:['açaí','acai','trufado','branco','ninho','doce cascao','doce cascão','sorveteria'],preparation:'other',
+      note:'Estimativa não oficial. Açaí com creme Ninho em camadas e raspas de chocolate branco. O copo tem 500 ml; peso e receita não foram informados.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      source:{name:'Estimativa nutricional independente',reference:'Vitafrut, Nestlé Professional e referência de chocolate branco; ver docs/acai-estimates.md',license:'Estimativa, não é rótulo da loja'},
+      estimate:{
+        confidence:'low',servingLabel:'1 copo inteiro de 500 ml',
+        assumptions:'Base: 300 g açaí com guaraná + 90 g creme Ninho + 15 g raspas brancas. Variação: 250–350 g açaí, 60–120 g creme, 10–25 g chocolate.',
+        central:{energyKcal:814.4,proteinG:9.9,carbsG:132.8,fatG:26.8},
+        low:{energyKcal:615.4,proteinG:7,carbsG:100.8,fatG:20.3},
+        high:{energyKcal:1040.8,proteinG:13.1,carbsG:167.8,fatG:34.9},
+      },
+      portions:[p('whole','1 copo inteiro (500 ml)',null,1),p('half','½ copo (≈250 ml, divisão proporcional)',null,0.5)],
+    },
+    {
+      id:'local:doce-cascao-acai-trufado-preto-500ml',
+      name:'Doce Cascão — Açaí trufado Preto 500 ml',category:'Sobremesas',
+      aliases:['açaí','acai','trufado','preto','avelã','avela','doce cascao','doce cascão','sorveteria'],preparation:'other',
+      note:'Estimativa não oficial. Açaí com creme de avelã em camadas e raspas de chocolate. O copo tem 500 ml; peso e receita não foram informados.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      source:{name:'Estimativa nutricional independente',reference:'Vitafrut, Nutella (referência), Nestlé chocolate; ver docs/acai-estimates.md',license:'Estimativa, não é rótulo da loja'},
+      estimate:{
+        confidence:'low',servingLabel:'1 copo inteiro de 500 ml',
+        assumptions:'Base: 300 g açaí com guaraná + 90 g creme de avelã + 15 g raspas de chocolate ao leite. Variação: 250–350 g açaí, 60–120 g creme, 10–25 g chocolate.',
+        central:{energyKcal:1003.4,proteinG:8.9,carbsG:134.3,fatG:46.9},
+        low:{energyKcal:741.4,proteinG:6.4,carbsG:101.8,fatG:33.7},
+        high:{energyKcal:1292.2,proteinG:11.8,carbsG:169.6,fatG:61.8},
+      },
+      portions:[p('whole','1 copo inteiro (500 ml)',null,1),p('half','½ copo (≈250 ml, divisão proporcional)',null,0.5)],
+    },
+    {
+      id:'local:doce-cascao-adicional-ninho',
+      name:'Adicional de creme Ninho (≈20 g, estimativa)',category:'Adicionais',
+      aliases:['adicional','ninho','creme ninho','recheio ninho'],preparation:'other',
+      note:'Registrar à parte somente se você adicionou creme extra. 20 g são uma hipótese, não a porção medida pela loja.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      source:{name:'Estimativa por ingrediente',reference:'Recheio Ninho Nestlé Professional; consultar docs/acai-estimates.md',license:'Estimativa, não é rótulo da loja'},
+      estimate:{
+        confidence:'low',servingLabel:'1 colher estimada de 20 g',
+        assumptions:'Referência de recheio Ninho (330 kcal/100 g); quantidade aproximada 20 g, intervalo 15–25 g.',
+        central:{energyKcal:66,proteinG:1.5,carbsG:11.2,fatG:1.7},
+        low:{energyKcal:49.5,proteinG:1.1,carbsG:8.4,fatG:1.3},
+        high:{energyKcal:82.5,proteinG:1.9,carbsG:14,fatG:2.1},
+      },
+      portions:[p('extra','1 adicional estimado (≈20 g)',null,1)],
+    },
+    {
+      id:'local:doce-cascao-adicional-avela',
+      name:'Adicional de creme de avelã (≈20 g, estimativa)',category:'Adicionais',
+      aliases:['adicional','avelã','avela','creme avelã','creme avela'],preparation:'other',
+      note:'Registrar à parte somente se adicionou creme extra. Referência de creme de avelã tipo Nutella; produto da loja pode variar.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      source:{name:'Estimativa por ingrediente',reference:'Informação nutricional Nutella Brasil; consultar docs/acai-estimates.md',license:'Estimativa, não é rótulo da loja'},
+      estimate:{
+        confidence:'low',servingLabel:'1 colher estimada de 20 g',
+        assumptions:'Referência de creme de avelã (542 kcal/100 g); quantidade aproximada 20 g, intervalo 15–25 g.',
+        central:{energyKcal:108.4,proteinG:1.3,carbsG:11.6,fatG:6.2},
+        low:{energyKcal:81.3,proteinG:0.9,carbsG:8.7,fatG:4.7},
+        high:{energyKcal:135.5,proteinG:1.6,carbsG:14.5,fatG:7.8},
+      },
+      portions:[p('extra','1 adicional estimado (≈20 g)',null,1)],
+    },
+
     {
       id:'photo:itambe-zero-morango-200g',name:'Itambé zero lactose morango, pote 200 g',category:'Laticínios',
       aliases:['itambe','itambé','iogurte','morango','zero lactose'],preparation:'other',
@@ -95,11 +160,22 @@
     const term=normalize(query);
     return foods.filter(food=>normalize([food.name,...food.aliases].join(' ')).includes(term));
   };
+
+  // Copy estimates into each entry so catalogue updates cannot rewrite past records.
+  function copyEstimate(estimate, factor=1) {
+    return {
+      confidence:estimate.confidence,servingLabel:estimate.servingLabel,
+      assumptions:estimate.assumptions,
+      ...Object.fromEntries(['low','central','high'].map(group=>[group,
+        Object.fromEntries(N.NUTRIENTS.map(key=>[key,
+          Math.round(estimate[group][key]*factor*10)/10]))])),
+    };
+  }
   function makeItem(foodId,portionId,count,makeId) {
     const food=find(foodId),qty=Number(count);
     if(!food || !Number.isFinite(qty) || qty<=0 || qty>10000 || typeof makeId!=='function')return null;
     const portion=food.portions.find(row=>row.id===portionId);
-    if(portionId==='custom' && food.nutrientsPerServing)return null;
+    if(portionId==='custom' && (food.nutrientsPerServing||food.estimate))return null;
     if(portionId!=='custom'&&!portion)return null;
     const grams=portionId==='custom'?qty:(portion.grams==null?null:Math.round(qty*portion.grams*100)/100);
     if(grams!==null && (grams<=0||grams>10000))return null;
@@ -109,6 +185,7 @@
       unit:portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
       ...(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
+      ...(food.estimate?{estimate:copyEstimate(food.estimate,portion?.factor??1)}:{}),
       source:{...food.source},
     };
     return N.validEntry({id:'validation',date:'2026-11-14',mealType:'other',items:[item]})?item:null;
@@ -122,6 +199,7 @@
         food={
           id:makeId('personal-food'),name:item.label,preparation:'other',
           nutrientsPer100g:{...item.nutrientsPer100g},
+          ...(item.estimate?{estimate:copyEstimate(item.estimate)}:{}),
           source:item.source?{...item.source}:{name:'Registro pessoal',reference:'Sem composição nutricional verificada',license:'Uso pessoal'},
         };
         if(!N.validFood(food))return null;
@@ -130,6 +208,7 @@
       built.push({id:makeId('preset'),foodId:food.id,
         quantity:item.quantity,unit:item.unit,grams:item.grams,
         ...(item.nutrientsPerServing?{nutrientsPerServing:{...item.nutrientsPerServing}}:{}),
+        ...(item.estimate?{estimate:copyEstimate(item.estimate)}:{}),
       });
     }
     const title=(String(name??'').trim()||entry.items.map(item=>item.label).join(' + ')).slice(0,120);
@@ -145,6 +224,7 @@
         quantity:item.quantity,unit:item.unit,grams:item.grams,
         nutrientsPer100g:{...food.nutrientsPer100g},
         ...(item.nutrientsPerServing?{nutrientsPerServing:{...item.nutrientsPerServing}}:(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{})),
+        ...(item.estimate?{estimate:copyEstimate(item.estimate)}:{}),
         source:{...food.source},
       }:null;
     });
