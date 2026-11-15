@@ -559,7 +559,7 @@
     for(const id of ROUTINE.IDS){
       configuration[id]={label:String(values.get(id+'Label')||''),time:String(values.get(id+'Time')||''),active:values.has(id+'Active')};
     }
-    const result=ROUTINE.configure(state.dailyRoutine,configuration);
+    const result=ROUTINE.configure(state.dailyRoutine,configuration,today());
     if(result.error)return notify(result.error);
     const previous=state.dailyRoutine;state.dailyRoutine=result.archive;
     if(!save()){state.dailyRoutine=previous;return;}
