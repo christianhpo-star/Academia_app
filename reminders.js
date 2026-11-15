@@ -47,7 +47,7 @@
        'A diferença entre duas pesagens próximas foi grande. Horário, hidratação e equipamento podem influenciar; confirme antes de reinterpretar medidas.',
        'weight',previous.date+'|'+current.date,'Limite de 3% em até três dias: convenção prudente do FORJA, não diagnóstico.'));
    }
-   if(profile&&profile.adultScope&&current&&Number.isFinite(profile.weightKg)&&profile.weightKg>0&&!rapidChange){
+   if(profile&&profile.adultScope&&current&&dayOK(profile.confirmedAt)&&current.date>=profile.confirmedAt&&Number.isFinite(profile.weightKg)&&profile.weightKg>0&&!rapidChange){
      const change=ratio(Number(current.weight),profile.weightKg);
      if(change>=5){
        out.push(make('profile-weight',1,'Revisar o peso usado nas estimativas',
