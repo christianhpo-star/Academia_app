@@ -3,8 +3,8 @@ import os, re, shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261115-acai1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
+HTML=re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
+FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition-goals.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
 DRAFT='forja.academia.draft.v1'
 MAIN='forja.academia.v1'
 

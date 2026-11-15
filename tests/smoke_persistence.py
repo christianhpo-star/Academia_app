@@ -14,7 +14,7 @@ from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = re.sub(r'<script defer src="\./[^\"]+"></script>', '', (ROOT / 'index.html').read_text())
-INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261115-acai1" />', '')
+INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />', '')
 
 
 def open_app(context, storage, errors):
@@ -33,7 +33,7 @@ def open_app(context, storage, errors):
       });
     }""", storage)
     page.add_style_tag(path=str(ROOT / 'styles.css'))
-    for script in ['data.js', 'engine.js', 'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'app.js']:
+    for script in ['data.js', 'engine.js', 'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'nutrition-goals.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'app.js']:
         page.add_script_tag(path=str(ROOT / script))
     page.wait_for_selector('#screen h1')
     return page
@@ -170,6 +170,8 @@ with sync_playwright() as p:
         'mimeType':'application/json',
         'buffer':json.dumps(incoming,ensure_ascii=False).encode('utf-8'),
     })
+    # File.text() is asynchronous; wait for the import handler to finish before reading storage.
+    page.wait_for_function("document.getElementById('import-file').value === ''", timeout=10000)
     merged = json.loads(storage_snapshot(page)['forja.academia.v1'])
     assert len(merged['sessions']) == len(original['sessions'])+1
     assert len({x['id'] for x in merged['sessions']}) == len(merged['sessions'])
@@ -183,6 +185,7 @@ with sync_playwright() as p:
         'mimeType':'application/json',
         'buffer':json.dumps(incoming,ensure_ascii=False).encode('utf-8'),
     })
+    page.wait_for_function("document.getElementById('import-file').value === ''", timeout=10000)
     again = json.loads(storage_snapshot(page)['forja.academia.v1'])
     assert len(again['sessions']) == len(merged['sessions'])
     assert len(again['weights']) == len(merged['weights'])

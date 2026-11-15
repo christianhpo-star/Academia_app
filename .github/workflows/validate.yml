@@ -25,17 +25,20 @@ jobs:
           node --check focus.js
           node --check catalog-advice.js
           node --check body-measures.js
+          node --check nutrition-goals.js
           node --check nutrition.js
           node --check nutrition-catalog.js
           node --check nutrition-ui.js
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
+        run: node --test tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
           python3 -m playwright install --with-deps chromium
+      - name: Browser smoke - nutrition diary and goals
+        run: python3 tests/smoke_nutrition.py
       - name: Browser smoke - strength persistence and radar
         run: |
           python3 tests/smoke_browser.py
@@ -50,7 +53,6 @@ jobs:
           python3 tests/smoke_catalog.py
           python3 tests/smoke_body.py
           python3 tests/smoke_history.py
-          python3 tests/smoke_nutrition.py
       - name: Upload isolated PR source for diagnostics
         if: github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
@@ -80,5 +82,6 @@ jobs:
             screenshots/focus-*.png
             screenshots/catalog-*.png
             screenshots/body-*.png
+            screenshots/nutrition-*.png
           if-no-files-found: warn
           retention-days: 3

@@ -134,6 +134,13 @@
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
   };
+  const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
+    commit(next){
+      if(!NUTRITION.validArchive(next)){notify('Dados incompatíveis; revise os campos e limites.');return false;}
+      const previous=state.nutrition;state.nutrition=next;
+      if(!save()){state.nutrition=previous;return false;}return true;
+    }
+  });
   let toastTimeout;
   function draftStatusText() {
     if (!ui.draftSaveOk) return 'Salvamento automático indisponível: não feche a página.';
@@ -402,9 +409,10 @@
     const main = document.getElementById('screen');
     main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
-      ui.tab === 'progress' ? (ui.nutritionOpen ? NUI.render({archive:state.nutrition,date:today(),editId:ui.nutritionEditId,limit:ui.nutritionLimit,selectedFoodId:ui.nutritionPicked}) : ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
+      ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
+    if(ui.tab==='nutrition')diary.mount();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
-      const active=btn.dataset.tab===ui.tab;
+      const active=btn.dataset.tab===ui.tab||(ui.tab==='catalog'&&btn.dataset.tab==='plans');
       btn.classList.toggle('active',active);
       if(active) btn.setAttribute('aria-current','page'); else btn.removeAttribute('aria-current');
     });
@@ -548,6 +556,7 @@
     const next=getNext(), p=planFor(ui.plan);
     const all=state.exercises.filter(x=>x.group===ui.plan);
     return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D. Cada bloco realizado sai da fila; os outros continuam pendentes.')}
+      <button class="secondary full mt-12" data-action="navigate" data-to="catalog">Catálogo de exercícios</button>
       ${resumeBanner()}
       ${renderQueue(next)}
       <div class="tabs plan-block-selector" role="group" aria-label="Escolher grupo de treino">
@@ -603,10 +612,10 @@
     const ids=Object.keys(entries);
     const focusIndex=Math.max(0,ids.indexOf(selected));
     return `${headline('Sessão em andamento',p.title,'As cargas preenchidas são referência; registre repetições e RIR após cada série.')}
-      <div class="callout ${ui.draftSaveOk?'good':'warn'}"><strong>${ui.recovered?'Treino recuperado após interrupção.':'Salvamento automático ativo.'}</strong>
+      <div class="callout workout-status-callout ${ui.draftSaveOk?'good':'warn'}"><strong>${ui.recovered?'Treino recuperado após interrupção.':'Salvamento automático ativo.'}</strong>
         <span class="draft-status ${ui.draftSaveOk?'':'save-error'}" id="draft-status" role="status">${esc(draftStatusText())}</span>
-        <p class="small mb-0">Cada edição é salva neste navegador. Você pode sair desta tela e retomar o treino.</p></div>
-      <div class="callout">${p.type==='lower'?'Treino de pernas: registre dor no joelho durante os exercícios e no dia seguinte. Se doer, não aumente a carga.':'Carga por halter significa o peso de cada halter, não a soma do par.'}</div>
+        <p class="small mb-0">Dados salvos neste aparelho.</p></div>
+      <div class="callout workout-guidance-callout">${p.type==='lower'?'Treino de pernas: registre dor no joelho durante os exercícios e no dia seguinte. Se doer, não aumente a carga.':'Halteres: anote o peso de cada um, não a soma.'}</div>
       <section class="workout-focus-bar card" aria-label="Modo de visualização e andamento">
         <div class="row-between focus-mode-row"><div><strong>Seu treino, no seu ritmo</strong><p class="small muted">Séries preenchidas: só contam após registrar carga e repetições.</p></div>
           <button type="button" class="secondary small-button" data-action="focus-toggle" aria-pressed="${ui.focusedMode}">${ui.focusedMode?'Ver ficha completa':'Ativar modo focado'}</button>
@@ -973,6 +982,7 @@
   }
   function renderSettings() {
     return `${headline('Preferências','Seus ajustes.','Dados no próprio aparelho. Sem login, mensalidade ou envio para servidores.')}
+      <button class="secondary full mb-8" data-action="nutrition-goals">Perfil e metas de alimentação · altura e idade</button>
       <form id="goal-form" class="card"><h2 class="section-title">Meta corporal</h2>
       <div class="field-row mt-12"><div class="field"><label for="initial-weight">Peso inicial (kg)</label><input id="initial-weight" name="startWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.startWeight}" required /></div>
       <div class="field"><label for="target-weight">Meta (kg)</label><input id="target-weight" name="targetWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.targetWeight}" required /></div></div>
@@ -1142,7 +1152,7 @@
         state.weights.filter(item=>!item.initial).length+(state.bodyMeasurements||[]).length+
         (state.nutrition?.entries||[]).length+(state.nutrition?.foods||[]).length+
         (state.nutrition?.mealTemplates||[]).length;
-      const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft);
+      const hasCurrent=existing>0||Boolean(ui.draft)||Boolean(state.muay.draft)||Boolean(state.nutrition.draft)||Boolean(state.nutrition.settings.profile)||(state.nutrition.settings.targets||[]).length>0;
       const action=hasCurrent?'mesclados aos atuais (sem substituir registros de mesmo ID)':
         'carregados neste aparelho';
       const counts=parsed.sessions.length+' musculação, '+parsed.muay.sessions.length+
@@ -1162,93 +1172,11 @@
       notify('Não foi possível importar: verifique o backup FORJA e os registros informados.');}
     document.getElementById('import-file').value='';
   }
-  function saveNutrition(form){
-    const old=state.nutrition.entries;
-    const editing=old.find(row=>row.id===ui.nutritionEditId)||null;
-    const result=NUI.fromForm(form,editing);
-    if(result.error)return notify(result.error);
-    if(result.entry.date>today())return notify('A data da refeição não pode ser futura.');
-    if(!NUTRITION.validEntry(result.entry))return notify('Registro incompatível.');
-    state.nutrition.entries=editing?old.map(row=>row.id===editing.id?result.entry:row):[...old,result.entry];
-    if(!save()){state.nutrition.entries=old;return notify('Não foi possível salvar. Os dados anteriores foram preservados.');}
-    ui.nutritionEditId=null;render();notify(editing?'Refeição atualizada.':'Refeição salva neste aparelho.');
-  }
-  function saveNutritionCatalog(form){
-    const fd=new FormData(form);
-    const foodId=ui.nutritionPicked;
-    const item=NCAT.makeItem(foodId,String(fd.get('portionId')||''),Number(fd.get('quantity')),NUI.newId);
-    const mealType=String(fd.get('mealType')||'snack');
-    if(!item||!NUTRITION.MEALS.includes(mealType))return notify('Selecione uma porção válida.');
-    const entry={id:NUI.newId('meal'),date:today(),mealType,time:null,notes:'',items:[item]};
-    if(!NUTRITION.validEntry(entry))return notify('Dados alimentares inválidos.');
-    state.nutrition.entries.push(entry);
-    if(!save()){state.nutrition.entries.pop();return notify('Não foi possível salvar. Histórico preservado.');}
-    ui.nutritionPicked=null;render();notify('Alimento registrado.');return;
-  }
   function handleAction(btn) {
     const action=btn.dataset.action;
-    if(action==='nutrition-pick'){
-      if(!NCAT.find(btn.dataset.food))return;
-      ui.nutritionPicked=btn.dataset.food;render();
-      document.querySelector('#nutrition-catalog-form')?.scrollIntoView({block:'nearest'});return;
-    }
-    if(action==='nutrition-save-favorite'){
-      const row=state.nutrition.entries.find(item=>item.id===btn.dataset.id);
-      if(!row||state.nutrition.mealTemplates.length>=300)return;
-      const fav=NCAT.makeFavorite(row,state.nutrition,'',NUI.newId);
-      if(!fav||state.nutrition.foods.length+fav.foodsToAdd.length>500)return notify('Esta refeição não pode ser salva como favorita.');
-      state.nutrition.foods.push(...fav.foodsToAdd);
-      state.nutrition.mealTemplates.push(fav.favorite);
-      if(!save()){
-        state.nutrition.mealTemplates.pop();
-        state.nutrition.foods.splice(state.nutrition.foods.length-fav.foodsToAdd.length,fav.foodsToAdd.length);
-        return notify('Não foi possível salvar o favorito.');
-      }
-      render();notify('Refeição salva como favorita.');return;
-    }
-    if(action==='nutrition-use-favorite'){
-      const fav=state.nutrition.mealTemplates.find(item=>item.id===btn.dataset.id);
-      if(!fav)return;
-      const entry=NCAT.fromFavorite(fav,today(),state.nutrition,NUI.newId);
-      if(!entry)return notify('Refeição favorita incompatível.');
-      state.nutrition.entries.push(entry);
-      if(!save()){state.nutrition.entries.pop();return notify('Não foi possível registrar o favorito.');}
-      render();notify('Refeição favorita registrada.');return;
-    }
-    if(action==='nutrition-open'){
-      ui.nutritionOpen=true;ui.bodyOpen=false;ui.nutritionEditId=null;ui.tab='progress';
-      render();window.scrollTo(0,0);return;
-    }
-    if(action==='nutrition-back'){
-      ui.nutritionOpen=false;ui.nutritionEditId=null;render();window.scrollTo(0,0);return;
-    }
-    if(action==='nutrition-more'){
-      ui.nutritionLimit=Math.min(state.nutrition.entries.length,ui.nutritionLimit+5);render();return;
-    }
-    if(action==='nutrition-cancel-edit'){ui.nutritionEditId=null;render();return;}
-    if(action==='nutrition-edit'){
-      if(!state.nutrition.entries.some(row=>row.id===btn.dataset.id&&row.items.length===1&&!row.items[0].nutrientsPerServing&&!row.items[0].estimate))return;
-      ui.nutritionEditId=btn.dataset.id;render();
-      document.querySelector('#nutrition-form')?.scrollIntoView({block:'start'});return;
-    }
-    if(action==='nutrition-repeat'){
-      const original=state.nutrition.entries.find(row=>row.id===btn.dataset.id);
-      if(!original)return;
-      const again={...copy(original),id:NUI.newId('meal'),date:today(),
-        items:original.items.map(item=>({...copy(item),id:NUI.newId('item')}))};
-      if(!NUTRITION.validEntry(again))return notify('Refeição incompatível.');
-      state.nutrition.entries.push(again);
-      if(!save()){state.nutrition.entries.pop();return;}
-      ui.nutritionEditId=null;render();notify('Refeição repetida hoje.');return;
-    }
-    if(action==='nutrition-delete'){
-      const exists=state.nutrition.entries.some(row=>row.id===btn.dataset.id);
-      if(!exists||!confirm('Excluir esta refeição do histórico?'))return;
-      const previous=state.nutrition.entries;
-      state.nutrition.entries=previous.filter(row=>row.id!==btn.dataset.id);
-      if(!save()){state.nutrition.entries=previous;return;}
-      if(ui.nutritionEditId===btn.dataset.id)ui.nutritionEditId=null;
-      render();notify('Refeição excluída.');return;
+    if(action==='nutrition-open'||action==='nutrition-goals'){
+      ui.tab='nutrition';ui.editor=null;render();window.scrollTo(0,0);
+      if(action==='nutrition-goals')diary.goals();return;
     }
 
     if(action==='history-more'){
@@ -1654,8 +1582,7 @@
     else if(event.target.id==='goal-form')setGoal(event.target);
     else if(event.target.id==='exercise-form')saveExercise(event.target);
     else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
-    else if(event.target.id==='nutrition-form')saveNutrition(event.target);
-    else if(event.target.id==='nutrition-catalog-form')saveNutritionCatalog(event.target);
+
   });
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   render();
@@ -1669,7 +1596,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-acai1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ux12',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

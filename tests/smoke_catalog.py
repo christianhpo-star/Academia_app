@@ -4,8 +4,8 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261115-acai1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
+HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
+FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','nutrition-goals.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']
 def start(context,stored,errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
@@ -31,11 +31,12 @@ with sync_playwright() as p:
     errors=[]
     page=start(ctx,{},errors)
     # Catálogo global existe fora do treino, com todos os grupos.
-    page.get_by_role('button',name='Catálogo',exact=True).click()
+    page.get_by_role('button',name='Treinos',exact=True).click()
+    page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
     assert page.locator('.catalog-browser-item').count()>=40
     assert page.locator('#catalog-search').count()==1
     assert page.locator('#catalog-count').count()==1
-    assert page.locator('#nav [data-tab="catalog"][aria-current="page"]').count()==1
+    assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
     initial_count=page.locator('.catalog-browser-item').count()
     page.locator('#catalog-search').fill('canadense')
     assert page.locator('.catalog-browser-item:visible').count()==1

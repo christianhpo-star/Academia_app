@@ -194,7 +194,9 @@
     if(!N.validEntry(entry)||!N.validArchive(archive)||typeof makeId!=='function')return null;
     const built=[],foodsToAdd=[];
     for(const item of entry.items) {
+      // Freeze the entry's composition in personal foods, including user corrections.
       let food=find(item.foodId)||archive.foods.find(f=>f.id===item.foodId);
+      if(food && (JSON.stringify(food.nutrientsPer100g)!==JSON.stringify(item.nutrientsPer100g)||JSON.stringify(food.source)!==JSON.stringify(item.source)||food.name!==item.label))food=null;
       if(!food) {
         food={
           id:makeId('personal-food'),name:item.label,preparation:'other',
