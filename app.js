@@ -695,12 +695,17 @@
         </div>
         <p class="small muted">${esc(ex.muscle||'Grupo muscular')} · ${esc(ex.equipment||'Equipamento não informado')}</p>
         <p class="small">${esc(ex.reason)}</p>
-        <button type="button" class="secondary small-button" data-action="${ex.kind==='extra-set'?'dose-add-one':ex.kind==='extra-exercise'?'catalog-extra-add':'flex-add'}" data-ex="${esc(ex.id)}" ${ex.sourceId?'data-source="'+esc(ex.sourceId)+'"':''}>${ex.kind==='extra-set'?'Acrescentar uma série':ex.kind==='extra-exercise'?'Adicionar exercício opcional':'Adicionar para substituir'}</button>
+        <div class="motion-flex-actions">
+          ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}" aria-label="Ver movimento: ${esc(ex.name)}">▶ Ver movimento</button>`:''}
+          <button type="button" class="secondary small-button" data-action="${ex.kind==='extra-set'?'dose-add-one':ex.kind==='extra-exercise'?'catalog-extra-add':'flex-add'}" data-ex="${esc(ex.id)}" ${ex.sourceId?'data-source="'+esc(ex.sourceId)+'"':''}>${ex.kind==='extra-set'?'Acrescentar uma série':ex.kind==='extra-exercise'?'Adicionar exercício opcional':'Adicionar para substituir'}</button>
+        </div>
       </article>`).join('');
     const full=choices.map(ex=>
       '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
       '<div><strong>' + esc(ex.name) + '</strong><small>' + esc(ex.muscle) + ' · ' + esc(ex.equipment) + '</small></div>' +
-      '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
+      '<div class="motion-flex-actions">' +
+      (MOTION.has(ex.id)?'<button class="motion-inline-trigger" data-action="motion-open" data-ex="' + esc(ex.id) + '">▶ Ver movimento</button>':'') +
+      '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div></div>'
     ).join('');
     return `<div class="flex-catalog mt-12">
       <div class="catalog-mode-switch" role="group" aria-label="Tipo de recomendação">

@@ -800,3 +800,8 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .motion-reduced{font-size:11px;color:#c4d6e2}
 @media(max-width:360px){.motion-thumb{width:75px;flex-basis:75px}.catalog-browser-main{gap:9px}.motion-sheet{padding:13px}.motion-dialog{width:96vw}}
 @media(prefers-reduced-motion:reduce){.motion-dialog,.motion-dialog::backdrop{transition:none!important}}
+
+.motion-flex-actions{display:flex;gap:7px 12px;flex-wrap:wrap;align-items:center;justify-content:flex-end}
+.flex-catalog-row{flex-wrap:wrap}
+.catalog-suggestion .motion-flex-actions{justify-content:space-between}
+@media(max-width:360px){.motion-flex-actions{justify-content:stretch;width:100%}.motion-flex-actions .secondary{flex:1;min-width:0}}
