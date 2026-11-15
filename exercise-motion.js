@@ -73,11 +73,45 @@ function segment(a,b,u,v,cls,width,animated){
  const s=`${xy(a,u)} ${xy(a,v)}`,t=`${xy(b,u)} ${xy(b,v)}`;
  return `<polyline class="${cls}" stroke-width="${width}" points="${s}">${ani('points',s,t,animated)}</polyline>`;
 }
-function svg(id, animated=false){
+const MOVEMENT_FOCUS={"supino":{"mark":["S","E","W","E2","W2"],"trace":[["W","E"]],"label":"Ombros e cotovelos"},"puxada":{"mark":["S","E","W","E2","W2"],"trace":[["W","S"]],"label":"Ombros e cotovelos"},"remada":{"mark":["S","E","W"],"trace":[["W","E"]],"label":"Ombro e cotovelo"},"rosca":{"mark":["E","E2","W","W2"],"trace":[["W","E"]],"label":"Cotovelos"},"lateral":{"mark":["S","S2","W","W2"],"trace":[["W","S"]],"label":"Ombros"},"desenvolvimento":{"mark":["S","E","W","E2","W2"],"trace":[["W","S"]],"label":"Ombros e cotovelos"},"triceps":{"mark":["E","E2","W","W2"],"trace":[["W","E"]],"label":"Cotovelos"},"agachamento":{"mark":["P","K","K2"],"trace":[["P","S"]],"label":"Quadril e joelhos"},"legpress":{"mark":["P","K","A","K2","A2"],"trace":[["K","P"]],"label":"Joelhos e tornozelos"},"hinge":{"mark":["P","P2","K"],"trace":[["S","P"]],"label":"Quadril e tronco"},"ponte":{"mark":["P","P2"],"trace":[["P","S"]],"label":"Quadril"},"afundo":{"mark":["P","K","K2"],"trace":[["P","S"]],"label":"Quadril e joelhos"},"extensora":{"mark":["K","K2","A"],"trace":[["A","K"]],"label":"Joelhos"},"flexora":{"mark":["K","K2","A"],"trace":[["A","K"]],"label":"Joelhos"},"panturrilha":{"mark":["A","A2"],"trace":[["A","K"]],"label":"Tornozelos"},"crucifixo":{"mark":["S","S2","W","W2"],"trace":[["W","S"]],"label":"Ombros"},"abdutora":{"mark":["P","P2","K","K2"],"trace":[["K","P"],["K2","P2"]],"label":"Quadril"},"coice":{"mark":["P","K","A"],"trace":[["A","P"]],"label":"Quadril"},"soco":{"mark":["S","E","W"],"trace":[["W","S"]],"label":"Ombro e cotovelo"}};
+function round1(n){return Math.round(n*10)/10;}
+function arcBetween(start,end,pivot){
+ const [sx,sy]=start,[ex,ey]=end,[px,py]=pivot;
+ if(![sx,sy,ex,ey,px,py].every(Number.isFinite))return "";
+ if(Math.hypot(ex-sx,ey-sy)<11)return "";
+ const angle0=Math.atan2(sy-py,sx-px);
+ let change=Math.atan2(ey-py,ex-px)-angle0;
+ while(change>Math.PI)change-=Math.PI*2;
+ while(change< -Math.PI)change+=Math.PI*2;
+ const r=(Math.hypot(sx-px,sy-py)+Math.hypot(ex-px,ey-py))/2;
+ const mid=angle0+change/2;
+ const mx=px+r*Math.cos(mid),my=py+r*Math.sin(mid);
+ const cx=Math.min(348,Math.max(12,2*mx-(sx+ex)/2));
+ const cy=Math.min(207,Math.max(13,2*my-(sy+ey)/2));
+ return `M ${round1(sx)} ${round1(sy)} Q ${round1(cx)} ${round1(cy)} ${round1(ex)} ${round1(ey)}`;
+}
+function detailLayers(id,fam,a,b,animated){
+ const config=MOVEMENT_FOCUS[fam];
+ if(!config)return {paths:"",joints:""};
+ const active=new Set(config.mark);
+ const markerId="m-arrow-"+id;
+ const curves=config.trace.map(([end,pivot])=>arcBetween(point(a,end),point(b,end),point(a,pivot))).filter(Boolean);
+ const paths=curves.length?`<defs><marker id="${markerId}" markerWidth="6" markerHeight="6" refX="5.5" refY="3" orient="auto" viewBox="0 0 6 6"><path d="M0 0L6 3L0 6" fill="none" stroke="#80beff" stroke-width="1.5" stroke-linecap="round"/></marker></defs><g class="m-trajectory-layer" aria-hidden="true">${curves.map(d=>`<path class="m-motion-track" d="${d}" marker-end="url(#${markerId})"/>`).join("")}</g>`:"";
+ const nodes=JOINTS.filter(j=>j!=="H").map(j=>{
+  const [x,y]=point(a,j),[xx,yy]=point(b,j),selected=active.has(j);
+  return `<circle data-joint="${j}" class="m-joint ${selected?"m-joint-active":"m-joint-neutral"}" cx="${x}" cy="${y}" r="${selected?4.5:2.2}">${ani("cx",x,xx,animated)}${ani("cy",y,yy,animated)}</circle>`;
+ }).join("");
+ return {paths,joints:`<g class="m-joints" aria-hidden="true">${nodes}</g>`};
+}
+function svg(id, animated=false, phase='start', detail=false){
  const fam=EXERCISES[id];if(!fam)return '';
  const p=profileFor(id,fam);if(!p)return '';
- const a=p.a,b=p.b, title=variantLabel(id)||TITLES[fam];
+ const a=phase==='end'&&!animated?p.b:p.a,b=p.b, title=variantLabel(id)||TITLES[fam];
+ const overlay=detail?detailLayers(id,fam,a,b,animated):{paths:'',joints:''};
  const parts=[
+  segment(a,b,'H','S','m-neck',7,animated),
+  segment(a,b,'S','S2','m-shoulder-band',8,animated),
+  segment(a,b,'P','P2','m-pelvis-band',11,animated),
   segment(a,b,'S','P','m-body',13,animated),
   segment(a,b,'S','E','m-arms',10,animated),
   segment(a,b,'E','W','m-arms',10,animated),
@@ -106,21 +140,31 @@ function svg(id, animated=false){
  }
  return `<svg xmlns="http://www.w3.org/2000/svg" class="motion-svg" data-motion-id="${esc(id)}" viewBox="0 0 360 220" role="img" aria-label="${esc(title)}: ilustração ${animated?'animada':'estática'} do movimento">
  <title>${esc(title)} — representação ilustrativa</title>
- <style>.m-equipment{fill:none;stroke:#84a0b2;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.m-floor{fill:none;stroke:#324a59;stroke-width:3}.m-body{fill:none;stroke:#a8cbd4;stroke-linecap:round}.m-arms{fill:none;stroke:#c5f56b;stroke-linecap:round}.m-legs{fill:none;stroke:#d3e4e9;stroke-linecap:round}.m-muted{fill:none;stroke:#96b1c1;opacity:.68;stroke-linecap:round}.m-head{fill:#adced2;stroke:#d3e8e8;stroke-width:2}.m-weight{fill:#80beff}.m-bar{stroke:#80beff;stroke-width:7;stroke-linecap:round}</style>
+ <style>.m-equipment{fill:none;stroke:#84a0b2;stroke-width:7;stroke-linecap:round;stroke-linejoin:round}.m-floor{fill:none;stroke:#324a59;stroke-width:3}.m-body{fill:none;stroke:#a8cbd4;stroke-linecap:round}.m-arms{fill:none;stroke:#c5f56b;stroke-linecap:round}.m-legs{fill:none;stroke:#d3e4e9;stroke-linecap:round}.m-muted{fill:none;stroke:#96b1c1;opacity:.68;stroke-linecap:round}.m-head{fill:#adced2;stroke:#d3e8e8;stroke-width:2}.m-weight{fill:#80beff}.m-bar{stroke:#80beff;stroke-width:7;stroke-linecap:round}.m-neck{fill:none;stroke:#abc8d2;stroke-linecap:round}.m-shoulder-band,.m-pelvis-band{fill:none;stroke:#92b3c6;stroke-linecap:round}.m-joint{stroke:#101b27;stroke-width:2}.m-joint-neutral{fill:#8eacb9;opacity:.85}.m-joint-active{fill:#c5f56b;stroke:#1a3326;stroke-width:2.2}.m-motion-track{fill:none;stroke:#80beff;stroke-width:2.5;stroke-dasharray:5 6;stroke-linecap:round;opacity:.93}</style>
  <rect width="360" height="220" fill="#101b27" rx="24"/><circle cx="182" cy="112" r="94" fill="#192a39"/><path d="M30 197H330" stroke="#324a59" stroke-width="2" stroke-dasharray="6 8"/>
- ${movementGear(id,fam)}${parts.join('')}
+ ${overlay.paths}${movementGear(id,fam)}${parts.join('')}${overlay.joints}
  <rect x="16" y="13" width="89" height="22" rx="11" fill="#253d45"/><text x="29" y="28" fill="#c5f56b" font-size="10" font-family="system-ui,sans-serif" font-weight="800">FORJA · MOVE</text>
  </svg>`;
 }
 function has(id){return Object.hasOwn(EXERCISES,id);}
 function thumb(id){return has(id)?`<span class="motion-thumb" aria-hidden="true">${svg(id,false)}</span>`:'';}
 function viewer(id,name,animated=true){
- if(!has(id))return '';
+ if(!has(id))return "";
  const fam=EXERCISES[id];
- return `<div class="motion-sheet"><div class="motion-sheet-header"><div><p class="section-eyebrow">FORJA MOVE · DEMONSTRAÇÃO</p><h2 id="motion-dialog-title">${esc(name)}</h2></div><button type="button" class="secondary motion-close" data-action="motion-close">Fechar</button></div>
- <div class="motion-stage">${svg(id,animated)}</div>${variantLabel(id)?`<span class="motion-variant-chip">${esc(variantLabel(id))}</span>`:""}<p class="motion-tip">${esc(movementCue(id,fam))}</p>
- <p class="motion-disclaimer">Ilustração de um padrão de movimento, não uma demonstração técnica exata. Confira a posição do equipamento e peça orientação presencial.</p>
- <div class="motion-controls">${animated?'<button type="button" class="secondary" data-action="motion-pause" aria-pressed="false">Pausar animação</button>':'<span class="motion-reduced">Movimento desativado conforme preferência de acessibilidade.</span>'}</div></div>`;
+ const stage=animated?svg(id,true,"start",true):`<div class="motion-static-pair"><figure>${svg(id,false,"start",true)}<figcaption>Início</figcaption></figure><figure>${svg(id,false,"end",true)}<figcaption>Fim</figcaption></figure></div>`;
+ const controls=animated?`<div class="motion-phase-controls" role="group" aria-label="Escolher posição do movimento">
+   <button type="button" class="secondary motion-phase-button" data-action="motion-phase" data-phase="start" aria-pressed="false">Início</button>
+   <button type="button" class="secondary motion-phase-button" data-action="motion-phase" data-phase="end" aria-pressed="false">Fim</button>
+   <button type="button" class="secondary motion-play-button" data-action="motion-pause" aria-pressed="false">Pausar animação</button>
+   </div><output class="motion-state" id="motion-state" aria-live="polite">Movimento em repetição</output>`:`<span class="motion-reduced">Movimento reduzido: compare as posições estáticas de início e fim.</span>`;
+ return `<div class="motion-sheet">
+  <div class="motion-sheet-header"><div><p class="section-eyebrow">FORJA MOVE · DEMONSTRAÇÃO</p><h2 id="motion-dialog-title">${esc(name)}</h2></div><button type="button" class="secondary motion-close" data-action="motion-close">Fechar</button></div>
+  <div class="motion-stage">${stage}</div>
+  <div class="motion-legend"><span><i class="motion-dot" aria-hidden="true"></i>${esc(MOVEMENT_FOCUS[fam]?.label||"Articulações")}</span><span><i class="motion-dash" aria-hidden="true"></i>Trajetória ilustrativa</span></div>
+  ${variantLabel(id)?`<span class="motion-variant-chip">${esc(variantLabel(id))}</span>`:""}
+  <p class="motion-tip">${esc(movementCue(id,fam))}</p>
+  <p class="motion-disclaimer">Ilustração para identificar o exercício. Não representa medidas corporais, amplitudes ou execução técnica individualizadas.</p>
+  <div class="motion-controls">${controls}</div></div>`;
 }
 const api={has,thumb,viewer,svg,variantLabel,EXERCISES,CUES,TITLES,variantCount:Object.keys(VARIANT_SPEC).length};
 root.ForjaExerciseMotion=api;
