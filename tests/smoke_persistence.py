@@ -116,7 +116,7 @@ with sync_playwright() as p:
     assert supino.locator('[data-field="reps"]').nth(3).input_value() == '12'
     assert supino.locator('[data-action="toggle-warmup"]').nth(3).inner_text().strip() == 'Aquec.'
     assert 'Tipo de série diferente' in supino.inner_text()
-    page.on('dialog', lambda dialog: dialog.accept())
+    page.once('dialog', lambda dialog: dialog.accept())
     page.get_by_role('button', name='Cancelar').click()
     assert 'forja.academia.draft.v1' not in storage_snapshot(page)
     page.get_by_role('button', name='Histórico', exact=True).click()
@@ -175,6 +175,7 @@ with sync_playwright() as p:
     assert merged['migrationAudit']['schema'] == 'FORJA v1 compatible / UX7'
     # Repeated import is idempotent: no duplicated series, sessions or weight records.
     page.locator('.top-settings').click()
+    page.once('dialog', lambda dialog: dialog.accept())
     page.locator('#import-file').set_input_files({
         'name':'forja-test-merge.json',
         'mimeType':'application/json',
