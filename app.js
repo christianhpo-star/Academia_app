@@ -1020,7 +1020,7 @@
       <div class="field mt-12"><label for="goal-date">Data-alvo</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
-      <div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
+      <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, alimentação, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
         <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
       <section class="card"><h2 class="section-title">Sobre as sugestões</h2><p class="small muted">O app diferencia aquecimento e séries efetivas. Para sugerir aumento, exige duas sessões consistentes dentro da faixa de repetições e RIR informado. Em exercícios de joelho, também exige ausência de sintomas durante e no dia seguinte.</p>
       <div class="callout warn">Não é um diagnóstico. Dor recorrente abaixo da patela deve ser avaliada por profissional de saúde; uma joelheira não garante segurança para aumentar a carga.</div>
@@ -1130,6 +1130,30 @@
     a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }
   function exportJSON() {download(`forja-backup-${today()}.json`,JSON.stringify(state,null,2),'application/json;charset=utf-8');notify('Backup exportado. Guarde em local seguro.');}
+  function exportForAI(){
+    // Generate a single analysis file on-device. FORJA never uploads this data.
+    let strengthDraft=null;
+    try {const raw=localStorage.getItem(DRAFT_KEY);if(raw)strengthDraft=JSON.parse(raw);}
+    catch(err){console.warn('Rascunho de musculação indisponível para exportação',err);}
+    const payload={
+      format:'FORJA_AI_EXPORT_V1',exportedAt:new Date().toISOString(),language:'pt-BR',
+      privacy:'Dados pessoais de treino, medidas e alimentação. Compartilhe somente com serviços de confiança.',
+      interpretation:[
+        'state contém os registros originais completos do aparelho, inclusive treinos, alimentação, medidas, bioimpedância e metas.',
+        'state.weights com initial:true representa um valor inicial de referência, não necessariamente uma pesagem aferida.',
+        'Valores de nutrientes ausentes (null) são desconhecidos, não zero. Não supor consumo de refeições não registradas.',
+        'Estimativas alimentares de baixa confiança devem permanecer separadas de rótulos ou medidas observadas.',
+        'Bioimpedância do Galaxy Watch é estimativa indireta; utilizar tendências, sem diagnóstico e sem cálculo automático de gasto.',
+        'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
+      ],
+      counts:{strengthSessions:state.sessions.length,muaySessions:state.muay.sessions.length,
+        weightRecords:state.weights.length,bodyMeasurements:(state.bodyMeasurements||[]).length,
+        watchBioimpedance:(state.bioimpedance||[]).length,meals:(state.nutrition?.entries||[]).length},
+      state:copy(state),strengthDraft,
+    };
+    download('forja-todos-dados-para-ia-'+today()+'.json',JSON.stringify(payload,null,2),'application/json;charset=utf-8');
+    notify('Exportação gerada no aparelho. Confira a pasta Downloads e proteja o arquivo.');
+  }
   const csvSafe = v=> {
     const txt=String(v??'');const safe=/^[=+@\-\t\r]/.test(txt)?`'${txt}`:txt;
     return `"${safe.replace(/"/g,'""')}"`;
@@ -1523,6 +1547,7 @@
     else if(action==='exit-editor'){ui.editor=null;render();}
     else if(action==='save-knee')saveKnee(btn.dataset.id);
     else if(action==='export-json')exportJSON();
+    else if(action==='export-ai')exportForAI();
     else if(action==='export-csv')exportCSV();
     else if(action==='import-json')document.getElementById('import-file').click();
     else if(action==='reset'){
