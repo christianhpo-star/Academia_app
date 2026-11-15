@@ -34,7 +34,7 @@ for icon in manifest['icons']:
 
 
 # Prevent stale UI versions being silently reused by the offline shell.
-release = '20261115-ux17'
+release = '20261115-ux18'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
 assets = ['styles.css', 'data.js', 'engine.js', 'muay.js', 'calendar.js',
@@ -43,12 +43,12 @@ for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
     assert expected in worker, f'missing asset version in offline worker: {asset}'
-ref_release='20261115-ref3d1'
+ref_release='20261115-ref3d2'
 for asset in ['styles.css','app.js','exercise-references.js']:
     expected=f'./{asset}?v={ref_release}'
     assert expected in index, f'missing reference asset in HTML: {asset}'
     assert expected in worker, f'missing reference asset in offline worker: {asset}'
-assert f'forja-shell-v33-{ref_release}' in worker, 'offline cache not version-bumped'
+assert f'forja-shell-v34-{ref_release}' in worker, 'offline cache not version-bumped'
 assert f'./sw.js?v={ref_release}' in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'
