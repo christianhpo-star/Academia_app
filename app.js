@@ -823,6 +823,9 @@
       (result.proteinBand?'<p class="small">Faixa de proteína para ajustar: '+fmt(result.proteinBand.low)+'–'+fmt(result.proteinBand.high)+' g/dia, considerando treino de força.</p>':'')+
       '<p class="small"><strong>Treinos:</strong> '+esc(result.trainingAdvice)+'</p>'+
       '<p class="small"><strong>Alimentação:</strong> '+esc(result.foodAdvice)+'</p>'+
+      '<details><summary>Opções de treino e alimentação</summary><p class="small muted">Alternativas para escolher, não mudanças na ficha ou metas atuais.</p><ul class="small">'+
+      result.trainingOptions.map(option=>'<li><strong>'+esc(option.label)+'</strong>: '+esc(option.detail)+'</li>').join('')+
+      result.foodOptions.map(option=>'<li><strong>'+esc(option.label)+'</strong>: '+esc(option.detail)+'</li>').join('')+'</ul></details>'+
       '<details><summary>Limites científicos e avisos</summary><ul class="small">'+result.warnings.map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul><p class="small">'+esc(result.nextReview)+'</p></details>'+
       '<button type="button" class="secondary full mt-12" data-action="goal-open">Editar objetivo e prazo</button></section>';
   }
