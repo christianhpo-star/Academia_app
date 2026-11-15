@@ -82,11 +82,13 @@
     if(representative){
       // Provisional conservative category, not a mathematical conversion of steps to PAL.
       // Exercise days influence at most one category; no separate calorie addition.
-      const base=avg<7500?1.375:avg<10000?1.55:1.725;
-      const days=windows.last28.workoutDays;
-      suggestedFactor=days>=12&&base<1.725?base===1.375?1.55:1.725:base;
+      // Step-count bands are FORJA review categories, never an individual PAL equation.
+      const base=avg<4000?1.2:avg<7500?1.375:avg<11000?1.55:1.725;
+      const mayUseTraining=coverage!=='limitada'&&windows.last14.workoutDays>=6&&avg>=4000;
+      const next={1.2:1.375,1.375:1.55,1.55:1.725,1.725:1.725};
+      suggestedFactor=mayUseTraining?next[base]:base;
     }
-    const bands={1.375:[1.2,1.55],1.55:[1.375,1.725],1.725:[1.55,1.9]};
+    const bands={1.2:[1.2,1.375],1.375:[1.2,1.55],1.55:[1.375,1.725],1.725:[1.55,1.9]};
     return {day,windows,stepDays:steps.length,spanDays:span,
       medianSteps:median(steps.map(row=>row.steps)),coverage,
       suggestedFactor,range:suggestedFactor?bands[suggestedFactor]:null,
