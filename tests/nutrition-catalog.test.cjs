@@ -313,3 +313,43 @@ test('Growth: tipos sem rótulo oficial continuam desconhecidos, sem falso zero'
  assert.ok(C.search('whey isolado').some(f=>f.id==='growth:official:isolate-natural'));
  assert.ok(C.orderedForMeal('breakfast').slice(0,5).some(f=>f.id==='growth:official:top-natural'));
 });
+
+test('leites e bebidas: ml livres, rótulos distintos e fibra desconhecida não é zero',()=>{
+ const drinks=C.foods.filter(f=>f.id.startsWith('drink:'));
+ assert.equal(drinks.length,5);
+ assert.ok(drinks.every(f=>N.validFood(f)));
+ const skim=C.makeItem('drink:itambe-uht-desnatado','customMl',200,id);
+ const whole=C.makeItem('drink:itambe-uht-integral','customMl',200,id);
+ const cup=C.makeItem('drink:cafe-coado-sem-acucar','customMl',80,id);
+ assert.equal(skim.unit,'ml');assert.equal(skim.quantity,200);assert.equal(skim.grams,null);
+ assert.equal(N.observedTotals([entry(skim)],'2026-11-14').totals.energyKcal,65);
+ assert.equal(N.observedTotals([entry(whole)],'2026-11-14').totals.energyKcal,118);
+ assert.equal(N.observedTotals([entry(cup)],'2026-11-14').totals.energyKcal,7.2);
+ assert.equal(N.observedTotals([entry(cup)],'2026-11-14').totals.fiberG,null);
+ assert.equal(C.makeItem('drink:itambe-uht-integral','custom',200,id),null);
+ assert.equal(C.makeItem('drink:itambe-uht-integral','customMl',0,id),null);
+ const monster=C.makeItem('drink:monster-zero-sugar-473ml','customMl',473,id);
+ assert.ok(Math.abs(N.observedTotals([entry(monster)],'2026-11-14').totals.energyKcal-7.095)<.02);
+ const ultra=C.makeItem('drink:monster-ultra-white-473ml','customMl',473,id);
+ assert.equal(N.observedTotals([entry(ultra)],'2026-11-14').totals.energyKcal,14);
+ assert.equal(N.observedTotals([entry(ultra)],'2026-11-14').totals.carbsG,null);
+ assert.ok(C.search('monster 0').some(f=>f.id==='drink:monster-zero-sugar-473ml'));
+ assert.ok(C.search('cafe sem acucar').some(f=>f.id==='drink:cafe-coado-sem-acucar'));
+});
+test('Growth e leite são dois snapshots independentes e favoritos mantêm volume',()=>{
+ const whey=C.makeItem('growth:official:100-chocolate','custom',35.5,id);
+ const milk=C.makeItem('drink:itambe-uht-desnatado','customMl',200,id);
+ const meal={id:id('meal'),date:'2026-11-14',mealType:'snack',items:[whey,milk]};
+ assert.equal(N.validEntry(meal),true);
+ const totals=N.observedTotals([meal],meal.date).totals;
+ assert.ok(Math.abs(totals.energyKcal-(121/30*35.5+65))<.02);
+ assert.equal(totals.proteinG,31.65);
+ const saved=C.makeFavorite(meal,N.archive(),'Whey com leite',id);
+ assert.ok(saved);const store=N.archive();store.mealTemplates.push(saved.favorite);
+ assert.equal(N.validArchive(store),true);
+ const repeated=C.fromFavorite(saved.favorite,'2026-11-15',store,id);
+ assert.equal(repeated.items.length,2);
+ assert.equal(repeated.items[1].unit,'ml');
+ assert.equal(repeated.items[1].quantity,200);
+ assert.equal(N.observedTotals([repeated],'2026-11-15').totals.energyKcal,totals.energyKcal);
+});
