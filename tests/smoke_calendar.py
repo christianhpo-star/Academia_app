@@ -24,7 +24,7 @@ with sync_playwright() as p:
       }});
     }""")
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']:
+    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']:
         page.add_script_tag(path=str(ROOT/script))
     page.locator('#screen h1').wait_for()
     # Seed only synthetic completed records, preserving valid app defaults.
@@ -62,7 +62,7 @@ with sync_playwright() as p:
       }});
     }""",snapshot)
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']:
+    for script in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']:
         page.add_script_tag(path=str(ROOT/script))
     page.get_by_role('button',name='Histórico',exact=True).click()
     assert page.locator('.history-calendar-fold').count()==1
