@@ -1887,6 +1887,20 @@
   document.getElementById('import-file').addEventListener('change',event=>importJSON(event.target.files?.[0]));
   document.getElementById('import-health-file').addEventListener('change',event=>importHealthFile(event.target.files?.[0]));
   render();
+  // Resuming the installed PWA after midnight must show today's status,
+  // even if Android kept the JavaScript tab alive in the background.
+  let lastVisibleDay=today();
+  function refreshOnNewDay(){
+    const currentDay=today();
+    if(currentDay===lastVisibleDay)return;
+    lastVisibleDay=currentDay;
+    ui.routineHidden=false;
+    if(ui.tab==='home')render();
+  }
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='visible')refreshOnNewDay();
+  });
+  window.addEventListener('pageshow',refreshOnNewDay);
   if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')){
     // Avoid a cached service-worker script after a new GitHub Pages release.
     const hadController=Boolean(navigator.serviceWorker.controller);
