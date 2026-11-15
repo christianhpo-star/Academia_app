@@ -15,6 +15,7 @@ jobs:
       - name: Validate JavaScript syntax
         run: |
           node --check app.js
+          node --check exercise-motion.js
           node --check data.js
           node --check engine.js
           node --check sw.js
@@ -34,7 +35,7 @@ jobs:
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
+        run: node --test tests/exercise-motion.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
