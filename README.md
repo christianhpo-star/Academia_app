@@ -1,5 +1,14 @@
 # FORJA
 
+## FORJA UX16 — revisão de dados sem cobrança
+
+- Um aviso opcional na Início, após o próximo treino; sugestões adicionais recolhidas por padrão.
+- Acompanhe mudanças importantes de peso e divergências de perfil sem interpretar uma leitura isolada como mudança de gordura.
+- Revisões de circunferências, bioimpedância, atividade e metas são sugestões, não tarefas obrigatórias.
+- **Conferir / Lembrar em 14 dias / Dispensar**; em Ajustes é possível desligar todos os lembretes. Preferências ficam no aparelho, nos backups e exportação para IA.
+- Periodicidades e limiares numéricos são heurísticas explícitas do FORJA, não pontos de corte clínicos.
+- [Matriz científica e critérios de implementação](docs/reminder-rules-ux16.md).
+
 ## FORJA UX15 — objetivos e auditoria científica
 
 - Em **Ajustes → Objetivo e prazo**, escolha entre peso-alvo por data, recomposição, redução de gordura, ganho de massa ou manutenção.
