@@ -6,7 +6,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 text_assets = [
     'index.html', 'styles.css', 'app.js', 'data.js', 'engine.js',
-    'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'sw.js', 'manifest.webmanifest', 'README.md',
+    'muay.js', 'calendar.js', 'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'exercise-references.js', 'exercise-video.js', 'sw.js', 'manifest.webmanifest', 'README.md',
     'tests/engine.test.cjs', 'tests/smoke_browser.py'
 ]
 for path in text_assets:
@@ -16,7 +16,7 @@ for path in text_assets:
     assert '\x00' not in content, f'{path} contains binary or null data'
 
 index = (root / 'index.html').read_text(encoding='utf-8')
-for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './activity.js', './health-import.js', './nutrition-goals.js', './goal-planner.js', './reminders.js', './daily-routine.js','./nutrition.js', './nutrition-catalog.js', './nutrition-ui.js', './app.js', './styles.css', './manifest.webmanifest']:
+for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './activity.js', './health-import.js', './nutrition-goals.js', './goal-planner.js', './reminders.js', './daily-routine.js','./nutrition.js', './nutrition-catalog.js', './nutrition-ui.js', './exercise-references.js', './exercise-video.js', './app.js', './styles.css', './manifest.webmanifest']:
     assert path in index, f'index.html must reference {path}'
 
 manifest = json.loads((root / 'manifest.webmanifest').read_text(encoding='utf-8'))
@@ -37,15 +37,21 @@ for icon in manifest['icons']:
 release = '20261115-ux20'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
-assets = ['styles.css', 'data.js', 'engine.js', 'muay.js', 'calendar.js',
-          'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js', 'app.js']
+assets = ['data.js', 'engine.js', 'muay.js', 'calendar.js',
+          'flex.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-ui.js']
 for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
     assert expected in worker, f'missing asset version in offline worker: {asset}'
-assert f'forja-shell-v35-{release}-catalog' in worker, 'offline cache not version-bumped'
-assert f"./sw.js?v={release}" in app, 'worker registration not versioned'
+ref_release='20261115-ref3d5'
+for asset in ['styles.css','app.js','exercise-references.js','exercise-video.js']:
+    expected=f'./{asset}?v={ref_release}'
+    assert expected in index, f'missing exercise asset in HTML: {asset}'
+    assert expected in worker, f'missing exercise asset in offline worker: {asset}'
+assert f'forja-shell-v37-{ref_release}' in worker, 'offline cache not version-bumped'
+assert f'./sw.js?v={ref_release}' in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'
+assert 'id="exercise-video-dialog"' in index, 'video viewer dialog missing'
 
 print('All deployment assets are valid.')

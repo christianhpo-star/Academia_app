@@ -15,6 +15,8 @@ jobs:
       - name: Validate JavaScript syntax
         run: |
           node --check app.js
+          node --check exercise-references.js
+          node --check exercise-video.js
           node --check data.js
           node --check engine.js
           node --check sw.js
@@ -37,13 +39,17 @@ jobs:
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
+        run: node --test tests/exercise-references.test.cjs tests/exercise-video.test.cjs tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-ui.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
           python3 -m playwright install --with-deps chromium
       - name: Browser smoke - nutrition diary and goals
         run: python3 tests/smoke_nutrition.py
+      - name: Browser smoke - offline user videos (mobile emulation)
+        run: |
+          command -v ffmpeg >/dev/null || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+          python3 tests/smoke_video_offline.py
       - name: Browser smoke - strength persistence and radar
         run: |
           python3 tests/smoke_browser.py
@@ -76,6 +82,17 @@ jobs:
             tests/*.cjs
             icons/*.png
           retention-days: 1
+      - name: Build and test isolated Android 3D QA preview
+        if: success() && github.event_name == 'pull_request' && github.head_ref == 'feature/forja-exercise-3d-references-v5'
+        run: python3 tests/smoke_qa_preview.py
+      - name: Upload isolated Android HTTPS preview (static site)
+        if: success() && github.event_name == 'pull_request' && github.head_ref == 'feature/forja-exercise-3d-references-v5'
+        uses: actions/upload-artifact@v4
+        with:
+          name: forja-pr27-preview-android
+          path: qa_preview_dist/
+          if-no-files-found: error
+          retention-days: 7
       - name: Upload Muay screenshots for visual review
         if: always()
         uses: actions/upload-artifact@v4
@@ -90,6 +107,8 @@ jobs:
             screenshots/previous-series-*.png
             screenshots/focus-*.png
             screenshots/catalog-*.png
+            screenshots/video-*.png
+            screenshots/qa-lab-*.png
             screenshots/body-*.png
             screenshots/nutrition-*.png
           if-no-files-found: warn
