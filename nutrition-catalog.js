@@ -48,6 +48,42 @@
     portions:TACO_PORTIONS[measure].map(portion=>({...portion})),
   }));
 
+  // Sweets with reference values and explicitly modelled recipes.
+  // TBCA values are used only to guide rounded, independent estimates (not copied as official branded facts).
+  const sweetFoods=[
+    {
+      id:'taco:2011:16',name:'Bolo de chocolate simples, pronto (sem cobertura)',category:'Doces e bolos',
+      aliases:['bolo chocolate','fatia bolo chocolate','bolo simples de chocolate','bolo sem cobertura'],preparation:'cooked',
+      note:'Bolo pronto de chocolate sem recheio ou cobertura — TACO item 16. Recheio, calda e cobertura devem ser adicionados separadamente.',
+      nutrientsPer100g:{energyKcal:410,proteinG:6.2,carbsG:54.7,fatG:18.5,fiberG:1.4},
+      source:{name:'NEPA/UNICAMP — TACO',reference:'Tabela TACO 4ª ed. (2011), item 16; https://nepa.unicamp.br/wp-content/uploads/sites/27/2023/10/taco_4_edicao_ampliada_e_revisada.pdf',license:'Reprodução com citação NEPA/UNICAMP'},
+      portions:[p('slice','1 fatia aproximada (≈80 g)',80),p('100g','100 g',100)],
+    },
+    {
+      id:'recipe:brigadeiro-caseiro',name:'Brigadeiro de chocolate caseiro (estimativa)',category:'Doces e bolos',
+      aliases:['brigadeiro','docinho chocolate','brigadeiro tradicional'],preparation:'cooked',
+      note:'Receitas e granulado mudam a composição. Aproximação por 100 g baseada em ingredientes típicos; não é tabela oficial nem receita aferida.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      estimateGramsBase:100,
+      estimate:{confidence:'low',servingLabel:'100 g de brigadeiro',
+        assumptions:'Estimativa de receita tradicional com leite condensado, chocolate e manteiga, usando referências de composição. Varia conforme receita, granulados e tamanho.',
+        low:{energyKcal:330,proteinG:4,carbsG:48,fatG:10},central:{energyKcal:385,proteinG:6.3,carbsG:57.8,fatG:14.6},high:{energyKcal:450,proteinG:8,carbsG:66,fatG:21}},
+      source:{name:'Estimativa de receita tradicional',reference:'Referências TACO de ingredientes e TBCA BRC0190K consultada como parâmetro; não constitui ficha oficial reproduzida',license:'Estimativa independente'},
+      portions:[p('one','1 docinho médio (≈25 g)',25,0.25),p('100g','100 g',100,1)],
+    },
+    {
+      id:'recipe:brigadeiro-morango',name:'Brigadeiro com morango (estimativa)',category:'Doces e bolos',
+      aliases:['brigadeiro com morango','brigadeiro de morango','bombom de morango brigadeiro','brigadeiro morango'],preparation:'cooked',
+      note:'Mistura ilustrativa com 80% brigadeiro de chocolate e 20% morango fresco. Bombom com cobertura de chocolate ou creme branco pode ter valores diferentes.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+      estimateGramsBase:100,
+      estimate:{confidence:'low',servingLabel:'100 g de brigadeiro com morango',
+        assumptions:'Hipótese: 80 g de brigadeiro e 20 g de morango em cada 100 g. O recheio/cobertura real varia; cenário não substitui rótulo.',
+        low:{energyKcal:260,proteinG:3.2,carbsG:39,fatG:8},central:{energyKcal:315,proteinG:5.2,carbsG:47,fatG:11.7},high:{energyKcal:390,proteinG:7,carbsG:58,fatG:18}},
+      source:{name:'Estimativa de receita composta',reference:'Hipótese de receita brigadeiro e morango; ver docs/brasilian-food-catalog.md',license:'Estimativa independente'},
+      portions:[p('one','1 unidade estimada (≈35 g)',35,0.35),p('100g','100 g',100,1)],
+    },
+  ];
   const foods = [
     {
       id:'local:doce-cascao-acai-trufado-branco-500ml',
@@ -189,7 +225,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods);
+  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods);
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -204,7 +240,7 @@
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown','taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265'],
     lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','ref:generic-171477','taco:2011:429','taco:2011:539'],
-    snack:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+    snack:['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown','taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml'],
     dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','taco:2011:538','taco:2011:429'],
@@ -230,7 +266,7 @@
     const food=find(foodId),qty=Number(count);
     if(!food || !Number.isFinite(qty) || qty<=0 || qty>10000 || typeof makeId!=='function')return null;
     const portion=food.portions.find(row=>row.id===portionId);
-    if(portionId==='custom' && (food.nutrientsPerServing||food.estimate))return null;
+    if(portionId==='custom' && (food.nutrientsPerServing||(food.estimate&&!food.estimateGramsBase)))return null;
     if(portionId!=='custom'&&!portion)return null;
     const grams=portionId==='custom'?qty:(portion.grams==null?null:Math.round(qty*portion.grams*100)/100);
     if(grams!==null && (grams<=0||grams>10000))return null;
@@ -240,7 +276,7 @@
       unit:portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
       ...(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
-      ...(food.estimate?{estimate:copyEstimate(food.estimate,portion?.factor??1)}:{}),
+      ...(food.estimate?{estimate:copyEstimate(food.estimate,portionId==='custom'?grams/food.estimateGramsBase:(portion?.factor??1))}:{}),
       source:{...food.source},
     };
     return N.validEntry({id:'validation',date:'2026-11-14',mealType:'other',items:[item]})?item:null;
