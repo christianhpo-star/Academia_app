@@ -131,71 +131,96 @@
     if(!review.legacy&&!review.ambiguous&&!review.missing)return '';
     return '<p class="muay-legacy-note">Registro da versão anterior: alguns detalhes não foram informados ou a unidade pode estar ambígua. Mantido sem correção automática; edite apenas se souber o que foi realizado.</p>';
   }
-  function sessionCard(s, showControls = false) {
-    return '<article class="card muay-record">' +
-      '<div class="card-row"><div><strong>' + esc(dateBR(s.day)) + ' · ' + esc(kinds[s.kind]) + '</strong>' +
-      '<p>' + esc(places[s.place]) + (s.duration === null ? ' · duração não informada' : ' · ' + esc(s.duration) + ' min') +
-      (s.intensity === null ? '' : ' · esforço ' + esc(s.intensity) + '/10') + '</p></div>' +
-      '<span class="pill green">Muay Thai</span></div>' +
-      '<ul class="mini-list muay-record-list">' + s.activities.map(a =>
-        '<li><span>' + esc(a.name) + '</span><small>' + esc(volumeText(a)) + '</small></li>'
-      ).join('') + '</ul>' +
-      (s.fatigue ? '<p class="small muted">Fadiga: ' + esc(fatigueLabels[s.fatigue]) + '</p>' : '') +
-      (s.kneePain == null ? '' : '<p class="small muted">Joelho após treino: ' + esc(s.kneePain) + '/10</p>') +
-      (s.notes ? '<p class="small muted">Observações: ' + esc(s.notes) + '</p>' : '') +
-      legacyNotice(s) +
-      (showControls ? '<div class="btnrow mt-12"><button class="secondary small-button" data-action="muay-edit" data-id="' + esc(s.id) + '">Editar registro</button>' +
-        '<button class="ghost small-button" data-action="muay-delete" data-id="' + esc(s.id) + '">Excluir</button></div>' : '') +
-      '</article>';
+
+  function sessionCard(s,showControls=false,expanded=false){
+    const items=(s.activities||[]);
+    return '<details class="history-entry muay-record" data-history-id="'+esc(s.id)+'"'+(expanded?' open':'')+'>'+
+      '<summary class="history-summary"><span class="history-summary-main"><small>'+esc(dateBR(s.day))+' · Muay Thai</small>'+
+      '<strong>'+esc(kinds[s.kind]||'Treino de Muay Thai')+'</strong>'+
+      '<span>'+items.length+' atividade(s)'+(s.duration==null?'':' · '+esc(s.duration)+' min')+
+      (s.intensity==null?'':' · esforço '+esc(s.intensity)+'/10')+'</span></span>'+
+      '<span class="history-chevron" aria-hidden="true">⌄</span></summary>'+
+      '<div class="history-content"><p class="small muted">'+esc(places[s.place]||s.place)+'</p>'+
+      '<ul class="mini-list muay-record-list">'+items.map(a=>
+        '<li><span>'+esc(a.name)+'</span><small>'+esc(volumeText(a))+'</small></li>'
+      ).join('')+'</ul>'+
+      (s.fatigue?'<p class="small muted">Fadiga: '+esc(fatigueLabels[s.fatigue])+'</p>':'')+
+      (s.kneePain==null?'':'<p class="small muted">Joelho após treino: '+esc(s.kneePain)+'/10</p>')+
+      (s.notes?'<p class="small muted">Observações: '+esc(s.notes)+'</p>':'')+
+      legacyNotice(s)+
+      (showControls?'<div class="btnrow mt-12"><button type="button" class="secondary small-button" data-action="muay-edit" data-id="'+esc(s.id)+'">Editar registro</button>'+
+        '<button type="button" class="ghost small-button" data-action="muay-delete" data-id="'+esc(s.id)+'">Excluir</button></div>':'')+
+      '</div></details>';
   }
-  function sortedSessions(sessions) {
-    return [...sessions].sort((a, b) => b.day.localeCompare(a.day) || b.timestamp.localeCompare(a.timestamp));
+  function sortedSessions(sessions){
+    return [...sessions].sort((a,b)=>b.day.localeCompare(a.day)||b.timestamp.localeCompare(a.timestamp));
   }
-  function historySection(sessions) {
-    return '<div class="section-row"><h2 class="section-title">Muay Thai</h2><small>' + sessions.length + ' registro(s)</small></div>' +
-      (sessions.length ? sortedSessions(sessions).map(s => sessionCard(s, true)).join('') :
-        '<div class="empty">Nenhum treino de Muay Thai registrado.</div>');
+  function historySection(sessions,limit=3){
+    const recent=sortedSessions(sessions).slice(0,Math.max(0,limit));
+    return '<div class="section-row"><h2 class="section-title">Muay Thai</h2><small>'+sessions.length+' registro(s)</small></div>'+
+      (recent.length?recent.map(s=>sessionCard(s,true)).join(''):'<div class="empty">Nenhum treino de Muay Thai registrado.</div>');
   }
-  function renderEditor(d) {
-    return '<section class="card"><div class="row-between"><h2 class="section-title">' +
-      (d.editingId ? 'Editar Muay Thai' : 'Treino em andamento') + '</h2><span class="pill green">Rascunho automático</span></div>' +
-      '<p class="small muted">Este rascunho é salvo no aparelho a cada edição e incluído no backup JSON.</p>' +
-      '<div class="field-row mt-12"><div class="field"><label for="muay-day">Data</label>' +
-      '<input id="muay-day" type="date" data-muay-field="day" value="' + esc(d.day) + '" /></div>' +
-      '<div class="field"><label for="muay-place">Local</label><select id="muay-place" data-muay-field="place">' +
-      select(places, d.place) + '</select></div></div>' +
-      '<div class="field-row mt-12"><div class="field"><label for="muay-kind">Tipo</label><select id="muay-kind" data-muay-field="kind">' +
-      select(kinds, d.kind) + '</select></div><div class="field"><label for="muay-duration">Duração (min, opcional)</label>' +
-      '<input id="muay-duration" type="number" min="1" max="360" step="1" inputmode="numeric" placeholder="Ex.: 50" data-muay-field="duration" value="' + esc(d.duration) + '" /></div></div>' +
-      '<div class="field-row mt-12"><div class="field"><label for="muay-intensity">Esforço percebido (1–10)</label>' +
-      '<select id="muay-intensity" data-muay-field="intensity">' +
-      select({ '': 'Não informado', 1:'1 · Muito leve', 2:'2', 3:'3', 4:'4', 5:'5 · Moderado', 6:'6', 7:'7', 8:'8', 9:'9', 10:'10 · Máximo' }, d.intensity) +
-      '</select></div><div class="field"><label for="muay-fatigue">Fadiga das pernas</label>' +
-      '<select id="muay-fatigue" data-muay-field="fatigue">' + select(fatigueLabels, d.fatigue) + '</select></div></div>' +
-      '<div class="field mt-12"><label for="muay-knee">Desconforto no joelho após o treino (0–10, opcional)</label>' +
-      '<select id="muay-knee" data-muay-field="kneePain">' +
-      select({ '': 'Não informado', 0:'0 · Sem dor', 1:'1', 2:'2', 3:'3', 4:'4', 5:'5', 6:'6', 7:'7', 8:'8', 9:'9', 10:'10 · Máximo' }, d.kneePain) +
-      '</select></div></section>' +
-      '<div class="section-row"><h2 class="section-title">Exercícios realizados</h2><small>' + d.activities.length + ' selecionado(s)</small></div>' +
-      '<p class="small muted">Toque nos exercícios que fez. Séries, repetições e duração de cada um são opcionais; não serão presumidas.</p>' +
-      (d.editingId?'<p class="muay-legacy-note">Ao editar registros antigos, confirme unidades manualmente. A FORJA não converte minutos em golpes ou atribui fadiga retroativamente.</p>':'') +
-      '<div class="muay-presets" role="group" aria-label="Adicionar exercício realizado">' +
-      PRESETS.map((p, i) => '<button type="button" class="secondary small-button" data-action="muay-preset" data-preset="' + i + '">+ ' + esc(p.name) + '</button>').join('') +
-      '<button type="button" class="secondary small-button" data-action="muay-custom">+ Outro exercício</button></div>' +
-      (d.activities.length ? d.activities.map((a, i) => '<section class="exercise-card muay-activity">' +
-        '<div class="row-between"><h3>Exercício ' + (i + 1) + '</h3><button class="button-inline" data-action="muay-remove" data-id="' + esc(a.id) + '">Remover</button></div>' +
-        '<div class="field mt-12"><label for="muay-name-' + esc(a.id) + '">Nome do exercício</label><input id="muay-name-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="name" maxlength="100" value="' + esc(a.name) + '" placeholder="Ex.: sequência de chutes" /></div>' +
-        '<div class="field mt-12"><label for="muay-category-' + esc(a.id) + '">Tipo de exercício</label><select id="muay-category-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="category">' + select(categories,a.category||'technique') + '</select></div>' +
-        '<div class="muay-volume mt-12"><div class="field"><label for="muay-sets-' + esc(a.id) + '">Blocos / séries (opcional)</label><input id="muay-sets-' + esc(a.id) + '" type="number" min="1" max="30" step="1" inputmode="numeric" data-muay-id="' + esc(a.id) + '" data-muay-prop="sets" value="' + esc(a.sets) + '" /></div>' +
-        '<div class="field"><label for="muay-quantity-' + esc(a.id) + '">Quantidade por bloco (opcional)</label><input id="muay-quantity-' + esc(a.id) + '" type="number" min="0.1" max="3000" step="any" inputmode="decimal" data-muay-id="' + esc(a.id) + '" data-muay-prop="quantity" value="' + esc(a.quantity) + '" /></div>' +
-        '<div class="field"><label for="muay-unit-' + esc(a.id) + '">Unidade</label><select id="muay-unit-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="unit">' + select(units, a.unit) + '</select></div></div>' +
-        (a.unit==='reps'?'<div class="field mt-12"><label for="muay-side-' + esc(a.id) + '">Como contar?</label><select id="muay-side-' + esc(a.id) + '" data-muay-id="' + esc(a.id) + '" data-muay-prop="side">' + select(sides,a.side||'total') + '</select><span class="field-help">Exemplo: 50 chutes por perna = 50 por lado, não 50 no total.</span></div>':'<p class="field-help mt-8">Combinações: informe minutos por bloco. Exemplo: 3 minutos de jab + direto + chute.</p>') +
-        '</section>').join('') :
-        '<div class="empty mt-12">Adicione somente os exercícios que realmente realizou.</div>') +
-      '<section class="card"><div class="field"><label for="muay-notes">Observações (opcional)</label>' +
-      '<textarea id="muay-notes" data-muay-field="notes" maxlength="1000" placeholder="Ex.: aquecimento, sequências de golpes, recuperação, alterações na aula">' + esc(d.notes) + '</textarea></div>' +
-      '<div class="btnrow mt-16"><button class="primary" data-action="muay-finish">Salvar treino</button>' +
-      '<button class="ghost" data-action="muay-cancel">Descartar rascunho</button></div></section>';
+  function presetButton(p,i){
+    return '<button type="button" class="secondary muay-preset" data-action="muay-preset" data-preset="'+i+'">+ '+esc(p.name)+'</button>';
+  }
+  function quickChoice(items,action,current){
+    return '<div class="muay-quick-choices" role="group" aria-label="'+(action==='muay-effort'?'Esforço percebido':'Fadiga das pernas')+'">'+
+      items.map(([value,label])=>
+        '<button type="button" class="muay-quick-chip '+(String(current)===String(value)?'selected':'')+'" data-action="'+action+'" data-value="'+esc(value)+'" aria-pressed="'+(String(current)===String(value))+'">'+esc(label)+'</button>'
+      ).join('')+'</div>';
+  }
+  function renderEditor(d){
+    const featured=new Set([6,7,8,0]);
+    return '<section class="card muay-fast-card" aria-labelledby="muay-quick-title">'+
+      '<div class="row-between"><h2 id="muay-quick-title" class="section-title">'+(d.editingId?'Editar treino':'Registro rápido')+'</h2><span class="pill green">Salvo automaticamente</span></div>'+
+      '<p class="small muted">Escolha o que realizou e informe apenas os dados que souber. O restante é opcional.</p>'+
+      '<div class="muay-quick-grid"><div class="field"><label for="muay-duration">Duração total (min)</label>'+
+      '<input id="muay-duration" type="number" min="1" max="360" step="1" inputmode="numeric" placeholder="Ex.: 50" data-muay-field="duration" value="'+esc(d.duration)+'" /></div>'+
+      '<div class="field"><label for="muay-knee">Joelho após treino</label>'+
+      '<select id="muay-knee" data-muay-field="kneePain">'+
+      select({'':'Não informado',0:'0 · Sem dor',1:'1',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'10 · Máximo'},d.kneePain)+'</select></div></div>'+
+      '<div class="muay-quick-question"><strong>Qual foi o esforço?</strong><p>Marque a nota que melhor descreve a sessão.</p>'+
+      quickChoice([['5','5/10 · Moderado'],['7','7/10 · Forte'],['9','9/10 · Muito forte']],'muay-effort',d.intensity)+'</div>'+
+      '<div class="muay-quick-question"><strong>Como ficaram as pernas?</strong>'+
+      quickChoice([['normal','Normal'],['moderada','Moderada'],['alta','Alta fadiga']],'muay-fatigue',d.fatigue)+'</div>'+
+      '<details class="muay-advanced"><summary>Data, local e informações adicionais</summary>'+
+      '<div class="field-row mt-12"><div class="field"><label for="muay-day">Data</label><input id="muay-day" type="date" data-muay-field="day" value="'+esc(d.day)+'"/></div>'+
+      '<div class="field"><label for="muay-place">Local</label><select id="muay-place" data-muay-field="place">'+select(places,d.place)+'</select></div></div>'+
+      '<div class="field-row mt-12"><div class="field"><label for="muay-kind">Tipo</label><select id="muay-kind" data-muay-field="kind">'+select(kinds,d.kind)+'</select></div>'+
+      '<div class="field"><label for="muay-intensity">Esforço exato (1–10)</label><select id="muay-intensity" data-muay-field="intensity">'+
+      select({'':'Não informado',1:'1',2:'2',3:'3',4:'4',5:'5',6:'6',7:'7',8:'8',9:'9',10:'10'},d.intensity)+'</select></div></div>'+
+      '<div class="field mt-12"><label for="muay-fatigue">Fadiga</label><select id="muay-fatigue" data-muay-field="fatigue">'+
+      select(fatigueLabels,d.fatigue)+'</select></div>'+
+      '<div class="field mt-12"><label for="muay-notes">Observações (opcional)</label><textarea id="muay-notes" data-muay-field="notes" maxlength="1000" placeholder="O que foi diferente hoje?">'+esc(d.notes)+'</textarea></div>'+
+      '</details></section>'+
+      '<section class="muay-activity-section"><div class="section-row"><h2 class="section-title">O que você fez?</h2><small>'+d.activities.length+' exercício(s)</small></div>'+
+      '<p class="small muted">Toque para adicionar. Golpes por tempo e exaustão por repetições já vêm com a unidade correta.</p>'+
+      '<div class="muay-presets muay-featured" role="group" aria-label="Adicionar atividade realizada">'+
+      PRESETS.map((p,i)=>featured.has(i)?presetButton(p,i):'').join('')+'</div>'+
+      '<details class="muay-extra-presets"><summary>Mais exercícios e técnicas</summary><div class="muay-presets mt-12">'+
+      PRESETS.map((p,i)=>featured.has(i)?'':presetButton(p,i)).join('')+
+      '<button type="button" class="secondary muay-preset" data-action="muay-custom">+ Outro exercício</button></div></details>'+
+      (d.editingId?'<p class="muay-legacy-note">Se o registro antigo tiver campos incompletos, confirme apenas o que souber. Não converteremos unidades automaticamente.</p>':'')+
+      (d.activities.length?d.activities.map((a,i)=>{
+        const label=a.unit==='reps'?(a.side==='each'?'Repetições por lado':'Repetições totais'):
+          a.unit==='min'?'Minutos por bloco':'Rounds por bloco';
+        return '<section class="muay-compact-activity" data-muay-activity="'+esc(a.id)+'">'+
+          '<div class="muay-compact-head"><div><span>ATIVIDADE '+(i+1)+'</span><strong class="muay-activity-title">'+esc(a.name||'Novo exercício')+'</strong></div>'+
+          '<button type="button" class="button-inline" data-action="muay-remove" data-id="'+esc(a.id)+'" aria-label="Remover '+esc(a.name||'exercício')+'">Remover</button></div>'+
+          '<div class="muay-quick-grid"><div class="field"><label for="muay-quantity-'+esc(a.id)+'">'+esc(label)+'</label>'+
+          '<input id="muay-quantity-'+esc(a.id)+'" type="number" min="0.1" max="3000" step="any" inputmode="decimal" placeholder="Opcional" data-muay-id="'+esc(a.id)+'" data-muay-prop="quantity" value="'+esc(a.quantity)+'"/></div>'+
+          '<div class="field"><label for="muay-sets-'+esc(a.id)+'">Blocos / séries</label>'+
+          '<input id="muay-sets-'+esc(a.id)+'" type="number" min="1" max="30" step="1" inputmode="numeric" placeholder="Opcional" data-muay-id="'+esc(a.id)+'" data-muay-prop="sets" value="'+esc(a.sets)+'"/></div></div>'+
+          '<details class="muay-activity-more"'+(!a.name.trim()?' open':'')+'><summary>Personalizar nome, unidade e contagem</summary>'+
+          '<div class="field mt-12"><label for="muay-name-'+esc(a.id)+'">Nome do exercício</label>'+
+          '<input id="muay-name-'+esc(a.id)+'" data-muay-id="'+esc(a.id)+'" data-muay-prop="name" maxlength="100" value="'+esc(a.name)+'" placeholder="Ex.: sequência de chutes"/></div>'+
+          '<div class="field mt-12"><label for="muay-category-'+esc(a.id)+'">Tipo de exercício</label><select id="muay-category-'+esc(a.id)+'" data-muay-id="'+esc(a.id)+'" data-muay-prop="category">'+select(categories,a.category||'technique')+'</select></div>'+
+          '<div class="field-row mt-12"><div class="field"><label for="muay-unit-'+esc(a.id)+'">Unidade</label><select id="muay-unit-'+esc(a.id)+'" data-muay-id="'+esc(a.id)+'" data-muay-prop="unit">'+select(units,a.unit)+'</select></div>'+
+          (a.unit==='reps'?'<div class="field"><label for="muay-side-'+esc(a.id)+'">Contagem</label><select id="muay-side-'+esc(a.id)+'" data-muay-id="'+esc(a.id)+'" data-muay-prop="side">'+select(sides,a.side||'total')+'</select></div>':'')+
+          '</div></details></section>';
+      }).join(''):'<div class="empty mt-12">Adicione pelo menos um exercício realizado.</div>')+
+      '<div class="muay-save-actions"><button type="button" class="primary full" data-action="muay-finish">Salvar treino</button>'+
+      '<button type="button" class="button-inline" data-action="muay-cancel">Descartar rascunho</button></div></section>';
   }
   // Avaliação conservadora baseada em esforço relatado, nunca em gasto calórico inferido.
   // Quantidade de golpes e duração não equivalem automaticamente a fadiga fisiológica.
@@ -247,33 +272,37 @@
          (data.volume||0)+' exercício(s) de exaustão · '+(data.combos||0)+' combinação(ões) cronometradas</small>':'')+
       '</section>';
   }
-  function renderPage(muay, today, settings={}) {
-    const last = sortedSessions(muay.sessions).slice(0, 3);
-    return '<p class="eyebrow">Diário de atividades</p><h1 class="page-title">Muay Thai</h1>' +
-      '<p class="lead">Registre aulas e treinos feitos em casa. Eles não substituem nem concluem os blocos de musculação.</p>' +
-      readinessCard(readiness(muay.sessions,today,settings)) +
-      '<section class="card muay-today-check"><h2 class="section-title">Como está sua recuperação hoje?</h2>' +
-      '<p class="small muted">Registre como está hoje: os valores de outro dia não serão reutilizados. Este relato não é diagnóstico.</p>' +
-      '<div class="field-row mt-12"><div class="field"><label for="muay-today-fatigue">Fadiga atual</label>' +
-      '<select id="muay-today-fatigue" data-recovery-field="fatigue">' + select({normal:'Normal',moderada:'Moderada',alta:'Alta'},settings.fatigue||'normal') + '</select></div>' +
-      '<div class="field"><label for="muay-today-knee">Dor no joelho agora</label>' +
-      '<select id="muay-today-knee" data-recovery-field="kneePain">' + select({'':'Não informado','0':'0 · Sem dor','1':'1 · Mínima','2':'2 · Leve','3':'3 · Moderada','4':'4 · Importante','5':'5+ · Forte'},settings.kneePain??'') + '</select></div></div></section>' +
-      (muay.draft ? renderEditor(muay.draft) :
-        '<section class="card"><h2 class="section-title">Como você treinou?</h2><p class="small muted">' +
-        'Registre a sessão depois de realizá-la, sem criar treinos fictícios.</p>' +
-        '<div class="muay-choices mt-12"><button class="primary" data-action="muay-start" data-place="casa">Treino em casa</button>' +
-        '<button class="secondary" data-action="muay-start" data-place="academia">Aula na academia</button>' +
-        '<button class="ghost" data-action="muay-start" data-place="outro">Outro local</button></div></section>') +
-      '<div class="section-row"><h2 class="section-title">Últimos registros</h2><small>' + muay.sessions.length + ' no total</small></div>' +
-      (last.length ? last.map(s => sessionCard(s)).join('') :
-        '<div class="empty">Sem registros de Muay Thai. Seu primeiro treino ainda não foi salvo.</div>') +
-      '<button class="secondary full" data-action="navigate" data-to="history">Ver histórico completo</button>';
+
+  function renderPage(muay,today,settings={}){
+    const last=sortedSessions(muay.sessions).slice(0,1);
+    const recovery='<details class="muay-guidance"><summary>Orientação de recuperação e check-in de hoje</summary>'+
+      readinessCard(readiness(muay.sessions,today,settings))+
+      '<section class="card muay-today-check"><h2 class="section-title">Como está sua recuperação hoje?</h2>'+
+      '<p class="small muted">Não reutilizamos avaliações de outros dias. Este relato não é diagnóstico.</p>'+
+      '<div class="field-row mt-12"><div class="field"><label for="muay-today-fatigue">Fadiga atual</label>'+
+      '<select id="muay-today-fatigue" data-recovery-field="fatigue">'+select({normal:'Normal',moderada:'Moderada',alta:'Alta'},settings.fatigue||'normal')+'</select></div>'+
+      '<div class="field"><label for="muay-today-knee">Dor no joelho agora</label>'+
+      '<select id="muay-today-knee" data-recovery-field="kneePain">'+
+      select({'':'Não informado','0':'0 · Sem dor','1':'1 · Mínima','2':'2 · Leve','3':'3 · Moderada','4':'4 · Importante','5':'5+ · Forte'},settings.kneePain??'')+
+      '</select></div></div></section></details>';
+    return '<p class="eyebrow">Diário de atividades</p><h1 class="page-title">Muay Thai</h1>'+
+      '<p class="lead">Registre rapidamente o que fez, sem preencher um formulário longo.</p>'+
+      (muay.draft?renderEditor(muay.draft):
+        '<section class="card muay-start-card"><h2 class="section-title">Registrar treino realizado</h2>'+
+        '<p class="small muted">Escolha onde treinou e adicione apenas as atividades que fez.</p>'+
+        '<div class="muay-choices mt-12"><button type="button" class="primary" data-action="muay-start" data-place="academia">Aula na academia</button>'+
+        '<button type="button" class="secondary" data-action="muay-start" data-place="casa">Treino em casa</button>'+
+        '<button type="button" class="ghost" data-action="muay-start" data-place="outro">Outro local</button></div></section>')+
+      recovery+
+      (!muay.draft?'<div class="section-row"><h2 class="section-title">Último registro</h2><small>'+muay.sessions.length+' no total</small></div>'+
+      (last.length?last.map(s=>sessionCard(s)).join(''):'<p class="small muted">Nenhum treino registrado até agora.</p>')+
+      '<button type="button" class="secondary full" data-action="navigate" data-to="history">Ver histórico completo</button>':'');
   }
   root.AcademiaMuay = {
     PRESETS, archive, activity, draft, ensureArchive, validDraft, validSession, legacyReview,
     readiness,readinessCard,
     validArchive, finishDraft, draftFromSession, volumeText, sortedSessions,
-    renderPage, historySection,
+    renderPage, historySection, sessionCard,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.AcademiaMuay;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
