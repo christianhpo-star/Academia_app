@@ -1,5 +1,14 @@
 # FORJA
 
+## FORJA MOVE — biblioteca de movimentos ilustrativos
+
+- Catálogo, fichas e sessão de musculação oferecem **Ver movimento**, sem alterar registros.
+- `exercise-motion.js` apresenta 19 famílias vetoriais; 51 IDs de exercícios do catálogo estão mapeados. Miniaturas são estáticas e o modal oferece animação SVG local com pausar/retomar.
+- Com `prefers-reduced-motion`, o modal mostra imagem estática. O recurso não utiliza serviços externos, localização ou armazenamento.
+- Variações de exercício compartilham ilustrações de padrões gerais. O visual **não corresponde à execução técnica exata** de inclinações, máquinas e pegadas. A posição do equipamento deve ser conferida presencialmente.
+- Validação: `node --test tests/exercise-motion.test.cjs` e testes de interface existentes.
+
+
 ## FORJA UX13 — histórico de atividade e recomendações
 
 - **Alimentação > Minhas metas**: após salvar um perfil completo, uma prévia com energia e macronutrientes é apresentada; os valores só se tornam metas quando o usuário aceita. Ajustes manuais e profissionais são preservados.

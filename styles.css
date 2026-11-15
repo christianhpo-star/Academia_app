@@ -770,3 +770,33 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .health-month-row strong{font-size:14px;color:var(--text)}
 .health-month-row span{font-size:13px;line-height:1.5;color:var(--text)}
 .health-month-row small{font-size:12px;color:var(--muted)}
+
+
+/* FORJA MOVE v1 — accessible previews for exercise patterns. */
+.catalog-browser-main{display:flex;gap:12px;align-items:center;margin:13px 0}
+.catalog-browser-summary{min-width:0;flex:1}
+.catalog-browser-main .catalog-browser-summary h3{margin:0 0 6px;font-size:15px;line-height:1.35}
+.catalog-browser-main .catalog-browser-description{margin:0 0 4px}
+.motion-thumb{display:block;width:100px;flex:0 0 100px;aspect-ratio:360/220;overflow:hidden;background:#101b27;border:1px solid #385160;border-radius:12px}
+.motion-thumb .motion-svg{display:block;width:100%;height:100%}
+.motion-inline-trigger{border:0;background:transparent;color:var(--lime);font-weight:800;font-size:12px;min-height:44px;padding:7px 0;text-align:left;cursor:pointer;display:inline-flex;align-items:center}
+.motion-inline-trigger:focus-visible{outline:3px solid var(--blue);outline-offset:2px;border-radius:4px}
+.motion-plan-actions{display:flex;flex-wrap:wrap;align-items:center;gap:7px 18px;margin-top:3px}
+.motion-plan-actions .plan-exercise-edit{margin-top:0;min-height:44px}
+.motion-dialog{width:min(94vw,530px);max-height:min(88dvh,760px);margin:auto;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;border:1px solid #4b6374;border-radius:23px;background:var(--card);color:var(--text);padding:0;box-shadow:0 22px 65px #000a}
+.motion-dialog::backdrop{background:#05080dc7;backdrop-filter:blur(5px)}
+.motion-sheet{padding:19px;display:grid;gap:12px}
+.motion-sheet-header{display:flex;align-items:flex-start;justify-content:space-between;gap:9px}
+.motion-sheet-header>div{min-width:0}
+.motion-sheet-header h2{font-size:clamp(19px,4.8vw,24px);line-height:1.25;letter-spacing:-.025em;margin:4px 0 0;overflow-wrap:anywhere}
+.motion-sheet-header .section-eyebrow{margin:0;color:var(--lime)}
+.motion-sheet-header .motion-close{min-height:44px;flex-shrink:0;padding:8px 12px}
+.motion-stage{background:#101b27;border:1px solid #3b5666;border-radius:17px;overflow:hidden}
+.motion-stage .motion-svg{display:block;width:100%;max-height:340px}
+.motion-tip{font-size:14px;line-height:1.55;color:#eff6fb;margin:0}
+.motion-disclaimer{font-size:12px;line-height:1.6;color:#b4c9d8;margin:0}
+.motion-controls{display:flex;justify-content:flex-start;align-items:center;gap:9px}
+.motion-controls .secondary{min-height:44px}
+.motion-reduced{font-size:11px;color:#c4d6e2}
+@media(max-width:360px){.motion-thumb{width:75px;flex-basis:75px}.catalog-browser-main{gap:9px}.motion-sheet{padding:13px}.motion-dialog{width:96vw}}
+@media(prefers-reduced-motion:reduce){.motion-dialog,.motion-dialog::backdrop{transition:none!important}}

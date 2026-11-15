@@ -14,6 +14,7 @@
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
   const NCAT = window.ForjaNutritionCatalog;
+  const MOTION = window.ForjaExerciseMotion;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -524,8 +525,11 @@
               <span class="catalog-group-code">BLOCO ${esc(ex.group)}</span>
               <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
             </div>
-            <h3>${esc(ex.name)}</h3>
-            <p class="catalog-browser-description">${esc(description)}</p>
+            <div class="catalog-browser-main">${MOTION.thumb(ex.id)}
+              <div class="catalog-browser-summary"><h3>${esc(ex.name)}</h3>
+              <p class="catalog-browser-description">${esc(description)}</p>
+              ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}" aria-label="Ver movimento: ${esc(ex.name)}">▶ Ver movimento</button>`:''}</div>
+            </div>
             <div class="catalog-browser-bottom">
               <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
               ${existing?
@@ -581,7 +585,9 @@
           <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
             <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
             <p class="plan-exercise-submeta">Progressão: +${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Atenção ao joelho':''}</p>
-            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div>
+            <div class="motion-plan-actions">
+              ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}">▶ Ver movimento</button>`:''}
+              <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div></div>
           <div class="plan-exercise-state"><span>${ex.active?'Na ficha':'Inativo'}</span><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
         </article>`).join('')}</div>
       </section>
@@ -780,7 +786,8 @@
     return `<section class="exercise-card workout-exercise-card" data-exercise="${esc(ex.id)}" aria-label="Exercício ${index+1} de ${total}: ${esc(ex.name)}">
       <div class="workout-exercise-heading"><span class="workout-exercise-number">${String(index+1).padStart(2,'0')} <small>/ ${String(total).padStart(2,'0')}</small></span>
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
-        <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p></div>
+        <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p>
+        ${MOTION.has(ex.id)?`<button type="button" class="motion-inline-trigger" data-action="motion-open" data-ex="${esc(ex.id)}">▶ Ver movimento</button>`:''}</div>
         <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
       <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
       <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
@@ -1278,6 +1285,28 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='motion-open'){
+      const id=btn.dataset.ex, exercise=exerciseFor(id)||F.catalog.find(item=>item.id===id);
+      const dialog=document.getElementById('motion-dialog');
+      if(!exercise||!dialog||!MOTION.has(id))return;
+      const shouldAnimate=!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      dialog.querySelector('.motion-dialog-content').innerHTML=MOTION.viewer(id,exercise.name,shouldAnimate);
+      if(typeof dialog.showModal==='function')dialog.showModal();else dialog.setAttribute('open','');
+      return;
+    }
+    if(action==='motion-close'){
+      const dialog=document.getElementById('motion-dialog');
+      if(typeof dialog.close==='function')dialog.close();else dialog.removeAttribute('open');
+      return;
+    }
+    if(action==='motion-pause'){
+      const svg=document.querySelector('#motion-dialog .motion-svg');
+      if(!svg||typeof svg.pauseAnimations!=='function')return;
+      const paused=btn.getAttribute('aria-pressed')==='true';
+      if(paused){svg.unpauseAnimations();btn.textContent='Pausar animação';btn.setAttribute('aria-pressed','false');}
+      else{svg.pauseAnimations();btn.textContent='Retomar animação';btn.setAttribute('aria-pressed','true');}
+      return;
+    }
     if(action==='nutrition-open'||action==='nutrition-goals'){
       ui.tab='nutrition';ui.editor=null;render();window.scrollTo(0,0);
       if(action==='nutrition-goals')diary.goals();return;
@@ -1615,6 +1644,11 @@
     render();window.scrollTo(0,0);
   });
   const screen=document.getElementById('screen');
+  const motionDialog=document.getElementById('motion-dialog');
+  motionDialog.addEventListener('click',event=>{
+    const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
+  });
+  motionDialog.addEventListener('close',()=>{motionDialog.querySelector('.motion-dialog-content').replaceChildren();});
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
@@ -1717,7 +1751,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-ux14',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-motion1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
