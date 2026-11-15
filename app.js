@@ -10,6 +10,7 @@
   const FOCUS = window.ForjaFocus;
   const BODY = window.ForjaBodyMeasures;
   const ACT = window.ForjaActivity;
+  const PLANNER = window.ForjaGoalPlanner;
   const HEALTH = window.ForjaHealthImport;
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
@@ -807,7 +808,26 @@
       ${ex.knee?`<div class="field mt-12"><label for="pain-${esc(ex.id)}">Dor no joelho durante o exercício (0–5+)</label><select id="pain-${esc(ex.id)}" data-ex-pain="${esc(ex.id)}" required>${painOptions(en.pain)}</select><span class="field-help">Informe 0 quando não sentiu dor. Este registro é necessário para salvar uma série efetiva deste exercício.</span></div>`:''}
     </section>`;
   }
+  function renderGoalPlannerSummary(result){
+    if(result.error)return '';
+    const status={informational:'Proposta inicial',incomplete:'Dados insuficientes',
+      expired:'Prazo encerrado',conflict:'Objetivo inconsistente',review:'Rever prazo',
+      caution:'Ritmo exige atenção','at-target':'Peso-alvo próximo'}[result.status];
+    const kcal=result.energyBand?
+      '<p class="small"><strong>Energia de partida: '+fmt(result.energyBand.low)+'–'+fmt(result.energyBand.high)+' kcal/dia</strong> ('+esc(result.energyBand.kind)+'). Referência ajustável, não meta aplicada.</p>':
+      '<p class="small muted">Sem recomendação energética para este objetivo com os dados atuais.</p>';
+    const weight=result.targetKg!=null?'<p class="small">Peso-alvo: <strong>'+fmt(result.targetKg)+' kg</strong> · '+(result.deadline?dateBR(result.deadline):'data não definida')+'</p>':'';
+    return '<section class="card goal-plan-card" aria-label="Planejamento do objetivo">'+
+      '<div class="row-between"><h2 class="section-title">Plano por objetivo</h2><span class="goal-status">'+esc(status)+'</span></div>'+
+      '<p><strong>'+esc(result.label)+'</strong></p>'+weight+kcal+
+      (result.proteinBand?'<p class="small">Faixa de proteína para ajustar: '+fmt(result.proteinBand.low)+'–'+fmt(result.proteinBand.high)+' g/dia, considerando treino de força.</p>':'')+
+      '<p class="small"><strong>Treinos:</strong> '+esc(result.trainingAdvice)+'</p>'+
+      '<p class="small"><strong>Alimentação:</strong> '+esc(result.foodAdvice)+'</p>'+
+      '<details><summary>Limites científicos e avisos</summary><ul class="small">'+result.warnings.map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul><p class="small">'+esc(result.nextReview)+'</p></details>'+
+      '<button type="button" class="secondary full mt-12" data-action="goal-open">Editar objetivo e prazo</button></section>';
+  }
   function renderProgress() {
+    const goalPlan=PLANNER.plan(state,today());
     const p=E.progress(state.weights,state.settings.startWeight,state.settings.targetWeight);
     const days=dayGap(today(),state.settings.goalDate);
     const pace=days>0 && p.remaining>0 ? (p.remaining/days*7) : 0;
@@ -825,7 +845,8 @@
         <span><strong>Medidas corporais</strong><small>${bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':'Circunferências por região e histórico'}</small></span>
         <span aria-hidden="true">›</span>
       </button>
-      <div class="kpi-row"><div class="kpi"><strong>${fmt(p.current)}</strong><span>kg atuais</span></div><div class="kpi"><strong>${p.lost>=0?'−':'+'}${fmt(Math.abs(p.lost))}</strong><span>kg de variação</span></div><div class="kpi"><strong>${days>0?days:'—'}</strong><span>dias até a meta</span></div></div>
+      ${renderGoalPlannerSummary(goalPlan)}
+      <div class="kpi-row"><div class="kpi"><strong>${fmt(p.current)}</strong><span>kg atuais</span></div><div class="kpi"><strong>${fmt(Number(p.current)-Number(state.settings.startWeight))}</strong><span>kg desde o início</span></div><div class="kpi"><strong>${days>0?days:'—'}</strong><span>dias até a meta</span></div></div>
       <div class="card"><div class="row-between"><h2 class="section-title">Histórico de peso</h2>${tag(`${items.length} registro(s)`,'green')}</div>
       <div class="chart-wrap mt-12"><svg viewBox="0 0 320 160" role="img" aria-label="Gráfico de peso registrado. Atual ${fmt(p.current)} quilos, meta ${fmt(state.settings.targetWeight)} quilos.">
       <line x1="18" y1="122" x2="305" y2="122" stroke="#526477" stroke-width="1" />
@@ -835,7 +856,7 @@
       ${items.map((it,i)=>`<circle cx="${x(i)}" cy="${y(it.weight)}" r="4" fill="#80beff" stroke="#152231" stroke-width="2"/>`).join('')}
       ${items.length?`<text x="24" y="148" fill="#a7b7c7" font-size="10">${dateBR(items[0].date)}</text><text x="299" y="148" fill="#a7b7c7" font-size="10" text-anchor="end">${dateBR(items[items.length-1].date)}</text>`:''}
       </svg></div><p class="chart-caption">Linha pontilhada: meta de peso. Oscilações diárias são normais.</p>
-      ${pace>0?`<div class="callout ${pace>.9?'warn':''}">Ritmo matemático até ${dateBR(state.settings.goalDate)}: <strong>${fmt(pace)} kg/semana</strong>. Não é uma recomendação automática de déficit; preserve o rendimento e sua saúde.</div>`:''}</div>
+      ${goalPlan.paceKgPerWeek!=null?`<div class="callout ${goalPlan.status==='review'?'warn':''}">Ritmo matemático do objetivo: <strong>${fmt(goalPlan.paceKgPerWeek)} kg/semana</strong>. Não representa previsão nem recomendação automática de déficit.</div>`:''}</div>
       ${strengthSection(90)}
       ${renderDosePanel()}
       ${weightForm()}
@@ -1052,10 +1073,11 @@
   function renderSettings() {
     return `${headline('Preferências','Seus ajustes.','Dados no próprio aparelho. Sem login, mensalidade ou envio para servidores.')}
       <button class="secondary full mb-8" data-action="nutrition-goals">Perfil e metas de alimentação · altura e idade</button>
-      <form id="goal-form" class="card"><h2 class="section-title">Meta corporal</h2>
+      <form id="goal-form" class="card"><h2 class="section-title">Objetivo e prazo</h2>
+      <div class="field mt-12"><label for="goal-mode">Meu objetivo</label><select id="goal-mode" name="goalMode">${Object.entries(PLANNER.MODES).map(([key,label])=>`<option value="${esc(key)}" ${(state.settings.goalMode||'weight')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></div>
       <div class="field-row mt-12"><div class="field"><label for="initial-weight">Peso inicial (kg)</label><input id="initial-weight" name="startWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.startWeight}" required /></div>
       <div class="field"><label for="target-weight">Meta (kg)</label><input id="target-weight" name="targetWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.targetWeight}" required /></div></div>
-      <div class="field mt-12"><label for="goal-date">Data-alvo</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div>
+      <div class="field mt-12"><label for="goal-date">Data-alvo desejada</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div><p class="small muted">Prazo desejado, não garantia de resultado. Nenhuma mudança de calorias é aplicada automaticamente.</p>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
       <section class="card"><h2 class="section-title">Samsung Health · histórico importado</h2>${renderHealthSummary()}</section>
       <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
@@ -1106,9 +1128,15 @@
   }
   function setGoal(form) {
     const data=new FormData(form), start=E.cleanNumber(data.get('startWeight')),goal=E.cleanNumber(data.get('targetWeight'));
-    const deadline=String(data.get('goalDate'));
-    if(start===null||goal===null||start<=goal||goal<30||start>350||!/^\d{4}-\d{2}-\d{2}$/.test(deadline)) return notify('Confira pesos e data. A meta deve ser menor que o peso inicial.');
-    Object.assign(state.settings,{startWeight:start,targetWeight:goal,goalDate:deadline});save();render();notify('Meta atualizada.');
+    const deadline=String(data.get('goalDate')),mode=String(data.get('goalMode')||'weight');
+    if(start===null||goal===null||start<30||start>350||goal<30||goal>350||!PLANNER.dateOK(deadline)||!(mode in PLANNER.MODES))
+      return notify('Confira pesos, modalidade e data-alvo.');
+    if(mode==='fat_loss'&&goal>=start)return notify('Para perda de gordura, escolha um peso-alvo menor ou use recomposição.');
+    if(mode==='muscle_gain'&&goal<=start)return notify('Para ganho de massa, escolha um peso-alvo maior ou use recomposição.');
+    const old=copy(state.settings);
+    Object.assign(state.settings,{startWeight:start,targetWeight:goal,goalDate:deadline,goalMode:mode});
+    if(!save()){state.settings=old;return notify('Não foi possível salvar. Sua meta anterior permanece.');}
+    render();notify('Objetivo salvo; nenhuma meta alimentar foi alterada automaticamente.');
   }
   function saveExercise(form) {
     const fd=new FormData(form), existing=ui.editor.id?exerciseFor(ui.editor.id):null;
@@ -1278,6 +1306,7 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if(action==='goal-open'){ui.tab='settings';ui.editor=null;render();window.scrollTo(0,0);document.getElementById('goal-form')?.scrollIntoView({block:'start'});return;}
     if(action==='nutrition-open'||action==='nutrition-goals'){
       ui.tab='nutrition';ui.editor=null;render();window.scrollTo(0,0);
       if(action==='nutrition-goals')diary.goals();return;
