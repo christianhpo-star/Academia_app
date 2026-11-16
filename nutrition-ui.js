@@ -270,7 +270,7 @@
     const dayName=date===todayDate?'Hoje':new Date(date+'T12:00:00Z').toLocaleDateString('pt-BR',{day:'numeric',month:'short',timeZone:'UTC'});
     const compactBalance=remainder==null?'Saldo indisponível':remainder>=0?fmt(remainder)+' kcal restantes da meta':fmt(Math.abs(remainder))+' kcal acima da meta';
     return `<div class="nutrition-screen">
-      <div class="nd-page-heading"><p class="eyebrow">ALIMENTAÇÃO</p>${button('goals','Metas','','ghost nd-head-goals')}</div>
+      <div class="nd-page-heading"><h1 class="eyebrow">ALIMENTAÇÃO</h1>${button('goals',target?'Metas':'Configurar metas','','ghost nd-head-goals')}</div>
       <div class="nd-overview" id="nd-overview">
         <section class="nd-energy-overview" aria-label="Energia registrada e saldo">
           <div class="nd-kcal-main"><strong>${remainder==null?'—':remainder>=0?fmt(remainder):'−'+fmt(Math.abs(remainder))}</strong><span>kcal ${remainder!=null&&remainder<0?'acima da meta':'restantes da meta'}</span></div>
@@ -282,7 +282,7 @@
           <div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k],totals.counts[k])).join('')}</div>
         </section>
         ${dailyAdjustment?'<p class="nd-balance-active">Meta temporária aceita: '+fmt(dailyAdjustment.values.energyKcal)+' kcal. Proteína e fibras preservadas.</p>':''}
-        ${(hasEstimated||hasUnknown)?'<details class="nd-data-quality"><summary>Valores aproximados ou incompletos</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. ≈ indica estimativa. — indica ausência de dados, não zero. Refeições não registradas não entram no saldo.</p></details>':''}
+        ${(hasEstimated||hasUnknown)?'<details class="nd-data-quality"><summary>Detalhes e incerteza · valores aproximados ou incompletos</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+(energyMeta.unknown?energyMeta.unknown+' alimento(s) sem calorias disponíveis. ':'')+'≈ indica estimativa. — indica ausência de dados, não zero. Refeições não registradas não entram no saldo.</p></details>':''}
         <p class="nd-summary-note">Não representa o consumo total do dia. O saldo depende do que foi registrado.</p>
       </div>
       <div class="nd-date-stick" id="nd-date-stick"><div class="nd-date">
@@ -292,7 +292,7 @@
         ${button('next','›','aria-label="Próximo dia" '+(date>=todayDate?'disabled':''))}
       </div><span class="nd-date-mini" aria-live="polite">${esc(compactBalance)}</span></div>
       ${archive.draft?`<div class="callout">Há um rascunho de refeição salvo. ${button('resume','Continuar rascunho','','button-inline')}</div>`:''}
-      <div class="nd-food-quick-actions">${button('shared','Dividir porção','data-meal="dinner"','secondary')}${button('add','+ Refeição','data-meal="lunch"','secondary')}</div>
+      <div class="nd-food-quick-actions">${button('shared','Dividir uma porção','data-meal="dinner"','secondary')}${button('add','+ Refeição','data-meal="lunch"','secondary')}</div>
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{
         const rows=daily.filter(e=>e.mealType===type),total=N.recordedBreakdown(rows,date).totals.energyKcal;
         return mealCardHTML(type,label,rows,total,target,date);
