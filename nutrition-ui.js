@@ -271,6 +271,19 @@
       days+'</details></div></details>';
   }
 
+  function metabolismCardHTML(state,archive,date,target){
+    const rest=G.restingFromState({...state,nutrition:archive},date);
+    const professional=target?.source==='professional';
+    const difference=target?G.difference(target.values):null;
+    const present=rest.valueKcal!=null;
+    return '<section class="nd-metabolism" aria-label="Referência profissional e metabolismo de repouso">'+
+      '<div class="nd-metabolism-kpis"><div><span>Meta '+(professional?'da nutricionista':'vigente')+'</span><strong>'+fmt(target?.values.energyKcal)+' <small>kcal/dia</small></strong></div>'+
+      '<div><span>Repouso estimado</span><strong>'+(present?fmt(rest.valueKcal):'—')+' <small>'+(present?'kcal/dia':'a calcular')+'</small></strong></div></div>'+
+      (present&&target?.values.energyKcal?'<div class="nd-metabolism-track" role="img" aria-label="Repouso estimado '+fmt(rest.valueKcal)+' kcal e meta diária '+fmt(target.values.energyKcal)+' kcal"><span style="width:'+Math.min(100,Math.max(0,rest.valueKcal/target.values.energyKcal*100)).toFixed(1)+'%"></span></div>':'')+
+      '<p class="nd-metabolism-caption">'+(present?'Estimativa Mifflin–St Jeor, não medida nem gasto diário total. Peso usado: '+fmt(rest.weightKg)+' kg'+(rest.weightDate?' ('+esc(dateBR(rest.weightDate))+')':'')+'.':'Para calcular, informe '+esc(rest.missing.join(', '))+' em Minhas metas.')+'</p>'+
+      (difference!=null&&Math.abs(difference)>20?'<p class="nd-prescription-diff">Meta energética e macros informados não coincidem pelo cálculo 4/4/9 (diferença: '+fmt(difference)+' kcal). Valores mantidos sem correção.</p>':'')+
+      '<div class="nd-metabolism-actions">'+button('goals',present?'Ver cálculo':'Completar perfil','','button-inline')+'</div></section>';
+  }
   function render({archive,date,limit=3,state={},balanceDate=date}){
     const totals=N.recordedBreakdown(archive.entries,date);
     const baseTarget=G.active(archive.settings,date);
@@ -301,6 +314,7 @@
         <section class="nd-macros-overview"><div class="nd-macro-heading"><strong>Macronutrientes</strong>${button('goals','Ajustar metas','','button-inline')}</div>
           <div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k],totals.counts[k])).join('')}</div>
         </section>
+        ${metabolismCardHTML(state,archive,date,target)}
         ${dailyAdjustment?'<p class="nd-balance-active">Meta temporária aceita: '+fmt(dailyAdjustment.values.energyKcal)+' kcal. Proteína e fibras preservadas.</p>':''}
         ${(hasEstimated||hasUnknown)?'<details class="nd-data-quality"><summary>Detalhes e incerteza · valores aproximados ou incompletos</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+(energyMeta.unknown?energyMeta.unknown+' alimento(s) sem calorias disponíveis. ':'')+'≈ indica estimativa. — indica ausência de dados, não zero. Refeições não registradas não entram no saldo.</p></details>':''}
         <p class="nd-summary-note">Não representa o consumo total do dia. O saldo depende do que foi registrado.</p>
@@ -523,6 +537,9 @@
       const wearable=BODY?.recentBio(get().bioimpedance||[])[0];
       dialog.querySelector('#nd-dialog-body').innerHTML=`<p class="small muted">Altura, idade, peso e atividade ajudam a estimar suas necessidades. Você pode editar as metas.</p><form id="nd-profile"><div class="field-row">${field('heightCm','Altura (cm)',p.heightCm,'inputmode="decimal" placeholder="Ex.: 175,5"')}${field('age','Idade (anos completos)',p.age,'type="number" min="18" max="100" step="1"')}${field('weightKg','Peso atual (kg)',p.weightKg,'inputmode="decimal"')}${select('sex','Parâmetro da fórmula',{'':'Não informado',male:'Masculino (+5)',female:'Feminino (−161)'},p.sex)}</div>
       ${latest?`<p class="small">Última pesagem: ${fmt(latest.weight)} kg em ${dateBR(latest.date)}. ${button('use-weight','Usar este peso','','button-inline')}</p>`:''}
+      <div class="nd-professional-recipe"><strong>Prescrição nutricional · 13/11/2026</strong><p>1.710 kcal · 159 g proteínas · 146 g carboidratos · 28 g gorduras. Meta de fibra não informada.</p>
+      <p class="small muted">A energia e os macronutrientes diferem em cerca de 238 kcal pelo cálculo 4/4/9. Mantemos as quantidades originais; confirme a divergência na próxima consulta.</p>
+      ${button('apply-professional',current?.source==='professional'?'Prescrição vigente — reaplicar':'Usar metas da nutricionista','','secondary full')}</div>
       ${select('goal','Objetivo',{recomposition:'Recomposição corporal',loss:'Redução de gordura',maintain:'Manutenção',gain:'Ganho gradual'},p.goal)}
       ${select('activity','Atividade habitual, incluindo treinos',{'':'Selecione','1.2':'Pouca atividade (1,2)','1.375':'Atividade leve (1,375)','1.55':'Atividade moderada (1,55)','1.725':'Atividade alta (1,725)','1.9':'Atividade muito alta (1,9)'},p.activity??'')}
       <p class="small muted">Considere trabalho, deslocamentos e frequência/duração dos treinos. Fatores são aproximações; não escolha apenas pela modalidade. Não somamos calorias de exercícios novamente.</p>
@@ -766,6 +783,18 @@
     }
     function action(b){const a=b.dataset.nd;
       if(a==='goals')return goals();
+      if(a==='apply-professional'){
+        const target=G.professionalTarget(today());
+        if(!target)return notify('Data da prescrição inválida.');
+        const current=G.active(archive().settings,today());
+        if(current?.source==='professional'&&G.difference(current.values)===G.difference(target.values)&&
+            JSON.stringify(current.values)===JSON.stringify(target.values))return notify('A prescrição já está vigente.');
+        if(!confirm('Tornar a prescrição da nutricionista a meta vigente a partir de hoje? O histórico anterior será preservado.'))return;
+        if((archive().settings.targets||[]).some(x=>x.from===today()))
+          target.id=id('target');
+        return saveTarget(target);
+      }
+
       if(a==='balance-review')return reviewBalanceDay(b.dataset.date);
       if(a==='balance-plan')return openBalancePlan();
       if(a==='balance-day'){day=b.dataset.date;refresh();window.scrollTo(0,0);return;}
