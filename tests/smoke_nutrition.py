@@ -281,9 +281,9 @@ with sync_playwright() as p:
     mixed.locator('#nav [data-tab="nutrition"]').click()
     mixed.locator('#nd-date').fill(day)
     mixed.locator('#nd-date').dispatch_event('change')
-    assert '≈486,7' in mixed.locator('.nd-energy-detail .nd-ring-inner').inner_text()
+    assert '≈486,7' in mixed.locator('.nd-energy-detail .nd-ring-inner').text_content()
     assert '≈252 kcal' in mixed.locator('.nd-meal').filter(has=mixed.get_by_role('heading',name='Lanche')).inner_text()
-    assert 'Valores aproximados ou incompletos' in mixed.locator('.nd-data-quality').inner_text()
+    assert 'Valores aproximados ou incompletos' in mixed.locator('.nd-data-quality').text_content()
     assert '≈' in mixed.locator('.nd-overview').inner_text()
     for width in (320,390):
         mixed.set_viewport_size({'width':width,'height':844})
