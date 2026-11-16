@@ -271,6 +271,44 @@ with sync_playwright() as p:
         mixed.set_viewport_size({'width':width,'height':844})
         assert mixed.evaluate('document.documentElement.scrollWidth <= innerWidth')
     mixed.close()
+    # Porcao compartilhada: dois participantes; somente consumo individual e estimativas.
+    shared=start(context,{},errors)
+    shared.locator('#nav [data-tab="nutrition"]').click()
+    shared.locator('[data-nd="shared"]').click()
+    assert shared.locator('#nd-shared').is_visible()
+    assert '2 pessoas' in shared.locator('#nd-shared').inner_text()
+    assert 'Trono dos Reis' in shared.locator('#nd-shared').inner_text()
+    assert '415 g' in shared.locator('#nd-shared-preview').inner_text()
+    assert '≈' in shared.locator('#nd-shared-preview').inner_text()
+    assert not json.loads(shared.evaluate("localStorage.getItem('forja.academia.v1')"))['nutrition']['entries']
+    shared.locator('#nd-total-0').fill('300')
+    shared.locator('#nd-share-0').fill('60')
+    assert '180 g' in shared.locator('#nd-share-my-0').inner_text()
+    shared.locator('#nd-share-global').fill('25')
+    shared.locator('[data-nd="apply-share"]').click()
+    assert shared.locator('#nd-share-0').input_value()=='25'
+    assert shared.locator('#nd-share-4').input_value()=='25'
+    shared.locator('#nd-share-1').fill('75')
+    assert '150 g' in shared.locator('#nd-share-my-1').inner_text()
+    for width in (320,390):
+        shared.set_viewport_size({'width':width,'height':844})
+        assert shared.evaluate('document.documentElement.scrollWidth <= innerWidth'),width
+    shared.set_viewport_size({'width':390,'height':844})
+    shared.locator('#nd-shared button[type="submit"]').click()
+    assert shared.locator('#nd-items .nd-item').count()==5
+    shared.locator('.nd-save-sticky button[type="submit"]').click()
+    shared_state=json.loads(shared.evaluate("localStorage.getItem('forja.academia.v1')"))
+    assert len(shared_state['nutrition']['entries'])==1
+    meal=shared_state['nutrition']['entries'][0]
+    assert meal['mealType']=='dinner'
+    assert all(item['estimate']['confidence']=='low' for item in meal['items'])
+    assert shared.evaluate("""() => {
+      const n=window.ForjaNutrition,archive=JSON.parse(localStorage.getItem('forja.academia.v1')).nutrition;
+      return n.observedTotals(archive.entries,archive.entries[0].date).totals.energyKcal===null;
+    }""")
+    assert '≈' in shared.locator('.nd-summary').inner_text()
+    shared.screenshot(path=str(ROOT/'screenshots/nutrition-shared-390.png'),full_page=True)
+    shared.close()
     # Quota errors preserve original history and form.
     page.locator('[data-nd="add"][data-meal="snack"]').click()
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()

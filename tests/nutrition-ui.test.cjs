@@ -110,3 +110,12 @@ test('dados desconhecidos mantêm subtotais por nutriente sem assumir ingestão 
  assert.match(html,/Energia com composição informada: 52 kcal/);
  assert.match(html,/não zero/);
 });
+
+
+test('atalho de dividir porção aparece no diário sem lançar nada automaticamente',()=>{
+ const archive=N.archive();
+ const html=UI.render({archive,date:'2026-11-15'});
+ assert.match(html,/data-nd="shared"/);
+ assert.match(html,/Dividir uma porção/);
+ assert.equal(archive.entries.length,0);
+});
