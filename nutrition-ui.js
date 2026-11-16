@@ -803,9 +803,10 @@
       const progress=Math.min(1,Math.max(0,(root.scrollY-startY)/distance));
       const reduced=root.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       view.style.setProperty('--nd-scroll-progress',String(progress));
-      collapse.style.height=Math.max(0,expanded*(1-progress))+'px';
+      // Visual scaling avoids scroll-anchoring feedback: layout space scrolls
+      // offscreen naturally while the date remains independently sticky.
+      collapse.style.transform=reduced?'none':'scale('+(1-progress)+')';
       collapse.classList.toggle('nd-collapsed',progress>=.999);
-      // Reduced motion still permits space recovery without scaling the content.
       collapse.style.setProperty('--nd-content-scale',String(reduced?1:1-.18*progress));
       const nav=view.querySelector('.nd-date-stick');
       if(nav)nav.classList.toggle('nd-is-stuck',nav.getBoundingClientRect().top<=3&&progress>.7);
