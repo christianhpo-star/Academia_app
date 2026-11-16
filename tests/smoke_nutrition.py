@@ -453,7 +453,7 @@ with sync_playwright() as p:
     evo.screenshot(path=str(ROOT/'screenshots/evolution-nutrition-390.png'),full_page=True)
     evo.close()
     # Quota errors preserve original history and form.
-    page.locator('[data-nd="add"][data-meal="snack"]').click()
+    page.locator('.nd-meal-top [data-nd="add"][data-meal="snack"]').click()
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
     page.locator('#nd-label').fill('Falha de armazenamento')
     page.locator('#nd-manual button[type="submit"]').click()
