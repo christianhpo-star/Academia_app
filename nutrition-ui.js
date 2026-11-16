@@ -786,10 +786,33 @@
       if(a==='favorite'&&e){const f=CAT.makeFavorite(e,archive(),'',id);if(!f)return notify('Não foi possível criar favorito.');if(!transact(x=>{x.foods.push(...f.foodsToAdd);x.mealTemplates.push(f.favorite);} ))return;notify('Favorito salvo.');}
       const scroll=window.scrollY;refresh();window.scrollTo(0,scroll);if(a==='more')document.querySelector('#nd-history').open=true;
     }
+    let scrollQueued=false,scrollBound=false;
+    function syncScroll(){
+      const view=document.querySelector('.nutrition-screen');
+      if(!view)return;
+      const travelled=Math.max(0,-view.getBoundingClientRect().top+18);
+      const fraction=Math.min(1,travelled/170);
+      view.style.setProperty('--nd-scroll-progress',String(fraction));
+      const nav=view.querySelector('.nd-date-stick');
+      if(nav)nav.classList.toggle('nd-is-stuck',nav.getBoundingClientRect().top<=3&&fraction>.7);
+    }
+    function onScroll(){
+      if(scrollQueued)return;
+      scrollQueued=true;
+      root.requestAnimationFrame(()=>{scrollQueued=false;syncScroll();});
+    }
     return {render:()=>render({archive:archive(),date:day,limit,state:get(),balanceDate:today()}),goals,
       mount(){const screen=document.querySelector('.nutrition-screen');if(!screen)return;
         screen.addEventListener('click',e=>{const b=e.target.closest('[data-nd]');if(b){e.stopPropagation();action(b);}});
-        screen.querySelector('#nd-date').addEventListener('change',e=>{if(N.dateOk(e.target.value)){day=e.target.value;refresh();}});
+        screen.querySelector('#nd-date').addEventListener('change',e=>{
+          if(N.dateOk(e.target.value)&&e.target.value<=today()){day=e.target.value;refresh();}
+        });
+        if(!scrollBound){
+          root.addEventListener('scroll',onScroll,{passive:true});
+          root.addEventListener('resize',onScroll,{passive:true});
+          scrollBound=true;
+        }
+        syncScroll();
       }};
   }
   const api={render,controller,newId:id};root.ForjaNutritionUI=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
