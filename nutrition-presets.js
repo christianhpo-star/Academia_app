@@ -19,7 +19,12 @@
   const forMeal = mealType => recipes.filter(recipe => recipe.mealType === mealType);
   const find = id => recipes.find(recipe => recipe.id === id) || null;
   const choicesFor = (recipe, selections=[]) => recipe.groups.map((group,i)=>group.choices[Number(selections[i]??0)]||group.choices[0]);
-  const needsQuantity = (recipe,selections=[]) => choicesFor(recipe,selections).some(choice => choice.qty==null);
+  const withQuantities=(recipe,selections=[],quantities=[])=>choicesFor(recipe,selections).map((item,i)=>{
+    const raw=quantities[i];if(raw===undefined||raw===null||String(raw).trim()==='')return {...item};
+    const qty=Number(String(raw).replace(',','.'));
+    return {...item,qty:Number.isFinite(qty)?qty:null};
+  });
+  const needsQuantity = (recipe,selections=[],quantities=[]) => withQuantities(recipe,selections,quantities).some(choice => choice.qty==null);
   const hasMissing = (recipe,selections=[]) => choicesFor(recipe,selections).some(choice=>choice.qty==null || (!choice.foodId && choice.qty!==0));
   function snapshot(choice,makeId){
     if(choice.qty===0)return null;
@@ -40,16 +45,16 @@
       nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null,fiberG:null},
       source:null};
   }
-  function makeEntry(recipeId,day,makeId,selections=[]) {
+  function makeEntry(recipeId,day,makeId,selections=[],quantities=[]) {
     const recipe=find(recipeId);
-    if(!recipe||!N||!N.dateOk(day)||typeof makeId!=='function'||needsQuantity(recipe,selections))return null;
-    const items=choicesFor(recipe,selections).map(choice=>snapshot(choice,makeId)).filter(item=>item!==null);
+    if(!recipe||!N||!N.dateOk(day)||typeof makeId!=='function'||needsQuantity(recipe,selections,quantities))return null;
+    const items=withQuantities(recipe,selections,quantities).map(choice=>snapshot(choice,makeId)).filter(item=>item!==null);
     if(!items.length || items.some(i=>i===undefined))return null;
     const entry={id:makeId('meal'),date:day,mealType:recipe.mealType,time:null,
       notes:'Opção da prescrição: '+recipe.title,items};
     return N.validEntry(entry)?entry:null;
   }
-  const api={VERSION:2,recipes,forMeal,find,choicesFor,needsQuantity,hasMissing,makeEntry,data:DATA};
+  const api={VERSION:2,recipes,forMeal,find,choicesFor,withQuantities,needsQuantity,hasMissing,makeEntry,data:DATA};
   root.ForjaMealPresets=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
