@@ -65,7 +65,7 @@ with sync_playwright() as p:
     assert len(state['bodyMeasurements'])==2
     assert next(x for x in state['bodyMeasurements'] if x['date']=='2026-11-14')['values']['chest']==99.5
     page.locator('[data-action="body-back"]').click()
-    assert page.locator('.body-quick-card').count()==1
+    assert page.locator('.evo-chart-selector').count()==1
     # Duplicate-date backup must not overwrite the phone's entry; new dates are added.
     incoming=json.loads(page.evaluate('window.__storage["forja.academia.v1"]'))
     incoming['bodyMeasurements']=[
@@ -88,6 +88,7 @@ with sync_playwright() as p:
     assert len(json.loads(page.evaluate('window.__storage["forja.academia.v1"]'))['bodyMeasurements'])==3
     page.set_viewport_size({'width':320,'height':700})
     page.get_by_role('button',name='Evolução',exact=True).click()
+    page.locator('[data-action="evo-chart-mode"][data-mode="measures"]').click()
     page.locator('[data-action="body-open"]').click()
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     out=ROOT/'screenshots';out.mkdir(exist_ok=True)
