@@ -44,7 +44,7 @@ with sync_playwright() as p:
     assert page.locator('.goal-plan-card').count()==1
     assert 'Ganhar massa muscular' in page.locator('.goal-plan-card').inner_text()
     assert 'Treinos:' in page.locator('.goal-plan-card').inner_text()
-    page.locator('.evo-extras > summary').click()
+    page.locator('.evo-more-tools > summary').click()
     page.locator('[data-action="goal-open"]').click()
     assert page.locator('#goal-mode').input_value()=='muscle_gain'
     page.locator('#goal-mode').select_option('weight')

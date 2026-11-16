@@ -141,6 +141,7 @@
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
     progressStepDays:14,progressRadarOpen:false,
     evolutionView:'weight',evolutionPeriods:{energy:7,macros:7,average:7},evolutionWeightLimit:8,evolutionExtrasOpen:false,
+    evolutionChartMode:'weight',evolutionMeasureKey:'abdomen',evolutionVolumeDays:30,
   };
   const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
     commitSteps(next){
@@ -1082,25 +1083,26 @@
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
   }
   function renderProgress(){
-    const day=today(),weights=EVO.renderWeight(state,day,ui.evolutionWeightLimit),
-      nutrition=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
-    const bm=BODY.recent(state.bodyMeasurements||[])[0];
+    const day=today();
+    const nutrition=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
+    const steps=progressStepsPanel();
+    const groups=EVO.renderGroupVolume(state,day,ui.evolutionVolumeDays);
+    const weights=EVO.renderWeight(state,day,ui.evolutionWeightLimit,{
+      chartMode:ui.evolutionChartMode,measureKey:ui.evolutionMeasureKey,
+      stepsHTML:steps,groupsHTML:groups,
+    });
     const goalPlan=PLANNER.plan(state,day);
-    return '<div class="evo-shell">' +
+    return '<div class="evo-shell">'+
       EVO.renderHeader(state,day,ui.evolutionView)+
       '<div class="evo-main">'+(ui.evolutionView==='nutrition'?nutrition:weights)+'</div>'+
-      '<details class="evo-extras" '+(ui.evolutionExtrasOpen?'open':'')+'>'+
-      '<summary>Treinos, medidas e indicadores adicionais <span aria-hidden="true">⌄</span></summary>'+
-      '<div class="evo-extra-body">'+
-      '<button type="button" class="body-quick-card" data-action="body-open"><span><strong>Medidas corporais</strong><small>'+
-      (bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':
-        'Circunferências e bioimpedância')+'</small></span><span aria-hidden="true">›</span></button>'+
-      progressMeasuresPanel()+progressStepsPanel()+progressStrengthSummary()+
-      '<details class="progress-advanced-radar" '+(ui.progressRadarOpen?'open':'')+'>'+
-      '<summary>Comparativo muscular avançado · radar</summary>'+strengthSection(90)+'</details>'+
-      renderGoalPlannerSummary(goalPlan)+renderDosePanel()+'</div></details>'+
-      '<div id="evo-weight-editor" class="evo-weight-editor">'+weightForm()+'</div>'+
-      '</div>';
+      (ui.evolutionView==='weight'?
+        '<details class="evo-more-tools" '+(ui.evolutionExtrasOpen?'open':'')+'>'+
+        '<summary>Mais indicadores e ajustes <span aria-hidden="true">⌄</span></summary>'+
+        '<div class="evo-more-content">'+
+        renderGoalPlannerSummary(goalPlan)+renderDosePanel()+
+        '</div></details>'+
+        '<details id="evo-weight-editor" class="evo-editor-fold"><summary>Registrar ou corrigir pesagem</summary>'+weightForm()+'</details>':
+        '')+'</div>';
   }
   function bodyFigure(current){
     const values=current?.values||{};
@@ -1854,6 +1856,15 @@
       ui.evolutionView=btn.dataset.view;
       render();return;
     }
+    else if(action==='evo-chart-mode'){
+      if(!['weight','measures'].includes(btn.dataset.mode))return;
+      ui.evolutionChartMode=btn.dataset.mode;render();return;
+    }
+    else if(action==='evo-volume-days'){
+      const days=Number(btn.dataset.days);
+      if(![7,30,90].includes(days))return;
+      ui.evolutionVolumeDays=days;render();return;
+    }
     else if(action==='evo-period'){
       const kind=btn.dataset.kind,days=Number(btn.dataset.days);
       if(!['energy','macros','average'].includes(kind)||![7,30,90].includes(days))return;
@@ -1863,8 +1874,8 @@
       ui.evolutionWeightLimit=Math.min(100,ui.evolutionWeightLimit+10);render();return;
     }
     else if(action==='evo-add-weight'){
-      const editor=document.getElementById('evo-weight-editor'),panel=editor?.querySelector('details');
-      if(panel)panel.open=true;
+      const editor=document.getElementById('evo-weight-editor');
+      if(editor)editor.open=true;
       editor?.scrollIntoView({behavior:'smooth',block:'start'});
       document.getElementById('new-weight')?.focus({preventScroll:true});return;
     }
@@ -1923,7 +1934,7 @@
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
     if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
-    if(event.target.matches?.('.evo-extras'))ui.evolutionExtrasOpen=event.target.open;
+    if(event.target.matches?.('.evo-more-tools'))ui.evolutionExtrasOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
   },true);
   screen.addEventListener('click',event=>{
@@ -1973,6 +1984,11 @@
   });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
+    if(event.target.id==='evo-measure-field'){
+      const id=event.target.value;
+      if(BODY.FIELDS.some(f=>f.id===id)){ui.evolutionMeasureKey=id;render();}
+      return;
+    }
     if(event.target.id==='home-step-date'){
       const previous=(state.activitySteps||[]).find(row=>row.date===event.target.value);
       const input=screen.querySelector('#home-step-count');if(input)input.value=previous?String(previous.steps):'';
@@ -2045,7 +2061,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-evo28',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-evo29',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
