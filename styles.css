@@ -1194,3 +1194,16 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .plan-exercise-state{min-width:46px;align-self:center}
 @media(max-width:719px){.plan-block-selector .plan-block-choice{min-height:56px!important;padding:7px 5px!important}.plan-exercises-list{grid-template-columns:1fr}}
 @media(max-width:350px){.plan-exercise-item{gap:6px;padding:9px 6px}.plan-exercise-detail h3{font-size:12px}.workout-list-heading .button-inline{font-size:10px}}
+
+/* UX43: organize the editable training list behind one deliberate disclosure. */
+.plan-editor-accordion{padding:0 12px 12px;border:1px solid #3b5261;background:var(--card);border-radius:15px;margin:12px 0}
+.plan-editor-accordion>summary{display:flex;align-items:center;gap:8px;min-height:54px;cursor:pointer;list-style:none;font-size:14px;font-weight:800;color:var(--text)}
+.plan-editor-accordion>summary::-webkit-details-marker{display:none}
+.plan-editor-accordion>summary small{font-size:11px;color:var(--muted);font-weight:650;margin-left:auto}
+.plan-editor-accordion>summary:after{content:'⌄';color:var(--lime);font-size:19px;line-height:1;transition:transform .15s}
+.plan-editor-accordion[open]>summary:after{transform:rotate(180deg)}
+.plan-editor-accordion .plan-exercises-list{padding-top:9px;border-top:1px solid var(--line)}
+.plan-editor-accordion .plan-editor-actions{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;padding:12px 0 0}
+.plan-editor-accordion .plan-editor-actions .secondary{min-height:44px;font-size:12px}
+@media(max-width:360px){.plan-editor-accordion{padding-left:9px;padding-right:9px}.plan-editor-accordion>summary small{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.plan-editor-accordion>summary:after{transition:none}}

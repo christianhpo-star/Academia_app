@@ -1,8 +1,8 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v46-20261116-focus42-catalog';
+const CACHE = 'forja-shell-v47-20261116-focus43-catalog';
 const APP_FILES = [
-  './', './index.html', './styles.css?v=20261116-focus42', './body-measures.js?v=20261116-focus42', './activity.js?v=20261116-focus42', './health-import.js?v=20261116-focus42', './nutrition-goals.js?v=20261116-focus42', './goal-planner.js?v=20261116-focus42', './reminders.js?v=20261116-focus42', './daily-routine.js?v=20261116-focus42', './nutrition.js?v=20261116-focus42', './nutrition-catalog.js?v=20261116-focus42', './nutrition-balance.js?v=20261116-focus42', './nutrition-ui.js?v=20261116-focus42', './evolution-dashboard.js?v=20261116-focus42', './app.js?v=20261116-focus42', './data.js?v=20261116-focus42',
-  './engine.js?v=20261116-focus42', './muay.js?v=20261116-focus42', './calendar.js?v=20261116-focus42', './flex.js?v=20261116-focus42', './dose.js?v=20261116-focus42', './focus.js?v=20261116-focus42', './catalog-advice.js?v=20261116-focus42', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=20261116-focus43', './body-measures.js?v=20261116-focus43', './activity.js?v=20261116-focus43', './health-import.js?v=20261116-focus43', './nutrition-goals.js?v=20261116-focus43', './goal-planner.js?v=20261116-focus43', './reminders.js?v=20261116-focus43', './daily-routine.js?v=20261116-focus43', './nutrition.js?v=20261116-focus43', './nutrition-catalog.js?v=20261116-focus43', './nutrition-balance.js?v=20261116-focus43', './nutrition-ui.js?v=20261116-focus43', './evolution-dashboard.js?v=20261116-focus43', './app.js?v=20261116-focus43', './data.js?v=20261116-focus43',
+  './engine.js?v=20261116-focus43', './muay.js?v=20261116-focus43', './calendar.js?v=20261116-focus43', './flex.js?v=20261116-focus43', './dose.js?v=20261116-focus43', './focus.js?v=20261116-focus43', './catalog-advice.js?v=20261116-focus43', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 

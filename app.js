@@ -746,11 +746,8 @@
         <span class="plan-exercises-count">${activeCount} ativos</span></div>
         <button class="primary full" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button>
       </section>
-      <section class="plan-exercises" aria-labelledby="plan-exercises-title">
-        <div class="section-row plan-exercises-heading workout-list-heading">
-          <h2 class="section-title" id="plan-exercises-title">Ficha · ${activeCount} ativos</h2>
-          <button class="button-inline" data-action="navigate" data-to="catalog" aria-label="Catálogo de exercícios">Catálogo ›</button>
-        </div>
+      <details class="plan-exercises plan-editor-accordion" id="plan-editor">
+        <summary><span>Editar ficha</span><small>${activeCount} ativos · ${all.length} exercícios</small></summary>
         <div class="plan-exercises-list">${all.map((ex,i)=>`<article class="plan-exercise-item ${ex.active?'':'is-inactive'}">
           <div class="plan-exercise-index" aria-hidden="true">${String(i+1).padStart(2,'0')}</div>
           <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
@@ -758,8 +755,9 @@
             <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}" aria-label="Editar ${esc(ex.name)}">Editar</button></div>
           <div class="plan-exercise-state"><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
         </article>`).join('')}</div>
-      </section>
-      <button class="secondary full mt-16" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button>`;
+        <div class="plan-editor-actions"><button class="button-inline" data-action="navigate" data-to="catalog" aria-label="Catálogo de exercícios">Catálogo ›</button>
+        <button class="secondary" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button></div>
+      </details>`;
   }
 
   function seedSets(ex) {
@@ -2071,7 +2069,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-focus42',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-focus43',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

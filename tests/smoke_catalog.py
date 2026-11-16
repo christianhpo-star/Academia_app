@@ -32,6 +32,7 @@ with sync_playwright() as p:
     page=start(ctx,{},errors)
     # Catálogo global existe fora do treino, com todos os grupos.
     page.get_by_role('button',name='Treinos',exact=True).click()
+    page.locator('.plan-editor-accordion > summary').click()
     page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
     assert page.locator('.catalog-browser-item').count()>=40
     assert page.locator('#catalog-search').count()==1
