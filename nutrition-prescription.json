@@ -18,7 +18,7 @@
       "snack": 240,
       "dinner": 450
     },
-    "evidence": "Transcrição fiel das escolhas; dados sem gramatura mantêm quantity null; valores nutricionais de rótulos/catálogos separados.",
+    "evidence": "Transcrição fiel das escolhas; dados sem gramatura mantêm quantity null; valores nutricionais de rótulos/catálogos separados. Listas completas de frutas disponíveis nas escolhas por porção.",
     "privacy": "Sem nome, contato ou dados clínicos pessoais."
   },
   "water": {
@@ -110,34 +110,22 @@
             "label": "Fruta — 1 porção (lista de substituição)",
             "choices": [
               {
-                "name": "Banana",
-                "qty": 80,
-                "unit": "g",
-                "foodId": "taco:2011:182"
-              },
-              {
-                "name": "Maçã",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:222"
-              },
-              {
-                "name": "Mamão papaia",
-                "qty": 170,
-                "unit": "g",
-                "foodId": "taco:2011:226"
-              },
-              {
-                "name": "Morangos",
+                "name": "Morango",
                 "qty": 240,
                 "unit": "g",
                 "foodId": "taco:2011:239"
               },
               {
-                "name": "Laranja",
-                "qty": 180,
+                "name": "Kiwi",
+                "qty": 150,
                 "unit": "g",
-                "foodId": "taco:2011:214"
+                "foodId": "taco:2011:207"
+              },
+              {
+                "name": "Uva Itália",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:256"
               },
               {
                 "name": "Abacaxi",
@@ -146,16 +134,252 @@
                 "foodId": "taco:2011:164"
               },
               {
-                "name": "Pera",
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Melão amarelo",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra Williams",
                 "qty": 120,
                 "unit": "g",
                 "foodId": "taco:2011:243"
               },
               {
-                "name": "Kiwi",
-                "qty": 150,
+                "name": "Mexerica",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
                 "unit": "g",
-                "foodId": "taco:2011:207"
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Manga háden",
+                "qty": 110,
+                "unit": "g"
+              },
+              {
+                "name": "Limão",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Melancia",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:235"
+              },
+              {
+                "name": "Maracujá",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goiaba",
+                "qty": 140,
+                "unit": "g",
+                "foodId": "taco:2011:200"
+              },
+              {
+                "name": "Carambola",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa",
+                "qty": 145,
+                "unit": "g"
+              },
+              {
+                "name": "Caqui",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Pêssego",
+                "qty": 190,
+                "unit": "g"
+              },
+              {
+                "name": "Nectarina",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Amoras",
+                "qty": 200,
+                "unit": "g"
+              },
+              {
+                "name": "Cereja",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Caju",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:186"
+              },
+              {
+                "name": "Acerola",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Jabuticaba",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Pitanga",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Açaí (fruta)",
+                "qty": 32,
+                "unit": "g"
+              },
+              {
+                "name": "Fruta-pão",
+                "qty": 70,
+                "unit": "g"
+              },
+              {
+                "name": "Pitaya",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Framboesa",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Romã",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Figo",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Lichia",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mirtilo",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goji Berry",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Mangostão",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Jaca",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Pinha",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Toranja",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Tâmaras",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Uva passa",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Damasco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Mamão seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Figo seco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Cranberry seco",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã desidratada",
+                "qty": 40,
+                "unit": "g"
+              },
+              {
+                "name": "Manga seca",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Abacaxi seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Banana passa (zero açúcar)",
+                "qty": 25,
+                "unit": "g"
               }
             ]
           }
@@ -206,34 +430,22 @@
             "label": "Fruta — 1 porção (lista de substituição)",
             "choices": [
               {
-                "name": "Banana",
-                "qty": 80,
-                "unit": "g",
-                "foodId": "taco:2011:182"
-              },
-              {
-                "name": "Maçã",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:222"
-              },
-              {
-                "name": "Mamão papaia",
-                "qty": 170,
-                "unit": "g",
-                "foodId": "taco:2011:226"
-              },
-              {
-                "name": "Morangos",
+                "name": "Morango",
                 "qty": 240,
                 "unit": "g",
                 "foodId": "taco:2011:239"
               },
               {
-                "name": "Laranja",
-                "qty": 180,
+                "name": "Kiwi",
+                "qty": 150,
                 "unit": "g",
-                "foodId": "taco:2011:214"
+                "foodId": "taco:2011:207"
+              },
+              {
+                "name": "Uva Itália",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:256"
               },
               {
                 "name": "Abacaxi",
@@ -242,16 +454,252 @@
                 "foodId": "taco:2011:164"
               },
               {
-                "name": "Pera",
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Melão amarelo",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra Williams",
                 "qty": 120,
                 "unit": "g",
                 "foodId": "taco:2011:243"
               },
               {
-                "name": "Kiwi",
-                "qty": 150,
+                "name": "Mexerica",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
                 "unit": "g",
-                "foodId": "taco:2011:207"
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Manga háden",
+                "qty": 110,
+                "unit": "g"
+              },
+              {
+                "name": "Limão",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Melancia",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:235"
+              },
+              {
+                "name": "Maracujá",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goiaba",
+                "qty": 140,
+                "unit": "g",
+                "foodId": "taco:2011:200"
+              },
+              {
+                "name": "Carambola",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa",
+                "qty": 145,
+                "unit": "g"
+              },
+              {
+                "name": "Caqui",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Pêssego",
+                "qty": 190,
+                "unit": "g"
+              },
+              {
+                "name": "Nectarina",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Amoras",
+                "qty": 200,
+                "unit": "g"
+              },
+              {
+                "name": "Cereja",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Caju",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:186"
+              },
+              {
+                "name": "Acerola",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Jabuticaba",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Pitanga",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Açaí (fruta)",
+                "qty": 32,
+                "unit": "g"
+              },
+              {
+                "name": "Fruta-pão",
+                "qty": 70,
+                "unit": "g"
+              },
+              {
+                "name": "Pitaya",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Framboesa",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Romã",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Figo",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Lichia",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mirtilo",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goji Berry",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Mangostão",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Jaca",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Pinha",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Toranja",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Tâmaras",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Uva passa",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Damasco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Mamão seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Figo seco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Cranberry seco",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã desidratada",
+                "qty": 40,
+                "unit": "g"
+              },
+              {
+                "name": "Manga seca",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Abacaxi seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Banana passa (zero açúcar)",
+                "qty": 25,
+                "unit": "g"
               }
             ]
           }
@@ -825,34 +1273,22 @@
             "label": "Fruta — 1 porção (lista de substituição)",
             "choices": [
               {
-                "name": "Banana",
-                "qty": 80,
-                "unit": "g",
-                "foodId": "taco:2011:182"
-              },
-              {
-                "name": "Maçã",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:222"
-              },
-              {
-                "name": "Mamão papaia",
-                "qty": 170,
-                "unit": "g",
-                "foodId": "taco:2011:226"
-              },
-              {
-                "name": "Morangos",
+                "name": "Morango",
                 "qty": 240,
                 "unit": "g",
                 "foodId": "taco:2011:239"
               },
               {
-                "name": "Laranja",
-                "qty": 180,
+                "name": "Kiwi",
+                "qty": 150,
                 "unit": "g",
-                "foodId": "taco:2011:214"
+                "foodId": "taco:2011:207"
+              },
+              {
+                "name": "Uva Itália",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:256"
               },
               {
                 "name": "Abacaxi",
@@ -861,16 +1297,252 @@
                 "foodId": "taco:2011:164"
               },
               {
-                "name": "Pera",
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Melão amarelo",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra Williams",
                 "qty": 120,
                 "unit": "g",
                 "foodId": "taco:2011:243"
               },
               {
-                "name": "Kiwi",
-                "qty": 150,
+                "name": "Mexerica",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
                 "unit": "g",
-                "foodId": "taco:2011:207"
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Manga háden",
+                "qty": 110,
+                "unit": "g"
+              },
+              {
+                "name": "Limão",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Melancia",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:235"
+              },
+              {
+                "name": "Maracujá",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goiaba",
+                "qty": 140,
+                "unit": "g",
+                "foodId": "taco:2011:200"
+              },
+              {
+                "name": "Carambola",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa",
+                "qty": 145,
+                "unit": "g"
+              },
+              {
+                "name": "Caqui",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Pêssego",
+                "qty": 190,
+                "unit": "g"
+              },
+              {
+                "name": "Nectarina",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Amoras",
+                "qty": 200,
+                "unit": "g"
+              },
+              {
+                "name": "Cereja",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Caju",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:186"
+              },
+              {
+                "name": "Acerola",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Jabuticaba",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Pitanga",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Açaí (fruta)",
+                "qty": 32,
+                "unit": "g"
+              },
+              {
+                "name": "Fruta-pão",
+                "qty": 70,
+                "unit": "g"
+              },
+              {
+                "name": "Pitaya",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Framboesa",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Romã",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Figo",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Lichia",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mirtilo",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goji Berry",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Mangostão",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Jaca",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Pinha",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Toranja",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Tâmaras",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Uva passa",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Damasco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Mamão seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Figo seco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Cranberry seco",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã desidratada",
+                "qty": 40,
+                "unit": "g"
+              },
+              {
+                "name": "Manga seca",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Abacaxi seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Banana passa (zero açúcar)",
+                "qty": 25,
+                "unit": "g"
               }
             ]
           }
@@ -1287,34 +1959,22 @@
           "label": "Fruta — 1 porção (lista de substituição)",
           "choices": [
             {
-              "name": "Banana",
-              "qty": 80,
-              "unit": "g",
-              "foodId": "taco:2011:182"
-            },
-            {
-              "name": "Maçã",
-              "qty": 120,
-              "unit": "g",
-              "foodId": "taco:2011:222"
-            },
-            {
-              "name": "Mamão papaia",
-              "qty": 170,
-              "unit": "g",
-              "foodId": "taco:2011:226"
-            },
-            {
-              "name": "Morangos",
+              "name": "Morango",
               "qty": 240,
               "unit": "g",
               "foodId": "taco:2011:239"
             },
             {
-              "name": "Laranja",
-              "qty": 180,
+              "name": "Kiwi",
+              "qty": 150,
               "unit": "g",
-              "foodId": "taco:2011:214"
+              "foodId": "taco:2011:207"
+            },
+            {
+              "name": "Uva Itália",
+              "qty": 150,
+              "unit": "g",
+              "foodId": "taco:2011:256"
             },
             {
               "name": "Abacaxi",
@@ -1323,16 +1983,252 @@
               "foodId": "taco:2011:164"
             },
             {
-              "name": "Pera",
+              "name": "Laranja-pêra",
+              "qty": 180,
+              "unit": "g",
+              "foodId": "taco:2011:214"
+            },
+            {
+              "name": "Mamão papaia",
+              "qty": 170,
+              "unit": "g",
+              "foodId": "taco:2011:226"
+            },
+            {
+              "name": "Banana",
+              "qty": 80,
+              "unit": "g",
+              "foodId": "taco:2011:182"
+            },
+            {
+              "name": "Melão amarelo",
+              "qty": 220,
+              "unit": "g"
+            },
+            {
+              "name": "Pêra Williams",
               "qty": 120,
               "unit": "g",
               "foodId": "taco:2011:243"
             },
             {
-              "name": "Kiwi",
-              "qty": 150,
+              "name": "Mexerica",
+              "qty": 170,
+              "unit": "g"
+            },
+            {
+              "name": "Maçã",
+              "qty": 120,
               "unit": "g",
-              "foodId": "taco:2011:207"
+              "foodId": "taco:2011:222"
+            },
+            {
+              "name": "Manga háden",
+              "qty": 110,
+              "unit": "g"
+            },
+            {
+              "name": "Limão",
+              "qty": 240,
+              "unit": "g"
+            },
+            {
+              "name": "Melancia",
+              "qty": 220,
+              "unit": "g",
+              "foodId": "taco:2011:235"
+            },
+            {
+              "name": "Maracujá",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Goiaba",
+              "qty": 140,
+              "unit": "g",
+              "foodId": "taco:2011:200"
+            },
+            {
+              "name": "Carambola",
+              "qty": 140,
+              "unit": "g"
+            },
+            {
+              "name": "Ameixa",
+              "qty": 145,
+              "unit": "g"
+            },
+            {
+              "name": "Caqui",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Pêssego",
+              "qty": 190,
+              "unit": "g"
+            },
+            {
+              "name": "Nectarina",
+              "qty": 160,
+              "unit": "g"
+            },
+            {
+              "name": "Amoras",
+              "qty": 200,
+              "unit": "g"
+            },
+            {
+              "name": "Cereja",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Caju",
+              "qty": 220,
+              "unit": "g",
+              "foodId": "taco:2011:186"
+            },
+            {
+              "name": "Acerola",
+              "qty": 240,
+              "unit": "g"
+            },
+            {
+              "name": "Jabuticaba",
+              "qty": 150,
+              "unit": "g"
+            },
+            {
+              "name": "Pitanga",
+              "qty": 220,
+              "unit": "g"
+            },
+            {
+              "name": "Açaí (fruta)",
+              "qty": 32,
+              "unit": "g"
+            },
+            {
+              "name": "Fruta-pão",
+              "qty": 70,
+              "unit": "g"
+            },
+            {
+              "name": "Pitaya",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Framboesa",
+              "qty": 140,
+              "unit": "g"
+            },
+            {
+              "name": "Romã",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Figo",
+              "qty": 170,
+              "unit": "g"
+            },
+            {
+              "name": "Lichia",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Mirtilo",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Goji Berry",
+              "qty": 20,
+              "unit": "g"
+            },
+            {
+              "name": "Mangostão",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Jaca",
+              "qty": 90,
+              "unit": "g"
+            },
+            {
+              "name": "Pinha",
+              "qty": 90,
+              "unit": "g"
+            },
+            {
+              "name": "Toranja",
+              "qty": 160,
+              "unit": "g"
+            },
+            {
+              "name": "Tâmaras",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Uva passa",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Ameixa seca",
+              "qty": 35,
+              "unit": "g"
+            },
+            {
+              "name": "Damasco",
+              "qty": 30,
+              "unit": "g"
+            },
+            {
+              "name": "Mamão seco",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Figo seco",
+              "qty": 30,
+              "unit": "g"
+            },
+            {
+              "name": "Cranberry seco",
+              "qty": 20,
+              "unit": "g"
+            },
+            {
+              "name": "Maçã desidratada",
+              "qty": 40,
+              "unit": "g"
+            },
+            {
+              "name": "Manga seca",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Abacaxi seco",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Pêra seca",
+              "qty": 35,
+              "unit": "g"
+            },
+            {
+              "name": "Banana passa (zero açúcar)",
+              "qty": 25,
+              "unit": "g"
             }
           ]
         }
