@@ -113,10 +113,34 @@
       (d.entry.items.length ? validEntry(d.entry) : validEntry({...d.entry,items:[{id:'draft-placeholder',label:'Rascunho',quantity:1,unit:'portion',grams:null,nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},source:null}]}));
   }
 
+  function validBalance(b) {
+    if (!isObject(b) || !Array.isArray(b.reviewedDays) || b.reviewedDays.length > 1000 ||
+        !uniqueIds(b.reviewedDays.map(x=>({id:x.date}))) ||
+        !b.reviewedDays.every(r=>isObject(r)&&dateOk(r.date)&&dateOk(r.reviewedAt)&&
+          r.reviewedAt>=r.date&&typeof r.fingerprint==='string'&&/^[a-f0-9]{8}-[0-9]{1,9}$/.test(r.fingerprint))) return false;
+    if (b.ignoredUntil !== undefined && (b.ignoredUntil !== null && !dateOk(b.ignoredUntil))) return false;
+    if (b.plan === undefined || b.plan === null) return true;
+    const p=b.plan;
+    return isObject(p)&&idOk(p.id)&&dateOk(p.acceptedAt)&&idOk(p.targetId)&&
+      GOALS.validProfile(p.profile)&&
+      Array.isArray(p.baseValues)&&p.baseValues.length===5 &&
+      p.baseValues.every((n,i)=>numberOk(n,1,i===0?10000:1000))&&
+      Array.isArray(p.sources)&&p.sources.length>=3&&p.sources.length<=7&&
+      new Set(p.sources.map(x=>x.date)).size===p.sources.length&&
+      p.sources.every(x=>isObject(x)&&dateOk(x.date)&&x.date<p.acceptedAt&&
+        typeof x.fingerprint==='string'&&/^[a-f0-9]{8}-[0-9]{1,9}$/.test(x.fingerprint))&&
+      Array.isArray(p.days)&&p.days.length>=1&&p.days.length<=5&&
+      new Set(p.days.map(x=>x.date)).size===p.days.length&&
+      p.days.every(x=>isObject(x)&&dateOk(x.date)&&x.date>=p.acceptedAt&&
+        x.date<=new Date(Date.parse(p.acceptedAt+'T12:00:00Z')+7*86400000).toISOString().slice(0,10)&&
+        numberOk(x.reductionKcal,40,200));
+  }
+
   function validArchive(value) {
     if (value === undefined) return true; // Pre-nutrition FORJA v1 backups.
     return isObject(value) && value.schemaVersion === VERSION &&
       isObject(value.settings) && MODES.includes(value.settings.mode) && GOALS.validSettings(value.settings) &&
+      (value.balance===undefined || validBalance(value.balance)) &&
       (value.draft==null || validDraft(value.draft)) &&
       Array.isArray(value.foods) && value.foods.length <= 500 &&
       Array.isArray(value.mealTemplates) && value.mealTemplates.length <= 300 &&
@@ -132,6 +156,19 @@
     if (state.nutrition !== undefined) return false;
     state.nutrition = archive();
     return true;
+  }
+
+  function mergeBalance(current, backup) {
+    // Local choices always win. Only import dated reviews absent locally;
+    // an accepted local plan or local pause cannot be overwritten by a backup.
+    if (!current && !backup) return {reviewedDays:[],plan:null};
+    if (!current) return {...backup,reviewedDays:backup.reviewedDays.slice()};
+    if (!backup) return {...current,reviewedDays:current.reviewedDays.slice()};
+    const own=current;
+    const restored=backup;
+    const reviews=own.reviewedDays.slice(), present=new Set(reviews.map(x=>x.date));
+    for(const x of restored.reviewedDays){if(!present.has(x.date)){reviews.push(x);present.add(x.date);}}
+    return {...restored,...own,reviewedDays:reviews};
   }
 
   function merge(current, incoming) {
@@ -153,6 +190,7 @@
       entries: union(a.entries, b.entries),
       settings: { ...b.settings, ...a.settings },
       ...(a.draft||b.draft?{draft:a.draft||b.draft}:{}),
+      ...(a.balance||b.balance?{balance:mergeBalance(a.balance,b.balance)}:{}),
     };
     if(a.settings.targets||b.settings.targets) merged.settings.targets=union(a.settings.targets||[],b.settings.targets||[]).filter((t,i,all)=>all.findIndex(x=>x.from===t.from)===i);
     if (!validArchive(merged)) throw new Error('Mesclagem alimentar inválida.');
@@ -265,7 +303,7 @@
     };
   }
   const api = {
-    VERSION, NUTRIENTS, ALL_NUTRIENTS, validDraft, MEALS, UNITS, archive, dateOk, nutrientsOk, validFood,
+    VERSION, NUTRIENTS, ALL_NUTRIENTS, validDraft, validBalance, MEALS, UNITS, archive, dateOk, nutrientsOk, validFood,
     validEntry, validTemplate, validArchive, validEstimate, ensureArchive, merge, observedTotals, estimatedTotals, recordedBreakdown,
   };
   root.ForjaNutrition = api;

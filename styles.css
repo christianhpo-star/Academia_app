@@ -975,3 +975,38 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .nd-share-apply{justify-content:flex-end}
 .nd-share-preview{padding:13px;background:#192c35;border:1px solid #456572;border-radius:12px;font-size:13px;font-weight:700;line-height:1.55;overflow-wrap:anywhere}
 @media(max-width:365px){.nd-share-ingredient .field-row{gap:7px}.nd-share-ingredient .field input{padding:10px 7px;font-size:13px}}
+
+/* Energy balance: compact, opt-in; no urgent red/green punishment badges. */
+.nd-balance{padding:0;overflow:hidden;margin:9px 0 12px}
+.nd-balance>summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:57px;padding:14px}
+.nd-balance>summary::-webkit-details-marker{display:none}
+.nd-balance>summary:focus-visible{outline:3px solid var(--blue);outline-offset:-3px}
+.nd-balance-head{min-width:0;display:flex;flex-direction:column;gap:4px}
+.nd-balance-head strong{font-size:14px;color:var(--text)}
+.nd-balance-head small{font-size:12px;color:var(--muted);line-height:1.3}
+.nd-balance-chevron{font-size:24px;transition:transform .2s}
+.nd-balance[open] .nd-balance-chevron{transform:rotate(180deg)}
+.nd-balance-body{padding:0 14px 14px;border-top:1px solid var(--line)}
+.nd-balance-body>p{line-height:1.6}
+.nd-balance-body>.full{margin-top:8px}
+.nd-balance-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.nd-balance-kpis>div{display:flex;flex-direction:column;gap:5px;padding:12px;border-radius:11px;border:1px solid var(--line);background:var(--card2);min-width:0}
+.nd-balance-kpis small{font-size:11px;color:var(--muted);line-height:1.35}
+.nd-balance-kpis strong{font-size:17px;letter-spacing:-.02em;overflow-wrap:anywhere}
+.nd-balance-history{margin-top:12px;border-top:1px solid var(--line);padding-top:12px}
+.nd-balance-history>summary{cursor:pointer;color:var(--blue);min-height:44px;padding:8px 0;font-size:13px;font-weight:750}
+.nd-balance-day{display:flex;align-items:center;justify-content:space-between;gap:9px;border-top:1px solid var(--line);padding:12px 0}
+.nd-balance-day>div{min-width:0;display:flex;flex-direction:column;gap:4px}
+.nd-balance-day strong{font-size:12px}
+.nd-balance-day span{font-size:11px;color:var(--muted);line-height:1.45}
+.nd-balance-day button{min-width:91px;font-size:11px;padding:8px 10px}
+.nd-balance-note,.nd-balance-active,.nd-balance-preview{background:#1c2e38;border:1px solid #375368;padding:12px;border-radius:12px;font-size:12px;line-height:1.6}
+.nd-balance-active{margin:10px 0}
+.nd-balance-form{display:grid;gap:12px}
+.nd-balance-form p{line-height:1.5;margin:0}
+.nd-balance-check{display:flex;align-items:flex-start;gap:12px;border:1px solid var(--line);background:var(--card2);border-radius:12px;padding:12px;font-size:12px;line-height:1.5;cursor:pointer}
+.nd-balance-check input{width:19px;height:19px;min-width:19px;accent-color:var(--lime);margin-top:1px}
+.nd-balance-choices{border:0;margin:0;padding:0;display:grid;gap:8px}
+.nd-balance-choices legend{font-size:12px;font-weight:750;margin-bottom:9px}
+.nd-balance-form .primary{margin-top:4px}
+@media(prefers-reduced-motion:reduce){.nd-balance-chevron{transition:none}}

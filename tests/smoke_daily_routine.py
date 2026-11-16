@@ -9,7 +9,7 @@ HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
 SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js',
  'catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js',
  'goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js',
- 'nutrition-ui.js','app.js']
+ 'nutrition-balance.js','nutrition-ui.js','app.js']
 KEY='forja.academia.v1'
 
 def create_page(ctx,seed,errors):

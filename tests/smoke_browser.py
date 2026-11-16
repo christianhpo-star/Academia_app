@@ -20,7 +20,7 @@ with sync_playwright() as p:
     page.set_content(html)
     page.evaluate("Object.defineProperty(window,'localStorage',{configurable:true,value:{getItem(){return null},setItem(){}}})")
     page.add_style_tag(path=str(root/'styles.css'))
-    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-ui.js','app.js']:
+    for js in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','app.js']:
         page.add_script_tag(path=str(root/js))
     page.wait_for_selector('.home-primary')
     assert 'Seu próximo passo.' in page.locator('#screen').inner_text()
