@@ -30,7 +30,7 @@ with sync_playwright() as p:
     errors=[]
     page=open_app(context,{},errors)
     page.get_by_role('button',name='Treinos',exact=True).click()
-    page.get_by_role('button',name='Iniciar treino A').click()
+    page.locator('.workout-banner-compact [data-action="start"][data-plan="A"]').click()
     assert page.get_by_role('heading',name='Ajustar este treino').count()==1
     page.locator('[data-action="flex-withdraw"][data-ex="pulley-aberto"]').click()
     assert page.locator('[data-exercise="pulley-aberto"]').count()==0
