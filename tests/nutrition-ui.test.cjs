@@ -88,12 +88,12 @@ test('tela diária soma almoço conhecido e brigadeiro estimado com sinalizaçã
     {id:'meal-snack-approx',date,mealType:'snack',items:[b]},
   ];
   const html=UI.render({archive,date});
-  assert.match(html,/Subtotal dos alimentos registrados/);
+  assert.match(html,/Não representa o consumo total do dia/);
   assert.match(html,/nd-data-quality/);
-  assert.match(html,/Inclui 1 alimento\(s\) com calorias estimadas/);
+  assert.match(html,/valores aproximados ou incompletos/i);
   assert.match(html,/≈486,7/);
-  assert.match(html,/≈252 kcal registradas/);
-  assert.match(html,/234,7 kcal registradas/);
+  assert.match(html,/≈252 kcal/);
+  assert.match(html,/234,7 kcal/);
   assert.match(html,/Detalhes e incerteza/);
   assert.match(html,/Estimativa de confiança baixa: 252/);
   assert.equal(N.observedTotals(archive.entries,date).totals.energyKcal,null);
