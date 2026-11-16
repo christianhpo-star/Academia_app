@@ -314,7 +314,6 @@
         <section class="nd-macros-overview"><div class="nd-macro-heading"><strong>Macronutrientes</strong>${button('goals','Ajustar metas','','button-inline')}</div>
           <div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k],totals.counts[k])).join('')}</div>
         </section>
-        ${metabolismCardHTML(state,archive,date,target)}
         ${dailyAdjustment?'<p class="nd-balance-active">Meta temporária aceita: '+fmt(dailyAdjustment.values.energyKcal)+' kcal. Proteína e fibras preservadas.</p>':''}
         ${(hasEstimated||hasUnknown)?'<details class="nd-data-quality"><summary>Detalhes e incerteza · valores aproximados ou incompletos</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+(energyMeta.unknown?energyMeta.unknown+' alimento(s) sem calorias disponíveis. ':'')+'≈ indica estimativa. — indica ausência de dados, não zero. Refeições não registradas não entram no saldo.</p></details>':''}
         <p class="nd-summary-note">Não representa o consumo total do dia. O saldo depende do que foi registrado.</p>
@@ -332,6 +331,7 @@
         const rows=daily.filter(e=>e.mealType===type),total=N.recordedBreakdown(rows,date).totals.energyKcal;
         return mealCardHTML(type,label,rows,total,target,date);
       }).join('')}</div>
+      ${metabolismCardHTML(state,archive,date,target)}
       ${balanceHTML(archive,state,balanceDate)}
 
       <details class="card"><summary>Treino, objetivo e acompanhamento</summary><p class="small">${context.strength} sessão(ões) de força e ${context.muay} de Muay registradas nesta data. Últimos 7 dias: ${context.weeklyStrength} de força e ${context.weeklyMuay} de Muay.</p>
