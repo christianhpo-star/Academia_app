@@ -2002,7 +2002,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-share26',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-balance27',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
