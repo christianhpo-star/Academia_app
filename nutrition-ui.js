@@ -523,8 +523,71 @@
       if((archive().settings.targets||[]).some(x=>x.from===t.from)&&!confirm('Substituir a meta com esta mesma data de início?'))return;
       if(transact(a=>{if(t.source==='suggested')a.settings.profile=clone(t.profile);a.settings.targets=[...(a.settings.targets||[]).filter(x=>x.from!==t.from),t];})){close(true);refresh();notify('Metas salvas. Suas escolhas serão preservadas.');}else error('Não foi possível salvar as metas. Tente novamente.');
     }
+
+    function reviewBalanceDay(date){
+      const quality=B.quality(archive(),date);
+      if(!quality.complete)return notify(quality.reason);
+      openModal('Conferir dia alimentar');
+      dialog.querySelector('#nd-dialog-body').innerHTML=
+        '<form id="nd-balance-review" class="nd-balance-form">'+
+        '<p>Dia '+dateBR(date)+' · '+fmt(quality.energyKcal)+' kcal registradas · '+fmt(quality.proteinG)+' g de proteína.</p>'+
+        '<p class="small muted">A conferência não comprova que toda alimentação foi anotada. Faça esta confirmação somente depois de registrar todas as refeições, lanches e bebidas consumidos nesse dia. Alterar qualquer registro invalida a confirmação.</p>'+
+        '<input type="hidden" name="date" value="'+esc(date)+'">'+
+        '<label class="nd-balance-check"><input name="complete" type="checkbox" value="yes" required>'+
+        '<span>Conferi todas as refeições, bebidas e quantidades que consumi neste dia.</span></label>'+
+        '<button type="submit" class="primary full">Confirmar dia completo</button></form>';
+    }
+    function openBalancePlan(){
+      const report=B.assessment(archive(),get(),today());
+      if(report.status!=='ready')return notify(report.reason);
+      openModal('Equilíbrio calórico opcional');
+      const dates=report.candidates.map(date=>
+        '<label class="nd-balance-check"><input type="checkbox" name="dates" value="'+esc(date)+'">'+
+        '<span>'+dateBR(date)+' · Declaro que será dia leve / descanso (sem treino planejado)</span></label>').join('');
+      dialog.querySelector('#nd-dialog-body').innerHTML=
+        '<form id="nd-balance-plan" class="nd-balance-form">'+
+        '<p><strong>Saldo parcial: +'+fmt(report.balanceKcal)+' kcal</strong> em '+report.usableCount+' dias conferidos. Não é o balanço energético total.</p>'+
+        '<p class="small muted">Escolha até cinco dias nos próximos sete. Ausência de treino no aplicativo não prova descanso. Marque apenas dias de menor demanda. Não é necessário recuperar todo o excesso.</p>'+
+        '<div class="nd-balance-kpis"><div><small>Limite ilustrativo por dia</small><strong>'+fmt(report.maxDailyReductionKcal)+' kcal</strong></div>'+
+        '<div><small>Proteína original</small><strong>'+fmt(report.base.values.proteinG)+' g</strong></div></div>'+
+        '<fieldset class="nd-balance-choices"><legend>Dias em que você prefere um ajuste leve</legend>'+
+        dates+'</fieldset>'+
+        '<p class="nd-balance-preview" id="nd-balance-preview" role="status" aria-live="polite">Selecione os dias para visualizar a proposta.</p>'+
+        '<label class="nd-balance-check"><input name="accept" type="checkbox" value="yes" required>'+
+        '<span>Quero aceitar a sugestão temporária; sei que é opcional e que as metas originais ficarão preservadas.</span></label>'+
+        '<button type="submit" class="primary full">Aplicar ajuste nos dias selecionados</button></form>';
+    }
+    function updateBalancePreview(){
+      const form=dialog?.querySelector('#nd-balance-plan');if(!form)return;
+      const days=[...new FormData(form).getAll('dates')];
+      const note=form.querySelector('#nd-balance-preview');
+      if(!days.length){note.textContent='Selecione até cinco dias para visualizar a proposta.';return;}
+      const suggestion=B.makePlan(archive(),get(),today(),days,id);
+      if(suggestion.error){note.textContent=suggestion.error;return;}
+      const day=suggestion.plan.days[0],base=G.active(archive().settings,today());
+      note.textContent='Proposta: '+fmt(base.values.energyKcal-day.reductionKcal)+
+        ' kcal nos dias escolhidos (−'+fmt(day.reductionKcal)+' kcal/dia). Proteína '+fmt(base.values.proteinG)+
+        ' g, gordura '+fmt(base.values.fatG)+' g e fibras '+fmt(base.values.fiberG)+
+        ' g mantidas; carboidrato −'+fmt(day.reductionKcal/4)+' g/dia. Distribuição total: '+
+        fmt(suggestion.totalReductionKcal)+' kcal. Saldo não compensado: ≈'+
+        fmt(suggestion.outstandingKcal)+' kcal, sem obrigação de recuperação.';
+    }
+
     function submit(event){event.preventDefault();const form=event.target,f=new FormData(form);
-      if(form.id==='nd-meal'){
+      if(form.id==='nd-balance-review'){
+        if(f.get('complete')!=='yes')return error('Confirme a conferência de todas as refeições e bebidas.');
+        const review=B.markReviewed(archive(),String(f.get('date')),today());
+        if(review.error)return error(review.error);
+        if(transact(a=>{a.balance=review.balance;})){close(true);refresh();notify('Dia conferido. Suas metas não foram alteradas.');}
+        else error('Não foi possível salvar a conferência.');
+      }else if(form.id==='nd-balance-plan'){
+        if(f.get('accept')!=='yes')return error('Confirme que deseja aceitar o ajuste temporário.');
+        const suggestion=B.makePlan(archive(),get(),today(),f.getAll('dates'),id);
+        if(suggestion.error)return error(suggestion.error);
+        if(transact(a=>{a.balance={...(a.balance||{reviewedDays:[]}),plan:suggestion.plan,ignoredUntil:null};})){
+          close(true);refresh();notify('Ajuste temporário aceito. Proteína e metas originais preservadas.');
+        }else error('Não foi possível salvar o ajuste.');
+      }else if(form.id==='nd-meal'){
         if(draft.pending&&Object.values(draft.pending).some(v=>String(v).trim()))return error('Há um alimento manual em preenchimento. Adicione-o à refeição antes de salvar ou limpe os campos preenchidos.');
         draft.entry.date=f.get('mealDate');draft.entry.mealType=f.get('mealType');draft.entry.time=f.get('time')||null;draft.entry.notes=f.get('notes')||'';
         if(!N.validEntry(draft.entry)||draft.entry.date>today())return error('Revise a data, as quantidades e adicione pelo menos um alimento.');
@@ -564,6 +627,7 @@
       if(el.id==='nd-search'){search=el.value;all=false;picked=null;portion();results();return;}
       if(el.closest('#nd-catalog')){updatePortionPreview();return;}
       if(el.closest('#nd-shared')){updateSharedPreview();return;}
+      if(el.closest('#nd-balance-plan')){updateBalancePreview();return;}
       if(el.closest('#nd-profile'))previewSuggestion(false);
       if(el.closest('#nd-target'))macroDiff();
       if(!draft)return;
@@ -646,6 +710,34 @@
     }
     function action(b){const a=b.dataset.nd;
       if(a==='goals')return goals();
+      if(a==='balance-review')return reviewBalanceDay(b.dataset.date);
+      if(a==='balance-plan')return openBalancePlan();
+      if(a==='balance-day'){day=b.dataset.date;refresh();window.scrollTo(0,0);return;}
+      if(a==='balance-unreview'){
+        const next=B.unmarkReviewed(archive(),b.dataset.date);
+        if(transact(a=>{a.balance=next.balance;})){refresh();notify('Conferência reaberta. Sugestões baseadas nesse dia ficam suspensas.');}
+        return;
+      }
+      if(a==='balance-keep'){
+        if(!confirm('Manter as metas normais e pausar as sugestões por sete dias?'))return;
+        if(transact(a=>{a.balance={...(a.balance||{reviewedDays:[]}),ignoredUntil:B.shift(today(),7)};})){
+          refresh();notify('Metas normais mantidas. Sugestões pausadas por sete dias.');
+        }
+        return;
+      }
+      if(a==='balance-cancel'){
+        if(!confirm('Cancelar o ajuste temporário? Nenhum alimento ou meta original será alterado.'))return;
+        if(transact(a=>{a.balance={...(a.balance||{reviewedDays:[]}),plan:null,ignoredUntil:B.shift(today(),7)};})){
+          refresh();notify('Ajuste cancelado. Metas normais retomadas.');
+        }
+        return;
+      }
+      if(a==='balance-unpause'){
+        if(transact(a=>{a.balance={...(a.balance||{reviewedDays:[]}),plan:null,ignoredUntil:null};})){
+          refresh();notify('Sugestões opcionais habilitadas novamente.');
+        }
+        return;
+      }
       if(a==='add')return start(b.dataset.meal||'lunch');
       if(a==='shared'){start(b.dataset.meal||'dinner');if(!draft)return;mode='portions';sharedPicked='trono-dos-reis';mealBody();return;}
       if(a==='resume'){draft=clone(archive().draft);if(!draft)return;openModal('Continuar refeição');mealBody();return;}
