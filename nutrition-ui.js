@@ -270,6 +270,7 @@
     const dayName=date===todayDate?'Hoje':new Date(date+'T12:00:00Z').toLocaleDateString('pt-BR',{day:'numeric',month:'short',timeZone:'UTC'});
     const compactBalance=remainder==null?'Saldo indisponível':remainder>=0?fmt(remainder)+' kcal restantes da meta':fmt(Math.abs(remainder))+' kcal acima da meta';
     return `<div class="nutrition-screen">
+      <div class="nd-collapse" id="nd-collapse">
       <div class="nd-page-heading"><h1 class="eyebrow">ALIMENTAÇÃO</h1>${button('goals',target?'Metas':'Configurar metas','','ghost nd-head-goals')}</div>
       <div class="nd-overview" id="nd-overview">
         <section class="nd-energy-overview" aria-label="Energia registrada e saldo">
@@ -284,6 +285,7 @@
         ${dailyAdjustment?'<p class="nd-balance-active">Meta temporária aceita: '+fmt(dailyAdjustment.values.energyKcal)+' kcal. Proteína e fibras preservadas.</p>':''}
         ${(hasEstimated||hasUnknown)?'<details class="nd-data-quality"><summary>Detalhes e incerteza · valores aproximados ou incompletos</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+(energyMeta.unknown?energyMeta.unknown+' alimento(s) sem calorias disponíveis. ':'')+'≈ indica estimativa. — indica ausência de dados, não zero. Refeições não registradas não entram no saldo.</p></details>':''}
         <p class="nd-summary-note">Não representa o consumo total do dia. O saldo depende do que foi registrado.</p>
+      </div>
       </div>
       <div class="nd-date-stick" id="nd-date-stick"><div class="nd-date">
         ${button('previous','‹','aria-label="Dia anterior"')}
@@ -790,11 +792,23 @@
     function syncScroll(){
       const view=document.querySelector('.nutrition-screen');
       if(!view)return;
-      const travelled=Math.max(0,-view.getBoundingClientRect().top+18);
-      const fraction=Math.min(1,travelled/170);
-      view.style.setProperty('--nd-scroll-progress',String(fraction));
+      const collapse=view.querySelector('.nd-collapse');
+      if(!collapse)return;
+      // Capture the expanded content height only after mount. Subsequent scrolling
+      // changes its clipped viewport, not its natural (scrollHeight) content.
+      const expanded=collapse.scrollHeight;
+      if(!Number.isFinite(expanded)||expanded<=0)return;
+      const startY=view.getBoundingClientRect().top+root.scrollY;
+      const distance=Math.max(180,Math.min(400,expanded*.75));
+      const progress=Math.min(1,Math.max(0,(root.scrollY-startY)/distance));
+      const reduced=root.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      view.style.setProperty('--nd-scroll-progress',String(progress));
+      collapse.style.height=Math.max(0,expanded*(1-progress))+'px';
+      collapse.classList.toggle('nd-collapsed',progress>=.999);
+      // Reduced motion still permits space recovery without scaling the content.
+      collapse.style.setProperty('--nd-content-scale',String(reduced?1:1-.18*progress));
       const nav=view.querySelector('.nd-date-stick');
-      if(nav)nav.classList.toggle('nd-is-stuck',nav.getBoundingClientRect().top<=3&&fraction>.7);
+      if(nav)nav.classList.toggle('nd-is-stuck',nav.getBoundingClientRect().top<=3&&progress>.7);
     }
     function onScroll(){
       if(scrollQueued)return;
