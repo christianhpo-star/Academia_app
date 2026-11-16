@@ -175,23 +175,40 @@
       button('favorite','Salvar favorito','data-id="'+esc(e.id)+'"')+
       button('delete','Excluir','data-id="'+esc(e.id)+'"','ghost')+'</div></section>';
   }
+
+  const MEAL_SYMBOLS={
+    breakfast:'<path d="M4 10h13v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8Zm13 2h2a3 3 0 0 1 0 6h-2M8 3c-2 2 2 3 0 5m5-5c-2 2 2 3 0 5"/>',
+    lunch:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M2 3v7M4 3v7M6 3v7M4 10v11M22 3v18"/>',
+    snack:'<path d="M12 7c-2-4-7-4-8 1-2 5 2 12 6 12l2-1 2 1c4 0 8-7 6-12-1-5-6-5-8-1Z"/><path d="M12 7c0-3 2-5 5-5m-5 5c-2-2-5-1-7-3"/>',
+    dinner:'<path d="M3 12h18l-2 8H5l-2-8Zm3-2c1-4 11-4 12 0M8 7V4m4 3V2m4 5V4"/>',
+    supper:'<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11ZM17 3v4m-2-2h4"/>',
+    other:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/>'
+  };
+  function mealSymbol(type){
+    return '<span class="nd-meal-symbol" data-meal-kind="'+esc(type)+'" aria-hidden="true">'+
+      '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+
+      (MEAL_SYMBOLS[type]||MEAL_SYMBOLS.other)+'</svg></span>';
+  }
   function mealCardHTML(type,label,rows,total,target,date){
     const detail=rows.length?N.recordedBreakdown(rows,date):null;
-    const macros=detail?.totals;
-    const calorieCount=detail?.counts.energyKcal;
-    const approximate=calorieCount&&(calorieCount.estimated>0||calorieCount.unknown>0);
+    const macros=detail?.totals,energyCount=detail?.counts.energyKcal;
+    const approximate=energyCount&&(energyCount.estimated>0||energyCount.unknown>0);
     const foodCount=rows.reduce((n,row)=>n+row.items.length,0);
-    const dailyTarget=target&&target.values||{};
-    const main='<div class="row-between"><div><h2 class="section-title">'+esc(label)+
-      '</h2><p class="small muted mb-0">'+(rows.length?(total==null?'— kcal · dados insuficientes':(approximate?'≈':'')+fmt(total)+' kcal registradas'+(calorieCount.unknown?' (parcial)':'')):'Sem registros')+'</p></div>'+
+    const dailyTarget=target?.values||{};
+    const kcal=rows.length?(total==null?'— kcal':(approximate?'≈':'')+fmt(total)+' kcal'):'Sem registros';
+    const preview=rows.length?rows.flatMap(e=>e.items.map(i=>shortFoodLabel(i.label))).slice(0,2).join(' · '):'';
+    const main='<div class="nd-meal-top">'+mealSymbol(type)+
+      '<div class="nd-meal-info"><h2 class="section-title">'+esc(label)+'</h2>'+
+      '<span class="nd-meal-calories">'+kcal+(foodCount?' · '+foodCount+' itens':'')+'</span>'+
+      (preview?'<small class="nd-meal-preview">'+esc(preview)+'</small>':'')+'</div>'+
       button('add','+','data-meal="'+esc(type)+'" aria-label="Adicionar ao '+esc(label)+'"','nd-add')+'</div>';
     const macro=rows.length?
       '<div class="nd-meal-macro-row">'+['proteinG','carbsG','fatG'].map(k=>mealMacroRing(k,macros[k],dailyTarget[k],detail.counts[k])).join('')+'</div>'+
       '<p class="nd-meal-macro-hint">Anéis = parcela da meta diária, não meta por refeição.</p>':'';
     const details=rows.length?
       '<details class="nd-meal-details"><summary>Ver '+foodCount+' alimento(s)<span class="nd-meal-chevron" aria-hidden="true">⌄</span></summary>'+
-      rows.map((e,index)=>entryHTML(e,index)).join('')+'</details>':'';
-    return '<section class="card nd-meal">'+main+macro+details+'</section>';
+      macro+rows.map((e,index)=>entryHTML(e,index)).join('')+'</details>':'';
+    return '<section class="card nd-meal">'+main+details+'</section>';
   }
 
   function balanceHTML(archive,state,currentDay){
@@ -246,30 +263,47 @@
     const daily=archive.entries.filter(e=>e.date===date);
     const days=[...new Set(archive.entries.filter(e=>e.date!==date).map(e=>e.date))].sort().reverse();
     const context=G.context(state,date);
-    return `<div class="nutrition-screen"><div class="row-between"><div><p class="eyebrow">SEU DIÁRIO</p><h1 class="page-title">Alimentação.</h1></div>${button('goals','Minhas metas','','ghost')}</div>
-      <div class="nd-date">${button('previous','‹','aria-label="Dia anterior"')}<div class="field"><label for="nd-date">${new Date(date+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long'})}</label><input id="nd-date" type="date" value="${date}" aria-label="Data do diário"></div>${button('next','›','aria-label="Próximo dia"')}</div><div class="nd-date-footer">${button('today','Hoje','','button-inline')}<span>${daily.length} registro(s)</span></div>
-      <section class="card nd-summary" aria-label="Consumo registrado e metas"><div class="nd-energy">${ring('energyKcal',totals.totals.energyKcal,target?.values.energyKcal,totals.counts.energyKcal)}<div><strong>Energia registrada</strong><p class="small muted">${target?'Meta '+({manual:'ajustada por você',suggested:'sugerida e aceita',professional:'informada por profissional'}[target.source]):'Configure seu perfil ou informe suas metas.'}</p>${button('goals',target?'Rever metas':'Configurar metas','','button-inline')}</div></div><div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k],totals.counts[k])).join('')}</div>
-      ${dailyAdjustment?`<p class="nd-balance-active">Ajuste opcional aceito: ${fmt(dailyAdjustment.values.energyKcal)} kcal hoje (meta original: ${fmt(dailyAdjustment.baseValues.energyKcal)} kcal). Proteína e fibras preservadas. Confira seus treinos antes de seguir.</p>`:''}
-      <p class="small muted">Subtotal dos alimentos registrados. ≈ indica estimativa e/ou composição incompleta; — significa sem valor disponível, não zero. Não representa o consumo total do dia.</p>
-      ${(hasEstimated||hasUnknown)?'<div class="nd-data-quality">'+
-        (hasEstimated?'<span>Inclui '+energyMeta.estimated+' alimento(s) com calorias estimadas, exibidas separadamente de valores confirmados.</span>':'')+
-        (energyMeta.unknown?'<span>'+energyMeta.unknown+' alimento(s) sem calorias disponíveis; subtotal pode estar abaixo do consumo registrado.</span>':'')+
-        '<details><summary>Detalhes e incerteza</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+
-        (energyMeta.estimated?'Energia estimada somada: ≈ '+fmt(N.estimatedTotals(archive.entries,date).totals.central.energyKcal)+' kcal. ':'')+
-        'Valores estimados não são rótulos; refeições não registradas não entram nesta soma.</p></details></div>':''}</section>
+    const kcal=totals.totals.energyKcal;
+    const goal=target?.values.energyKcal;
+    const remainder=kcal!=null&&Number.isFinite(goal)?goal-kcal:null;
+    const todayDate=balanceDate;
+    const dayName=date===todayDate?'Hoje':new Date(date+'T12:00:00Z').toLocaleDateString('pt-BR',{day:'numeric',month:'short',timeZone:'UTC'});
+    const compactBalance=remainder==null?'Saldo indisponível':remainder>=0?fmt(remainder)+' kcal restantes da meta':fmt(Math.abs(remainder))+' kcal acima da meta';
+    return `<div class="nutrition-screen">
+      <div class="nd-page-heading"><h1 class="eyebrow">ALIMENTAÇÃO</h1>${button('goals',target?'Metas':'Configurar metas','','ghost nd-head-goals')}</div>
+      <div class="nd-overview" id="nd-overview">
+        <section class="nd-energy-overview" aria-label="Energia registrada e saldo">
+          <div class="nd-kcal-main"><strong>${remainder==null?'—':remainder>=0?fmt(remainder):'−'+fmt(Math.abs(remainder))}</strong><span>kcal ${remainder!=null&&remainder<0?'acima da meta':'restantes da meta'}</span></div>
+          <div class="nd-energy-compare"><div><strong>${daily.length?(hasEstimated?'≈':'')+fmt(kcal):'—'}</strong><small>registradas</small></div><div><strong>${fmt(goal)}</strong><small>meta diária</small></div></div>
+          ${daily.length?'':'<p class="nd-brief-note">Nenhuma refeição registrada neste dia.</p>'}
+          <details class="nd-energy-detail"><summary>Detalhes da energia</summary>${ring('energyKcal',kcal,goal,totals.counts.energyKcal)}</details>
+        </section>
+        <section class="nd-macros-overview"><div class="nd-macro-heading"><strong>Macronutrientes</strong>${button('goals','Ajustar metas','','button-inline')}</div>
+          <div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k],totals.counts[k])).join('')}</div>
+        </section>
+        ${dailyAdjustment?'<p class="nd-balance-active">Meta temporária aceita: '+fmt(dailyAdjustment.values.energyKcal)+' kcal. Proteína e fibras preservadas.</p>':''}
+        ${(hasEstimated||hasUnknown)?'<details class="nd-data-quality"><summary>Detalhes e incerteza · valores aproximados ou incompletos</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+(energyMeta.unknown?energyMeta.unknown+' alimento(s) sem calorias disponíveis. ':'')+'≈ indica estimativa. — indica ausência de dados, não zero. Refeições não registradas não entram no saldo.</p></details>':''}
+        <p class="nd-summary-note">Não representa o consumo total do dia. O saldo depende do que foi registrado.</p>
+      </div>
+      <div class="nd-date-stick" id="nd-date-stick"><div class="nd-date">
+        ${button('previous','‹','aria-label="Dia anterior"')}
+        <div class="nd-date-center"><label for="nd-date"><strong>${esc(dayName)}</strong><span>${esc(dateBR(date))}</span></label>
+        <input id="nd-date" type="date" value="${date}" max="${todayDate}" aria-label="Escolher dia do diário"></div>
+        ${button('next','›','aria-label="Próximo dia" '+(date>=todayDate?'disabled':''))}
+      </div>${date!==todayDate?button('today','Hoje','aria-label="Voltar para hoje"','nd-go-today'):''}<span class="nd-date-mini" aria-live="polite">${esc(compactBalance)}</span></div>
       ${archive.draft?`<div class="callout">Há um rascunho de refeição salvo. ${button('resume','Continuar rascunho','','button-inline')}</div>`:''}
-      ${button('add','+ Registrar refeição','data-meal="lunch"','primary full')}<div class="nd-share-quick">${button('shared','Dividir uma porção','data-meal="dinner"','secondary full')}</div>
+      <div class="nd-food-quick-actions">${button('shared','Dividir uma porção','data-meal="dinner"','secondary')}${button('add','+ Refeição','data-meal="lunch"','secondary')}</div>
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{
         const rows=daily.filter(e=>e.mealType===type),total=N.recordedBreakdown(rows,date).totals.energyKcal;
         return mealCardHTML(type,label,rows,total,target,date);
       }).join('')}</div>
       ${balanceHTML(archive,state,balanceDate)}
-      ${!archive.entries.length?'<p class="small muted">Ainda não há refeições registradas. Comece pelo que consumiu hoje.</p>':''}
+
       <details class="card"><summary>Treino, objetivo e acompanhamento</summary><p class="small">${context.strength} sessão(ões) de força e ${context.muay} de Muay registradas nesta data. Últimos 7 dias: ${context.weeklyStrength} de força e ${context.weeklyMuay} de Muay.</p>
       <p class="small">${context.strength&&context.muay?'Dia com duas modalidades: organize fontes de carboidratos nas refeições próximas aos treinos, conforme tolerância.':context.strength||context.muay?'Distribua fontes de proteína nas refeições e considere carboidratos para sustentar o treino.':'Sem treino registrado nesta data; isso não significa descanso ou menor necessidade de alimento.'} As metas não mudam automaticamente.</p>
       <p class="small muted">${context.recentWeights} pesagens em 28 dias; ${context.measures} aferições corporais disponíveis.${context.weightChange!=null?' Variação entre primeira e última pesagem: '+fmt(context.weightChange)+' kg.':''} ${context.abdomenChange!=null?' Variação de abdômen no umbigo: '+fmt(context.abdomenChange)+' cm.':''} Medidas e força não comprovam mudança de gordura ou músculo. Revise tendências de 2–4 semanas, recuperação e qualidade dos registros antes de ajustar metas.</p>${context.abdomenChange!=null&&context.abdomenChange<0&&context.weightChange!=null&&Math.abs(context.weightChange)<1?'<p class="small">Peso pouco alterado e medida abdominal menor: confira técnica de aferição, desempenho e tendência antes de reduzir energia apenas pela balança. Isso não prova recomposição.</p>':''}${button('goals','Rever sugestão','','button-inline')}<p class="small"><a href="https://pubmed.ncbi.nlm.nih.gov/26920240/" target="_blank" rel="noopener">Base: nutrição e desempenho (AND/DC/ACSM)</a></p></details>
       <details class="card" id="nd-history"><summary>Histórico alimentar · ${days.length} outros dias</summary>${days.slice(0,limit).map(d=>`<details class="nd-entry"><summary>${dateBR(d)}</summary>${button('day','Abrir dia',`data-date="${d}"`)}${archive.entries.filter(e=>e.date===d).map((e,index)=>entryHTML(e,index)).join('')}</details>`).join('')}${days.length>limit?button('more','Ver mais dias'):''}</details>
-      <p class="small muted">Dados neste aparelho, incluídos no backup JSON.</p></div>`;
+      </div>`;
   }
   function controller({get,commit,commitSteps,notify,today,refresh}){
     let day=today(),limit=3,dialog=null,returnFocus=null,draft=null,picked=null,sharedPicked=null,search='',mode='search',all=false,profileDraft=null,suggestion=null;
@@ -742,7 +776,7 @@
       if(a==='add')return start(b.dataset.meal||'lunch');
       if(a==='shared'){start(b.dataset.meal||'dinner');if(!draft)return;mode='portions';sharedPicked='trono-dos-reis';mealBody();return;}
       if(a==='resume'){draft=clone(archive().draft);if(!draft)return;openModal('Continuar refeição');mealBody();return;}
-      if(a==='previous'||a==='next'){const d=new Date(day+'T12:00:00');d.setDate(d.getDate()+(a==='next'?1:-1));day=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');}
+      if(a==='previous'||a==='next'){const d=new Date(day+'T12:00:00');d.setDate(d.getDate()+(a==='next'?1:-1));const next=[d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');day=next>today()?today():next;}
       if(a==='today')day=today();if(a==='day')day=b.dataset.date;
       if(a==='more')limit+=5;
       const e=archive().entries.find(e=>e.id===b.dataset.id);
@@ -752,10 +786,33 @@
       if(a==='favorite'&&e){const f=CAT.makeFavorite(e,archive(),'',id);if(!f)return notify('Não foi possível criar favorito.');if(!transact(x=>{x.foods.push(...f.foodsToAdd);x.mealTemplates.push(f.favorite);} ))return;notify('Favorito salvo.');}
       const scroll=window.scrollY;refresh();window.scrollTo(0,scroll);if(a==='more')document.querySelector('#nd-history').open=true;
     }
+    let scrollQueued=false,scrollBound=false;
+    function syncScroll(){
+      const view=document.querySelector('.nutrition-screen');
+      if(!view)return;
+      const travelled=Math.max(0,-view.getBoundingClientRect().top+18);
+      const fraction=Math.min(1,travelled/170);
+      view.style.setProperty('--nd-scroll-progress',String(fraction));
+      const nav=view.querySelector('.nd-date-stick');
+      if(nav)nav.classList.toggle('nd-is-stuck',nav.getBoundingClientRect().top<=3&&fraction>.7);
+    }
+    function onScroll(){
+      if(scrollQueued)return;
+      scrollQueued=true;
+      root.requestAnimationFrame(()=>{scrollQueued=false;syncScroll();});
+    }
     return {render:()=>render({archive:archive(),date:day,limit,state:get(),balanceDate:today()}),goals,
       mount(){const screen=document.querySelector('.nutrition-screen');if(!screen)return;
         screen.addEventListener('click',e=>{const b=e.target.closest('[data-nd]');if(b){e.stopPropagation();action(b);}});
-        screen.querySelector('#nd-date').addEventListener('change',e=>{if(N.dateOk(e.target.value)){day=e.target.value;refresh();}});
+        screen.querySelector('#nd-date').addEventListener('change',e=>{
+          if(N.dateOk(e.target.value)&&e.target.value<=today()){day=e.target.value;refresh();}
+        });
+        if(!scrollBound){
+          root.addEventListener('scroll',onScroll,{passive:true});
+          root.addEventListener('resize',onScroll,{passive:true});
+          scrollBound=true;
+        }
+        syncScroll();
       }};
   }
   const api={render,controller,newId:id};root.ForjaNutritionUI=api;if(typeof module!=='undefined'&&module.exports)module.exports=api;
