@@ -47,6 +47,8 @@ jobs:
         run: |
           python3 -m pip install --user playwright
           python3 -m playwright install --with-deps chromium
+      - name: Browser smoke - protect populated local histories
+        run: python3 tests/smoke_recovery.py
       - name: Browser smoke - nutrition diary and goals
         run: python3 tests/smoke_nutrition.py
       - name: Browser smoke - strength group volume and evolution
