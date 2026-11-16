@@ -71,6 +71,7 @@
   }
   function matchesPlan(nutrition, state, plan) {
     if (!plan) return false;
+    if (JSON.stringify(nutrition.settings.profile || null) !== JSON.stringify(plan.profile)) return false;
     if (!plan.sources.every(s => reviewed(nutrition, s.date) &&
        s.fingerprint === fingerprint(nutrition, s.date) &&
        G.active(nutrition.settings, s.date)?.id === plan.targetId)) return false;
@@ -177,6 +178,7 @@
     if (reduction < 40) return {error:'O ajuste por dia ficaria muito pequeno; continue suas metas normais.'};
     const plan = {
       id:makeId('balance'), acceptedAt:currentDay,targetId:report.base.id,
+      profile:JSON.parse(JSON.stringify(nutrition.settings.profile)),
       baseValues: G.KEYS.map(k=>report.base.values[k]),
       sources: report.sourceDays,
       days:selectedDates.slice().sort().map(date=>({date,reductionKcal:reduction}))
