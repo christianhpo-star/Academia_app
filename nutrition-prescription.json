@@ -110,10 +110,46 @@
             "label": "Fruta — 1 porção (lista de substituição)",
             "choices": [
               {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
                 "name": "Morango",
                 "qty": 240,
                 "unit": "g",
                 "foodId": "taco:2011:239"
+              },
+              {
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Abacaxi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:164"
+              },
+              {
+                "name": "Pêra Williams",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:243"
               },
               {
                 "name": "Kiwi",
@@ -128,50 +164,14 @@
                 "foodId": "taco:2011:256"
               },
               {
-                "name": "Abacaxi",
-                "qty": 150,
-                "unit": "g",
-                "foodId": "taco:2011:164"
-              },
-              {
-                "name": "Laranja-pêra",
-                "qty": 180,
-                "unit": "g",
-                "foodId": "taco:2011:214"
-              },
-              {
-                "name": "Mamão papaia",
-                "qty": 170,
-                "unit": "g",
-                "foodId": "taco:2011:226"
-              },
-              {
-                "name": "Banana",
-                "qty": 80,
-                "unit": "g",
-                "foodId": "taco:2011:182"
-              },
-              {
                 "name": "Melão amarelo",
                 "qty": 220,
                 "unit": "g"
               },
               {
-                "name": "Pêra Williams",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:243"
-              },
-              {
                 "name": "Mexerica",
                 "qty": 170,
                 "unit": "g"
-              },
-              {
-                "name": "Maçã",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:222"
               },
               {
                 "name": "Manga háden",
@@ -430,10 +430,46 @@
             "label": "Fruta — 1 porção (lista de substituição)",
             "choices": [
               {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
                 "name": "Morango",
                 "qty": 240,
                 "unit": "g",
                 "foodId": "taco:2011:239"
+              },
+              {
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Abacaxi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:164"
+              },
+              {
+                "name": "Pêra Williams",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:243"
               },
               {
                 "name": "Kiwi",
@@ -448,50 +484,14 @@
                 "foodId": "taco:2011:256"
               },
               {
-                "name": "Abacaxi",
-                "qty": 150,
-                "unit": "g",
-                "foodId": "taco:2011:164"
-              },
-              {
-                "name": "Laranja-pêra",
-                "qty": 180,
-                "unit": "g",
-                "foodId": "taco:2011:214"
-              },
-              {
-                "name": "Mamão papaia",
-                "qty": 170,
-                "unit": "g",
-                "foodId": "taco:2011:226"
-              },
-              {
-                "name": "Banana",
-                "qty": 80,
-                "unit": "g",
-                "foodId": "taco:2011:182"
-              },
-              {
                 "name": "Melão amarelo",
                 "qty": 220,
                 "unit": "g"
               },
               {
-                "name": "Pêra Williams",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:243"
-              },
-              {
                 "name": "Mexerica",
                 "qty": 170,
                 "unit": "g"
-              },
-              {
-                "name": "Maçã",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:222"
               },
               {
                 "name": "Manga háden",
@@ -1273,10 +1273,46 @@
             "label": "Fruta — 1 porção (lista de substituição)",
             "choices": [
               {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
                 "name": "Morango",
                 "qty": 240,
                 "unit": "g",
                 "foodId": "taco:2011:239"
+              },
+              {
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Abacaxi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:164"
+              },
+              {
+                "name": "Pêra Williams",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:243"
               },
               {
                 "name": "Kiwi",
@@ -1291,50 +1327,14 @@
                 "foodId": "taco:2011:256"
               },
               {
-                "name": "Abacaxi",
-                "qty": 150,
-                "unit": "g",
-                "foodId": "taco:2011:164"
-              },
-              {
-                "name": "Laranja-pêra",
-                "qty": 180,
-                "unit": "g",
-                "foodId": "taco:2011:214"
-              },
-              {
-                "name": "Mamão papaia",
-                "qty": 170,
-                "unit": "g",
-                "foodId": "taco:2011:226"
-              },
-              {
-                "name": "Banana",
-                "qty": 80,
-                "unit": "g",
-                "foodId": "taco:2011:182"
-              },
-              {
                 "name": "Melão amarelo",
                 "qty": 220,
                 "unit": "g"
               },
               {
-                "name": "Pêra Williams",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:243"
-              },
-              {
                 "name": "Mexerica",
                 "qty": 170,
                 "unit": "g"
-              },
-              {
-                "name": "Maçã",
-                "qty": 120,
-                "unit": "g",
-                "foodId": "taco:2011:222"
               },
               {
                 "name": "Manga háden",
@@ -1959,10 +1959,46 @@
           "label": "Fruta — 1 porção (lista de substituição)",
           "choices": [
             {
+              "name": "Banana",
+              "qty": 80,
+              "unit": "g",
+              "foodId": "taco:2011:182"
+            },
+            {
+              "name": "Maçã",
+              "qty": 120,
+              "unit": "g",
+              "foodId": "taco:2011:222"
+            },
+            {
+              "name": "Mamão papaia",
+              "qty": 170,
+              "unit": "g",
+              "foodId": "taco:2011:226"
+            },
+            {
               "name": "Morango",
               "qty": 240,
               "unit": "g",
               "foodId": "taco:2011:239"
+            },
+            {
+              "name": "Laranja-pêra",
+              "qty": 180,
+              "unit": "g",
+              "foodId": "taco:2011:214"
+            },
+            {
+              "name": "Abacaxi",
+              "qty": 150,
+              "unit": "g",
+              "foodId": "taco:2011:164"
+            },
+            {
+              "name": "Pêra Williams",
+              "qty": 120,
+              "unit": "g",
+              "foodId": "taco:2011:243"
             },
             {
               "name": "Kiwi",
@@ -1977,50 +2013,14 @@
               "foodId": "taco:2011:256"
             },
             {
-              "name": "Abacaxi",
-              "qty": 150,
-              "unit": "g",
-              "foodId": "taco:2011:164"
-            },
-            {
-              "name": "Laranja-pêra",
-              "qty": 180,
-              "unit": "g",
-              "foodId": "taco:2011:214"
-            },
-            {
-              "name": "Mamão papaia",
-              "qty": 170,
-              "unit": "g",
-              "foodId": "taco:2011:226"
-            },
-            {
-              "name": "Banana",
-              "qty": 80,
-              "unit": "g",
-              "foodId": "taco:2011:182"
-            },
-            {
               "name": "Melão amarelo",
               "qty": 220,
               "unit": "g"
             },
             {
-              "name": "Pêra Williams",
-              "qty": 120,
-              "unit": "g",
-              "foodId": "taco:2011:243"
-            },
-            {
               "name": "Mexerica",
               "qty": 170,
               "unit": "g"
-            },
-            {
-              "name": "Maçã",
-              "qty": 120,
-              "unit": "g",
-              "foodId": "taco:2011:222"
             },
             {
               "name": "Manga háden",
