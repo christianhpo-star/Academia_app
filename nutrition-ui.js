@@ -487,7 +487,7 @@
         const out=proposedShared(form,id);
         if(!out)return error('Revise as quantidades consumidas antes de registrar.');
         if(draft.entry.items.length+out.items.length>30)return error('Limite de 30 alimentos por refeição.');
-        addItems(out.items);sharedPicked=null;
+        sharedPicked=null;addItems(out.items);
 
       }else if(form.id==='nd-manual'){
         const n=Object.fromEntries(G.KEYS.map(k=>[k,num(f.get(k))]));const serving=f.get('basis')==='serving';
