@@ -50,7 +50,7 @@ with sync_playwright() as p:
     page.locator('#nd-profile button[type="submit"]').click()
     assert page.locator('.nd-goal-recommendation').count()==1
     state=lambda: json.loads(page.evaluate('localStorage.getItem("forja.academia.v1")'))
-    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='professional'
+    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='manual'
     assert state()['nutrition']['settings']['profile']['activity']==1.725
     page.locator('[data-nd="show-steps"]').click()
     assert page.locator('#nd-steps-panel').get_attribute('open') is not None
@@ -68,7 +68,7 @@ with sync_playwright() as p:
     assert state()['nutrition']['settings']['profile']['activity']==1.725
     page.locator('#nd-profile button[type="submit"]').click()
     assert state()['nutrition']['settings']['profile']['activity']==1.55
-    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='professional'
+    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='manual'
     page.locator('[data-nd="accept"]').click()
     assert len(state()['nutrition']['settings']['targets'])==1
     assert state()['nutrition']['settings']['targets'][0]['profile']['activity']==1.55
