@@ -252,6 +252,8 @@ with sync_playwright() as p:
     before_scroll=page.evaluate("""() => document.querySelector('.nd-overview').getBoundingClientRect().top""")
     page.evaluate("window.scrollTo(0,document.querySelector('.nd-meals').getBoundingClientRect().top+window.scrollY)")
     page.wait_for_timeout(100)
+    collapsed_height=page.locator('.nd-collapse').evaluate('(e)=>e.getBoundingClientRect().height')
+    assert collapsed_height<5, f'Nutrition summary failed to collapse: {collapsed_height}'
     assert page.locator('.nd-date-stick').evaluate('(e)=>e.classList.contains("nd-is-stuck")')
     assert page.evaluate("parseFloat(document.querySelector('.nutrition-screen').style.getPropertyValue('--nd-scroll-progress'))>.7")
     assert page.evaluate("""() => {
@@ -261,6 +263,9 @@ with sync_playwright() as p:
     assert page.evaluate("document.querySelector('.nd-overview').getBoundingClientRect().top < "+str(0)) 
     page.evaluate('window.scrollTo(0,0)')
     page.wait_for_timeout(100)
+    restored_height=page.locator('.nd-collapse').evaluate('(e)=>e.getBoundingClientRect().height')
+    assert restored_height>300, f'Nutrition summary failed to expand on upward scroll: {restored_height}'
+    assert page.locator('.nd-overview').is_visible()
     (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots/nutrition-390.png'),full_page=True)
     # Regression: a mixed day must show recorded subtotals even with estimated sweets.
