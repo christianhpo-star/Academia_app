@@ -42,11 +42,10 @@ with sync_playwright() as p:
     log=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
     assert len(log['activitySteps'])==1 and log['activitySteps'][0]['steps']==9152
     page.locator('#nav [data-tab="progress"]').click()
-    page.locator('.evo-extras > summary').click()
     assert page.locator('.progress-steps-day').count()==14
     assert page.locator('.progress-steps-day.known').count()==1
-    assert page.locator('.progress-advanced-radar').count()==1
-    assert not page.locator('.progress-advanced-radar').evaluate('(node)=>node.open')
+    assert page.locator('.progress-advanced-radar').count()==0
+    assert page.locator('.evo-volume-row').count()==4
     page.locator('[data-action="progress-steps-days"][data-days="28"]').click()
     assert page.locator('.progress-steps-day').count()==28
     page.locator('#nav [data-tab="nutrition"]').click()
@@ -383,9 +382,20 @@ with sync_playwright() as p:
     assert evo.locator('#evo-panel-weight').is_visible()
     assert 'Peso inicial' in evo.locator('.evo-weight-kpis').inner_text()
     assert evo.locator('.evo-cta').is_visible()
-    assert evo.locator('.evo-weight-history').count()==1
-    assert evo.locator('.evo-extras').count()==1
-    assert not evo.locator('.evo-extras').evaluate('(x)=>x.open')
+    assert evo.locator('.evo-history-fold').count()==1
+    assert evo.locator('.evo-more-tools').count()==1
+    assert not evo.locator('.evo-more-tools').evaluate('(x)=>x.open')
+    assert evo.locator('.evo-volume-row').count()==4
+    assert evo.locator('.progress-steps-card').count()==1
+    assert evo.locator('.evo-hero').count()==0
+    assert evo.locator('.evo-chart-selector').count()==1
+    evo.locator('[data-action="evo-chart-mode"][data-mode="measures"]').click()
+    assert evo.locator('#evo-measure-field').is_visible()
+    evo.locator('#evo-measure-field').select_option('chest')
+    assert 'Peitoral' in evo.locator('#evo-weight-heading').locator('..').inner_text() or 'Peitoral' in evo.locator('.evo-body-chart').inner_text()
+    evo.locator('[data-action="evo-chart-mode"][data-mode="weight"]').click()
+    evo.locator('[data-action="evo-volume-days"][data-days="90"]').click()
+    assert evo.locator('[data-action="evo-volume-days"][data-days="90"]').get_attribute('aria-pressed')=='true'
     evo.locator('[data-action="evo-view"][data-view="nutrition"]').click()
     assert evo.locator('#evo-panel-nutrition').is_visible()
     assert evo.get_by_role('heading',name='Objetivo (kcal)').count()==1
@@ -401,6 +411,7 @@ with sync_playwright() as p:
         assert evo.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
     evo.locator('[data-action="evo-view"][data-view="weight"]').click()
     evo.locator('.evo-cta').click()
+    assert evo.locator('#evo-weight-editor').evaluate('(e)=>e.open')
     assert evo.locator('#weight-form').is_visible()
     evo.screenshot(path=str(ROOT/'screenshots/evolution-weight-390.png'),full_page=True)
     evo.locator('[data-action="evo-view"][data-view="nutrition"]').click()
