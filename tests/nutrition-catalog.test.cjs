@@ -418,7 +418,7 @@ test('porção compartilhada registra apenas o consumo próprio; pesos e percent
  const unfair=half.map(row=>({...row}));unfair[0].myGrams=250;unfair[1].myGrams=0;
  const own=C.makeSharedPortion(preset.id,unfair,id);
  assert.equal(own.items.length,4);
- assert.equal(own.consumedGrams,465);
+ assert.equal(own.consumedGrams,415); // +100 g de batata e -100 g de nuggets
  assert.equal(own.items.filter(i=>i.foodId==='tbca:BRC0474F').length,0);
  assert.equal(C.makeSharedPortion(preset.id,[{...half[0],myGrams:400},...half.slice(1)],id),null);
  assert.equal(C.makeSharedPortion(preset.id,half.map(row=>({...row,myGrams:0})),id),null);
