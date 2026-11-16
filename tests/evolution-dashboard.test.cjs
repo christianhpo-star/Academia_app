@@ -61,7 +61,7 @@ test('averages exclude unregistered days and fiber is never included as a fourth
 });
 test('estimated partial macros are explained rather than declared total daily consumption',()=>{
  const a=N.archive(),e=entry('2026-11-15',1800,3);
- e.items[0].nutrientsPerServing.fatG=null;
+ e.items.forEach(item=>{item.nutrientsPerServing.fatG=null;});
  a.entries=[e];
  const html=E.renderNutrition(a,date,{energy:7,macros:7,average:7});
  assert.match(html,/Não há dados nutricionais suficientes/);
