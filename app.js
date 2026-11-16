@@ -138,6 +138,7 @@
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
+    progressStepDays:14,progressRadarOpen:false,
   };
   const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
     commitSteps(next){
@@ -585,6 +586,29 @@
       render();notify(result.confirmed?'Confirmação registrada.':'Confirmação desfeita.');return;
     }
   }
+  function homeStepsCard(){
+    const day=today(),rows=(state.activitySteps||[]).filter(row=>row.date<=day).slice().sort((a,b)=>b.date.localeCompare(a.date));
+    const current=rows.find(row=>row.date===day),recent=rows.slice(0,7);
+    return '<section class="card home-steps-quick" aria-labelledby="home-steps-title">'+
+      '<div class="row-between"><div><p class="eyebrow">REGISTRO DIÁRIO</p><h2 class="section-title" id="home-steps-title">Passos de hoje</h2></div><span class="home-steps-status">'+(current?'Registrado':'Ainda não informado')+'</span></div>'+
+      '<p class="small muted">Anote o total do Samsung Health ao final do dia. Sem sincronização automática.</p>'+
+      '<form id="home-steps-form" class="home-steps-form">'+
+      '<div class="field"><label for="home-step-date">Data</label><input id="home-step-date" name="date" type="date" max="'+day+'" value="'+day+'" required></div>'+
+      '<div class="field"><label for="home-step-count">Número de passos</label><input id="home-step-count" name="steps" type="number" inputmode="numeric" min="0" max="100000" step="1" value="'+(current?current.steps:'')+'" placeholder="Ex.: 8500" required></div>'+
+      '<button type="submit" class="primary">'+(current?'Atualizar':'Salvar')+'</button></form>'+
+      '<details class="home-steps-history"><summary>Histórico recente ('+recent.length+')</summary>'+
+      (recent.length?'<ul class="mini-list">'+recent.map(row=>'<li><span>'+dateBR(row.date)+'</span><strong>'+fmt(row.steps)+' passos</strong></li>').join('')+'</ul>':'<p class="small muted">Nenhum dia registrado ainda.</p>')+
+      '</details><p class="tiny muted">Dia sem registro é dado ausente, não zero. Registrar passos não altera automaticamente suas metas.</p></section>';
+  }
+  function saveHomeSteps(form){
+    const fd=new FormData(form),date=String(fd.get('date')||''),count=String(fd.get('steps')||'').trim();
+    if(date>today())return notify('Não é possível registrar uma data futura.');
+    const out=ACT.upsertSteps(state.activitySteps||[],date,count);
+    if(out.error)return notify(out.error);
+    const before=state.activitySteps;state.activitySteps=out.items;
+    if(!save()){state.activitySteps=before;return notify('Não foi possível salvar os passos. O histórico foi preservado.');}
+    render();notify('Passos registrados para '+dateBR(date)+'.');
+  }
   function renderHome() {
     const next=getNext(),plan=next.id?planFor(next.id):null;
     const pending=dueKnee(),last=latestSessions()[0],check=checkin();
@@ -608,6 +632,7 @@
       ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
         <p>Há ${pending.length} treino(s) aguardando registro após 24h.
         <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
+      ${homeStepsCard()}
       ${renderDailyRoutine()}
       ${renderReminderPanel('home')}
       <details class="home-recovery" ${ui.homeRecoveryOpen?'open':''}>
@@ -964,6 +989,57 @@
       '<details><summary>Limites científicos e avisos</summary><ul class="small">'+result.warnings.map(w=>'<li>'+esc(w)+'</li>').join('')+'</ul><p class="small">'+esc(result.nextReview)+'</p></details>'+
       '<button type="button" class="secondary full mt-12" data-action="goal-open">Editar objetivo e prazo</button></section>';
   }
+  function dayAtOffset(offset){
+    const d=new Date(today()+'T12:00:00');d.setDate(d.getDate()+offset);
+    return [d.getFullYear(),String(d.getMonth()+1).padStart(2,'0'),String(d.getDate()).padStart(2,'0')].join('-');
+  }
+  function progressStepsPanel(){
+    const days=ui.progressStepDays;
+    const map=new Map((state.activitySteps||[]).map(row=>[row.date,row.steps]));
+    const points=Array.from({length:days},(_,i)=>{const date=dayAtOffset(i+1-days);return {date,steps:map.get(date)};});
+    const known=points.filter(row=>row.steps!==undefined),maximum=Math.max(1,...known.map(row=>row.steps));
+    const average=known.length?Math.round(known.reduce((sum,row)=>sum+row.steps,0)/known.length):null;
+    return '<section class="card progress-steps-card" aria-labelledby="progress-steps-title">'+
+      '<div class="row-between"><h2 class="section-title" id="progress-steps-title">Movimento diário</h2><span class="pill">'+known.length+'/'+days+' dias</span></div>'+
+      '<p class="small muted">Média dos dias informados: <strong>'+(average==null?'—':fmt(average)+' passos')+'</strong>. O gráfico não preenche dias ausentes com zero.</p>'+
+      '<div class="progress-period-picker" role="group" aria-label="Período dos passos">'+[7,14,28].map(n=>'<button type="button" class="tab-chip'+(days===n?' selected':'')+'" data-action="progress-steps-days" data-days="'+n+'" aria-pressed="'+(days===n)+'">'+n+' dias</button>').join('')+'</div>'+
+      '<div class="progress-steps-scroll"><div class="progress-steps-bars" style="--steps-count:'+days+'" role="group" aria-label="Passos registrados por dia">'+points.map((row,i)=>{
+        const logged=row.steps!==undefined,ratio=logged?Math.max(2,Math.round(row.steps/maximum*100)):0;
+        const speech=dateBR(row.date)+(logged?' · '+fmt(row.steps)+' passos':' · sem registro');
+        return '<div class="progress-steps-day'+(logged?' known':' missing')+'" role="img" aria-label="'+speech+'" title="'+speech+'">'+
+          (logged?'<span class="progress-steps-bar" style="height:'+ratio+'%"></span>':'<span class="progress-steps-unknown" aria-hidden="true">–</span>')+
+          '<small>'+(days===28?(i%4===0?row.date.slice(8):''):row.date.slice(8))+'</small></div>';
+      }).join('')+'</div></div>'+
+      '<p class="tiny muted">As barras mostram passos, não calorias gastas. O Samsung Health continua com lançamento manual.</p></section>';
+  }
+  function progressMeasuresPanel(){
+    const rows=BODY.recent(state.bodyMeasurements||[]).filter(row=>Number.isFinite(row.values?.abdomen)).reverse();
+    const latest=rows.at(-1),previous=rows.length>=2?rows[0]:null;
+    if(!latest)return '<section class="card progress-measures-card"><h2 class="section-title">Circunferência abdominal</h2><p class="small muted">Sem aferição comparável. Registre o abdômen na altura do umbigo em Medidas corporais, no atalho acima, para ver tendências.</p></section>';
+    const delta=previous?Math.round((latest.values.abdomen-previous.values.abdomen)*10)/10:null;
+    const series=rows.slice(-10),vals=series.map(r=>r.values.abdomen),lo=Math.min(...vals)-2,hi=Math.max(...vals)+2;
+    const sx=i=>series.length===1?160:22+i*276/(series.length-1),sy=v=>97-(v-lo)/Math.max(1,hi-lo)*78;
+    const coords=series.map((r,i)=>sx(i).toFixed(1)+','+sy(r.values.abdomen).toFixed(1)).join(' ');
+    return '<section class="card progress-measures-card" aria-labelledby="progress-measures-title">'+
+      '<div class="row-between"><h2 id="progress-measures-title" class="section-title">Abdômen (umbigo)</h2><strong>'+fmt(latest.values.abdomen)+' cm</strong></div>'+
+      '<p class="small muted">Aferido em '+dateBR(latest.date)+(delta==null?' · só uma aferição':'; variação desde '+dateBR(previous.date)+': '+(delta>0?'+':'')+fmt(delta)+' cm')+'.</p>'+
+      (series.length>1?'<div class="chart-wrap"><svg viewBox="0 0 320 122" role="img" aria-label="Evolução de '+series.length+' medidas de abdômen; última '+fmt(latest.values.abdomen)+' centímetros">'+
+        '<line x1="18" y1="100" x2="302" y2="100" stroke="#526477" />'+
+        '<polyline fill="none" stroke="#80beff" stroke-width="3" stroke-linejoin="round" points="'+coords+'"/>'+
+        series.map((r,i)=>'<circle cx="'+sx(i).toFixed(1)+'" cy="'+sy(r.values.abdomen).toFixed(1)+'" r="3.5" fill="#c5f56b"/>').join('')+
+        '</svg></div>':'')+
+      '<p class="small muted">Use Medidas corporais, no atalho acima, para editar aferições.</p>'+
+      '<p class="tiny muted">Medidas diferentes ou feitas em condições distintas não devem ser interpretadas como perda de gordura comprovada.</p></section>';
+  }
+  function progressStrengthSummary(){
+    const leaders=strengthOverview(90).leaders.slice(0,3);
+    return '<section class="card progress-strength-card" aria-labelledby="progress-strength-title">'+
+      '<h2 class="section-title" id="progress-strength-title">Força por exercício</h2>'+
+      (leaders.length?'<p class="small muted">Comparação dentro de cada exercício registrado nos últimos 90 dias.</p><ul class="mini-list">'+
+        leaders.map(item=>'<li><span><strong>'+esc(item.name)+'</strong><small class="progress-strength-period">'+dateBR(item.firstDate)+' → '+dateBR(item.lastDate)+'</small></span><strong>'+((item.percent||0)>=0?'+':'')+fmt(item.percent)+'%</strong></li>').join('')+'</ul>':
+        '<p class="small muted">São necessárias ao menos duas sessões comparáveis do mesmo exercício para mostrar uma tendência.</p>')+
+      '<p class="tiny muted">Carga, repetições, equipamento e esforço importam. Aumento de força não equivale diretamente a ganho de músculo.</p></section>';
+  }
   function renderProgress() {
     const goalPlan=PLANNER.plan(state,today());
     const p=E.progress(state.weights,state.settings.startWeight,state.settings.targetWeight);
@@ -983,7 +1059,6 @@
         <span><strong>Medidas corporais</strong><small>${bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':'Circunferências por região e histórico'}</small></span>
         <span aria-hidden="true">›</span>
       </button>
-      ${renderGoalPlannerSummary(goalPlan)}
       <div class="kpi-row"><div class="kpi"><strong>${fmt(p.current)}</strong><span>kg atuais</span></div><div class="kpi"><strong>${fmt(Number(p.current)-Number(state.settings.startWeight))}</strong><span>kg desde o início</span></div><div class="kpi"><strong>${days>0?days:'—'}</strong><span>dias até a meta</span></div></div>
       <div class="card"><div class="row-between"><h2 class="section-title">Histórico de peso</h2>${tag(`${items.length} registro(s)`,'green')}</div>
       <div class="chart-wrap mt-12"><svg viewBox="0 0 320 160" role="img" aria-label="Gráfico de peso registrado. Atual ${fmt(p.current)} quilos, meta ${fmt(state.settings.targetWeight)} quilos.">
@@ -995,7 +1070,11 @@
       ${items.length?`<text x="24" y="148" fill="#a7b7c7" font-size="10">${dateBR(items[0].date)}</text><text x="299" y="148" fill="#a7b7c7" font-size="10" text-anchor="end">${dateBR(items[items.length-1].date)}</text>`:''}
       </svg></div><p class="chart-caption">Linha pontilhada: meta de peso. Oscilações diárias são normais.</p>
       ${goalPlan.paceKgPerWeek!=null?`<div class="callout ${goalPlan.status==='review'?'warn':''}">Ritmo matemático do objetivo: <strong>${fmt(goalPlan.paceKgPerWeek)} kg/semana</strong>. Não representa previsão nem recomendação automática de déficit.</div>`:''}</div>
-      ${strengthSection(90)}
+      ${progressMeasuresPanel()}
+      ${progressStepsPanel()}
+      ${progressStrengthSummary()}
+      <details class="progress-advanced-radar mt-12" ${ui.progressRadarOpen?'open':''}><summary>Comparativo muscular avançado · radar</summary>${strengthSection(90)}</details>
+      ${renderGoalPlannerSummary(goalPlan)}
       ${renderDosePanel()}
       ${weightForm()}
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
@@ -1747,9 +1826,14 @@
       }
     }
     else if(action==='finish')finishWorkout();
+    else if(action==='progress-steps-days'){
+      const days=Number(btn.dataset.days);if(![7,14,28].includes(days))return;
+      ui.progressStepDays=days;render();return;
+    }
     else if(action==='strength-group') {
       const group = btn.dataset.group;
       if (!DATA.rotation.includes(group)) return;
+      ui.progressRadarOpen=true;
       ui.strengthGroup = ui.strengthGroup === group ? null : group;
       ui.strengthExercise = null;
       render();
@@ -1758,12 +1842,12 @@
     else if(action==='strength-exercise') {
       const ex = exerciseFor(btn.dataset.ex);
       if (!ex || ex.group !== ui.strengthGroup) return;
-      ui.strengthExercise = ex.id;
+      ui.progressRadarOpen=true;ui.strengthExercise = ex.id;
       render();
       document.getElementById('strength-exercise-panel')?.scrollIntoView({behavior:'smooth', block:'nearest'});
     }
     else if(action==='strength-close') {
-      ui.strengthGroup = null; ui.strengthExercise = null;
+      ui.progressRadarOpen=true;ui.strengthGroup = null; ui.strengthExercise = null;
       render();
       document.getElementById('strength-radar-title')?.scrollIntoView({behavior:'smooth',block:'start'});
     }
@@ -1796,6 +1880,7 @@
   const screen=document.getElementById('screen');
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
+    if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
   },true);
   screen.addEventListener('click',event=>{
@@ -1845,6 +1930,11 @@
   });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
+    if(event.target.id==='home-step-date'){
+      const previous=(state.activitySteps||[]).find(row=>row.date===event.target.value);
+      const input=screen.querySelector('#home-step-count');if(input)input.value=previous?String(previous.steps):'';
+      return;
+    }
     collectDraft(event);
     updateMuayField(event);
     const el=event.target;
@@ -1878,6 +1968,7 @@
     event.preventDefault();
     if(event.target.id==='weight-form')setWeight(event.target);
     else if(event.target.id==='goal-form')setGoal(event.target);
+    else if(event.target.id==='home-steps-form')saveHomeSteps(event.target);
     else if(event.target.id==='daily-routine-form')saveDailyRoutineSettings(event.target);
     else if(event.target.id==='exercise-form')saveExercise(event.target);
     else if(event.target.id==='body-measures-form')saveBodyMeasures(event.target);
@@ -1911,7 +2002,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-inline24',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261115-trends25',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

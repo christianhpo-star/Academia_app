@@ -33,6 +33,7 @@
     milk:'<path d="M7 3h9l2 5v13H6V8l1-5Z"/><path d="M6 8h12M9 3v5M9 12h6v5H9z"/>',
     dessert:'<path d="M5 12c0-5 14-5 14 0l-2 8H7l-2-8Z"/><path d="M7 12c-4-4 1-8 5-6 4-4 9 2 5 6"/><circle cx="12" cy="9" r="1"/>',
     topping:'<path d="M11 14 6 21M13 12c5 2 9-8 3-9-5 0-7 7-3 9Z"/>',
+    fruit:'<path d="M12 8c-2-4-7-4-8 1-2 5 2 12 6 12l2-1 2 1c5 0 8-7 6-12-1-5-6-5-8-1Z"/><path d="M12 8c0-3 1-5 4-6M12 7c-3-2-5-1-6-4"/>',
     food:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M3 2v8M6 2v8M3 6h3M20 2v19"/>'
   };
   const FOOD_KINDS={
@@ -64,6 +65,7 @@
     if(/frango/.test(label))return 'chicken';
     if(/ovo/.test(label))return 'egg';
     if(/banana/.test(label))return 'banana';
+    if(food.category==='Frutas')return 'fruit';
     if(/aveia/.test(label))return 'oats';
     if(/leite/.test(label))return 'milk';
     if(/acai|sobremesa|sorvete/.test(label))return 'dessert';
@@ -251,7 +253,7 @@
       const e=draft.entry;
       dialog.querySelector('#nd-dialog-body').innerHTML=`<form id="nd-meal"><div class="field-row">${field('mealDate','Data',e.date,`type="date" max="${today()}" required`)}${select('mealType','Refeição',labels,e.mealType)}</div><div id="nd-items">${e.items.map((i,index)=>`<div class="nd-item"><div class="nd-item-head">${foodVisual(i)}<strong>${esc(i.label)}</strong></div><div class="field-row">${field('qty-'+index,'Quantidade ('+esc(units[i.unit])+')',i.quantity,`type="number" inputmode="decimal" min="0.001" max="10000" step="any" data-index="${index}" required`)}${button('remove','Retirar',`data-index="${index}"`,'ghost')}</div><small class="muted">${i.grams!=null&&i.unit!=='g'?fmt(i.grams)+' g · ':''}${esc(i.source?.name||'Sem composição conhecida')}${i.estimate?' · confiança baixa':''}</small><details><summary>Composição e fonte</summary><p class="small">${esc(i.source?.reference||'Valores não informados')}${i.estimate?' · '+esc(i.estimate.assumptions):''}</p><div class="field-row">${!i.estimate?G.KEYS.map(k=>field('item-'+index+'-'+k,nutrients[k]+' / '+(i.nutrientsPerServing?'porção':i.nutrientsPerMl?'ml':'100 g'),(i.nutrientsPerServing||i.nutrientsPerMl||i.nutrientsPer100g)[k],`type="number" min="0" max="${k==='energyKcal'?1200:100}" step="any" data-nutrient="${k}" data-index="${index}"`)).join(''):'Estimativa preservada. Ajuste a quantidade ou substitua o alimento.'}</div></details></div>`).join('')||'<p class="small muted">Escolha alimentos abaixo para montar sua refeição.</p>'}</div>
       <p id="nd-preview" class="small" aria-live="polite"></p><details><summary>Horário e observações</summary>${field('time','Horário',e.time,'type="time"')}${field('notes','Observações',e.notes,'maxlength="500"')}</details></form>
-      <section class="nd-search-section"><h3>Adicionar alimentos</h3><p class="small muted">Pesquise, ajuste a quantidade e adicione aqui mesmo, sem abrir outra janela.</p><div class="btnrow">${button('mode','Recentes','data-mode="recent"')}${button('mode','Favoritos','data-mode="favorites"')}${button('mode','Buscar','data-mode="search"')}</div><div class="field mt-12"><label for="nd-search">Buscar alimentos e produtos</label><input id="nd-search" type="search" value="${esc(search)}" placeholder="Nome, produto ou ingrediente"></div><div id="nd-portion-panel"></div><div id="nd-results"></div></section>
+      <section class="nd-search-section"><h3>Adicionar alimentos</h3><p class="small muted">Pesquise, ajuste a quantidade e adicione aqui mesmo, sem abrir outra janela.</p><div class="btnrow">${button('mode','Recentes','data-mode="recent"')}${button('mode','Favoritos','data-mode="favorites"')}${button('mode','Frutas','data-mode="fruits"')}${button('mode','Buscar','data-mode="search"')}</div><div class="field mt-12"><label for="nd-search">Buscar alimentos e produtos</label><input id="nd-search" type="search" value="${esc(search)}" placeholder="Nome, produto ou ingrediente"></div><div id="nd-portion-panel"></div><div id="nd-results"></div></section>
       <details class="mt-16"><summary>Adicionar manualmente / rótulo</summary><form id="nd-manual">${field('label','Alimento ou preparação','','maxlength="120" required')}<div class="field-row">${field('quantity','Quantidade',1,'type="number" min="0.001" max="10000" step="any" required')}${select('unit','Unidade',units,'portion')}</div>${field('grams','Peso total equivalente em g (opcional)','','type="number" min="0.001" max="10000" step="any"')}<details><summary>Informações nutricionais do rótulo</summary>${select('basis','Valores informados por',{'100g':'100 g',serving:'uma porção'},'100g')}<p class="small muted">Por porção: use unidade porção; não converta ml em g. Campos vazios ficam desconhecidos.</p><div class="field-row">${G.KEYS.map(k=>field(k,nutrients[k]+(k==='energyKcal'?' (kcal)':' (g)'),' ',`type="number" min="0" max="${k==='energyKcal'?1200:100}" step="any"`)).join('')}</div></details><button type="submit" class="secondary full mt-12">Adicionar à refeição</button></form></details>${button('discard','Descartar rascunho','','ghost full mt-16')}<div class="nd-save nd-save-sticky"><button type="submit" form="nd-meal" class="primary full" ${e.items.length?'':'disabled'}>Salvar refeição${e.items.length?' · '+e.items.length+' alimento(s)':''}</button></div>`;
       results();portion();preview();
       for(const [name,value] of Object.entries(draft.pending||{})){const input=dialog.querySelector('#nd-manual')?.elements.namedItem(name);if(input)input.value=value;}
@@ -263,7 +265,7 @@
       else if(mode==='recent'&&!search){
         const seen=new Set();rows=archive().entries.slice().reverse().flatMap(e=>e.items.map(i=>({i,e}))).filter(({i})=>{const key=i.foodId||i.label;if(seen.has(key))return false;seen.add(key);return true;}).map(({i,e})=>button('recent',foodVisual(i)+'<span class="nd-result-copy"><strong>'+esc(i.label)+'</strong></span>',`data-entry="${esc(e.id)}" data-id="${esc(i.id)}"`,'nd-result nd-food-result'));
       }else {
-        const found=search?CAT.search(search):CAT.orderedForMeal(draft.entry.mealType);
+        const found=search?CAT.search(search):mode==='fruits'?CAT.foods.filter(food=>food.category==='Frutas'):CAT.orderedForMeal(draft.entry.mealType);
         rows=found.map(f=>button('pick',foodVisual(f)+'<span class="nd-result-copy"><strong>'+esc(f.name)+'</strong><small>'+esc(f.category)+(f.estimate?' · estimativa':'')+(f.nutrientsPerServing?' · rótulo por porção':'')+(f.source?.name==='Growth Supplements — tabela nutricional oficial'?' · tabela oficial Growth':'')+'</small></span>',`data-id="${esc(f.id)}"`,'nd-result nd-food-result'));
       }
       const empty=mode==='recent'&&!search?'Você ainda não registrou alimentos. Abra Buscar para ver todo o catálogo.':

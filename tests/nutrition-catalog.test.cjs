@@ -141,7 +141,7 @@ test('alimentos pesquisados aparecem primeiro no café sem depender de consumo p
 
 test('catálogo TACO cobre carnes, frituras e pratos brasileiros com fonte específica',()=>{
  const taco=C.foods.filter(f=>f.id.startsWith('taco:2011:'));
- assert.equal(taco.length,54);
+ assert.equal(taco.length,68); // 54 anteriores + 14 novas frutas TACO
  assert.equal(new Set(C.foods.map(f=>f.id)).size,C.foods.length);
  for(const f of taco) {
    assert.equal(N.validFood(f),true,f.id);
@@ -352,4 +352,26 @@ test('Growth e leite são dois snapshots independentes e favoritos mantêm volum
  assert.equal(repeated.items[1].unit,'ml');
  assert.equal(repeated.items[1].quantity,200);
  assert.equal(N.observedTotals([repeated],'2026-11-15').totals.energyKcal,totals.energyKcal);
+});
+
+test('TACO: frutas variadas têm fonte rastreável e aceitam valores fracionados',()=>{
+ const fruits=C.foods.filter(f=>f.category==='Frutas');
+ const tacoFruits=fruits.filter(f=>f.id.startsWith('taco:2011:'));
+ assert.equal(fruits.length,18); // 17 TACO e uma referência genérica de banana
+ assert.equal(tacoFruits.length,17);
+ assert.equal(new Set(fruits.map(f=>f.id)).size,fruits.length);
+ for(const f of fruits)assert.equal(N.validFood(f),true,f.name);
+ for(const f of tacoFruits){
+   assert.equal(f.source.name,'NEPA/UNICAMP — TACO');
+   assert.ok(f.source.reference.includes('TACO 4ª ed.'),f.name);
+ }
+ for(const term of ['morango','laranja pera','manga','kiwi','melancia','abacaxi','uva']){
+   assert.ok(C.search(term).some(f=>f.category==='Frutas'),term);
+ }
+ const abacaxi=C.makeItem('taco:2011:164','custom',121.5,id);
+ assert.equal(abacaxi.quantity,121.5);assert.equal(abacaxi.unit,'g');
+ const entry={id:id('meal'),date:'2026-11-14',mealType:'snack',items:[abacaxi]};
+ const total=N.observedTotals([entry],entry.date).totals;
+ assert.ok(Math.abs(total.energyKcal-58.32)<.01);
+ assert.ok(Math.abs(total.carbsG-14.9445)<.01);
 });

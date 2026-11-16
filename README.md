@@ -1,5 +1,14 @@
 # FORJA
 
+## Atualização: passos, frutas e evolução por tendências (15/11/2026)
+
+- **Passos na tela inicial:** formulário direto, data editável, histórico recente e salvamento por dia. Os dados seguem locais e são incluídos no backup JSON; sem leitura automática do Samsung Health. 0 só quando informado. Valores ausentes não entram como zero na média.
+- **Catálogo de frutas:** 14 frutas TACO adicionais, somadas às 4 já disponíveis (incluindo banana de referência genérica); total de 18 opções de frutas; filtro `Frutas` na busca da refeição e quantidade livre em gramas comestíveis. Origem e preparo associados a cada entrada.
+- **Evolução:** tendência de peso preservada, gráfico de abdômen (umbigo) quando há 2+ medições, passos 7/14/28 dias com lacunas sinalizadas, desempenho por exercício com base no histórico e radar movido para detalhes avançados. Leitura não equivale a diagnóstico de composição corporal.
+- **Sem metas arbitrárias:** passos não viram calorias de exercício, pesagens não determinam massa muscular e metas alimentares não mudam automaticamente. Preservamos o armazenamento existente e backups.
+- [Plano detalhado para futuras iterações da aba Evolução](docs/evolution-trends-plan.md).
+
+
 ## Whey Growth — tabelas oficiais por linha e sabor (15/11/2026)
 
 - Adicionados **16 produtos Growth com tabela oficial identificada**, incluindo Concentrado TOP, 100% Concentrado (chocolate/baunilha/morango), Isolado natural, Hidrolisado natural, 3W chocolate, Zero Lactose natural, Medium natural, Basic natural, Daily (doce de leite/baunilha), Daily Zero Lactose (chocolate/doce de leite), Gourmet Tiramisù e sachê concentrado natural.
