@@ -70,35 +70,114 @@
       ticks+goal+(path?'<path d="'+path+'" fill="none" stroke="#263B54" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>':'')+
       dots+labels+'</svg></div>';
   }
+  const BODY=root.ForjaBodyMeasures||(typeof require==='function'?require('./body-measures.js'):null);
+  const E=root.AcademiaEngine||(typeof require==='function'?require('./engine.js'):null);
+  const measureDefault='abdomen';
+  function measuresModel(state,endDay,measureKey=measureDefault){
+    const field=BODY.FIELDS.find(x=>x.id===measureKey)||BODY.FIELDS.find(x=>x.id===measureDefault);
+    const all=BODY.recent(state?.bodyMeasurements||[]).filter(r=>r.date<=endDay&&Number.isFinite(r.values?.[field.id]))
+      .map(r=>({date:r.date, value:r.values[field.id]})).reverse();
+    return {field,all,latest:all.at(-1)||null,previous:all.length>1?all[all.length-2]:null};
+  }
+  function measureSVG(model){
+    const series=model.all.slice(-30);
+    if(!series.length)return '<p class="evo-empty">Sem medidas de '+esc(model.field.label.toLowerCase())+'. Registre uma aferição para acompanhar sua evolução.</p>';
+    const vals=series.map(x=>x.value),min=Math.min(...vals),max=Math.max(...vals);
+    const spread=Math.max(4,max-min+2),bottom=(max+min-spread)/2;
+    const y=v=>Number((187-(v-bottom)/spread*148).toFixed(2));
+    const first=toUTC(series[0].date),range=Math.max(1,toUTC(series.at(-1).date)-first);
+    const x=d=>series.length===1?184:Number((43+(toUTC(d)-first)/range*305).toFixed(2));
+    const coordinates=series.map(r=>[x(r.date),y(r.value)]);
+    const axes=[0,1,2,3,4].map(i=>{const v=bottom+spread*i/4;return '<g><line x1="39" y1="'+y(v)+'" x2="351" y2="'+y(v)+'" stroke="#344658"/><text x="34" y="'+(y(v)+4)+'" text-anchor="end" font-size="10" fill="#B0C0D0">'+fmt(v,1)+'</text></g>';}).join('');
+    const path=series.length>1?'<polyline fill="none" stroke="#C5F56B" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="'+
+      coordinates.map(p=>p.join(',')).join(' ')+'"/>':'';
+    const dots=coordinates.map((p,i)=>'<circle cx="'+p[0]+'" cy="'+p[1]+'" r="4" fill="#C5F56B" stroke="#182636" stroke-width="2"><title>'+
+      stamp(series[i].date)+' · '+fmt(series[i].value)+' cm</title></circle>').join('');
+    return '<div class="evo-chart"><svg class="evo-plot" viewBox="0 0 372 230" role="img" aria-label="Evolução de '+esc(model.field.label)+
+      '. '+series.length+' registros. Última medida: '+fmt(model.latest.value)+' centímetros.">'+axes+path+dots+
+      '<text x="43" y="215" font-size="10" fill="#B0C0D0">'+stamp(series[0].date)+'</text>'+
+      '<text x="348" y="215" font-size="10" text-anchor="end" fill="#B0C0D0">'+stamp(series.at(-1).date)+'</text></svg></div>';
+  }
+  function groupVolume(state,endDay,days=30){
+    const limit=periodDays(days),from=moveDate(endDay,1-limit);
+    const plans=(root.AcademiaData?.plans||[]);
+    const titles={A:'Costas e bíceps',B:'Peito e tríceps',C:'Quadríceps',D:'Posteriores e glúteos'};
+    const groups=['A','B','C','D'].map(id=>({id,title:plans.find(p=>p.id===id)?.title||titles[id],sets:0,sessions:new Set()}));
+    const byId=new Map(groups.map(g=>[g.id,g]));
+    const exMap=new Map((state?.exercises||[]).map(e=>[e.id,e.group]));
+    for(const session of state?.sessions||[]){
+      if(!session?.day||session.day<from||session.day>endDay)continue;
+      for(const entry of session.entries||[]){
+        const id=exMap.get(entry.id),group=byId.get(id);
+        if(!group)continue;
+        const count=E.workSets(entry).length;
+        if(count){group.sets+=count;group.sessions.add(session.id);}
+      }
+    }
+    return groups.map(g=>({id:g.id,title:g.title,sets:g.sets,sessionCount:g.sessions.size}));
+  }
+  function renderGroupVolume(state,endDay,days=30){
+    const groups=groupVolume(state,endDay,days),max=Math.max(1,...groups.map(g=>g.sets));
+    const totals=groups.reduce((sum,g)=>sum+g.sets,0);
+    return '<section class="evo-section evo-volume-card" aria-labelledby="evo-volume-title">'+
+      '<div class="evo-card-heading"><div><h2 id="evo-volume-title">Treino por grupo</h2><p>Séries efetivas registradas</p></div></div>'+
+      '<div class="evo-periods evo-volume-periods" role="group" aria-label="Período do treino">'+
+      [7,30,90].map(n=>'<button type="button" data-action="evo-volume-days" data-days="'+n+'" aria-pressed="'+(n===days)+
+        '" class="'+(n===days?'is-selected':'')+'">'+n+' dias</button>').join('')+'</div>'+
+      (totals?'<div class="evo-volume-bars">'+groups.map(g=>
+        '<div class="evo-volume-row"><div class="evo-volume-label"><strong>'+esc(g.title)+'</strong><span>'+g.sets+' séries</span></div>'+
+        '<div class="evo-volume-track" role="img" aria-label="'+esc(g.title)+': '+g.sets+' séries efetivas em '+days+' dias">'+
+        (g.sets?'<span style="width:'+Math.max(2,100*g.sets/max).toFixed(1)+'%"></span>':'')+
+        '</div></div>').join('')+'</div>':
+        '<p class="evo-empty">Ainda não há séries efetivas registradas nesses '+days+' dias.</p>')+
+      '<p class="evo-footnote">Agrupamento pela ficha A/B/C/D. Cada barra conta séries com carga e repetições efetivamente registradas; aquecimentos são excluídos. Não representa volume individual de cada músculo nem inclui Muay Thai.</p>'+
+      '</section>';
+  }
   function renderHeader(state,endDay,view){
-    const kcal=G.active(state?.nutrition?.settings||{},endDay)?.values.energyKcal;
-    const name={weight:'Perder peso',fat_loss:'Reduzir gordura',muscle_gain:'Ganhar massa',recomposition:'Recomposição corporal',maintenance:'Manutenção'}[state?.settings?.goalMode||'weight']||'Acompanhar evolução';
-    return '<header class="evo-hero"><div class="evo-person"><span class="evo-mark" aria-hidden="true">F<span>↗</span></span>'+
-      '<div class="evo-person-content"><strong>Minha evolução</strong><span>'+esc(name)+'</span>'+
-      '<span class="evo-kcal">'+(kcal!=null?fmt(kcal,0)+' kcal / dia':'Meta alimentar não definida')+'</span></div></div>'+
+    return '<header class="evo-header">'+
+      '<p class="eyebrow">ACOMPANHAMENTO</p><h1 class="page-title">Sua evolução.</h1>'+
+      '<p class="evo-subhead">Corpo, alimentação e treinos em perspectiva.</p>'+
       '<div class="evo-tabs" role="tablist" aria-label="Acompanhamento de evolução">'+
       ['weight','nutrition'].map(v=>'<button id="evo-tab-'+v+'" type="button" role="tab" aria-selected="'+(v===view?'true':'false')+
         '" aria-controls="evo-panel-'+v+'" data-action="evo-view" data-view="'+v+'" class="'+(v===view?'is-selected':'')+'">'+
-        (v==='weight'?'Peso':'Nutrição')+'</button>').join('')+'</div></header>';
+        (v==='weight'?'Corpo':'Nutrição')+'</button>').join('')+'</div></header>';
   }
-  function renderWeight(state,day,limit){
-    const model=weightModel(state,day,limit);
+  function renderWeight(state,day,limit,opts={}){
+    const model=weightModel(state,day,limit),chartMode=opts.chartMode==='measures'?'measures':'weight';
+    const metric=measuresModel(state,day,opts.measureKey||measureDefault);
+    const line=chartMode==='weight'?weightSVG(model):measureSVG(metric);
+    const chartTitle=chartMode==='weight'?'Histórico de peso':metric.field.label;
     return '<section id="evo-panel-weight" class="evo-pane" role="tabpanel" aria-labelledby="evo-tab-weight">'+
       '<div class="evo-weight-kpis"><div><strong>'+fmt(model.initial)+'<small>kg</small></strong><span>Peso inicial</span></div>'+
       '<div><strong>'+fmt(model.latest?.weight)+'<small>kg</small></strong><span>Peso atual</span></div>'+
       '<div><strong>'+fmt(model.desired)+'<small>kg</small></strong><span>Peso desejado</span></div></div>'+
       '<button type="button" class="evo-cta" data-action="evo-add-weight">Adicionar uma pesagem</button>'+
-      '<section class="evo-section" aria-labelledby="evo-weight-heading"><h2 id="evo-weight-heading">Peso</h2>'+
-      weightSVG(model)+
-      (model.hasUserWeighing?'<p class="evo-footnote">Somente pesagens registradas. Flutuações de um dia não demonstram mudança de gordura.</p>':
-        '<p class="evo-footnote">O valor de referência inicial não substitui uma pesagem realizada.</p>')+'</section>'+
-      '<section class="evo-section evo-weight-history" aria-labelledby="evo-weighings-heading"><h2 id="evo-weighings-heading">Pesagens registradas</h2>'+
-      (model.history.length?'<div class="evo-history-list">'+model.history.map(row=>'<div class="evo-history-row"><strong>'+fmt(row.weight)+' kg</strong><span>'+
+      '<section class="evo-section evo-body-chart" aria-labelledby="evo-weight-heading">'+
+      '<div class="evo-card-heading"><div><h2 id="evo-weight-heading">Evolução corporal</h2><p>'+esc(chartTitle)+'</p></div>'+
+      '<div class="evo-chart-selector" role="group" aria-label="Tipo do gráfico">'+
+      ['weight','measures'].map(v=>'<button type="button" data-action="evo-chart-mode" data-mode="'+v+
+        '" aria-pressed="'+(v===chartMode)+'" class="'+(v===chartMode?'is-selected':'')+'">'+(v==='weight'?'Peso':'Medidas')+'</button>').join('')+
+      '</div></div>'+
+      (chartMode==='measures'?'<div class="evo-measure-picker"><label for="evo-measure-field">Região corporal</label>'+
+        '<select id="evo-measure-field" aria-label="Selecionar medida corporal">'+BODY.FIELDS.map(f=>
+        '<option value="'+esc(f.id)+'" '+(f.id===metric.field.id?'selected':'')+'>'+esc(f.label)+'</option>').join('')+
+        '</select></div>':'')+
+      line+
+      (chartMode==='measures'?'<div class="evo-chart-bottom"><span>'+(
+        metric.latest?'Última medida: '+fmt(metric.latest.value)+' cm · '+stamp(metric.latest.date):
+        'Sem aferição nesta região')+'</span>'+
+        '<button type="button" data-action="body-open">Ver mapa corporal ›</button></div>'+
+        '<p class="evo-footnote">Aferições em condições diferentes não comprovam alteração de gordura.</p>':
+        '<p class="evo-footnote">Linha pontilhada: meta desejada. Oscilações diárias são normais.</p>')+
+      '</section>'+
+      (opts.stepsHTML||'')+(opts.groupsHTML||'')+
+      '<details class="evo-history-fold"><summary>Pesagens registradas <span>'+model.all.length+'</span></summary>'+
+      '<div class="evo-history-list">'+(model.history.length?model.history.map(row=>
+        '<div class="evo-history-row"><strong>'+fmt(row.weight)+' kg</strong><span>'+
         new Date(toUTC(row.date)).toLocaleDateString('pt-BR',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})+
-        (row.initial?' · referência':'')+'</span></div>').join('')+'</div>':
-        '<p class="evo-empty">Ainda não há pesagens.</p>')+
-      (model.all.length>model.history.length?'<button class="evo-more-button" data-action="evo-weight-more" type="button">Ver mais pesagens ('+(model.all.length-model.history.length)+')</button>':'')+
-      '</section></section>';
+        (row.initial?' · referência':'')+'</span></div>').join(''):'<p class="evo-empty">Ainda não há pesagens.</p>')+'</div>'+
+      (model.all.length>model.history.length?'<button class="evo-more-button" type="button" data-action="evo-weight-more">Ver mais pesagens ('+
+        (model.all.length-model.history.length)+')</button>':'')+'</details></section>';
   }
   function indexedEntries(nutrition){
     const map=new Map();
@@ -250,7 +329,7 @@
       '<button type="button" class="evo-link" data-action="nutrition-open">Registrar ou revisar refeições <span aria-hidden="true">›</span></button>'+
       '</section>';
   }
-  const api={moveDate,periodDays,weightModel,nutritionWindow,macroSummary,renderHeader,renderWeight,renderNutrition};
+  const api={moveDate,periodDays,weightModel,measuresModel,groupVolume,renderGroupVolume,nutritionWindow,macroSummary,renderHeader,renderWeight,renderNutrition};
   root.ForjaEvolutionDashboard=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
