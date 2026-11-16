@@ -30,6 +30,30 @@ with sync_playwright() as p:
     errors=[]
     page=start(context,{},errors)
     page.on('dialog',lambda d:d.accept())
+    # Separate synthetic browser verifies dinner alternatives are mutually exclusive.
+    probe=start(context,{},errors)
+    probe.on('dialog',lambda d:d.accept())
+    probe.locator('#nav [data-tab="nutrition"]').click()
+    dinner=probe.locator('.nd-meal').filter(has=probe.get_by_role('heading',name='Jantar'))
+    dinner.locator('.nd-plan-alternatives > summary').click()
+    wrap=dinner.locator('[data-recipe-card="dinner-wrap"]')
+    wrap.locator('[data-plan-choice][data-group="0"]').select_option('1')  # pão de hambúrguer
+    wrap.locator('[data-plan-choice][data-group="1"]').select_option('1')  # atum, não frango
+    wrap.locator('[data-plan-choice][data-group="2"]').select_option('1')  # sem queijo
+    wrap.locator('[data-nd="plan-confirm"]').click()
+    after=json.loads(probe.evaluate("localStorage.getItem('forja.academia.v1')"))
+    dinners=[e for e in after['nutrition']['entries'] if e['mealType']=='dinner']
+    assert len(dinners)==1
+    labels=[i['label'] for i in dinners[0]['items']]
+    assert labels==['Pão de hambúrguer','Atum'],labels
+    assert after['nutrition']['settings']['targets'][0]['values']['energyKcal']==2170
+    probe.close()
+    # All fruit equivalents from the PDF are available in the single selection.
+    fruitprobe=start(context,{},errors)
+    fruitprobe.locator('#nav [data-tab="nutrition"]').click()
+    fruits=fruitprobe.locator('[data-recipe-card="breakfast-shake"] [data-plan-choice][data-group="3"]')
+    assert fruits.locator('option').count()==52
+    fruitprobe.close()
     # First launch installs the professional reference without inventing personal measurements.
     first=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')") or 'null')
     # The in-memory initial state is persisted after a first normal interaction.
