@@ -47,8 +47,8 @@ with sync_playwright() as p:
     assert any(float(w['weight'])==84 for w in json.loads(restored.evaluate('localStorage.getItem("'+KEY+'")'))['weights'])
     assert json.loads(restored.evaluate('localStorage.getItem("'+KEY+'")'))['sessions'][0]['id']=='test-saved-strength'
     restored.locator('#nav [data-tab="history"]').click()
-    assert '1 musculação' in restored.locator('.history-overview').inner_text()
-    assert '1 Muay Thai' not in restored.locator('.history-overview').inner_text()
+    assert restored.locator('.history-overview strong').first.inner_text().strip()=='1'
+    assert restored.locator('.history-overview strong').nth(1).inner_text().strip()=='0'
     restored.close()
     corrupt={**sample,'recoveryHistory':[{'day':'dia-invalido','energy':'baixa','fatigue':'alta'}]}
     original=json.dumps(corrupt,ensure_ascii=False)
