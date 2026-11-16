@@ -7,7 +7,7 @@ HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
 SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js',
  'catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js',
- 'nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','app.js']
+ 'nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
 def start(ctx,seed,errors):
     page=ctx.new_page()
     page.on('pageerror',lambda exc:errors.append(str(exc)))
