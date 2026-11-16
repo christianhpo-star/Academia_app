@@ -218,7 +218,8 @@ with sync_playwright() as p:
     page.locator('.nd-save-sticky button[type="submit"]').click()
     assert len(state()['nutrition']['entries'])==3
     # Complete profile, accept estimate, override target; edits to profile never overwrite it.
-    page.locator('[data-nd="goals"]').first.click()
+    page.evaluate('window.scrollTo(0,0)')
+    page.locator('.nd-head-goals').click()
     page.locator('#nd-heightCm').fill('175,5');page.locator('#nd-age').fill('30');page.locator('#nd-weightKg').fill('80')
     page.locator('#nd-sex').select_option('male');page.locator('#nd-activity').select_option('1.55')
     page.locator('[name="adultScope"]').check()
@@ -227,13 +228,15 @@ with sync_playwright() as p:
     page.locator('[data-nd="accept"]').click()
     assert state()['nutrition']['settings']['profile']['heightCm']==175.5
     page.locator('[data-nd="today"]').click()
-    page.locator('[data-nd="goals"]').first.click()
+    page.evaluate('window.scrollTo(0,0)')
+    page.locator('.nd-head-goals').click()
     page.locator('.nd-goals-manual > summary').click()
     page.locator('#nd-target-proteinG').fill('150')
     page.locator('#nd-target button[type="submit"]').click()
     target=state()['nutrition']['settings']['targets'][-1]
     assert target['source']=='manual' and target['values']['proteinG']==150
-    page.locator('[data-nd="goals"]').first.click()
+    page.evaluate('window.scrollTo(0,0)')
+    page.locator('.nd-head-goals').click()
     page.locator('#nd-age').fill('31');page.locator('#nd-profile button[type="submit"]').click()
     assert state()['nutrition']['settings']['targets'][-1]==target
     page.locator('[data-nd="close"]').click()
