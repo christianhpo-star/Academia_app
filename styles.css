@@ -1229,3 +1229,21 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .nd-plan-other{padding:9px 3px 1px}
 .nd-plan-other .button-inline{min-height:44px;display:inline-flex;align-items:center}
 @media(max-width:360px){.nd-plan-option{padding:10px}.nd-plan-option-head strong{font-size:13px}}
+
+
+/* Professional daily nutrition targets and estimated resting energy: compact, informational. */
+.nd-metabolism{padding:13px;border:1px solid #3c5162;background:#182737;border-radius:14px;margin:12px 0}
+.nd-metabolism-kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.nd-metabolism-kpis>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.nd-metabolism-kpis span{font-size:11px;color:#a8bfd0}
+.nd-metabolism-kpis strong{font-size:clamp(19px,4.2vw,25px);line-height:1.2;color:#f3f6fb;font-weight:850;letter-spacing:-.03em}
+.nd-metabolism-kpis small{font-weight:550;font-size:10px;letter-spacing:0;color:#bacbd8}
+.nd-metabolism-track{height:7px;background:#33475a;border-radius:999px;margin-top:12px;overflow:hidden}
+.nd-metabolism-track>span{display:block;background:#80beff;height:100%;border-radius:999px}
+.nd-metabolism-caption{font-size:11px;color:#bbcad8;line-height:1.5;margin:9px 0 0}
+.nd-prescription-diff{font-size:11px;line-height:1.5;color:#e9c99b;margin:9px 0 0}
+.nd-metabolism-actions{display:flex;margin-top:8px}
+.nd-metabolism-actions button{min-height:42px}
+.nd-professional-recipe{padding:13px;margin:12px 0;border:1px solid #456a52;border-radius:13px;background:#1b342b}
+.nd-professional-recipe strong{font-size:13px;color:#daffc0}
+.nd-professional-recipe p{font-size:12px;line-height:1.5;margin:7px 0 9px}
