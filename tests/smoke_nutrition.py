@@ -254,6 +254,7 @@ with sync_playwright() as p:
     page.wait_for_timeout(100)
     assert page.locator('.nd-date-stick').evaluate('(e)=>e.classList.contains("nd-is-stuck")')
     assert page.evaluate("parseFloat(document.querySelector('.nutrition-screen').style.getPropertyValue('--nd-scroll-progress'))>.7")
+    assert page.evaluate("parseFloat(document.querySelector('#nd-collapse').style.height) < document.querySelector('#nd-collapse .nd-collapse-inner').scrollHeight * .3"), 'summary must release real layout height'
     assert page.evaluate("""() => {
       const r=document.querySelector('.nd-date-stick').getBoundingClientRect();
       return r.top>=-1 && r.top<55;
