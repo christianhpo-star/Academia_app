@@ -726,32 +726,42 @@
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
     const all=state.exercises.filter(x=>x.group===ui.plan);
-    return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D. Cada bloco realizado sai da fila; os outros continuam pendentes.')}
-      <button class="secondary full mt-12" data-action="navigate" data-to="catalog">Catálogo de exercícios</button>
+    const activeCount=all.filter(x=>x.active).length;
+    const isNext=next.pending[0]===ui.plan;
+    return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>
       ${resumeBanner()}
-      ${renderQueue(next)}
+      <section class="workout-plan-top" aria-label="Planejamento da musculação">
+        <div class="workout-plan-status"><span>RODADA ${next.completedRounds+1}</span><strong>${next.completed.length}/${DATA.rotation.length} feitos</strong></div>
+        <details class="workout-queue-compact"><summary>Ver sequência de treinos <span aria-hidden="true">⌄</span></summary>
+          ${renderQueue(next)}</details>
+      </section>
       <div class="tabs plan-block-selector" role="group" aria-label="Escolher grupo de treino">
       ${DATA.plans.map(plan => {
         const label=plan.title.split(" ")[0];
         return `<button type="button" class="tab-chip plan-block-choice ${ui.plan===plan.id?'selected':''}" data-action="select-plan" data-plan="${plan.id}" aria-pressed="${ui.plan===plan.id}" aria-label="Bloco ${plan.id}: ${esc(label)}">
           <span class="plan-choice-code">BLOCO ${plan.id}</span><span class="plan-choice-name">${esc(label)}</span></button>`;
       }).join('')}</div>
-      <section class="workout-banner"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><p>${esc(p.subtitle)}</p><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button></section>
+      <section class="workout-banner workout-banner-compact">
+        <div class="workout-main-heading"><div><span class="section-eyebrow">${isNext?'PRÓXIMO TREINO':'TREINO SELECIONADO'} · BLOCO ${p.id}</span><h1>${esc(p.title)}</h1></div>
+        <span class="plan-exercises-count">${activeCount} ativos</span></div>
+        <button class="primary full" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button>
+      </section>
       <section class="plan-exercises" aria-labelledby="plan-exercises-title">
-        <div class="section-row plan-exercises-heading"><div><p class="section-eyebrow">SUA FICHA · BLOCO ${p.id}</p><h2 class="section-title" id="plan-exercises-title">Exercícios do bloco</h2>
-          <p class="small muted">Organizados na ordem da sessão. Ative ou edite cada movimento sem perder os registros anteriores.</p></div><span class="plan-exercises-count">${all.filter(x=>x.active).length} ativos</span></div>
+        <div class="section-row plan-exercises-heading workout-list-heading">
+          <h2 class="section-title" id="plan-exercises-title">Ficha · ${activeCount} ativos</h2>
+          <button class="button-inline" data-action="navigate" data-to="catalog" aria-label="Catálogo de exercícios">Catálogo ›</button>
+        </div>
         <div class="plan-exercises-list">${all.map((ex,i)=>`<article class="plan-exercise-item ${ex.active?'':'is-inactive'}">
           <div class="plan-exercise-index" aria-hidden="true">${String(i+1).padStart(2,'0')}</div>
           <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
-            <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
-            <p class="plan-exercise-submeta">Progressão: +${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Atenção ao joelho':''}</p>
-            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div>
-          <div class="plan-exercise-state"><span>${ex.active?'Na ficha':'Inativo'}</span><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
+            <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições<span aria-hidden="true"> · </span>+${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Joelho':''}</p>
+            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}" aria-label="Editar ${esc(ex.name)}">Editar</button></div>
+          <div class="plan-exercise-state"><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
         </article>`).join('')}</div>
       </section>
-      <button class="secondary full mt-16" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button>
-      <div class="callout mt-16">Aquecimentos não contam como séries efetivas. Você pode alterar exercícios, progressão e número de séries em qualquer momento.</div>`;
+      <button class="secondary full mt-16" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button>`;
   }
+
   function seedSets(ex) {
     const h=history(ex.id);
     if(h.length){
@@ -2061,7 +2071,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-food41',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-focus42',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
