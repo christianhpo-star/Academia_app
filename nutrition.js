@@ -161,8 +161,11 @@
   function mergeBalance(current, backup) {
     // Local choices always win. Only import dated reviews absent locally;
     // an accepted local plan or local pause cannot be overwritten by a backup.
-    const own=current || {reviewedDays:[],plan:null};
-    const restored=backup || {reviewedDays:[],plan:null};
+    if (!current && !backup) return {reviewedDays:[],plan:null};
+    if (!current) return {...backup,reviewedDays:backup.reviewedDays.slice()};
+    if (!backup) return {...current,reviewedDays:current.reviewedDays.slice()};
+    const own=current;
+    const restored=backup;
     const reviews=own.reviewedDays.slice(), present=new Set(reviews.map(x=>x.date));
     for(const x of restored.reviewedDays){if(!present.has(x.date)){reviews.push(x);present.add(x.date);}}
     return {...restored,...own,reviewedDays:reviews};
