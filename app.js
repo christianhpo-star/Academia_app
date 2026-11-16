@@ -21,6 +21,22 @@
   const NCAT = window.ForjaNutritionCatalog;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
+  const SAFETY_BACKUP_KEY = 'forja.academia.safety-backup.v1';
+  const UNREADABLE_COPY_KEY = 'forja.academia.unreadable-copy.v1';
+  let loadFailure = null;
+  let unreadableOriginal = null;
+  // Store a single pre-upgrade, validated snapshot on this device. Never remove
+  // the only available local copy when validation or migration fails.
+  function preserveValidatedSnapshot(raw) {
+    if (!raw) return;
+    try {
+      if (!localStorage.getItem(SAFETY_BACKUP_KEY))
+        localStorage.setItem(SAFETY_BACKUP_KEY, raw);
+    } catch (err) {
+      console.warn('Não foi possível criar cópia local de segurança; exporte um backup JSON.', err);
+    }
+  }
+
   const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   const fmt = E.formatWeight;
   const today = () => {
@@ -48,8 +64,9 @@
     };
   }
   function load() {
+    let raw = null;
     try {
-      const raw = localStorage.getItem(KEY); if (!raw) return initial();
+      raw = localStorage.getItem(KEY); if (!raw) return initial();
       const parsed = JSON.parse(raw);
       if (!validState(parsed)) throw new Error('Backup incompatível');
       const upgradedMuay = M.ensureArchive(parsed);
@@ -64,11 +81,25 @@
       }
       const upgradedReferences = migrateReferences(parsed);
       if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedProfessionalTarget || upgradedRecovery) {
+        preserveValidatedSnapshot(raw);
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
       }
       return parsed;
-    } catch (err) { console.warn('Não foi possível ler os registros',err); return initial(); }
+    } catch (err) {
+      console.warn('Não foi possível ler os registros', err);
+      loadFailure = err;
+      unreadableOriginal = raw;
+      if (raw) {
+        try {
+          if (!localStorage.getItem(UNREADABLE_COPY_KEY))
+            localStorage.setItem(UNREADABLE_COPY_KEY, raw);
+        } catch (_) { /* the primary original stays untouched */ }
+      }
+      // This in-memory template is NEVER allowed to overwrite a nonreadable
+      // existing archive. Display the protected recovery screen instead.
+      return initial();
+    }
   }
   function validState(value) {
     return value && value.version === 1 && value.settings &&
@@ -78,7 +109,7 @@
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
       BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && HEALTH.validMonthlyList(value.healthMonthly) && HEALTH.validWeightReports(value.healthWeightReports) && REM.validPrefs(value.reminderPrefs) && ROUTINE.valid(value.dailyRoutine) && NUTRITION.validArchive(value.nutrition) &&
-      (value.recoveryHistory===undefined || (Array.isArray(value.recoveryHistory)&&value.recoveryHistory.length<=1095&&value.recoveryHistory.every(r=>r&&typeof r.day==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(r.day)&&['boa','normal','baixa'].includes(r.energy)&&['normal','moderada','alta'].includes(r.fatigue)))) &&
+      (value.recoveryHistory===undefined || (Array.isArray(value.recoveryHistory)&&value.recoveryHistory.length<=1095&&value.recoveryHistory.every(r=>r&&typeof r.day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(r.day)&&['boa','normal','baixa'].includes(r.energy)&&['normal','moderada','alta'].includes(r.fatigue)))) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -207,7 +238,20 @@
     ui.draftSaveOk = false;
   }
   function save() {
-    try { localStorage.setItem(KEY,JSON.stringify(state)); return true; }
+    if (loadFailure) {
+      notify('Dados antigos protegidos. Exporte a cópia original antes de tentar recuperar.');
+      return false;
+    }
+    try {
+      const previous = localStorage.getItem(KEY);
+      if (previous && previous !== JSON.stringify(state)) {
+        try {
+          if (validState(JSON.parse(previous))) preserveValidatedSnapshot(previous);
+        } catch (_) { /* never copy a corrupt state into the validated snapshot */ }
+      }
+      localStorage.setItem(KEY,JSON.stringify(state));
+      return true;
+    }
     catch (err) { notify('Armazenamento indisponível. Exporte um backup antes de sair.'); return false; }
   }
   function notify(message) {
@@ -432,6 +476,14 @@
   }
   function render() {
     const main = document.getElementById('screen');
+    if (loadFailure) {
+      main.innerHTML = '<section class="card" role="alert" aria-label="Proteção de histórico">'+
+        '<h1>Seus dados precisam ser recuperados.</h1>'+
+        '<p>O FORJA encontrou dados locais que não conseguiu validar. O arquivo original NÃO foi apagado pelo carregamento e nenhum novo registro poderá sobrescrevê-lo nesta tela.</p>'+
+        (unreadableOriginal?'<button type="button" class="primary full" data-action="recovery-export-raw">Baixar cópia dos registros encontrados (JSON)</button>':'<p>O navegador não permitiu ler o armazenamento. Não limpe os dados deste site.</p>')+
+        '<p class="small muted">Após guardar o arquivo, procure o suporte para uma recuperação segura. Não desinstale ou limpe o armazenamento local.</p></section>';
+      return;
+    }
     main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
       ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
@@ -1588,6 +1640,13 @@
   }
   function handleAction(btn) {
     const action=btn.dataset.action;
+    if (loadFailure) {
+      if (action==='recovery-export-raw' && unreadableOriginal) {
+        download('forja-recuperacao-bruta-'+today()+'.json',unreadableOriginal,'application/json;charset=utf-8');
+        notify('Cópia original exportada. Guarde o arquivo em local seguro.');
+      }
+      return;
+    }
     if(action==='routine-confirm'||action==='routine-hide'||action==='routine-show'||action==='routine-manage'||action==='routine-enable'){
       handleDailyRoutineAction(btn);return;
     }
@@ -1959,9 +2018,11 @@
     }
   }
   document.querySelector('.top-settings')?.addEventListener('click',()=>{
+    if (loadFailure) return;
     ui.editor=null;ui.tab='settings';render();window.scrollTo(0,0);
   });
   document.getElementById('nav').addEventListener('click',event=>{
+    if (loadFailure) return;
     const btn=event.target.closest('[data-tab]');if(!btn)return;
     ui.editor=null;ui.tab=btn.dataset.tab;
     if(ui.tab==='progress'){ui.bodyOpen=false;ui.nutritionOpen=false;ui.nutritionEditId=null;}
