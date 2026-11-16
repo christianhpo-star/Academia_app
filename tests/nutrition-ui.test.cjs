@@ -119,3 +119,31 @@ test('atalho de dividir porção aparece no diário sem lançar nada automaticam
  assert.match(html,/Dividir uma porção/);
  assert.equal(archive.entries.length,0);
 });
+
+
+test('UX41: native diary hierarchy displays macros, sticky day and five distinct meal pictograms',()=>{
+ const a=N.archive();
+ const html=UI.render({archive:a,date:'2026-11-16',balanceDate:'2026-11-16'});
+ assert.match(html,/class="nd-overview"/);
+ assert.match(html,/class="nd-date-stick"/);
+ assert.match(html,/class="nd-kcal-main"/);
+ assert.equal((html.match(/class="nd-meal-symbol"/g)||[]).length,5);
+ for(const type of ['breakfast','lunch','snack','dinner','supper'])
+   assert.match(html,new RegExp('data-meal-kind="'+type+'"'));
+ assert.equal((html.match(/class="nd-meal-top"/g)||[]).length,5);
+ assert.match(html,/Nenhuma refeição registrada neste dia/);
+ assert.match(html,/Não representa o consumo total do dia/);
+ assert.match(html,/data-nd="shared"/);
+ assert.doesNotMatch(html,/aria-label="Calorias gastas"/);
+});
+test('UX41: recorded energy displays a subtotal, not invented full-day consumption',()=>{
+ const a=N.archive(),date='2026-11-16';
+ const item=CAT.makeItem('photo:itambe-zero-morango-200g','pack',1,p=>p+'-ux41');
+ a.entries.push({id:'m-ux41',date,mealType:'breakfast',items:[item]});
+ const html=UI.render({archive:a,date,balanceDate:date});
+ assert.match(html,/registradas/);
+ assert.match(html,/data-meal-kind="breakfast"/);
+ assert.match(html,/nd-meal-preview/);
+ assert.match(html,/Itambé morango/);
+ assert.doesNotMatch(html,/N[Aa]o registrad[ao].*0 kcal/);
+});
