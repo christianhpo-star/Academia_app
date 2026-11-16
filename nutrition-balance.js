@@ -87,7 +87,7 @@
         exerciseOn(state, day)) return null;
     const adjustment = plan.days.find(x => x.date === day);
     const base = G.active(nutrition.settings, day);
-    if (!adjustment || !base || base.id !== plan.targetId ||
+    if (!adjustment || !base || base.source === 'professional' || base.id !== plan.targetId ||
         base.values.energyKcal !== plan.baseValues[0]) return null;
     const values = {...base.values,
       energyKcal: round(base.values.energyKcal - adjustment.reductionKcal),
@@ -105,6 +105,8 @@
       const facts = quality(nutrition, date);
       return {date, checked, quality: facts.complete,
         energyKcal: facts.complete ? facts.energyKcal : null,
+        proteinG: facts.complete ? facts.proteinG : null,
+        targetProteinG: target?.values.proteinG ?? null,
         targetKcal: target?.values.energyKcal ?? null,
         compatible: !!base && target?.id === base.id,
         deltaKcal: checked && facts.complete && target?.values.energyKcal != null ?
@@ -150,6 +152,8 @@
     }
     if (validDays.length < MIN_REVIEWED_DAYS)
       return blocked('Confirme ao menos três dias anteriores completos e com nutrientes conhecidos. Dias ausentes não contam como zero.');
+    if (validDays.some(d => d.proteinG < d.targetProteinG * 0.85))
+      return blocked('A proteína registrada em pelo menos um dia confirmado ficou abaixo de 85% da meta. Priorize alimentação e recuperação, sem propor cortes.');
     if (balanceKcal < 150)
       return {...summary, status:'steady', reason:'O saldo dos dias conferidos não indica necessidade de compensação.'};
     if (!validDays.some(d => d.energyKcal > estimate.maintenance + 100))
