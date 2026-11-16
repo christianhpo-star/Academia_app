@@ -8,7 +8,7 @@ nutrition.settings.targets=[target];
 const item=(id,kcal,protein,carbs,fat,fiber)=>({id,label:'Registro sintético',quantity:1,unit:'portion',
   grams:null,source:{name:'Dados sintéticos'},nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null,fiberG:null},
   nutrientsPerServing:{energyKcal:kcal,proteinG:protein,carbsG:carbs,fatG:fat,fiberG:fiber}});
-const entry=(day,kcal,id)=>({id:'e'+id,date:day,mealType:'dinner',items:[item('i'+id,kcal,100,200,55,20)]});
+const entry=(day,kcal,id)=>({id:'e'+id,date:day,mealType:'dinner',items:Array.from({length:3},(_,i)=>item('i'+id+'-'+i,kcal/3,100/3,200/3,55/3,20/3))});
 test('weight model only uses local weights and labels inherited initial values',()=>{
  const state={settings,weights:[{id:'a',date:'2026-10-21',weight:90,initial:true},
   {id:'b',date:'2026-11-15',weight:87.2,initial:false},{id:'c',date:'2026-11-09',weight:88.8,initial:false}]};
