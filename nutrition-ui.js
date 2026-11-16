@@ -285,9 +285,10 @@
     const difference=target?G.difference(target.values):null;
     const present=rest.valueKcal!=null;
     return '<section class="nd-metabolism" aria-label="Referência profissional e metabolismo de repouso">'+
-      '<div class="nd-metabolism-kpis"><div><span>Meta '+(professional?'da nutricionista':'vigente')+'</span><strong>'+fmt(target?.values.energyKcal)+' <small>kcal/dia</small></strong></div>'+
+      '<div class="nd-metabolism-kpis"><div><span>Meta '+(professional?'da prescrição':'ajustada')+'</span><strong>'+fmt(target?.values.energyKcal)+' <small>kcal/dia</small></strong></div>'+
       '<div><span>Repouso estimado</span><strong>'+(present?fmt(rest.valueKcal):'—')+' <small>'+(present?'kcal/dia':'a calcular')+'</small></strong></div></div>'+
       (present&&target?.values.energyKcal?'<div class="nd-metabolism-track" role="img" aria-label="Repouso estimado '+fmt(rest.valueKcal)+' kcal e meta diária '+fmt(target.values.energyKcal)+' kcal"><span style="width:'+Math.min(100,Math.max(0,rest.valueKcal/target.values.energyKcal*100)).toFixed(1)+'%"></span></div>':'')+
+      '<p class="nd-metabolism-caption">PDF original: 1.710 kcal; o valor de 2.170 kcal é uma escolha de uso do app, não está no documento.</p>'+
       '<p class="nd-metabolism-caption">'+(present?'Estimativa Mifflin–St Jeor, não medida nem gasto diário total. Peso usado: '+fmt(rest.weightKg)+' kg'+(rest.weightDate?' ('+esc(dateBR(rest.weightDate))+')':'')+'.':'Para calcular, informe '+esc(rest.missing.join(', '))+' em Minhas metas.')+'</p>'+
       (difference!=null&&Math.abs(difference)>20?'<p class="nd-prescription-diff">Meta energética e macros informados não coincidem pelo cálculo 4/4/9 (diferença: '+fmt(difference)+' kcal). Valores mantidos sem correção.</p>':'')+
       '<div class="nd-metabolism-actions">'+button('goals',present?'Ver cálculo':'Completar perfil','','button-inline')+'</div></section>';
@@ -316,6 +317,7 @@
         <section class="nd-energy-overview" aria-label="Energia registrada e saldo">
           <div class="nd-kcal-main"><strong>${remainder==null?'—':remainder>=0?fmt(remainder):'−'+fmt(Math.abs(remainder))}</strong><span>kcal ${remainder!=null&&remainder<0?'acima da meta':'restantes da meta'}</span></div>
           <div class="nd-energy-compare"><div><strong>${daily.length?(hasEstimated?'≈':'')+fmt(kcal):'—'}</strong><small>registradas</small></div><div><strong>${fmt(goal)}</strong><small>meta diária</small></div></div>
+          <p class="nd-goal-origin">${goal===2170?'2.170 kcal · meta ajustada no FORJA; PDF: 1.710 kcal.':'Meta vigente em '+fmt(goal)+' kcal. PDF original: 1.710 kcal.'}</p>
           ${daily.length?'':'<p class="nd-brief-note">Nenhuma refeição registrada neste dia.</p>'}
           <details class="nd-energy-detail"><summary>Detalhes da energia</summary>${ring('energyKcal',kcal,goal,totals.counts.energyKcal)}</details>
         </section>
