@@ -59,15 +59,15 @@
       const startY=prev.y+(p.y-prior.y)/6,endY=p.y-(next.y-prev.y)/6;
       return 'C '+startX.toFixed(1)+' '+startY.toFixed(1)+' '+endX.toFixed(1)+' '+endY.toFixed(1)+' '+p.x+' '+p.y;
     }).join(' '):'';
-    const ticks=[0,1,2,3,4].map(i=>{const value=bottom+spread*i/4;return '<g><line x1="39" x2="351" y1="'+y(value)+'" y2="'+y(value)+'" stroke="#E5EAEE" stroke-width="1"/>'+
-      '<text x="34" y="'+(y(value)+4)+'" fill="#81909D" font-size="10" text-anchor="end">'+esc(fmt(value,0))+'</text></g>';}).join('');
-    const goal=reference!=null&&y(reference)>=20&&y(reference)<=188?'<line x1="43" x2="351" y1="'+y(reference)+'" y2="'+y(reference)+'" stroke="#929BA6" stroke-width="1.4" stroke-dasharray="5 4"/>'+
-      '<text x="351" y="'+(y(reference)-7)+'" font-size="10" text-anchor="end" fill="#536475">'+esc(fmt(reference))+' kg</text>':'';
+    const ticks=[0,1,2,3,4].map(i=>{const value=bottom+spread*i/4;return '<g><line x1="39" x2="351" y1="'+y(value)+'" y2="'+y(value)+'" stroke="#344658" stroke-width="1"/>'+
+      '<text x="34" y="'+(y(value)+4)+'" fill="#B0C0D0" font-size="10" text-anchor="end">'+esc(fmt(value,0))+'</text></g>';}).join('');
+    const goal=reference!=null&&y(reference)>=20&&y(reference)<=188?'<line x1="43" x2="351" y1="'+y(reference)+'" y2="'+y(reference)+'" stroke="#9DAFC0" stroke-width="1.4" stroke-dasharray="5 4"/>'+
+      '<text x="351" y="'+(y(reference)-7)+'" font-size="10" text-anchor="end" fill="#C0D1E0">'+esc(fmt(reference))+' kg</text>':'';
     const labels=[0,Math.floor((coords.length-1)/2),coords.length-1].filter((x,i,a)=>a.indexOf(x)===i).map(index=>'<text x="'+coords[index].x+
-      '" y="216" font-size="10" fill="#81909D" text-anchor="'+(index===0?'start':index===coords.length-1?'end':'middle')+'">'+stamp(coords[index].r.date)+'</text>').join('');
-    const dots=coords.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="4.6" stroke="#FFFFFF" stroke-width="1.6" fill="#263B54"><title>'+stamp(p.r.date)+' · '+fmt(p.r.weight)+' kg'+(p.r.initial?' · referência inicial':'')+'</title></circle>').join('');
+      '" y="216" font-size="10" fill="#B0C0D0" text-anchor="'+(index===0?'start':index===coords.length-1?'end':'middle')+'">'+stamp(coords[index].r.date)+'</text>').join('');
+    const dots=coords.map(p=>'<circle cx="'+p.x+'" cy="'+p.y+'" r="4.6" stroke="#142334" stroke-width="1.6" fill="#C5F56B"><title>'+stamp(p.r.date)+' · '+fmt(p.r.weight)+' kg'+(p.r.initial?' · referência inicial':'')+'</title></circle>').join('');
     return '<div class="evo-chart"><svg class="evo-plot" viewBox="0 0 372 230" role="img" aria-label="Linha de '+period.length+' pesagens, peso atual '+fmt(model.latest?.weight)+' quilos, objetivo '+fmt(reference)+' quilos">'+
-      ticks+goal+(path?'<path d="'+path+'" fill="none" stroke="#263B54" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>':'')+
+      ticks+goal+(path?'<path d="'+path+'" fill="none" stroke="#C5F56B" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>':'')+
       dots+labels+'</svg></div>';
   }
   const BODY=root.ForjaBodyMeasures||(typeof require==='function'?require('./body-measures.js'):null);
@@ -210,10 +210,10 @@
     const grid=Array.from({length:tickCount+1},(_,i)=>{
       const n=max*i/tickCount;
       return '<g><line x1="'+left+'" x2="'+right+'" y1="'+scaleY(n)+'" y2="'+scaleY(n)+
-        '" stroke="#E5EAEE"/><text x="32" y="'+(scaleY(n)+3)+'" fill="#84909C" text-anchor="end" font-size="9">'+fmt(n,0)+'</text></g>';
+        '" stroke="#344658"/><text x="32" y="'+(scaleY(n)+3)+'" fill="#B0C0D0" text-anchor="end" font-size="9">'+fmt(n,0)+'</text></g>';
     }).join('');
     const targetLine=target!=null?'<line x1="'+left+'" x2="'+right+'" y1="'+scaleY(target)+'" y2="'+scaleY(target)+'" stroke="#929AA5" stroke-dasharray="5 4" stroke-width="1.3"/>'+
-      '<text x="'+right+'" y="'+Math.max(12,scaleY(target)-7)+'" fill="#697987" font-size="10" text-anchor="end">'+fmt(target,0)+' kcal</text>':'';
+      '<text x="'+right+'" y="'+Math.max(12,scaleY(target)-7)+'" fill="#B8C9D8" font-size="10" text-anchor="end">'+fmt(target,0)+' kcal</text>':'';
     // Only connect consecutive days with recorded values. Missing diary days are gaps, never zero.
     const paths=[];
     let current=[];
@@ -223,14 +223,14 @@
     }
     if(current.length>1)paths.push(current);
     const lines=paths.map(points=>'<path d="M '+points.map(p=>p.map(n=>n.toFixed(1)).join(' ')).join(' L ')+
-      '" fill="none" stroke="#6EBF82" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>').join('');
+      '" fill="none" stroke="#C5F56B" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"/>').join('');
     const points=series.map((r,i)=>r.totals?.energyKcal==null?'':'<circle cx="'+scaleX(i)+'" cy="'+scaleY(r.totals.energyKcal)+'" r="4.2"'+
-      ' stroke="'+(r.counts?.energyKcal?.estimated||r.counts?.energyKcal?.unknown?'#E6A055':'#FFFFFF')+
-      '" stroke-width="2" fill="#6EBF82"><title>'+stamp(r.date)+' · '+fmt(r.totals.energyKcal)+' kcal registradas'+
+      ' stroke="'+(r.counts?.energyKcal?.estimated||r.counts?.energyKcal?.unknown?'#E6A055':'#142334')+
+      '" stroke-width="2" fill="#C5F56B"><title>'+stamp(r.date)+' · '+fmt(r.totals.energyKcal)+' kcal registradas'+
       (r.counts?.energyKcal?.estimated?' · estimadas':'')+'</title></circle>').join('');
     const labelDates=[series[0],series[Math.floor((series.length-1)/2)],series.at(-1)];
     const labels=labelDates.map((r,i)=>'<text x="'+scaleX(i===0?0:i===1?Math.floor((series.length-1)/2):series.length-1)+
-      '" y="207" font-size="10" fill="#84909C" text-anchor="'+(i===0?'start':i===2?'end':'middle')+'">'+stamp(r.date)+'</text>').join('');
+      '" y="207" font-size="10" fill="#B0C0D0" text-anchor="'+(i===0?'start':i===2?'end':'middle')+'">'+stamp(r.date)+'</text>').join('');
     return '<div class="evo-chart"><svg class="evo-plot" viewBox="0 0 352 216" role="img" aria-label="Consumo calórico registrado em '+known.length+
       ' de '+series.length+' dias. Dias sem registro estão em branco">'+grid+targetLine+lines+points+labels+'</svg></div>';
   }
@@ -250,7 +250,7 @@
   function donutSegments(values,r,width){
     const safe=values.map(v=>Math.max(0,Number(v)||0));
     const total=safe.reduce((sum,v)=>sum+v,0),circ=2*Math.PI*r;
-    if(total<=0)return '<circle cx="175" cy="146" r="'+r+'" stroke="#E8EFF2" stroke-width="'+width+'" fill="none"/>';
+    if(total<=0)return '<circle cx="175" cy="146" r="'+r+'" stroke="#33495B" stroke-width="'+width+'" fill="none"/>';
     let offset=0;
     return safe.map((value,i)=>{
       const len=circ*(value/total),markup='<circle cx="175" cy="146" r="'+r+'" fill="none" stroke="'+macroLabels[i][2]+
@@ -270,10 +270,10 @@
     const innerText=targetTotal?'Meu objetivo':'Sem meta';
     return '<div class="evo-ring-wrap"><svg viewBox="0 0 350 292" role="img" aria-label="Anel externo: proporção energética aproximada dos macronutrientes registrados, com 9 kcal por grama de gordura e 4 kcal por grama de proteína e carboidrato. Anel interno: metas. Fibras à parte.">'+
       donutSegments(values,100,35)+donutSegments(targets,65,28)+
-      '<circle cx="175" cy="146" r="46" fill="#FFFFFF"/>'+
-      '<text x="175" y="147" text-anchor="middle" font-size="13" font-weight="700" fill="#80909A">'+innerText+'</text>'+
-      '<text x="175" y="166" text-anchor="middle" font-size="10" fill="#93A1AA">'+(targetTotal?'Anel interno':'Configure metas')+'</text>'+
-      '<text x="175" y="282" text-anchor="middle" font-size="12" font-weight="700" fill="#66747E">Minha ingestão · anel externo</text>'+
+      '<circle cx="175" cy="146" r="46" fill="#142334"/>'+
+      '<text x="175" y="147" text-anchor="middle" font-size="13" font-weight="700" fill="#C0D1E0">'+innerText+'</text>'+
+      '<text x="175" y="166" text-anchor="middle" font-size="10" fill="#B0C0D0">'+(targetTotal?'Anel interno':'Configure metas')+'</text>'+
+      '<text x="175" y="282" text-anchor="middle" font-size="12" font-weight="700" fill="#C2D0DB">Minha ingestão · anel externo</text>'+
       '</svg></div><div class="evo-legend">'+names+'</div>';
   }
   function renderAverages(summary,goal){
@@ -288,14 +288,14 @@
         '" rx="3" fill="'+color+'" opacity=".9"/>'+
         (Number.isFinite(target)?'<line x1="'+(center-25)+'" x2="'+(center+25)+'" y1="'+y(target)+'" y2="'+y(target)+
           '" stroke="'+color+'" stroke-width="2" stroke-dasharray="4 3"/>':'')+
-        '<text x="'+center+'" y="'+Math.max(19,isPresent?y(value)-9:28)+'" text-anchor="middle" fill="#33465B" font-size="12" font-weight="700">'+
+        '<text x="'+center+'" y="'+Math.max(19,isPresent?y(value)-9:28)+'" text-anchor="middle" fill="#F3F6FB" font-size="12" font-weight="700">'+
         (isPresent?fmt(value,0)+' g':'—')+'</text>'+
-        '<text x="'+center+'" y="200" text-anchor="middle" fill="#586879" font-size="11">'+label+'</text>'+
-        '<text x="'+center+'" y="218" text-anchor="middle" fill="#8995A0" font-size="9">'+
+        '<text x="'+center+'" y="200" text-anchor="middle" fill="#C5D4E3" font-size="11">'+label+'</text>'+
+        '<text x="'+center+'" y="218" text-anchor="middle" fill="#B6C8D8" font-size="9">'+
         (Number.isFinite(target)?'Meta '+fmt(target,0)+'g':'Sem meta')+'</text></g>';
     }).join('');
     return '<div class="evo-chart"><svg viewBox="0 0 350 231" class="evo-plot" role="img" aria-label="Média dos macronutrientes registrados, em gramas, comparada com metas indicadas por linhas tracejadas">'+
-      '<line x1="19" x2="335" y1="'+baseline+'" y2="'+baseline+'" stroke="#CBD7DF"/>'+bars+'</svg></div>';
+      '<line x1="19" x2="335" y1="'+baseline+'" y2="'+baseline+'" stroke="#496071"/>'+bars+'</svg></div>';
   }
   function renderNutrition(nutrition,day,periods){
     const target=G.active(nutrition?.settings||{},day)?.values||null;
