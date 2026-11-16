@@ -181,14 +181,15 @@
     }).join('');
   }
   function renderMacroRing(summary,goal){
-    const values=macroLabels.map(([key])=>summary.average[key]||0),total=values.reduce((a,b)=>a+b,0);
-    const targets=macroLabels.map(([key])=>goal?.[key]||0),targetTotal=targets.reduce((a,b)=>a+b,0);
+    const energyFactor={fatG:9,proteinG:4,carbsG:4};
+    const values=macroLabels.map(([key])=>(summary.average[key]||0)*energyFactor[key]),total=values.reduce((a,b)=>a+b,0);
+    const targets=macroLabels.map(([key])=>(goal?.[key]||0)*energyFactor[key]),targetTotal=targets.reduce((a,b)=>a+b,0);
     const names=macroLabels.map(([key,label,color],i)=>{
       const share=total>0?fmt(values[i]/total*100,0)+'%':'—';
       return '<span class="evo-macro-legend"><i style="background:'+color+'"></i><span>'+label+'</span><strong>'+share+'</strong></span>';
     }).join('');
     const innerText=targetTotal?'Meu objetivo':'Sem meta';
-    return '<div class="evo-ring-wrap"><svg viewBox="0 0 350 292" role="img" aria-label="Anel externo: proporção de lipídios, proteínas e carboidratos por gramas registrados. Anel interno: distribuição em gramas das metas. Fibras à parte.">'+
+    return '<div class="evo-ring-wrap"><svg viewBox="0 0 350 292" role="img" aria-label="Anel externo: proporção energética aproximada dos macronutrientes registrados, com 9 kcal por grama de gordura e 4 kcal por grama de proteína e carboidrato. Anel interno: metas. Fibras à parte.">'+
       donutSegments(values,100,35)+donutSegments(targets,65,28)+
       '<circle cx="175" cy="146" r="46" fill="#FFFFFF"/>'+
       '<text x="175" y="147" text-anchor="middle" font-size="13" font-weight="700" fill="#80909A">'+innerText+'</text>'+
@@ -238,7 +239,7 @@
       (macros.used?renderMacroRing(macros,target):'<p class="evo-empty">Registre lipídios, proteínas e carboidratos para comparar a distribuição.</p>')+
       '<div class="evo-fiber"><i></i><span>Fibras (acompanhadas à parte)</span><strong>'+fmt(fiber,0)+' g'+
       (Number.isFinite(target?.fiberG)?' / '+fmt(target.fiberG,0)+' g':'')+'</strong></div>'+
-      '<p class="evo-footnote">'+macros.used+' dia(s) com macros disponíveis; porcentagens calculadas sobre os gramas de lipídios, proteínas e carboidratos, não sobre calorias. Fibras não entram no anel para evitar dupla contagem.'+
+      '<p class="evo-footnote">'+macros.used+' dia(s) com macros disponíveis; porcentagens energéticas aproximadas pelos fatores 9/4/4 kcal por grama de gordura/proteína/carboidrato. Não recalculamos a energia declarada nos rótulos. Fibras não entram no anel para evitar dupla contagem.'+
       (macros.anyEstimate||macros.anyUnknown?' Inclui subtotais estimados ou incompletos.':'')+'</p></section>'+
       '<section class="evo-section" aria-labelledby="evo-averages-title"><h2 id="evo-averages-title">Média de macronutrientes (g)</h2>'+
       periodButtons('average',averageDays)+
