@@ -31,7 +31,8 @@ with sync_playwright() as p:
     errors=[]
     page=launch(ctx,{},errors)
     page.get_by_role('button',name='Evolução',exact=True).click()
-    page.locator('.evo-extras > summary').click()
+    page.locator('[data-action="evo-chart-mode"][data-mode="measures"]').click()
+    assert page.locator('#evo-measure-field').is_visible()
     page.locator('[data-action="body-open"]').click()
     assert page.get_by_role('heading',name='Medidas corporais.').count()==1
     assert page.locator('.body-figure svg').count()==1
