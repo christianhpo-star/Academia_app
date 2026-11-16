@@ -39,7 +39,7 @@ with sync_playwright() as p:
     page.locator('#goal-form button[type="submit"]').click()
     saved=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
     assert saved['settings']['goalMode']=='muscle_gain'
-    assert len(saved['nutrition']['settings'].get('targets',[]))==1 and saved['nutrition']['settings']['targets'][0]['source']=='professional'
+    assert len(saved['nutrition']['settings'].get('targets',[]))==1 and saved['nutrition']['settings']['targets'][0]['source']=='manual'
     page.locator('#nav [data-tab="progress"]').click()
     assert page.locator('.goal-plan-card').count()==1
     assert 'Ganhar massa muscular' in page.locator('.goal-plan-card').inner_text()
