@@ -33,14 +33,16 @@ jobs:
           node --check daily-routine.js
           node --check nutrition.js
           node --check nutrition-catalog.js
+          node --check nutrition-prescription-data.js
           node --check nutrition-presets.js
           node --check nutrition-balance.js
           node --check nutrition-ui.js
           node --check evolution-dashboard.js
+          node --check performance-trends.js
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/nutrition-balance.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-presets.test.cjs tests/nutrition-ui.test.cjs tests/evolution-dashboard.test.cjs
+        run: node --test tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/nutrition-balance.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/nutrition-presets.test.cjs tests/performance-trends.test.cjs tests/nutrition-ui.test.cjs tests/evolution-dashboard.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright

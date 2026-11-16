@@ -1,59 +1,61 @@
-const test=require('node:test');
-const assert=require('node:assert/strict');
-const N=require('../nutrition.js');
-const CAT=require('../nutrition-catalog.js');
-const PLAN=require('../nutrition-presets.js');
-const UI=require('../nutrition-ui.js');
-let seq=0;
-const uid=prefix=>prefix+'-'+(++seq);
-const day='2026-11-16';
-test('every suggested recipe creates a valid diary snapshot without changing the archive',()=>{
- const archive=N.archive(),frozen=JSON.stringify(archive);
- for(const preset of PLAN.recipes){
-   const entry=PLAN.makeEntry(preset.id,day,uid);
-   assert.ok(entry,'Failed '+preset.id);
-   assert.ok(N.validEntry(entry),preset.id);
-   assert.equal(entry.mealType,preset.mealType);
-   assert.equal(entry.date,day);
-   assert.equal(entry.items.length,preset.ingredients.length);
-   assert.ok(entry.items.every(item=>item.quantity>0),preset.id);
-   assert.notEqual(entry.id,PLAN.makeEntry(preset.id,day,uid).id);
- }
- assert.equal(JSON.stringify(archive),frozen);
- assert.equal(PLAN.makeEntry('not-real',day,uid),null);
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+const N=require('../nutrition.js'),CAT=require('../nutrition-catalog.js');
+const RAW=require('../nutrition-prescription-data.js'),PLAN=require('../nutrition-presets.js'),UI=require('../nutrition-ui.js');
+const json=JSON.parse(fs.readFileSync(path.join(__dirname,'../nutrition-prescription.json'),'utf8'));
+let n=0;const id=x=>x+'-'+(++n),day='2026-11-16';
+test('JSON document is single source of truth and covers all 13 pages',()=>{
+ assert.deepEqual(RAW,json);
+ assert.equal(json.source.pages,13);
+ assert.deepEqual(Object.fromEntries(Object.entries(json.meals).map(([k,v])=>[k,v.length])),{breakfast:5,lunch:2,snack:3,dinner:3});
+ assert.equal(json.fruits.equivalents.length,52);
+ assert.equal(json.source.originalEnergyKcal,1710);
+ assert.equal(json.source.energyTargetRequestedByUserKcal,2170);
+ assert.equal(json.source.originalMacroEquivalentKcal,1472);
+ assert.equal(json.meals.dinner[0].label,'Prato como o almoço');
+ assert.equal(json.meals.dinner[1].groups[0].choices.length,3);
+ assert.equal(json.meals.dinner[2].groups[0].choices.length,2);
+ assert.equal(json.meals.dinner[2].groups[1].choices.length,4);
 });
-test('missing ingredient values remain unknown, never recorded as zero or as fictitious energy',()=>{
- const entry=PLAN.makeEntry('snack-yogurt',day,uid);
- const yogurt=entry.items.find(item=>item.label==='Iogurte natural desnatado');
- assert.ok(yogurt);
- assert.equal(yogurt.nutrientsPer100g.energyKcal,null);
- assert.equal(yogurt.source,null);
- const totals=N.recordedBreakdown([entry],day);
- assert.ok(totals.counts.energyKcal.unknown>0);
- assert.ok(totals.totals.energyKcal>0);
+test('variants never mix mutually exclusive foods and missing quantity blocks logging',()=>{
+ const dinner=PLAN.find('dinner-wrap');
+ const choices=PLAN.choicesFor(dinner,[1,1,1]);
+ assert.deepEqual(choices.map(c=>c.name),['Pão de hambúrguer','Atum','Sem queijo']);
+ const entry=PLAN.makeEntry('dinner-wrap',day,id,[1,1,1]);
+ assert.ok(entry&&N.validEntry(entry));
+ assert.equal(entry.items.length,2);
+ assert.equal(entry.items.some(x=>/frango|rap10|queijo/i.test(x.label)),false);
+ assert.equal(entry.items.find(x=>x.label==='Pão de hambúrguer').quantity,50);
+ assert.equal(PLAN.makeEntry('dinner-plate',day,id),null);
+ const adjusted=PLAN.makeEntry('dinner-plate',day,id,[],[120,80,2,120]);
+ assert.ok(adjusted&&N.validEntry(adjusted));
+ assert.equal(adjusted.items.at(-1).quantity,120);
 });
-test('suggested breakfast includes milk, whey, oats and fruit with actual amounts',()=>{
- const entry=PLAN.makeEntry('breakfast-shake',day,uid);
- assert.deepEqual(entry.items.map(item=>item.grams),[null,30,20,80]);
+test('whey milk oatmeal and fruit recorded separately at real mass',()=>{
+ const entry=PLAN.makeEntry('breakfast-shake',day,id);
+ assert.ok(entry&&N.validEntry(entry));
+ assert.equal(entry.items.length,4);
+ assert.deepEqual(entry.items.map(x=>x.quantity),[200,30,20,80]);
  assert.equal(entry.items[0].unit,'ml');
- assert.equal(entry.items[0].quantity,200);
  assert.equal(entry.items[1].foodId,'growth:official:isolate-natural');
  assert.equal(entry.items[1].nutrientsPer100g.proteinG,CAT.find('growth:official:isolate-natural').nutrientsPer100g.proteinG);
 });
-test('the existing meal card exposes quick action, alternative and edit but no fake logging',()=>{
- const archive=N.archive(),original=JSON.stringify(archive);
+test('unknown and unit portions never become fake grams or zero-energy values',()=>{
+ const entry=PLAN.makeEntry('breakfast-sandwich',day,id);
+ assert.ok(entry&&N.validEntry(entry));
+ const bread=entry.items[0],eggs=entry.items[1];
+ assert.equal(bread.unit,'unit');assert.equal(bread.grams,null);
+ assert.equal(bread.nutrientsPer100g.energyKcal,null);
+ assert.equal(eggs.nutrientsPer100g.energyKcal,null);
+ const totals=N.recordedBreakdown([entry],day);
+ assert.ok(totals.counts.energyKcal.unknown>=2);
+});
+test('diary displays prescribed alternatives and numeric quantities without creating entries',()=>{
+ const archive=N.archive();const saved=JSON.stringify(archive);
  const html=UI.render({archive,date:day,balanceDate:day});
- assert.match(html,/data-nd="plan-confirm"/);
- assert.match(html,/data-nd="plan-adjust"/);
- assert.match(html,/Comi outra coisa/);
- assert.match(html,/Ver outras 4 opções/);
- assert.match(html,/Dados incompletos/);
- assert.equal(archive.entries.length,0);
- assert.equal(JSON.stringify(archive),original);
- const entry=PLAN.makeEntry('breakfast-shake',day,uid);
- archive.entries.push(entry);
+ for(const value of ['data-plan-choice','data-plan-qty','Rap10','Pão de hambúrguer','Comi outra coisa','Ver as outras 4 opções'])assert.match(html,new RegExp(value));
+ assert.equal(JSON.stringify(archive),saved);
+ const entry=PLAN.makeEntry('breakfast-shake',day,id);archive.entries.push(entry);
  const updated=UI.render({archive,date:day,balanceDate:day});
  const breakfast=updated.match(/<section class="card nd-meal">[\s\S]*?<\/section>/);
- assert.ok(breakfast);
- assert.doesNotMatch(breakfast[0],/data-nd="plan-confirm"/);
+ assert.ok(breakfast);assert.doesNotMatch(breakfast[0],/data-nd="plan-confirm"/);
 });

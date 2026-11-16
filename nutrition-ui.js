@@ -216,17 +216,25 @@
     if(!PRESETS || rows.length || !['breakfast','lunch','snack','dinner'].includes(type))return '';
     const ideas=PRESETS.forMeal(type);
     if(!ideas.length)return '';
-    const card=(idea,featured=false)=>{
-      const missing=PRESETS.hasMissing(idea);
-      const ingredients=idea.ingredients.map(item=>'<span class="nd-plan-ingredient"><strong>'+esc(item.label)+'</strong> · '+esc(item.amount)+'</span>').join('');
-      return '<div class="nd-plan-option'+(featured?' is-featured':'')+'"><div class="nd-plan-option-head"><strong>'+esc(idea.title)+'</strong>'+(missing?'<span class="nd-plan-unknown">Dados incompletos</span>':'')+'</div>'+
-        '<div class="nd-plan-ingredients">'+ingredients+'</div>'+
-        '<div class="nd-plan-actions">'+button('plan-confirm','Comi isso','data-recipe="'+esc(idea.id)+'"','primary nd-plan-confirm')+
-        button('plan-adjust','Ajustar','data-recipe="'+esc(idea.id)+'"','secondary nd-plan-adjust')+'</div></div>';
+    const optionCard=(recipe,featured=false)=>{
+      const groups=recipe.groups.map((group,i)=>{
+        const choices=group.choices.map((choice,j)=>'<option value="'+j+'"'+(j===0?' selected':'')+'>'+esc(choice.name)+(choice.qty==null?' · informar quantidade':choice.qty===0?'':(' · '+choice.qty+' '+choice.unit))+'</option>').join('');
+        const first=group.choices[0];
+        return '<div class="nd-plan-choice-row"><label class="nd-plan-choice-label">'+esc(group.label)+
+          '<select data-plan-choice data-group="'+i+'" aria-label="'+esc(recipe.title+' — '+group.label)+'">'+choices+'</select></label>'+
+          '<label class="nd-plan-qty-label">Qtd. <input type="number" inputmode="decimal" data-plan-qty data-group="'+i+'" aria-label="'+esc(group.label+' quantidade')+'" min="0" max="10000" step="any" value="'+esc(first.qty??'')+'" placeholder="informar"></label>'+
+          '<small class="nd-plan-unit" data-plan-unit data-group="'+i+'">'+esc(first.unit)+'</small></div>';
+      }).join('');
+      return '<div class="nd-plan-option'+(featured?' is-featured':'')+'" data-recipe-card="'+esc(recipe.id)+'">'+
+        '<div class="nd-plan-option-head"><strong>'+esc(recipe.title)+'</strong><small>PDF p. '+recipe.page+'</small></div>'+
+        '<div class="nd-plan-choice-list">'+groups+'</div>'+
+        (recipe.notes.length?'<details class="nd-plan-notes"><summary>Orientações da opção</summary>'+recipe.notes.map(n=>'<p>'+esc(n)+'</p>').join('')+'</details>':'')+
+        '<div class="nd-plan-actions">'+button('plan-confirm','Comi isso','data-recipe="'+esc(recipe.id)+'"','primary nd-plan-confirm')+
+        button('plan-adjust','Editar antes de salvar','data-recipe="'+esc(recipe.id)+'"','secondary nd-plan-adjust')+'</div></div>';
     };
-    return '<div class="nd-plan-section"><div class="nd-plan-head"><span>Do seu plano · opções editáveis</span></div>'+
-      card(ideas[0],true)+(ideas.length>1?'<details class="nd-plan-alternatives"><summary>Ver outras '+(ideas.length-1)+' opções</summary>'+
-      ideas.slice(1).map(idea=>card(idea)).join('')+'</details>':'')+
+    return '<div class="nd-plan-section"><div class="nd-plan-head"><span>Escolhas da prescrição · toque para trocar cada alimento</span></div>'+
+      optionCard(ideas[0],true)+(ideas.length>1?'<details class="nd-plan-alternatives"><summary>Ver as outras '+(ideas.length-1)+' opções desta refeição</summary>'+
+      ideas.slice(1).map(idea=>optionCard(idea)).join('')+'</details>':'')+
       '<div class="nd-plan-other">'+button('add','Comi outra coisa','data-meal="'+esc(type)+'"','button-inline')+'</div></div>';
   }
 
@@ -277,9 +285,10 @@
     const difference=target?G.difference(target.values):null;
     const present=rest.valueKcal!=null;
     return '<section class="nd-metabolism" aria-label="Referência profissional e metabolismo de repouso">'+
-      '<div class="nd-metabolism-kpis"><div><span>Meta '+(professional?'da nutricionista':'vigente')+'</span><strong>'+fmt(target?.values.energyKcal)+' <small>kcal/dia</small></strong></div>'+
+      '<div class="nd-metabolism-kpis"><div><span>Meta '+(professional?'da prescrição':'ajustada')+'</span><strong>'+fmt(target?.values.energyKcal)+' <small>kcal/dia</small></strong></div>'+
       '<div><span>Repouso estimado</span><strong>'+(present?fmt(rest.valueKcal):'—')+' <small>'+(present?'kcal/dia':'a calcular')+'</small></strong></div></div>'+
       (present&&target?.values.energyKcal?'<div class="nd-metabolism-track" role="img" aria-label="Repouso estimado '+fmt(rest.valueKcal)+' kcal e meta diária '+fmt(target.values.energyKcal)+' kcal"><span style="width:'+Math.min(100,Math.max(0,rest.valueKcal/target.values.energyKcal*100)).toFixed(1)+'%"></span></div>':'')+
+      '<p class="nd-metabolism-caption">PDF original: 1.710 kcal; o valor de 2.170 kcal é uma escolha de uso do app, não está no documento.</p>'+
       '<p class="nd-metabolism-caption">'+(present?'Estimativa Mifflin–St Jeor, não medida nem gasto diário total. Peso usado: '+fmt(rest.weightKg)+' kg'+(rest.weightDate?' ('+esc(dateBR(rest.weightDate))+')':'')+'.':'Para calcular, informe '+esc(rest.missing.join(', '))+' em Minhas metas.')+'</p>'+
       (difference!=null&&Math.abs(difference)>20?'<p class="nd-prescription-diff">Meta energética e macros informados não coincidem pelo cálculo 4/4/9 (diferença: '+fmt(difference)+' kcal). Valores mantidos sem correção.</p>':'')+
       '<div class="nd-metabolism-actions">'+button('goals',present?'Ver cálculo':'Completar perfil','','button-inline')+'</div></section>';
@@ -308,6 +317,7 @@
         <section class="nd-energy-overview" aria-label="Energia registrada e saldo">
           <div class="nd-kcal-main"><strong>${remainder==null?'—':remainder>=0?fmt(remainder):'−'+fmt(Math.abs(remainder))}</strong><span>kcal ${remainder!=null&&remainder<0?'acima da meta':'restantes da meta'}</span></div>
           <div class="nd-energy-compare"><div><strong>${daily.length?(hasEstimated?'≈':'')+fmt(kcal):'—'}</strong><small>registradas</small></div><div><strong>${fmt(goal)}</strong><small>meta diária</small></div></div>
+          <p class="nd-goal-origin">${goal===2170?'2.170 kcal · meta ajustada no FORJA; PDF: 1.710 kcal.':'Meta vigente em '+fmt(goal)+' kcal. PDF original: 1.710 kcal.'}</p>
           ${daily.length?'':'<p class="nd-brief-note">Nenhuma refeição registrada neste dia.</p>'}
           <details class="nd-energy-detail"><summary>Detalhes da energia</summary>${ring('energyKcal',kcal,goal,totals.counts.energyKcal)}</details>
         </section>
@@ -828,8 +838,13 @@
         if(!recipe)return notify('Opção de refeição não encontrada.');
         if(archive().entries.some(e=>e.date===day&&e.mealType===recipe.mealType))
           return notify('Essa refeição já tem um registro. Use Adicionar para registrar outra.');
-        const entry=PRESETS.makeEntry(recipe.id,day,id);
-        if(!entry)return notify('Não foi possível montar a refeição. Confira o catálogo.');
+        const card=b.closest('[data-recipe-card]');
+        const selections=recipe.groups.map((g,i)=>Number(card?.querySelector('[data-plan-choice][data-group="'+i+'"]')?.value??0));
+        const quantities=recipe.groups.map((g,i)=>card?.querySelector('[data-plan-qty][data-group="'+i+'"]')?.value);
+        if(recipe.groups.some((g,i)=>quantities[i]==null||String(quantities[i]).trim()===''||!Number.isFinite(Number(quantities[i]))||Number(quantities[i])<0))
+          return notify('Informe a quantidade dos alimentos escolhidos antes de registrar.');
+        const entry=PRESETS.makeEntry(recipe.id,day,id,selections,quantities);
+        if(!entry)return notify('Confira as quantidades e seleções. Nenhum alimento foi registrado.');
         if(a==='plan-adjust')return start(recipe.mealType,entry,true);
         if(archive().draft)return notify('Há um rascunho pendente. Continue ou descarte antes de confirmar.');
         const ok=transact(a=>{a.entries.push(entry);});
@@ -881,6 +896,17 @@
     return {render:()=>render({archive:archive(),date:day,limit,state:get(),balanceDate:today()}),goals,
       mount(){const screen=document.querySelector('.nutrition-screen');if(!screen)return;
         screen.addEventListener('click',e=>{const b=e.target.closest('[data-nd]');if(b){e.stopPropagation();action(b);}});
+        screen.addEventListener('change',e=>{
+          const select=e.target.closest('[data-plan-choice]');
+          if(!select)return;
+          const card=select.closest('[data-recipe-card]'),recipe=PRESETS?.find(card?.dataset.recipeCard);
+          const idx=Number(select.dataset.group),choice=recipe?.groups[idx]?.choices[Number(select.value)];
+          if(!choice)return;
+          const input=card.querySelector('[data-plan-qty][data-group="'+idx+'"]');
+          const unit=card.querySelector('[data-plan-unit][data-group="'+idx+'"]');
+          if(input)input.value=choice.qty??'';
+          if(unit)unit.textContent=choice.unit;
+        });
         screen.querySelector('#nd-date').addEventListener('change',e=>{
           if(N.dateOk(e.target.value)&&e.target.value<=today()){day=e.target.value;refresh();}
         });

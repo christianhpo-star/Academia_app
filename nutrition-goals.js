@@ -44,6 +44,28 @@
       values:{...PROFESSIONAL_VALUES},profile:null,formula:'professional-plan-20261113'};
     return validTarget(target)?target:null;
   }
+  // User requested a 2,170 kcal daily display despite the scanned PDF stating
+  // 1,710 kcal. Treat this as a PERSONAL override, never as text from the PDF.
+  const USER_ENERGY_KCAL=2170;
+  function userTarget(from){
+    const base=professionalTarget(from);
+    return base?{...base,id:'personal-'+from,source:'manual',
+      values:{...base.values,energyKcal:USER_ENERGY_KCAL},
+      formula:'user-preference-2170-v2'}:null;
+  }
+  function useUserTarget(settings,from){
+    if(!settings||!date(from))return false;
+    const targets=settings.targets||[];
+    if(targets.length===0){settings.targets=[userTarget(from)];return true;}
+    const onlyOld=targets.length===1&&targets[0].source==='professional'&&
+      targets[0].formula==='professional-plan-20261113'&&
+      JSON.stringify(targets[0].values)===JSON.stringify(PROFESSIONAL_VALUES);
+    if(!onlyOld)return false;
+    // Preserve previous reference in backup, even when it has the same start date.
+    settings.priorPrescriptionTarget={...targets[0]};
+    settings.targets=[userTarget(from)];
+    return true;
+  }
   function professionalDefault(settings,from){
     if(!settings || !date(from))return false;
     if(Array.isArray(settings.targets)&&settings.targets.length)return false;
@@ -89,6 +111,6 @@
     return {strength,muay,measures,abdomenChange,weeklyStrength,weeklyMuay,recentWeights:recent.length,
       weightChange:recent.length>=2&&Date.parse(recent.at(-1).date)-Date.parse(recent[0].date)>=14*86400000?Math.round((recent.at(-1).weight-recent[0].weight)*10)/10:null};
   }
-  const api={KEYS,validProfile,validTarget,validSettings,estimate,active,difference,context,PROFESSIONAL_VALUES,professionalTarget,professionalDefault,restingFromState};root.ForjaNutritionGoals=api;
+  const api={KEYS,validProfile,validTarget,validSettings,estimate,active,difference,context,PROFESSIONAL_VALUES,professionalTarget,professionalDefault,restingFromState,USER_ENERGY_KCAL,userTarget,useUserTarget};root.ForjaNutritionGoals=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

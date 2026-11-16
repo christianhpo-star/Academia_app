@@ -1,0 +1,2647 @@
+{
+  "schemaVersion": 2,
+  "source": {
+    "type": "prescription",
+    "date": "2026-11-13",
+    "pages": 13,
+    "originalEnergyKcal": 1710,
+    "energyTargetRequestedByUserKcal": 2170,
+    "originalMacros": {
+      "proteinG": 159,
+      "carbsG": 146,
+      "fatG": 28
+    },
+    "originalMacroEquivalentKcal": 1472,
+    "mealEstimateKcal": {
+      "breakfast": 290,
+      "lunch": 450,
+      "snack": 240,
+      "dinner": 450
+    },
+    "evidence": "Transcrição fiel das escolhas; dados sem gramatura mantêm quantity null; valores nutricionais de rótulos/catálogos separados. Listas completas de frutas disponíveis nas escolhas por porção.",
+    "privacy": "Sem nome, contato ou dados clínicos pessoais."
+  },
+  "water": {
+    "minMl": 2500,
+    "maxMl": 3000,
+    "morningBeforeBreakfastMl": 500
+  },
+  "dailyRoutine": {
+    "creatineG": 5,
+    "coffeeSmallCupsMax": 4,
+    "coffeeWithoutSugar": true,
+    "sweetenerExample": "eritritol",
+    "oliveOilTablespoons": {
+      "lunch": 1,
+      "dinner": 1
+    },
+    "notes": [
+      "Registrar azeite se consumido, não contar como automaticamente ingerido",
+      "O documento orienta evitar líquidos durante refeições, especialmente refrigerantes e sucos de caixinha",
+      "Em caso de aversão, não obrigar consumo",
+      "Sugerir agendar retorno nutricional cerca de 30 dias após prescrição"
+    ]
+  },
+  "meals": {
+    "breakfast": [
+      {
+        "id": "breakfast-sandwich",
+        "label": "Pão ou tapioca com proteína",
+        "page": 1,
+        "groups": [
+          {
+            "label": "Pão ou tapioca",
+            "choices": [
+              {
+                "name": "Pão de forma — 2 fatias",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Pão francês",
+                "qty": 1,
+                "unit": "unit",
+                "foodId": "taco:2011:53"
+              },
+              {
+                "name": "Tapioca",
+                "qty": 50,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Proteína",
+            "choices": [
+              {
+                "name": "Ovos",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Frango",
+                "qty": 40,
+                "unit": "g",
+                "foodId": "taco:2011:410"
+              },
+              {
+                "name": "Atum",
+                "qty": 40,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Complemento",
+            "choices": [
+              {
+                "name": "Requeijão light",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Muçarela — 1 fatia",
+                "qty": 1,
+                "unit": "unit"
+              }
+            ]
+          },
+          {
+            "label": "Fruta — 1 porção (lista de substituição)",
+            "choices": [
+              {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Morango",
+                "qty": 240,
+                "unit": "g",
+                "foodId": "taco:2011:239"
+              },
+              {
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Abacaxi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:164"
+              },
+              {
+                "name": "Pêra Williams",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:243"
+              },
+              {
+                "name": "Kiwi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:207"
+              },
+              {
+                "name": "Uva Itália",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:256"
+              },
+              {
+                "name": "Melão amarelo",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Mexerica",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Manga háden",
+                "qty": 110,
+                "unit": "g"
+              },
+              {
+                "name": "Limão",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Melancia",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:235"
+              },
+              {
+                "name": "Maracujá",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goiaba",
+                "qty": 140,
+                "unit": "g",
+                "foodId": "taco:2011:200"
+              },
+              {
+                "name": "Carambola",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa",
+                "qty": 145,
+                "unit": "g"
+              },
+              {
+                "name": "Caqui",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Pêssego",
+                "qty": 190,
+                "unit": "g"
+              },
+              {
+                "name": "Nectarina",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Amoras",
+                "qty": 200,
+                "unit": "g"
+              },
+              {
+                "name": "Cereja",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Caju",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:186"
+              },
+              {
+                "name": "Acerola",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Jabuticaba",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Pitanga",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Açaí (fruta)",
+                "qty": 32,
+                "unit": "g"
+              },
+              {
+                "name": "Fruta-pão",
+                "qty": 70,
+                "unit": "g"
+              },
+              {
+                "name": "Pitaya",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Framboesa",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Romã",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Figo",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Lichia",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mirtilo",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goji Berry",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Mangostão",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Jaca",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Pinha",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Toranja",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Tâmaras",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Uva passa",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Damasco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Mamão seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Figo seco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Cranberry seco",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã desidratada",
+                "qty": 40,
+                "unit": "g"
+              },
+              {
+                "name": "Manga seca",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Abacaxi seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Banana passa (zero açúcar)",
+                "qty": 25,
+                "unit": "g"
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Ovos podem ser cozidos e misturados com requeijão para fazer uma pasta"
+        ]
+      },
+      {
+        "id": "breakfast-shake",
+        "label": "Vitamina com whey",
+        "page": 1,
+        "groups": [
+          {
+            "label": "Leite desnatado",
+            "choices": [
+              {
+                "name": "Leite desnatado",
+                "qty": 200,
+                "unit": "ml",
+                "foodId": "drink:itambe-uht-desnatado"
+              }
+            ]
+          },
+          {
+            "label": "Whey isolado",
+            "choices": [
+              {
+                "name": "Whey isolado",
+                "qty": 30,
+                "unit": "g",
+                "foodId": "growth:official:isolate-natural"
+              }
+            ]
+          },
+          {
+            "label": "Aveia",
+            "choices": [
+              {
+                "name": "Aveia",
+                "qty": 20,
+                "unit": "g",
+                "foodId": "ref:generic-169705"
+              }
+            ]
+          },
+          {
+            "label": "Fruta — 1 porção (lista de substituição)",
+            "choices": [
+              {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Morango",
+                "qty": 240,
+                "unit": "g",
+                "foodId": "taco:2011:239"
+              },
+              {
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Abacaxi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:164"
+              },
+              {
+                "name": "Pêra Williams",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:243"
+              },
+              {
+                "name": "Kiwi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:207"
+              },
+              {
+                "name": "Uva Itália",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:256"
+              },
+              {
+                "name": "Melão amarelo",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Mexerica",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Manga háden",
+                "qty": 110,
+                "unit": "g"
+              },
+              {
+                "name": "Limão",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Melancia",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:235"
+              },
+              {
+                "name": "Maracujá",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goiaba",
+                "qty": 140,
+                "unit": "g",
+                "foodId": "taco:2011:200"
+              },
+              {
+                "name": "Carambola",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa",
+                "qty": 145,
+                "unit": "g"
+              },
+              {
+                "name": "Caqui",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Pêssego",
+                "qty": 190,
+                "unit": "g"
+              },
+              {
+                "name": "Nectarina",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Amoras",
+                "qty": 200,
+                "unit": "g"
+              },
+              {
+                "name": "Cereja",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Caju",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:186"
+              },
+              {
+                "name": "Acerola",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Jabuticaba",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Pitanga",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Açaí (fruta)",
+                "qty": 32,
+                "unit": "g"
+              },
+              {
+                "name": "Fruta-pão",
+                "qty": 70,
+                "unit": "g"
+              },
+              {
+                "name": "Pitaya",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Framboesa",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Romã",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Figo",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Lichia",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mirtilo",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goji Berry",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Mangostão",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Jaca",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Pinha",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Toranja",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Tâmaras",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Uva passa",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Damasco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Mamão seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Figo seco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Cranberry seco",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã desidratada",
+                "qty": 40,
+                "unit": "g"
+              },
+              {
+                "name": "Manga seca",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Abacaxi seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Banana passa (zero açúcar)",
+                "qty": 25,
+                "unit": "g"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "breakfast-yogurt",
+        "label": "Iogurte com fruta e whey",
+        "page": 1,
+        "groups": [
+          {
+            "label": "Iogurte natural desnatado",
+            "choices": [
+              {
+                "name": "Iogurte natural desnatado",
+                "qty": 170,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Fruta",
+            "choices": [
+              {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Morangos",
+                "qty": 240,
+                "unit": "g",
+                "foodId": "taco:2011:239"
+              }
+            ]
+          },
+          {
+            "label": "Aveia OU chia",
+            "choices": [
+              {
+                "name": "Aveia",
+                "qty": 20,
+                "unit": "g",
+                "foodId": "ref:generic-169705"
+              },
+              {
+                "name": "Chia — 1 colher de sopa",
+                "qty": 1,
+                "unit": "spoon"
+              }
+            ]
+          },
+          {
+            "label": "Whey isolado",
+            "choices": [
+              {
+                "name": "Whey isolado",
+                "qty": 15,
+                "unit": "g",
+                "foodId": "growth:official:isolate-natural"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "breakfast-pancake",
+        "label": "Panqueca de banana",
+        "page": 1,
+        "groups": [
+          {
+            "label": "Banana madura",
+            "choices": [
+              {
+                "name": "Banana madura",
+                "qty": 1,
+                "unit": "unit"
+              }
+            ]
+          },
+          {
+            "label": "Ovo",
+            "choices": [
+              {
+                "name": "Ovo",
+                "qty": 1,
+                "unit": "unit"
+              }
+            ]
+          },
+          {
+            "label": "Cacau em pó",
+            "choices": [
+              {
+                "name": "Cacau em pó",
+                "qty": 1,
+                "unit": "spoon"
+              }
+            ]
+          },
+          {
+            "label": "Aveia em flocos finos",
+            "choices": [
+              {
+                "name": "Aveia em flocos finos",
+                "qty": 1,
+                "unit": "spoon"
+              }
+            ]
+          },
+          {
+            "label": "Cobertura com whey (opcional)",
+            "choices": [
+              {
+                "name": "Sem whey",
+                "qty": 0,
+                "unit": "g"
+              },
+              {
+                "name": "Whey isolado",
+                "qty": 15,
+                "unit": "g",
+                "foodId": "growth:official:isolate-natural"
+              }
+            ],
+            "optional": true
+          }
+        ],
+        "notes": [
+          "Fermento 1 colher de chá opcional; canela e adoçante a gosto; preparar em frigideira, forno ou airfryer"
+        ],
+        "recipeRef": "panqueca-banana-whey"
+      },
+      {
+        "id": "breakfast-porridge",
+        "label": "Mingau de aveia",
+        "page": 2,
+        "groups": [
+          {
+            "label": "Aveia",
+            "choices": [
+              {
+                "name": "Aveia",
+                "qty": 50,
+                "unit": "g",
+                "foodId": "ref:generic-169705"
+              }
+            ]
+          },
+          {
+            "label": "Leite",
+            "choices": [
+              {
+                "name": "Leite",
+                "qty": 150,
+                "unit": "ml",
+                "foodId": "drink:itambe-uht-desnatado"
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Adoçante a gosto; leite desnatado é opção de cadastro, o PDF informa apenas leite"
+        ]
+      }
+    ],
+    "lunch": [
+      {
+        "id": "lunch-plate",
+        "label": "Prato completo",
+        "page": 2,
+        "groups": [
+          {
+            "label": "Carboidrato",
+            "choices": [
+              {
+                "name": "Arroz branco ou integral",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "ref:generic-169757"
+              },
+              {
+                "name": "Batata inglesa",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:91"
+              },
+              {
+                "name": "Abóbora",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Purê de batata",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mandioquinha — porção não indicada",
+                "qty": null,
+                "unit": "g"
+              },
+              {
+                "name": "Macaxeira — 2 unidades médias",
+                "qty": 2,
+                "unit": "unit",
+                "foodId": "taco:2011:129"
+              },
+              {
+                "name": "Macarrão",
+                "qty": 100,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Leguminosa",
+            "choices": [
+              {
+                "name": "Feijão",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:561"
+              },
+              {
+                "name": "Ervilha — 4 colheres de sopa",
+                "qty": 4,
+                "unit": "spoon"
+              },
+              {
+                "name": "Lentilha — 4 colheres de sopa",
+                "qty": 4,
+                "unit": "spoon"
+              },
+              {
+                "name": "Grão-de-bico — 3 colheres de sopa",
+                "qty": 3,
+                "unit": "spoon"
+              },
+              {
+                "name": "Sem leguminosa",
+                "qty": 0,
+                "unit": "g"
+              }
+            ],
+            "notes": [
+              "Se não consumir leguminosa, a receita permite acrescentar 10 g de carboidrato; ajustar manualmente, não somar automaticamente"
+            ]
+          },
+          {
+            "label": "Proteína",
+            "choices": [
+              {
+                "name": "Carne vermelha grelhada — 2 filés médios",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Patinho moído",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:377"
+              },
+              {
+                "name": "Fígado bovino",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Camarão",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Lagarto — 2 filés médios",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Frango grelhado",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:410"
+              },
+              {
+                "name": "Ovos",
+                "qty": 3,
+                "unit": "unit"
+              },
+              {
+                "name": "Lombo suíno — 2 filés médios",
+                "qty": 2,
+                "unit": "unit",
+                "foodId": "taco:2011:432"
+              },
+              {
+                "name": "Filé mignon suíno — 2 filés médios",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Tilápia grelhada",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Atum ou sardinha",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Moela",
+                "qty": 150,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Salada ou legumes (opcional)",
+            "choices": [
+              {
+                "name": "Não adicionados",
+                "qty": 0,
+                "unit": "g"
+              },
+              {
+                "name": "Salada crua — quantidade livre",
+                "qty": null,
+                "unit": "g"
+              },
+              {
+                "name": "Legumes cozidos — quantidade livre",
+                "qty": null,
+                "unit": "g"
+              }
+            ],
+            "optional": true
+          }
+        ],
+        "notes": [
+          "Preferir frango, peixe e carnes magras",
+          "Azeite extravirgem: 1 colher de sopa dividida entre salada e legumes no almoço (registrar quantidade consumida)"
+        ]
+      },
+      {
+        "id": "lunch-sandwich",
+        "label": "Sanduíche ou Rap10",
+        "page": 2,
+        "groups": [
+          {
+            "label": "Base",
+            "choices": [
+              {
+                "name": "Pão francês sem miolo",
+                "qty": 1,
+                "unit": "unit"
+              },
+              {
+                "name": "Rap10",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Pão de forma",
+                "qty": 2,
+                "unit": "unit"
+              }
+            ]
+          },
+          {
+            "label": "Proteína",
+            "choices": [
+              {
+                "name": "Frango",
+                "qty": 70,
+                "unit": "g",
+                "foodId": "taco:2011:410"
+              },
+              {
+                "name": "Carne vermelha",
+                "qty": 60,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Muçarela — 1 fatia",
+            "choices": [
+              {
+                "name": "Muçarela — 1 fatia",
+                "qty": 1,
+                "unit": "unit"
+              }
+            ]
+          },
+          {
+            "label": "Salada à vontade",
+            "choices": [
+              {
+                "name": "Salada à vontade",
+                "qty": null,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Fruta cítrica",
+            "choices": [
+              {
+                "name": "Laranja",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Abacaxi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:164"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "snack": [
+      {
+        "id": "snack-yogurt",
+        "label": "Iogurte ou leite + whey",
+        "page": 2,
+        "groups": [
+          {
+            "label": "Base",
+            "choices": [
+              {
+                "name": "Iogurte natural desnatado — quantidade não informada",
+                "qty": null,
+                "unit": "g"
+              },
+              {
+                "name": "Leite desnatado — quantidade não informada",
+                "qty": null,
+                "unit": "ml"
+              }
+            ]
+          },
+          {
+            "label": "Proteína",
+            "choices": [
+              {
+                "name": "Whey isolado",
+                "qty": 30,
+                "unit": "g",
+                "foodId": "growth:official:isolate-natural"
+              },
+              {
+                "name": "Leite em pó desnatado",
+                "qty": 30,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Morangos — 8 unidades",
+            "choices": [
+              {
+                "name": "Morangos — 8 unidades",
+                "qty": 8,
+                "unit": "unit",
+                "foodId": "taco:2011:239"
+              }
+            ]
+          },
+          {
+            "label": "Fibra",
+            "choices": [
+              {
+                "name": "Chia",
+                "qty": 15,
+                "unit": "g"
+              },
+              {
+                "name": "Psyllium",
+                "qty": 15,
+                "unit": "g"
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "No PDF, 30 g aparece ligado ao whey ou leite em pó; conferir opção específica antes de registrar"
+        ]
+      },
+      {
+        "id": "snack-sandwich",
+        "label": "Sanduíche, Rap10 ou tapioca",
+        "page": 2,
+        "groups": [
+          {
+            "label": "Proteína",
+            "choices": [
+              {
+                "name": "Frango",
+                "qty": 40,
+                "unit": "g",
+                "foodId": "taco:2011:410"
+              },
+              {
+                "name": "Atum",
+                "qty": 40,
+                "unit": "g"
+              },
+              {
+                "name": "Ovos",
+                "qty": 2,
+                "unit": "unit"
+              }
+            ]
+          },
+          {
+            "label": "Base",
+            "choices": [
+              {
+                "name": "Pão de forma",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Rap10",
+                "qty": 1,
+                "unit": "unit"
+              },
+              {
+                "name": "Tapioca",
+                "qty": 50,
+                "unit": "g"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "snack-drink",
+        "label": "Bebida proteica + fruta",
+        "page": 2,
+        "groups": [
+          {
+            "label": "Bebida láctea proteica",
+            "choices": [
+              {
+                "name": "Bebida láctea proteica",
+                "qty": 250,
+                "unit": "ml"
+              }
+            ]
+          },
+          {
+            "label": "Fruta — 1 porção (lista de substituição)",
+            "choices": [
+              {
+                "name": "Banana",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão papaia",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Morango",
+                "qty": 240,
+                "unit": "g",
+                "foodId": "taco:2011:239"
+              },
+              {
+                "name": "Laranja-pêra",
+                "qty": 180,
+                "unit": "g",
+                "foodId": "taco:2011:214"
+              },
+              {
+                "name": "Abacaxi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:164"
+              },
+              {
+                "name": "Pêra Williams",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:243"
+              },
+              {
+                "name": "Kiwi",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:207"
+              },
+              {
+                "name": "Uva Itália",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:256"
+              },
+              {
+                "name": "Melão amarelo",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Mexerica",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Manga háden",
+                "qty": 110,
+                "unit": "g"
+              },
+              {
+                "name": "Limão",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Melancia",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:235"
+              },
+              {
+                "name": "Maracujá",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goiaba",
+                "qty": 140,
+                "unit": "g",
+                "foodId": "taco:2011:200"
+              },
+              {
+                "name": "Carambola",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa",
+                "qty": 145,
+                "unit": "g"
+              },
+              {
+                "name": "Caqui",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Pêssego",
+                "qty": 190,
+                "unit": "g"
+              },
+              {
+                "name": "Nectarina",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Amoras",
+                "qty": 200,
+                "unit": "g"
+              },
+              {
+                "name": "Cereja",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Caju",
+                "qty": 220,
+                "unit": "g",
+                "foodId": "taco:2011:186"
+              },
+              {
+                "name": "Acerola",
+                "qty": 240,
+                "unit": "g"
+              },
+              {
+                "name": "Jabuticaba",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Pitanga",
+                "qty": 220,
+                "unit": "g"
+              },
+              {
+                "name": "Açaí (fruta)",
+                "qty": 32,
+                "unit": "g"
+              },
+              {
+                "name": "Fruta-pão",
+                "qty": 70,
+                "unit": "g"
+              },
+              {
+                "name": "Pitaya",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Framboesa",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Romã",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Figo",
+                "qty": 170,
+                "unit": "g"
+              },
+              {
+                "name": "Lichia",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mirtilo",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Goji Berry",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Mangostão",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Jaca",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Pinha",
+                "qty": 90,
+                "unit": "g"
+              },
+              {
+                "name": "Toranja",
+                "qty": 160,
+                "unit": "g"
+              },
+              {
+                "name": "Tâmaras",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Uva passa",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Ameixa seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Damasco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Mamão seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Figo seco",
+                "qty": 30,
+                "unit": "g"
+              },
+              {
+                "name": "Cranberry seco",
+                "qty": 20,
+                "unit": "g"
+              },
+              {
+                "name": "Maçã desidratada",
+                "qty": 40,
+                "unit": "g"
+              },
+              {
+                "name": "Manga seca",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Abacaxi seco",
+                "qty": 25,
+                "unit": "g"
+              },
+              {
+                "name": "Pêra seca",
+                "qty": 35,
+                "unit": "g"
+              },
+              {
+                "name": "Banana passa (zero açúcar)",
+                "qty": 25,
+                "unit": "g"
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Opção para dias mais corridos e sem outras opções"
+        ]
+      }
+    ],
+    "dinner": [
+      {
+        "id": "dinner-plate",
+        "label": "Prato como o almoço",
+        "page": 2,
+        "groups": [
+          {
+            "label": "Carboidrato",
+            "choices": [
+              {
+                "name": "Arroz branco ou integral",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "ref:generic-169757"
+              },
+              {
+                "name": "Batata inglesa",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:91"
+              },
+              {
+                "name": "Abóbora",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Purê de batata",
+                "qty": 100,
+                "unit": "g"
+              },
+              {
+                "name": "Mandioquinha — porção não indicada",
+                "qty": null,
+                "unit": "g"
+              },
+              {
+                "name": "Macaxeira — 2 unidades médias",
+                "qty": 2,
+                "unit": "unit",
+                "foodId": "taco:2011:129"
+              },
+              {
+                "name": "Macarrão",
+                "qty": 100,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Leguminosa",
+            "choices": [
+              {
+                "name": "Feijão",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:561"
+              },
+              {
+                "name": "Ervilha — 4 colheres de sopa",
+                "qty": 4,
+                "unit": "spoon"
+              },
+              {
+                "name": "Lentilha — 4 colheres de sopa",
+                "qty": 4,
+                "unit": "spoon"
+              },
+              {
+                "name": "Grão-de-bico — 3 colheres de sopa",
+                "qty": 3,
+                "unit": "spoon"
+              },
+              {
+                "name": "Sem leguminosa",
+                "qty": 0,
+                "unit": "g"
+              }
+            ],
+            "notes": [
+              "Se não consumir leguminosa, a receita permite acrescentar 10 g de carboidrato; ajustar manualmente, não somar automaticamente"
+            ]
+          },
+          {
+            "label": "Proteína",
+            "choices": [
+              {
+                "name": "Carne vermelha grelhada — 2 filés médios",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Patinho moído",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:377"
+              },
+              {
+                "name": "Fígado bovino",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Camarão",
+                "qty": 120,
+                "unit": "g"
+              },
+              {
+                "name": "Lagarto — 2 filés médios",
+                "qty": 140,
+                "unit": "g"
+              },
+              {
+                "name": "Frango grelhado",
+                "qty": 150,
+                "unit": "g",
+                "foodId": "taco:2011:410"
+              },
+              {
+                "name": "Ovos",
+                "qty": 3,
+                "unit": "unit"
+              },
+              {
+                "name": "Lombo suíno — 2 filés médios",
+                "qty": 2,
+                "unit": "unit",
+                "foodId": "taco:2011:432"
+              },
+              {
+                "name": "Filé mignon suíno — 2 filés médios",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Tilápia grelhada",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Atum ou sardinha",
+                "qty": 150,
+                "unit": "g"
+              },
+              {
+                "name": "Moela",
+                "qty": 150,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Vegetais",
+            "choices": [
+              {
+                "name": "Legumes cozidos — quantidade livre",
+                "qty": null,
+                "unit": "g"
+              },
+              {
+                "name": "Salada crua reduzida — quantidade livre",
+                "qty": null,
+                "unit": "g"
+              }
+            ]
+          }
+        ],
+        "notes": [
+          "Repetir combinações do almoço, reduzindo salada crua e preferindo cozidos",
+          "Azeite: 1 colher de sopa no jantar, se consumido"
+        ]
+      },
+      {
+        "id": "dinner-wrap",
+        "label": "Rap10, hambúrguer ou tapioca",
+        "page": 3,
+        "groups": [
+          {
+            "label": "Base",
+            "choices": [
+              {
+                "name": "Rap10 — 2 unidades",
+                "qty": 2,
+                "unit": "unit"
+              },
+              {
+                "name": "Pão de hambúrguer",
+                "qty": 50,
+                "unit": "g"
+              },
+              {
+                "name": "Tapioca",
+                "qty": 50,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Proteína",
+            "choices": [
+              {
+                "name": "Frango",
+                "qty": 100,
+                "unit": "g",
+                "foodId": "taco:2011:410"
+              },
+              {
+                "name": "Atum",
+                "qty": 100,
+                "unit": "g"
+              }
+            ]
+          },
+          {
+            "label": "Queijo",
+            "choices": [
+              {
+                "name": "Muçarela — 1 fatia",
+                "qty": 1,
+                "unit": "unit"
+              },
+              {
+                "name": "Sem queijo",
+                "qty": 0,
+                "unit": "unit"
+              }
+            ],
+            "optional": true
+          }
+        ],
+        "notes": [
+          "Pode fazer hambúrguer com carne moída ou frango, e colocar na airfryer",
+          "A redação do PDF sobre queijo/tapioca é ambígua; selecionar antes de registrar"
+        ]
+      },
+      {
+        "id": "dinner-shake",
+        "label": "Vitamina com whey",
+        "page": 3,
+        "groups": [
+          {
+            "label": "Líquido",
+            "choices": [
+              {
+                "name": "Leite desnatado",
+                "qty": 200,
+                "unit": "ml",
+                "foodId": "drink:itambe-uht-desnatado"
+              },
+              {
+                "name": "Água",
+                "qty": 200,
+                "unit": "ml"
+              }
+            ]
+          },
+          {
+            "label": "Fruta",
+            "choices": [
+              {
+                "name": "Banana média",
+                "qty": 80,
+                "unit": "g",
+                "foodId": "taco:2011:182"
+              },
+              {
+                "name": "Maçã",
+                "qty": 120,
+                "unit": "g",
+                "foodId": "taco:2011:222"
+              },
+              {
+                "name": "Mamão",
+                "qty": 170,
+                "unit": "g",
+                "foodId": "taco:2011:226"
+              },
+              {
+                "name": "Morangos — 8 unidades",
+                "qty": 8,
+                "unit": "unit",
+                "foodId": "taco:2011:239"
+              }
+            ]
+          },
+          {
+            "label": "Whey isolado",
+            "choices": [
+              {
+                "name": "Whey isolado",
+                "qty": 30,
+                "unit": "g",
+                "foodId": "growth:official:isolate-natural"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "desserts": [
+    {
+      "id": "dessert-gelatin",
+      "label": "Gelatina",
+      "components": [
+        {
+          "label": "Gelatina",
+          "choices": [
+            {
+              "name": "Gelatina",
+              "qty": 1,
+              "unit": "portion"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dessert-fruit-salad",
+      "label": "Salada de frutas",
+      "components": [
+        {
+          "label": "Salada de frutas",
+          "choices": [
+            {
+              "name": "Salada de frutas",
+              "qty": null,
+              "unit": "g"
+            }
+          ]
+        },
+        {
+          "label": "Complemento",
+          "choices": [
+            {
+              "name": "Leite condensado",
+              "qty": 20,
+              "unit": "g"
+            },
+            {
+              "name": "Doce de leite",
+              "qty": 20,
+              "unit": "g"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dessert-unit",
+      "label": "Doce unitário",
+      "components": [
+        {
+          "label": "Exemplo",
+          "choices": [
+            {
+              "name": "Paçoquinha",
+              "qty": 1,
+              "unit": "unit"
+            },
+            {
+              "name": "Trento",
+              "qty": 1,
+              "unit": "unit"
+            },
+            {
+              "name": "Sonho de Valsa",
+              "qty": 1,
+              "unit": "unit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "dessert-acai",
+      "label": "Açaí (até 2 vezes por semana)",
+      "components": [
+        {
+          "label": "Açaí",
+          "choices": [
+            {
+              "name": "Açaí",
+              "qty": 350,
+              "unit": "g"
+            }
+          ]
+        },
+        {
+          "label": "Cobertura",
+          "choices": [
+            {
+              "name": "Leite condensado",
+              "qty": 30,
+              "unit": "g"
+            },
+            {
+              "name": "Leite em pó desnatado",
+              "qty": 30,
+              "unit": "g"
+            }
+          ]
+        },
+        {
+          "label": "Fruta — 1 porção (lista de substituição)",
+          "choices": [
+            {
+              "name": "Banana",
+              "qty": 80,
+              "unit": "g",
+              "foodId": "taco:2011:182"
+            },
+            {
+              "name": "Maçã",
+              "qty": 120,
+              "unit": "g",
+              "foodId": "taco:2011:222"
+            },
+            {
+              "name": "Mamão papaia",
+              "qty": 170,
+              "unit": "g",
+              "foodId": "taco:2011:226"
+            },
+            {
+              "name": "Morango",
+              "qty": 240,
+              "unit": "g",
+              "foodId": "taco:2011:239"
+            },
+            {
+              "name": "Laranja-pêra",
+              "qty": 180,
+              "unit": "g",
+              "foodId": "taco:2011:214"
+            },
+            {
+              "name": "Abacaxi",
+              "qty": 150,
+              "unit": "g",
+              "foodId": "taco:2011:164"
+            },
+            {
+              "name": "Pêra Williams",
+              "qty": 120,
+              "unit": "g",
+              "foodId": "taco:2011:243"
+            },
+            {
+              "name": "Kiwi",
+              "qty": 150,
+              "unit": "g",
+              "foodId": "taco:2011:207"
+            },
+            {
+              "name": "Uva Itália",
+              "qty": 150,
+              "unit": "g",
+              "foodId": "taco:2011:256"
+            },
+            {
+              "name": "Melão amarelo",
+              "qty": 220,
+              "unit": "g"
+            },
+            {
+              "name": "Mexerica",
+              "qty": 170,
+              "unit": "g"
+            },
+            {
+              "name": "Manga háden",
+              "qty": 110,
+              "unit": "g"
+            },
+            {
+              "name": "Limão",
+              "qty": 240,
+              "unit": "g"
+            },
+            {
+              "name": "Melancia",
+              "qty": 220,
+              "unit": "g",
+              "foodId": "taco:2011:235"
+            },
+            {
+              "name": "Maracujá",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Goiaba",
+              "qty": 140,
+              "unit": "g",
+              "foodId": "taco:2011:200"
+            },
+            {
+              "name": "Carambola",
+              "qty": 140,
+              "unit": "g"
+            },
+            {
+              "name": "Ameixa",
+              "qty": 145,
+              "unit": "g"
+            },
+            {
+              "name": "Caqui",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Pêssego",
+              "qty": 190,
+              "unit": "g"
+            },
+            {
+              "name": "Nectarina",
+              "qty": 160,
+              "unit": "g"
+            },
+            {
+              "name": "Amoras",
+              "qty": 200,
+              "unit": "g"
+            },
+            {
+              "name": "Cereja",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Caju",
+              "qty": 220,
+              "unit": "g",
+              "foodId": "taco:2011:186"
+            },
+            {
+              "name": "Acerola",
+              "qty": 240,
+              "unit": "g"
+            },
+            {
+              "name": "Jabuticaba",
+              "qty": 150,
+              "unit": "g"
+            },
+            {
+              "name": "Pitanga",
+              "qty": 220,
+              "unit": "g"
+            },
+            {
+              "name": "Açaí (fruta)",
+              "qty": 32,
+              "unit": "g"
+            },
+            {
+              "name": "Fruta-pão",
+              "qty": 70,
+              "unit": "g"
+            },
+            {
+              "name": "Pitaya",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Framboesa",
+              "qty": 140,
+              "unit": "g"
+            },
+            {
+              "name": "Romã",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Figo",
+              "qty": 170,
+              "unit": "g"
+            },
+            {
+              "name": "Lichia",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Mirtilo",
+              "qty": 120,
+              "unit": "g"
+            },
+            {
+              "name": "Goji Berry",
+              "qty": 20,
+              "unit": "g"
+            },
+            {
+              "name": "Mangostão",
+              "qty": 100,
+              "unit": "g"
+            },
+            {
+              "name": "Jaca",
+              "qty": 90,
+              "unit": "g"
+            },
+            {
+              "name": "Pinha",
+              "qty": 90,
+              "unit": "g"
+            },
+            {
+              "name": "Toranja",
+              "qty": 160,
+              "unit": "g"
+            },
+            {
+              "name": "Tâmaras",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Uva passa",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Ameixa seca",
+              "qty": 35,
+              "unit": "g"
+            },
+            {
+              "name": "Damasco",
+              "qty": 30,
+              "unit": "g"
+            },
+            {
+              "name": "Mamão seco",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Figo seco",
+              "qty": 30,
+              "unit": "g"
+            },
+            {
+              "name": "Cranberry seco",
+              "qty": 20,
+              "unit": "g"
+            },
+            {
+              "name": "Maçã desidratada",
+              "qty": 40,
+              "unit": "g"
+            },
+            {
+              "name": "Manga seca",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Abacaxi seco",
+              "qty": 25,
+              "unit": "g"
+            },
+            {
+              "name": "Pêra seca",
+              "qty": 35,
+              "unit": "g"
+            },
+            {
+              "name": "Banana passa (zero açúcar)",
+              "qty": 25,
+              "unit": "g"
+            }
+          ]
+        }
+      ],
+      "notes": [
+        "Prescrição recomenda reservar para dias de treino mais intenso"
+      ]
+    }
+  ],
+  "recipes": [
+    {
+      "id": "panqueca-banana-whey",
+      "page": 5,
+      "yield": "1 porção",
+      "ingredients": [
+        [
+          "Banana madura",
+          1,
+          "unit"
+        ],
+        [
+          "Ovo inteiro",
+          1,
+          "unit"
+        ],
+        [
+          "Cacau em pó",
+          1,
+          "spoon"
+        ],
+        [
+          "Aveia em flocos finos",
+          1,
+          "spoon"
+        ],
+        [
+          "Fermento em pó (opcional)",
+          1,
+          "teaspoon"
+        ],
+        [
+          "Canela a gosto",
+          null,
+          "g"
+        ],
+        [
+          "Adoçante a gosto",
+          null,
+          "g"
+        ],
+        [
+          "Whey na massa ou cobertura (opcional)",
+          15,
+          "g"
+        ]
+      ],
+      "preparation": [
+        "Amassar banana",
+        "Misturar ovo, cacau e aveia",
+        "Acrescentar fermento, canela e adoçante",
+        "Cozinhar em frigideira antiaderente levemente untada, forno ou airfryer"
+      ]
+    }
+  ],
+  "fruits": {
+    "energyRangeKcalPerPortion": [
+      70,
+      80
+    ],
+    "pages": [
+      9,
+      10,
+      11,
+      12,
+      13
+    ],
+    "equivalents": [
+      {
+        "name": "Morango",
+        "grams": 240,
+        "household": "10 unidades",
+        "page": 9
+      },
+      {
+        "name": "Kiwi",
+        "grams": 150,
+        "household": "2 unidades",
+        "page": 9
+      },
+      {
+        "name": "Uva Itália",
+        "grams": 150,
+        "household": "1 cacho médio",
+        "page": 9
+      },
+      {
+        "name": "Abacaxi",
+        "grams": 150,
+        "household": "1 fatia",
+        "page": 9
+      },
+      {
+        "name": "Laranja-pêra",
+        "grams": 180,
+        "household": "1 unidade",
+        "page": 9
+      },
+      {
+        "name": "Mamão papaia",
+        "grams": 170,
+        "household": "1/2 unidade",
+        "page": 9
+      },
+      {
+        "name": "Banana",
+        "grams": 80,
+        "household": "1 unidade",
+        "page": 9
+      },
+      {
+        "name": "Melão amarelo",
+        "grams": 220,
+        "household": "2 fatias",
+        "page": 9
+      },
+      {
+        "name": "Pêra Williams",
+        "grams": 120,
+        "household": "1 unidade",
+        "page": 9
+      },
+      {
+        "name": "Mexerica",
+        "grams": 170,
+        "household": "1 unidade grande",
+        "page": 9
+      },
+      {
+        "name": "Maçã",
+        "grams": 120,
+        "household": "1 unidade",
+        "page": 9
+      },
+      {
+        "name": "Manga háden",
+        "grams": 110,
+        "household": "1/2 unidade",
+        "page": 9
+      },
+      {
+        "name": "Limão",
+        "grams": 240,
+        "household": "3 unidades",
+        "page": 10
+      },
+      {
+        "name": "Melancia",
+        "grams": 220,
+        "household": "2 fatias",
+        "page": 10
+      },
+      {
+        "name": "Maracujá",
+        "grams": 120,
+        "household": "1,5 colher de servir",
+        "page": 10
+      },
+      {
+        "name": "Goiaba",
+        "grams": 140,
+        "household": "1 unidade",
+        "page": 10
+      },
+      {
+        "name": "Carambola",
+        "grams": 140,
+        "household": "2 unidades",
+        "page": 10
+      },
+      {
+        "name": "Ameixa",
+        "grams": 145,
+        "household": "1,5 unidade",
+        "page": 10
+      },
+      {
+        "name": "Caqui",
+        "grams": 120,
+        "household": "1,5 unidade",
+        "page": 10
+      },
+      {
+        "name": "Pêssego",
+        "grams": 190,
+        "household": "1,5 unidade",
+        "page": 10
+      },
+      {
+        "name": "Nectarina",
+        "grams": 160,
+        "household": "1 unidade",
+        "page": 10
+      },
+      {
+        "name": "Amoras",
+        "grams": 200,
+        "household": "30 unidades",
+        "page": 10
+      },
+      {
+        "name": "Cereja",
+        "grams": 100,
+        "household": "25 unidades",
+        "page": 10
+      },
+      {
+        "name": "Caju",
+        "grams": 220,
+        "household": "2 fatias",
+        "page": 10
+      },
+      {
+        "name": "Acerola",
+        "grams": 240,
+        "household": "20 unidades",
+        "page": 11
+      },
+      {
+        "name": "Jabuticaba",
+        "grams": 150,
+        "household": "30 unidades",
+        "page": 11
+      },
+      {
+        "name": "Pitanga",
+        "grams": 220,
+        "household": "22 unidades",
+        "page": 11
+      },
+      {
+        "name": "Açaí (fruta)",
+        "grams": 32,
+        "household": "8 unidades",
+        "page": 11
+      },
+      {
+        "name": "Fruta-pão",
+        "grams": 70,
+        "household": "1/5 unidade",
+        "page": 11
+      },
+      {
+        "name": "Pitaya",
+        "grams": 120,
+        "household": "1 unidade",
+        "page": 11
+      },
+      {
+        "name": "Framboesa",
+        "grams": 140,
+        "household": "7 colheres de sopa",
+        "page": 11
+      },
+      {
+        "name": "Romã",
+        "grams": 100,
+        "household": "1 unidade",
+        "page": 11
+      },
+      {
+        "name": "Figo",
+        "grams": 170,
+        "household": "3 unidades",
+        "page": 11
+      },
+      {
+        "name": "Lichia",
+        "grams": 100,
+        "household": "não informada",
+        "page": 11
+      },
+      {
+        "name": "Mirtilo",
+        "grams": 120,
+        "household": "1 xícara",
+        "page": 11
+      },
+      {
+        "name": "Goji Berry",
+        "grams": 20,
+        "household": "3 colheres de sopa",
+        "page": 11
+      },
+      {
+        "name": "Mangostão",
+        "grams": 100,
+        "household": "1/2 unidade",
+        "page": 12
+      },
+      {
+        "name": "Jaca",
+        "grams": 90,
+        "household": "3 bagos",
+        "page": 12
+      },
+      {
+        "name": "Pinha",
+        "grams": 90,
+        "household": "1,5 unidade",
+        "page": 12
+      },
+      {
+        "name": "Toranja",
+        "grams": 160,
+        "household": "1 unidade",
+        "page": 12
+      },
+      {
+        "name": "Tâmaras",
+        "grams": 25,
+        "household": "3 unidades",
+        "page": 12
+      },
+      {
+        "name": "Uva passa",
+        "grams": 25,
+        "household": "1,5 colher de sopa",
+        "page": 12
+      },
+      {
+        "name": "Ameixa seca",
+        "grams": 35,
+        "household": "3 unidades",
+        "page": 12
+      },
+      {
+        "name": "Damasco",
+        "grams": 30,
+        "household": "2 unidades",
+        "page": 12
+      },
+      {
+        "name": "Mamão seco",
+        "grams": 25,
+        "household": "2 colheres de sopa",
+        "page": 12
+      },
+      {
+        "name": "Figo seco",
+        "grams": 30,
+        "household": "1 unidade",
+        "page": 12
+      },
+      {
+        "name": "Cranberry seco",
+        "grams": 20,
+        "household": "1,5 colher de sopa",
+        "page": 12
+      },
+      {
+        "name": "Maçã desidratada",
+        "grams": 40,
+        "household": "1 pacote",
+        "page": 12
+      },
+      {
+        "name": "Manga seca",
+        "grams": 25,
+        "household": "1 colher de sopa",
+        "page": 13
+      },
+      {
+        "name": "Abacaxi seco",
+        "grams": 25,
+        "household": "12 pedaços",
+        "page": 13
+      },
+      {
+        "name": "Pêra seca",
+        "grams": 35,
+        "household": "2 unidades",
+        "page": 13
+      },
+      {
+        "name": "Banana passa (zero açúcar)",
+        "grams": 25,
+        "household": "não informada",
+        "page": 13
+      }
+    ]
+  },
+  "notes": {
+    "mealPlanning": [
+      "Planejar refeições conforme rotina semanal e saídas",
+      "Selecionar duas preparações por grupo para simplificar",
+      "Priorizar preparações de forno ou panela de pressão",
+      "Fazer lista de compras",
+      "Preparar bolsas térmicas e lanches na véspera",
+      "Pesar prato caseiro como referência para comer fora"
+    ],
+    "measurements": [
+      "Medir cintura, quadril, braço e coxa em condições consistentes",
+      "Comparar circunferências por local e data",
+      "Fotos de frente, lado e costas, com consistência e periodicidade sugerida de 30 dias"
+    ],
+    "supplements": [
+      "Whey isolado e creatina 5g/dia são citados",
+      "Pode substituir whey por leite em pó desnatado sem lactose conforme documento",
+      "Citação de magnésio/inositol no PDF, sem dose ou prescrição estruturada"
+    ],
+    "nonPrescribed": [
+      "Não há ceia com composição prescrita",
+      "Não há cálculo do gasto total energético ou meta de 2.170 kcal no PDF"
+    ]
+  }
+}

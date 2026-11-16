@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HTML = re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text(encoding='utf-8'))
 HTML = re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />', '', HTML)
 SCRIPTS = ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js',
-           'body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-presets.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
+           'body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-prescription-data.js','nutrition-presets.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','performance-trends.js','app.js']
 KEY = 'forja.academia.v1'
 
 def launch(ctx, seed, errors):
@@ -50,7 +50,7 @@ with sync_playwright() as p:
     page.locator('#nd-profile button[type="submit"]').click()
     assert page.locator('.nd-goal-recommendation').count()==1
     state=lambda: json.loads(page.evaluate('localStorage.getItem("forja.academia.v1")'))
-    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='professional'
+    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='manual'
     assert state()['nutrition']['settings']['profile']['activity']==1.725
     page.locator('[data-nd="show-steps"]').click()
     assert page.locator('#nd-steps-panel').get_attribute('open') is not None
@@ -68,7 +68,7 @@ with sync_playwright() as p:
     assert state()['nutrition']['settings']['profile']['activity']==1.725
     page.locator('#nd-profile button[type="submit"]').click()
     assert state()['nutrition']['settings']['profile']['activity']==1.55
-    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='professional'
+    assert len(state()['nutrition']['settings'].get('targets',[]))==1 and state()['nutrition']['settings']['targets'][0]['source']=='manual'
     page.locator('[data-nd="accept"]').click()
     assert len(state()['nutrition']['settings']['targets'])==1
     assert state()['nutrition']['settings']['targets'][0]['profile']['activity']==1.55
