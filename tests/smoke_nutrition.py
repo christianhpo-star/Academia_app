@@ -376,6 +376,36 @@ with sync_playwright() as p:
     balance.locator('.nd-balance > summary').click()
     balance.screenshot(path=str(ROOT/'screenshots/nutrition-balance-390.png'),full_page=True)
     balance.close()
+    # Evolução: exact Peso/Nutrição hierarchy, mobile range controls, no invented data.
+    evo=start(context,{},errors)
+    evo.locator('#nav [data-tab="progress"]').click()
+    assert evo.locator('.evo-tabs [data-action="evo-view"]').count()==2
+    assert evo.locator('#evo-panel-weight').is_visible()
+    assert 'Peso inicial' in evo.locator('.evo-weight-kpis').inner_text()
+    assert evo.locator('.evo-cta').is_visible()
+    assert evo.locator('.evo-weight-history').count()==1
+    assert evo.locator('.evo-extras').count()==1
+    assert not evo.locator('.evo-extras').evaluate('(x)=>x.open')
+    evo.locator('[data-action="evo-view"][data-view="nutrition"]').click()
+    assert evo.locator('#evo-panel-nutrition').is_visible()
+    assert evo.get_by_role('heading',name='Objetivo (kcal)').count()==1
+    assert evo.get_by_role('heading',name='Distribuição de macros (%)').count()==1
+    assert evo.get_by_role('heading',name='Média de macronutrientes (g)').count()==1
+    assert evo.locator('[data-action="evo-period"]').count()==9
+    assert 'Nenhuma caloria registrada' in evo.locator('#evo-panel-nutrition').inner_text()
+    for kind in ('energy','macros','average'):
+        evo.locator('[data-action="evo-period"][data-kind="'+kind+'"][data-days="30"]').click()
+        assert evo.locator('[data-action="evo-period"][data-kind="'+kind+'"][data-days="30"]').get_attribute('aria-pressed')=='true'
+    for width in (320,390):
+        evo.set_viewport_size({'width':width,'height':844})
+        assert evo.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+    evo.locator('[data-action="evo-view"][data-view="weight"]').click()
+    evo.locator('.evo-cta').click()
+    assert evo.locator('#weight-form').is_visible()
+    evo.screenshot(path=str(ROOT/'screenshots/evolution-weight-390.png'),full_page=True)
+    evo.locator('[data-action="evo-view"][data-view="nutrition"]').click()
+    evo.screenshot(path=str(ROOT/'screenshots/evolution-nutrition-390.png'),full_page=True)
+    evo.close()
     # Quota errors preserve original history and form.
     page.locator('[data-nd="add"][data-meal="snack"]').click()
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
