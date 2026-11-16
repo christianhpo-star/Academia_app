@@ -149,6 +149,41 @@
     };
   });
 
+
+  // TBCA references are per 100 g of a described preparation, not restaurant-labelled facts.
+  // Household pieces and spoon weights are optional heuristics, not measured portions.
+  const PARTY_FOOD_ROWS=[
+    ['BRC0474F','Nuggets de frango fritos (óleo)','Empanados',
+      ['nuggets','nugget','nuguets','frango empanado','nuggets fritos'],339,15.4,24.7,20.3,1.95,
+      [p('one','1 unidade estimada (≈25 g)',25),p('four','4 unidades estimadas (≈100 g)',100),p('100g','100 g preparados',100)]],
+    ['BRC0475F','Nuggets de frango assados (sem óleo)','Empanados',
+      ['nuggets assado','nugget forno','nuggets air fryer'],303,18.5,29.7,12.8,2.34,
+      [p('one','1 unidade estimada (≈25 g)',25),p('four','4 unidades estimadas (≈100 g)',100),p('100g','100 g preparados',100)]],
+    ['BRC0898F','Linguiça calabresa frita','Porções e petiscos',
+      ['calabresa','calabresa fatiada','linguiça calabresa','linguica calabresa'],325,14.9,3.33,26.6,0.67,
+      [p('small','Porção estimada (≈80 g)',80),p('medium','Porção estimada (≈150 g)',150),p('100g','100 g preparados',100)]],
+    ['BRC0941F','Bacon frito','Porções e petiscos',
+      ['bacon','bacon frito','bacon crocante','toucinho defumado'],655,26,1.06,61.2,0.43,
+      [p('spoon','1 colher estimada (≈15 g)',15),p('medium','Porção estimada (≈50 g)',50),p('100g','100 g preparados',100)]],
+    ['BRC0137G','Molho de requeijão com cheddar','Molhos e adicionais',
+      ['cheddar','molho cheddar','cheddar cremoso','molho de queijo'],330,15.1,3.05,28.6,0,
+      [p('spoon','1 colher de sopa rasa (≈15 g)',15),p('full','1 colher de sopa cheia (≈30 g)',30),p('100g','100 g de molho',100)]],
+    ['BRC0090G','Queijo cheddar','Queijos',
+      ['cheddar queijo','queijo cheddar','cheddar fatia'],404,22.9,3.09,33.3,0,
+      [p('slice','1 fatia estimada (≈30 g)',30),p('100g','100 g de queijo',100)]]
+  ];
+  const partyFoods=PARTY_FOOD_ROWS.map(([code,name,category,aliases,kcal,protein,carbs,fat,fiber,portions])=>({
+    id:'tbca:'+code,name,category,aliases,preparation:'cooked',
+    note:'Composição de referência TBCA por 100 g; marca, fritura e receita da lanchonete podem variar. Quantidades por unidade e porção não foram pesadas.',
+    nutrientsPer100g:{energyKcal:kcal,proteinG:protein,carbsG:carbs,fatG:fat,fiberG:fiber},
+    source:{
+      name:'TBCA — USP/FoRC',
+      reference:'TBCA '+code+'; https://www.tbca.net.br/base-dados-en/int_food_composition.php?cod_produto='+code,
+      license:'Referência nutricional TBCA; consultar a fonte original'
+    },
+    portions
+  }));
+
   const foods = [
     {
       id:'local:doce-cascao-acai-trufado-branco-500ml',
@@ -290,7 +325,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods,drinkFoods);
+  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods,drinkFoods,partyFoods);
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -313,11 +348,11 @@
   const mealFirst={
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265',...DRINK_SUGGESTIONS],
-    lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','ref:generic-171477','taco:2011:429','taco:2011:539'],
+    lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','ref:generic-171477','taco:2011:429','taco:2011:539'],
     snack:['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml',...DRINK_SUGGESTIONS],
-    dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','taco:2011:538','taco:2011:429'],
+    dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','taco:2011:538','taco:2011:429'],
     supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'ref:generic-171265',...GROWTH_TOP_IDS,'growth:whey-unknown',...DRINK_SUGGESTIONS]
   };
@@ -408,7 +443,83 @@
       time:null,notes:'',items};
     return N.validEntry(entry)?entry:null;
   }
-  const api={VERSION:1,foods,find,search,orderedForMeal,makeItem,makeFavorite,fromFavorite};
+
+  // The advertised number of servings is never used to infer how much a person ate.
+  // Weights are explicitly editable assumptions. Each component is estimated separately,
+  // and is not allowed into observedTotals as a verified amount.
+  const SHARED_PRESETS=[
+    {
+      id:'trono-dos-reis',name:'Trono dos Reis — batata, nuggets e calabresa',
+      note:'Exemplo de composição a partir da imagem e da descrição: os pesos NÃO foram informados pelo restaurante. Ajuste antes de registrar.',
+      components:[
+        {foodId:'taco:2011:93',label:'Batata frita',wholeGrams:300},
+        {foodId:'tbca:BRC0474F',label:'Nuggets fritos (≈8 unidades de 25 g)',wholeGrams:200},
+        {foodId:'tbca:BRC0898F',label:'Calabresa fatiada',wholeGrams:160},
+        {foodId:'tbca:BRC0137G',label:'Molho com cheddar',wholeGrams:100},
+        {foodId:'tbca:BRC0941F',label:'Bacon',wholeGrams:70}
+      ]
+    },
+    {
+      id:'batata-cheddar-bacon',name:'Batata com cheddar e bacon',
+      note:'Modelo de porção de lanchonete. Os pesos são exemplos; edite de acordo com o que foi servido.',
+      components:[
+        {foodId:'taco:2011:93',label:'Batata frita',wholeGrams:250},
+        {foodId:'tbca:BRC0137G',label:'Molho com cheddar',wholeGrams:70},
+        {foodId:'tbca:BRC0941F',label:'Bacon',wholeGrams:50}
+      ]
+    },
+    {
+      id:'nuggets-compartilhados',name:'Porção de nuggets',
+      note:'Peso por unidade é apenas ilustrativo (≈25 g). Se puder, informe a massa real.',
+      components:[{foodId:'tbca:BRC0474F',label:'Nuggets fritos (≈8 unidades)',wholeGrams:200}]
+    },
+    {
+      id:'calabresa-compartilhada',name:'Porção de calabresa',
+      note:'Peso e preparo dependem do restaurante. Edite a quantidade da porção servida.',
+      components:[{foodId:'tbca:BRC0898F',label:'Calabresa fatiada',wholeGrams:200}]
+    }
+  ];
+  function makeSharedPortion(presetId,rows,makeId){
+    const preset=SHARED_PRESETS.find(p=>p.id===presetId);
+    if(!preset||!Array.isArray(rows)||rows.length!==preset.components.length||typeof makeId!=='function')return null;
+    const items=[];let wholeGrams=0,consumedGrams=0;
+    for(let idx=0;idx<preset.components.length;idx++){
+      const part=preset.components[idx],row=rows[idx],food=find(part.foodId);
+      if(!food||!row||row.foodId!==part.foodId)return null;
+      const whole=Number(row.totalGrams),mine=Number(row.myGrams);
+      if(!Number.isFinite(whole)||!Number.isFinite(mine)||whole<0||whole>10000||
+          mine<0||mine>whole||mine>10000)return null;
+      wholeGrams+=whole;consumedGrams+=mine;
+      if(mine===0)continue;
+      if(mine<0.001||N.NUTRIENTS.some(k=>!Number.isFinite(food.nutrientsPer100g[k])))return null;
+      const perGram=Object.fromEntries(N.NUTRIENTS.map(k=>[k,food.nutrientsPer100g[k]/100]));
+      const scale=(n,m)=>Number((n*m).toFixed(5));
+      const assumptions='Peso total informado/estimado: '+whole+' g; minha parte: '+mine+
+        ' g. TBCA usada como referência, sem receita/rótulo da loja. Faixa heurística ±40% sobre a composição; não é intervalo estatístico.';
+      items.push({
+        id:makeId('item'),foodId:food.id,
+        label:part.label+' — '+preset.name+' (estimativa)',
+        quantity:mine,unit:'g',grams:null,
+        nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null,fiberG:null},
+        source:{
+          name:'TBCA + quantidade informada/estimada',
+          reference:food.source.reference,
+          license:'Registro aproximado; não é informação oficial do restaurante'
+        },
+        estimate:{
+          confidence:'low',servingLabel:'1 g da quantidade informada',
+          assumptions,
+          low:Object.fromEntries(N.NUTRIENTS.map(k=>[k,scale(perGram[k],0.6)])),
+          central:Object.fromEntries(N.NUTRIENTS.map(k=>[k,scale(perGram[k],1)])),
+          high:Object.fromEntries(N.NUTRIENTS.map(k=>[k,scale(perGram[k],1.4)]))
+        }
+      });
+    }
+    if(!items.length||items.length>30||
+       !N.validEntry({id:'shared-preview',date:'2026-11-15',mealType:'other',items}))return null;
+    return {items,wholeGrams:Math.round(wholeGrams*100)/100,consumedGrams:Math.round(consumedGrams*100)/100,preset};
+  }
+  const api={VERSION:1,foods,find,search,orderedForMeal,makeItem,makeFavorite,fromFavorite,SHARED_PRESETS,makeSharedPortion};
   root.ForjaNutritionCatalog=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
