@@ -33,6 +33,7 @@ jobs:
           node --check daily-routine.js
           node --check nutrition.js
           node --check nutrition-catalog.js
+          node --check nutrition-prescription-data.js
           node --check nutrition-presets.js
           node --check nutrition-balance.js
           node --check nutrition-ui.js
