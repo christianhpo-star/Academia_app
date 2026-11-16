@@ -7,7 +7,7 @@ HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
 SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js',
  'catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js',
- 'goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
+ 'goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-presets.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
 with sync_playwright() as p:
     browser_path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or shutil.which('google-chrome')
     opts={'headless':True,'args':['--no-sandbox']}
@@ -39,7 +39,7 @@ with sync_playwright() as p:
     page.locator('#goal-form button[type="submit"]').click()
     saved=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
     assert saved['settings']['goalMode']=='muscle_gain'
-    assert saved['nutrition']['settings'].get('targets',[])==[]
+    assert len(saved['nutrition']['settings'].get('targets',[]))==1 and saved['nutrition']['settings']['targets'][0]['source']=='professional'
     page.locator('#nav [data-tab="progress"]').click()
     assert page.locator('.goal-plan-card').count()==1
     assert 'Ganhar massa muscular' in page.locator('.goal-plan-card').inner_text()
