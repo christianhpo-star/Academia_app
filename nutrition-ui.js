@@ -175,23 +175,40 @@
       button('favorite','Salvar favorito','data-id="'+esc(e.id)+'"')+
       button('delete','Excluir','data-id="'+esc(e.id)+'"','ghost')+'</div></section>';
   }
+
+  const MEAL_SYMBOLS={
+    breakfast:'<path d="M4 10h13v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8Zm13 2h2a3 3 0 0 1 0 6h-2M8 3c-2 2 2 3 0 5m5-5c-2 2 2 3 0 5"/>',
+    lunch:'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M2 3v7M4 3v7M6 3v7M4 10v11M22 3v18"/>',
+    snack:'<path d="M12 7c-2-4-7-4-8 1-2 5 2 12 6 12l2-1 2 1c4 0 8-7 6-12-1-5-6-5-8-1Z"/><path d="M12 7c0-3 2-5 5-5m-5 5c-2-2-5-1-7-3"/>',
+    dinner:'<path d="M3 12h18l-2 8H5l-2-8Zm3-2c1-4 11-4 12 0M8 7V4m4 3V2m4 5V4"/>',
+    supper:'<path d="M20 15A8 8 0 0 1 9 4a8 8 0 1 0 11 11ZM17 3v4m-2-2h4"/>',
+    other:'<circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/>'
+  };
+  function mealSymbol(type){
+    return '<span class="nd-meal-symbol" data-meal-kind="'+esc(type)+'" aria-hidden="true">'+
+      '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+
+      (MEAL_SYMBOLS[type]||MEAL_SYMBOLS.other)+'</svg></span>';
+  }
   function mealCardHTML(type,label,rows,total,target,date){
     const detail=rows.length?N.recordedBreakdown(rows,date):null;
-    const macros=detail?.totals;
-    const calorieCount=detail?.counts.energyKcal;
-    const approximate=calorieCount&&(calorieCount.estimated>0||calorieCount.unknown>0);
+    const macros=detail?.totals,energyCount=detail?.counts.energyKcal;
+    const approximate=energyCount&&(energyCount.estimated>0||energyCount.unknown>0);
     const foodCount=rows.reduce((n,row)=>n+row.items.length,0);
-    const dailyTarget=target&&target.values||{};
-    const main='<div class="row-between"><div><h2 class="section-title">'+esc(label)+
-      '</h2><p class="small muted mb-0">'+(rows.length?(total==null?'— kcal · dados insuficientes':(approximate?'≈':'')+fmt(total)+' kcal registradas'+(calorieCount.unknown?' (parcial)':'')):'Sem registros')+'</p></div>'+
+    const dailyTarget=target?.values||{};
+    const kcal=rows.length?(total==null?'— kcal':(approximate?'≈':'')+fmt(total)+' kcal'):'Sem registros';
+    const preview=rows.length?rows.flatMap(e=>e.items.map(i=>shortFoodLabel(i.label))).slice(0,2).join(' · '):'';
+    const main='<div class="nd-meal-top">'+mealSymbol(type)+
+      '<div class="nd-meal-info"><h2 class="section-title">'+esc(label)+'</h2>'+
+      '<span class="nd-meal-calories">'+kcal+(foodCount?' · '+foodCount+' itens':'')+'</span>'+
+      (preview?'<small class="nd-meal-preview">'+esc(preview)+'</small>':'')+'</div>'+
       button('add','+','data-meal="'+esc(type)+'" aria-label="Adicionar ao '+esc(label)+'"','nd-add')+'</div>';
     const macro=rows.length?
       '<div class="nd-meal-macro-row">'+['proteinG','carbsG','fatG'].map(k=>mealMacroRing(k,macros[k],dailyTarget[k],detail.counts[k])).join('')+'</div>'+
       '<p class="nd-meal-macro-hint">Anéis = parcela da meta diária, não meta por refeição.</p>':'';
     const details=rows.length?
       '<details class="nd-meal-details"><summary>Ver '+foodCount+' alimento(s)<span class="nd-meal-chevron" aria-hidden="true">⌄</span></summary>'+
-      rows.map((e,index)=>entryHTML(e,index)).join('')+'</details>':'';
-    return '<section class="card nd-meal">'+main+macro+details+'</section>';
+      macro+rows.map((e,index)=>entryHTML(e,index)).join('')+'</details>':'';
+    return '<section class="card nd-meal">'+main+details+'</section>';
   }
 
   function balanceHTML(archive,state,currentDay){
