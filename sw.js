@@ -1,5 +1,5 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v48-20261116-mealplan01';
+const CACHE = 'forja-shell-v48-20261116-mealplan01-catalog';
 const APP_FILES = [
   './', './index.html', './styles.css?v=20261116-mealplan01', './body-measures.js?v=20261116-mealplan01', './activity.js?v=20261116-mealplan01', './health-import.js?v=20261116-mealplan01', './nutrition-goals.js?v=20261116-mealplan01', './goal-planner.js?v=20261116-mealplan01', './reminders.js?v=20261116-mealplan01', './daily-routine.js?v=20261116-mealplan01', './nutrition.js?v=20261116-mealplan01', './nutrition-catalog.js?v=20261116-mealplan01', './nutrition-presets.js?v=20261116-mealplan01', './nutrition-balance.js?v=20261116-mealplan01', './nutrition-ui.js?v=20261116-mealplan01', './evolution-dashboard.js?v=20261116-mealplan01', './app.js?v=20261116-mealplan01', './data.js?v=20261116-mealplan01',
   './engine.js?v=20261116-mealplan01', './muay.js?v=20261116-mealplan01', './calendar.js?v=20261116-mealplan01', './flex.js?v=20261116-mealplan01', './dose.js?v=20261116-mealplan01', './focus.js?v=20261116-mealplan01', './catalog-advice.js?v=20261116-mealplan01', './manifest.webmanifest',
