@@ -344,6 +344,7 @@ with sync_playwright() as p:
     for i in (3,2,1):
         stamp=balance.evaluate('(offset)=>{const d=new Date(),day=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");return window.ForjaEnergyBalance.shift(day,-offset)}',i)
         balance.locator('.nd-balance > summary').click()
+        balance.locator('.nd-balance-history > summary').click()
         balance.locator('[data-nd="balance-review"][data-date="'+stamp+'"]').click()
         assert balance.locator('#nd-balance-review').is_visible()
         balance.locator('#nd-balance-review input[name="complete"]').check()
