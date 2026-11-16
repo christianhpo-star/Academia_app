@@ -1149,3 +1149,6 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .nutrition-screen .nd-meal-details .nd-meal-macro-row{margin-top:9px}
 @media(max-width:350px){.nd-meal-top{grid-template-columns:39px minmax(0,1fr) 44px;gap:7px;padding:9px}.nd-meal-symbol{width:39px;height:39px}.nutrition-screen .nd-meal .section-title{font-size:14px}.nutrition-screen .nd-macros-overview .nd-ring{width:42px;height:42px}}
 @media(prefers-reduced-motion:reduce){.nd-overview,.nd-date-stick,.nd-date-mini{transition:none}}
+
+/* Quick return to the current day is available only when reading another day. */
+.nd-date-stick .nd-go-today{min-height:36px;padding:5px 12px;display:block;margin:5px auto 0;border:1px solid #40566c;background:#1f3042;border-radius:9px;color:var(--lime);font-size:12px;font-weight:750}
