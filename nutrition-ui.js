@@ -4,6 +4,7 @@
   const N=root.ForjaNutrition,CAT=root.ForjaNutritionCatalog;
   const G=root.ForjaNutritionGoals||(typeof require==='function'?require('./nutrition-goals.js'):null);
   const B=root.ForjaEnergyBalance||(typeof require==='function'?require('./nutrition-balance.js'):null);
+  const PRESETS=root.ForjaMealPresets||(typeof require==='function'?require('./nutrition-presets.js'):null);
   const BODY=root.ForjaBodyMeasures||(typeof require==='function'?require('./body-measures.js'):null);
   const ACT=root.ForjaActivity||(typeof require==='function'?require('./activity.js'):null);
   const HEALTH=root.ForjaHealthImport||(typeof require==='function'?require('./health-import.js'):null);
@@ -208,7 +209,25 @@
     const details=rows.length?
       '<details class="nd-meal-details"><summary>Ver '+foodCount+' alimento(s)<span class="nd-meal-chevron" aria-hidden="true">⌄</span></summary>'+
       macro+rows.map((e,index)=>entryHTML(e,index)).join('')+'</details>':'';
-    return '<section class="card nd-meal">'+main+details+'</section>';
+    return '<section class="card nd-meal">'+main+recipeSuggestionsHTML(type,rows)+details+'</section>';
+  }
+
+  function recipeSuggestionsHTML(type,rows){
+    if(!PRESETS || rows.length || !['breakfast','lunch','snack','dinner'].includes(type))return '';
+    const ideas=PRESETS.forMeal(type);
+    if(!ideas.length)return '';
+    const card=(idea,featured=false)=>{
+      const missing=PRESETS.hasMissing(idea);
+      const ingredients=idea.ingredients.map(item=>'<span class="nd-plan-ingredient"><strong>'+esc(item.label)+'</strong> · '+esc(item.amount)+'</span>').join('');
+      return '<div class="nd-plan-option'+(featured?' is-featured':'')+'"><div class="nd-plan-option-head"><strong>'+esc(idea.title)+'</strong>'+(missing?'<span class="nd-plan-unknown">Dados incompletos</span>':'')+'</div>'+
+        '<div class="nd-plan-ingredients">'+ingredients+'</div>'+
+        '<div class="nd-plan-actions">'+button('plan-confirm','Comi isso','data-recipe="'+esc(idea.id)+'"','primary nd-plan-confirm')+
+        button('plan-adjust','Ajustar','data-recipe="'+esc(idea.id)+'"','secondary nd-plan-adjust')+'</div></div>';
+    };
+    return '<div class="nd-plan-section"><div class="nd-plan-head"><span>Do seu plano · opções editáveis</span></div>'+
+      card(ideas[0],true)+(ideas.length>1?'<details class="nd-plan-alternatives"><summary>Ver outras '+(ideas.length-1)+' opções</summary>'+
+      ideas.slice(1).map(idea=>card(idea)).join('')+'</details>':'')+
+      '<div class="nd-plan-other">'+button('add','Comi outra coisa','data-meal="'+esc(type)+'"','button-inline')+'</div></div>';
   }
 
   function balanceHTML(archive,state,currentDay){
@@ -774,6 +793,20 @@
           refresh();notify('Sugestões opcionais habilitadas novamente.');
         }
         return;
+      }
+      if(a==='plan-confirm'||a==='plan-adjust'){
+        const recipe=PRESETS?.find(b.dataset.recipe);
+        if(!recipe)return notify('Opção de refeição não encontrada.');
+        if(archive().entries.some(e=>e.date===day&&e.mealType===recipe.mealType))
+          return notify('Essa refeição já tem um registro. Use Adicionar para registrar outra.');
+        const entry=PRESETS.makeEntry(recipe.id,day,id);
+        if(!entry)return notify('Não foi possível montar a refeição. Confira o catálogo.');
+        if(a==='plan-adjust')return start(recipe.mealType,entry,true);
+        if(archive().draft)return notify('Há um rascunho pendente. Continue ou descarte antes de confirmar.');
+        const ok=transact(a=>{a.entries.push(entry);});
+        if(!ok)return notify('Não foi possível salvar a refeição.');
+        notify('Refeição confirmada e nutrientes atualizados.');
+        const scroll=root.scrollY;refresh();root.scrollTo(0,scroll);return;
       }
       if(a==='add')return start(b.dataset.meal||'lunch');
       if(a==='shared'){start(b.dataset.meal||'dinner');if(!draft)return;mode='portions';sharedPicked='trono-dos-reis';mealBody();return;}
