@@ -46,7 +46,7 @@ jobs:
           python3 -m playwright install --with-deps chromium
       - name: Browser smoke - nutrition diary and goals
         run: python3 tests/smoke_nutrition.py
-      - name: Browser smoke - strength persistence and radar
+      - name: Browser smoke - strength group volume and evolution
         run: |
           python3 tests/smoke_browser.py
           python3 tests/smoke_persistence.py
@@ -94,5 +94,6 @@ jobs:
             screenshots/catalog-*.png
             screenshots/body-*.png
             screenshots/nutrition-*.png
+            screenshots/evolution-*.png
           if-no-files-found: warn
           retention-days: 3
