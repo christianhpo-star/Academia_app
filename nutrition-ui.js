@@ -52,7 +52,6 @@
   function foodKind(item){
     const food=CAT.find(item.foodId||item.id)||item;
     const id=food.id||item.foodId;
-    if(food.category==='Frutas')return 'fruit';
     if(FOOD_KINDS[id])return FOOD_KINDS[id];
     if(String(id||'').includes('doce-cascao-adicional'))return 'topping';
     if(String(id||'').includes('doce-cascao'))return 'dessert';
@@ -66,6 +65,7 @@
     if(/frango/.test(label))return 'chicken';
     if(/ovo/.test(label))return 'egg';
     if(/banana/.test(label))return 'banana';
+    if(food.category==='Frutas')return 'fruit';
     if(/aveia/.test(label))return 'oats';
     if(/leite/.test(label))return 'milk';
     if(/acai|sobremesa|sorvete/.test(label))return 'dessert';

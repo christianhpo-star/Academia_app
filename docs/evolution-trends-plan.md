@@ -5,13 +5,13 @@ Data de referência: 15/11/2026. Referência: screenshots e navegação atual do
 ## Diagnóstico
 
 1. Passos estavam em Alimentação → Minhas metas → painel de atividade: dado diário escondido em configurações, embora seja usado para interpretação do volume habitual de atividade.
-2. Frutas existentes: banana-prata, maçã Fuji e mamão Formosa, sem navegação por categoria. Catálogo grande exige busca ou rolagem.
+2. Frutas existentes: banana-prata, maçã Fuji, mamão Formosa e banana genérica de referência, sem navegação por categoria. Catálogo grande exige busca ou rolagem.
 3. Radar de força é uma medida relativa entre poucos grupos, normalizando por exercício; ocupa área principal sem indicar diretamente evolução da recomposição.
 
 ## Entrega na versão atual
 
 - **Início:** cartão logo após o treino principal com data, total de passos de hoje, edição do dia e histórico recente. A linha de hoje não preenchida é «não informado», diferente de zero; não enviar notificações externas ou mudar metas sem confirmação. A entrada usa ACT.upsertSteps e guarda activitySteps no backup.
-- **Alimentação:** 14 frutas de TACO 4ª edição acrescentadas às três já registradas, com fonte, gramas comestíveis e filtro Frutas no seletor de refeição. Não converter peso bruto com casca ou semente em 100% parte comestível.
+- **Alimentação:** 14 frutas de TACO 4ª edição acrescentadas às quatro já registradas (18 no total), com fonte, gramas comestíveis e filtro Frutas no seletor de refeição. Não converter peso bruto com casca ou semente em 100% parte comestível.
 - **Evolução:** peso registrado e gráfico original continuam; circunferência de abdômen (umbigo) em tendência temporal quando há pelo menos dois pontos; passos diários em períodos de 7/14/28 dias, pontos ausentes exibidos com lacunas; top 3 variações de força calculadas por exercício (não somar kg de máquinas diferentes); radar original recolhido em análise avançada. A meta de peso continua manual e é apenas referência visual.
 
 ## Fase seguinte (não incluída nesta entrega)

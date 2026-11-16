@@ -141,7 +141,7 @@ test('alimentos pesquisados aparecem primeiro no café sem depender de consumo p
 
 test('catálogo TACO cobre carnes, frituras e pratos brasileiros com fonte específica',()=>{
  const taco=C.foods.filter(f=>f.id.startsWith('taco:2011:'));
- assert.equal(taco.length,54);
+ assert.equal(taco.length,68); // 54 anteriores + 14 novas frutas TACO
  assert.equal(new Set(C.foods.map(f=>f.id)).size,C.foods.length);
  for(const f of taco) {
    assert.equal(N.validFood(f),true,f.id);
@@ -356,10 +356,12 @@ test('Growth e leite são dois snapshots independentes e favoritos mantêm volum
 
 test('TACO: frutas variadas têm fonte rastreável e aceitam valores fracionados',()=>{
  const fruits=C.foods.filter(f=>f.category==='Frutas');
- assert.equal(fruits.length,17);
+ const tacoFruits=fruits.filter(f=>f.id.startsWith('taco:2011:'));
+ assert.equal(fruits.length,18); // 17 TACO e uma referência genérica de banana
+ assert.equal(tacoFruits.length,17);
  assert.equal(new Set(fruits.map(f=>f.id)).size,fruits.length);
- for(const f of fruits){
-   assert.equal(N.validFood(f),true,f.name);
+ for(const f of fruits)assert.equal(N.validFood(f),true,f.name);
+ for(const f of tacoFruits){
    assert.equal(f.source.name,'NEPA/UNICAMP — TACO');
    assert.ok(f.source.reference.includes('TACO 4ª ed.'),f.name);
  }
