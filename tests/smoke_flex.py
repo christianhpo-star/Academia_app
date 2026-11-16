@@ -81,6 +81,8 @@ with sync_playwright() as p:
     assert not any(e['id']=='pulley-aberto' for e in saved['entries'])
     assert next(e for e in stored['exercises'] if e['id']=='puxada-neutra')['active'] is False
     page.get_by_role('button',name='Evolução',exact=True).click()
+    page.locator('.evo-extras > summary').click()
+    page.locator('.progress-advanced-radar > summary').click()
     assert page.get_by_role('heading',name='Volume por grupo muscular').count()==1
     assert 'Costas' in page.locator('.dose-card').inner_text()
 
