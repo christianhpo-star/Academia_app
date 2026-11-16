@@ -16,6 +16,7 @@
   const HEALTH = window.ForjaHealthImport;
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
+  const EVO = window.ForjaEvolutionDashboard;
   const NCAT = window.ForjaNutritionCatalog;
   const KEY = 'forja.academia.v1';
   const DRAFT_KEY = 'forja.academia.draft.v1';
@@ -139,6 +140,7 @@
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
     progressStepDays:14,progressRadarOpen:false,
+    evolutionView:'weight',evolutionPeriods:{energy:7,macros:7,average:7},evolutionWeightLimit:8,evolutionExtrasOpen:false,
   };
   const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
     commitSteps(next){
@@ -1040,7 +1042,7 @@
         '<p class="small muted">São necessárias ao menos duas sessões comparáveis do mesmo exercício para mostrar uma tendência.</p>')+
       '<p class="tiny muted">Carga, repetições, equipamento e esforço importam. Aumento de força não equivale diretamente a ganho de músculo.</p></section>';
   }
-  function renderProgress() {
+  function renderProgressLegacy() {
     const goalPlan=PLANNER.plan(state,today());
     const p=E.progress(state.weights,state.settings.startWeight,state.settings.targetWeight);
     const days=dayGap(today(),state.settings.goalDate);
@@ -1078,6 +1080,27 @@
       ${renderDosePanel()}
       ${weightForm()}
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
+  }
+  function renderProgress(){
+    const day=today(),weights=EVO.renderWeight(state,day,ui.evolutionWeightLimit),
+      nutrition=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
+    const bm=BODY.recent(state.bodyMeasurements||[])[0];
+    const goalPlan=PLANNER.plan(state,day);
+    return '<div class="evo-shell">' +
+      EVO.renderHeader(state,day,ui.evolutionView)+
+      '<div class="evo-main">'+(ui.evolutionView==='nutrition'?nutrition:weights)+'</div>'+
+      '<details class="evo-extras" '+(ui.evolutionExtrasOpen?'open':'')+'>'+
+      '<summary>Treinos, medidas e indicadores adicionais <span aria-hidden="true">⌄</span></summary>'+
+      '<div class="evo-extra-body">'+
+      '<button type="button" class="body-quick-card" data-action="body-open"><span><strong>Medidas corporais</strong><small>'+
+      (bm?'Última aferição: '+dateBR(bm.date)+' · '+Object.keys(bm.values).length+' regiões':
+        'Circunferências e bioimpedância')+'</small></span><span aria-hidden="true">›</span></button>'+
+      progressMeasuresPanel()+progressStepsPanel()+progressStrengthSummary()+
+      '<details class="progress-advanced-radar" '+(ui.progressRadarOpen?'open':'')+'>'+
+      '<summary>Comparativo muscular avançado · radar</summary>'+strengthSection(90)+'</details>'+
+      renderGoalPlannerSummary(goalPlan)+renderDosePanel()+'</div></details>'+
+      '<div id="evo-weight-editor" class="evo-weight-editor">'+weightForm()+'</div>'+
+      '</div>';
   }
   function bodyFigure(current){
     const values=current?.values||{};
@@ -1826,6 +1849,25 @@
       }
     }
     else if(action==='finish')finishWorkout();
+    else if(action==='evo-view'){
+      if(!['weight','nutrition'].includes(btn.dataset.view))return;
+      ui.evolutionView=btn.dataset.view;
+      render();return;
+    }
+    else if(action==='evo-period'){
+      const kind=btn.dataset.kind,days=Number(btn.dataset.days);
+      if(!['energy','macros','average'].includes(kind)||![7,30,90].includes(days))return;
+      ui.evolutionPeriods[kind]=days;render();return;
+    }
+    else if(action==='evo-weight-more'){
+      ui.evolutionWeightLimit=Math.min(100,ui.evolutionWeightLimit+10);render();return;
+    }
+    else if(action==='evo-add-weight'){
+      const editor=document.getElementById('evo-weight-editor'),panel=editor?.querySelector('details');
+      if(panel)panel.open=true;
+      editor?.scrollIntoView({behavior:'smooth',block:'start'});
+      document.getElementById('new-weight')?.focus({preventScroll:true});return;
+    }
     else if(action==='progress-steps-days'){
       const days=Number(btn.dataset.days);if(![7,14,28].includes(days))return;
       ui.progressStepDays=days;render();return;
@@ -1881,6 +1923,7 @@
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
     if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
+    if(event.target.matches?.('.evo-extras'))ui.evolutionExtrasOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
   },true);
   screen.addEventListener('click',event=>{
