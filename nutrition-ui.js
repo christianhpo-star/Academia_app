@@ -270,7 +270,7 @@
     const dayName=date===todayDate?'Hoje':new Date(date+'T12:00:00Z').toLocaleDateString('pt-BR',{day:'numeric',month:'short',timeZone:'UTC'});
     const compactBalance=remainder==null?'Saldo indisponível':remainder>=0?fmt(remainder)+' kcal restantes da meta':fmt(Math.abs(remainder))+' kcal acima da meta';
     return `<div class="nutrition-screen">
-      <div class="nd-page-heading"><h1 class="eyebrow">ALIMENTAÇÃO</h1>${button('goals',target?'Metas':'Configurar metas','','ghost nd-head-goals')}</div>
+      <div class="nd-collapse" id="nd-collapse"><div class="nd-collapse-inner"><div class="nd-page-heading"><h1 class="eyebrow">ALIMENTAÇÃO</h1>${button('goals',target?'Metas':'Configurar metas','','ghost nd-head-goals')}</div>
       <div class="nd-overview" id="nd-overview">
         <section class="nd-energy-overview" aria-label="Energia registrada e saldo">
           <div class="nd-kcal-main"><strong>${remainder==null?'—':remainder>=0?fmt(remainder):'−'+fmt(Math.abs(remainder))}</strong><span>kcal ${remainder!=null&&remainder<0?'acima da meta':'restantes da meta'}</span></div>
@@ -285,6 +285,7 @@
         ${(hasEstimated||hasUnknown)?'<details class="nd-data-quality"><summary>Detalhes e incerteza · valores aproximados ou incompletos</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+(energyMeta.unknown?energyMeta.unknown+' alimento(s) sem calorias disponíveis. ':'')+'≈ indica estimativa. — indica ausência de dados, não zero. Refeições não registradas não entram no saldo.</p></details>':''}
         <p class="nd-summary-note">Não representa o consumo total do dia. O saldo depende do que foi registrado.</p>
       </div>
+      </div></div>
       <div class="nd-date-stick" id="nd-date-stick"><div class="nd-date">
         ${button('previous','‹','aria-label="Dia anterior"')}
         <div class="nd-date-center"><label for="nd-date"><strong>${esc(dayName)}</strong><span>${esc(dateBR(date))}</span></label>
@@ -786,12 +787,24 @@
       if(a==='favorite'&&e){const f=CAT.makeFavorite(e,archive(),'',id);if(!f)return notify('Não foi possível criar favorito.');if(!transact(x=>{x.foods.push(...f.foodsToAdd);x.mealTemplates.push(f.favorite);} ))return;notify('Favorito salvo.');}
       const scroll=window.scrollY;refresh();window.scrollTo(0,scroll);if(a==='more')document.querySelector('#nd-history').open=true;
     }
-    let scrollQueued=false,scrollBound=false;
+    let scrollQueued=false,scrollBound=false,expandedHeight=0;
     function syncScroll(){
       const view=document.querySelector('.nutrition-screen');
       if(!view)return;
-      const travelled=Math.max(0,-view.getBoundingClientRect().top+18);
-      const fraction=Math.min(1,travelled/170);
+      const fold=view.querySelector('#nd-collapse');
+      const inner=fold?.querySelector('.nd-collapse-inner');
+      if(!fold||!inner)return;
+      if(!expandedHeight||!fold.style.height)expandedHeight=inner.scrollHeight;
+      const y=Math.max(0,root.scrollY||document.documentElement.scrollTop||0);
+      const distance=Math.min(expandedHeight,Math.max(0,y));
+      const remaining=Math.max(0,expandedHeight-distance);
+      const fraction=expandedHeight?distance/expandedHeight:0;
+      fold.style.height=remaining+'px';
+      fold.style.opacity=String(Math.max(0,1-fraction*1.4));
+      fold.style.pointerEvents=fraction>.95?'none':'';
+      fold.setAttribute('aria-hidden',fraction>.98?'true':'false');
+      if(fraction>.98)fold.querySelectorAll('button,input').forEach(e=>e.tabIndex=-1);
+      else fold.querySelectorAll('button,input').forEach(e=>e.removeAttribute('tabindex'));
       view.style.setProperty('--nd-scroll-progress',String(fraction));
       const nav=view.querySelector('.nd-date-stick');
       if(nav)nav.classList.toggle('nd-is-stuck',nav.getBoundingClientRect().top<=3&&fraction>.7);
@@ -812,6 +825,7 @@
           root.addEventListener('resize',onScroll,{passive:true});
           scrollBound=true;
         }
+        expandedHeight=0;
         syncScroll();
       }};
   }
