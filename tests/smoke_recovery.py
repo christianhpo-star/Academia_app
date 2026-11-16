@@ -6,9 +6,9 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=(ROOT/'index.html').read_text(encoding='utf-8')
-SCRIPTS=re.findall(r'<script defer src="\\./([^?"#]+)(?:\\?[^"]*)?"></script>',HTML)
-INDEX=re.sub(r'<script defer src="\\./[^"]+"></script>','',HTML)
-INDEX=re.sub(r'<link rel="stylesheet" href="\\./styles\\.css\\?v=[^"]+" />','',INDEX)
+SCRIPTS=re.findall(r'<script defer src="\./([^?"#]+)(?:\?[^"]*)?"></script>',HTML)
+INDEX=re.sub(r'<script defer src="\./[^"]+"></script>','',HTML)
+INDEX=re.sub(r'<link rel="stylesheet" href="\./styles\.css\?v=[^"]+" />','',INDEX)
 KEY='forja.academia.v1'
 def start(context,store,errors):
     page=context.new_page()
