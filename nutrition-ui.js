@@ -800,6 +800,7 @@
       const remaining=Math.max(0,expandedHeight-distance);
       const fraction=expandedHeight?distance/expandedHeight:0;
       fold.style.height=remaining+'px';
+      inner.style.transform='scale('+(1-0.16*fraction).toFixed(3)+')';
       fold.style.opacity=String(Math.max(0,1-fraction*1.4));
       fold.style.pointerEvents=fraction>.95?'none':'';
       fold.setAttribute('aria-hidden',fraction>.98?'true':'false');
