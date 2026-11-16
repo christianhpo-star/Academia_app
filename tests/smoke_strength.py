@@ -28,7 +28,7 @@ def open_app(context, storage, errors):
       });
     }""", storage)
     page.add_style_tag(path=str(ROOT / 'styles.css'))
-    for name in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','app.js']:
+    for name in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']:
         page.add_script_tag(path=str(ROOT / name))
     page.wait_for_selector('#screen h1')
     return page
@@ -59,6 +59,7 @@ with sync_playwright() as p:
     empty = open_app(context, {}, errors)
     empty.get_by_role('button', name='Evolução', exact=True).click()
     assert not empty.locator('.progress-advanced-radar').evaluate('(node)=>node.open')
+    empty.locator('.evo-extras > summary').click()
     empty.locator('.progress-advanced-radar > summary').click()
     assert empty.locator('.radar-axis-button').count() == 4
     assert 'O radar começará a mostrar evolução' in empty.locator('#screen').inner_text()
@@ -84,6 +85,7 @@ with sync_playwright() as p:
     }
     page = open_app(context, {'forja.academia.v1':json.dumps(state,ensure_ascii=False)}, errors)
     page.get_by_role('button', name='Evolução', exact=True).click()
+    page.locator('.evo-extras > summary').click()
     page.locator('.progress-advanced-radar > summary').click()
     assert page.locator('.radar-axis-button').count() == 4
     assert page.locator('.strength-detail-card').count() == 0

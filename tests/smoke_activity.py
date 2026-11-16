@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 HTML = re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text(encoding='utf-8'))
 HTML = re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />', '', HTML)
 SCRIPTS = ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js',
-           'body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','app.js']
+           'body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
 KEY = 'forja.academia.v1'
 
 def launch(ctx, seed, errors):
@@ -74,6 +74,7 @@ with sync_playwright() as p:
     assert state()['nutrition']['settings']['targets'][0]['profile']['activity']==1.55
 
     page.locator('#nav [data-tab="progress"]').click()
+    page.locator('.evo-extras > summary').click()
     page.locator('[data-action="body-open"]').click()
     page.locator('.bio-panel > summary').click()
     page.locator('#bio-date').fill(today.isoformat())

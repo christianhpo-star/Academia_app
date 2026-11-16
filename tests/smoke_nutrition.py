@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','app.js']
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
 
 def start(context,stored,errors):
     page=context.new_page()
@@ -42,6 +42,7 @@ with sync_playwright() as p:
     log=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
     assert len(log['activitySteps'])==1 and log['activitySteps'][0]['steps']==9152
     page.locator('#nav [data-tab="progress"]').click()
+    page.locator('.evo-extras > summary').click()
     assert page.locator('.progress-steps-day').count()==14
     assert page.locator('.progress-steps-day.known').count()==1
     assert page.locator('.progress-advanced-radar').count()==1
@@ -375,6 +376,36 @@ with sync_playwright() as p:
     balance.locator('.nd-balance > summary').click()
     balance.screenshot(path=str(ROOT/'screenshots/nutrition-balance-390.png'),full_page=True)
     balance.close()
+    # Evolução: exact Peso/Nutrição hierarchy, mobile range controls, no invented data.
+    evo=start(context,{},errors)
+    evo.locator('#nav [data-tab="progress"]').click()
+    assert evo.locator('.evo-tabs [data-action="evo-view"]').count()==2
+    assert evo.locator('#evo-panel-weight').is_visible()
+    assert 'Peso inicial' in evo.locator('.evo-weight-kpis').inner_text()
+    assert evo.locator('.evo-cta').is_visible()
+    assert evo.locator('.evo-weight-history').count()==1
+    assert evo.locator('.evo-extras').count()==1
+    assert not evo.locator('.evo-extras').evaluate('(x)=>x.open')
+    evo.locator('[data-action="evo-view"][data-view="nutrition"]').click()
+    assert evo.locator('#evo-panel-nutrition').is_visible()
+    assert evo.get_by_role('heading',name='Objetivo (kcal)').count()==1
+    assert evo.get_by_role('heading',name='Distribuição de macros (%)').count()==1
+    assert evo.get_by_role('heading',name='Média de macronutrientes (g)').count()==1
+    assert evo.locator('[data-action="evo-period"]').count()==9
+    assert 'Nenhuma caloria registrada' in evo.locator('#evo-panel-nutrition').inner_text()
+    for kind in ('energy','macros','average'):
+        evo.locator('[data-action="evo-period"][data-kind="'+kind+'"][data-days="30"]').click()
+        assert evo.locator('[data-action="evo-period"][data-kind="'+kind+'"][data-days="30"]').get_attribute('aria-pressed')=='true'
+    for width in (320,390):
+        evo.set_viewport_size({'width':width,'height':844})
+        assert evo.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+    evo.locator('[data-action="evo-view"][data-view="weight"]').click()
+    evo.locator('.evo-cta').click()
+    assert evo.locator('#weight-form').is_visible()
+    evo.screenshot(path=str(ROOT/'screenshots/evolution-weight-390.png'),full_page=True)
+    evo.locator('[data-action="evo-view"][data-view="nutrition"]').click()
+    evo.screenshot(path=str(ROOT/'screenshots/evolution-nutrition-390.png'),full_page=True)
+    evo.close()
     # Quota errors preserve original history and form.
     page.locator('[data-nd="add"][data-meal="snack"]').click()
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
