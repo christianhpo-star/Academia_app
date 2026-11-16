@@ -1015,7 +1015,7 @@
   function progressMeasuresPanel(){
     const rows=BODY.recent(state.bodyMeasurements||[]).filter(row=>Number.isFinite(row.values?.abdomen)).reverse();
     const latest=rows.at(-1),previous=rows.length>=2?rows[0]:null;
-    if(!latest)return '<section class="card progress-measures-card"><h2 class="section-title">Circunferência abdominal</h2><p class="small muted">Sem aferição comparável. Registre o abdômen na altura do umbigo para ver tendências.</p><button class="secondary full" data-action="body-open">Registrar medidas</button></section>';
+    if(!latest)return '<section class="card progress-measures-card"><h2 class="section-title">Circunferência abdominal</h2><p class="small muted">Sem aferição comparável. Registre o abdômen na altura do umbigo em Medidas corporais, no atalho acima, para ver tendências.</p></section>';
     const delta=previous?Math.round((latest.values.abdomen-previous.values.abdomen)*10)/10:null;
     const series=rows.slice(-10),vals=series.map(r=>r.values.abdomen),lo=Math.min(...vals)-2,hi=Math.max(...vals)+2;
     const sx=i=>series.length===1?160:22+i*276/(series.length-1),sy=v=>97-(v-lo)/Math.max(1,hi-lo)*78;
@@ -1028,7 +1028,7 @@
         '<polyline fill="none" stroke="#80beff" stroke-width="3" stroke-linejoin="round" points="'+coords+'"/>'+
         series.map((r,i)=>'<circle cx="'+sx(i).toFixed(1)+'" cy="'+sy(r.values.abdomen).toFixed(1)+'" r="3.5" fill="#c5f56b"/>').join('')+
         '</svg></div>':'')+
-      '<button type="button" class="button-inline" data-action="body-open">Ver e editar medidas</button>'+
+      '<p class="small muted">Use Medidas corporais, no atalho acima, para editar aferições.</p>'+
       '<p class="tiny muted">Medidas diferentes ou feitas em condições distintas não devem ser interpretadas como perda de gordura comprovada.</p></section>';
   }
   function progressStrengthSummary(){
