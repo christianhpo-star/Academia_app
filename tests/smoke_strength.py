@@ -85,7 +85,7 @@ with sync_playwright() as p:
     assert page.evaluate("""() => {
       const x=window.ForjaEvolutionDashboard.groupVolume(
         JSON.parse(window.__testStorage['forja.academia.v1']),
-        new Date().toLocaleDateString('en-CA'),30);
+        [new Date().getFullYear(),String(new Date().getMonth()+1).padStart(2,'0'),String(new Date().getDate()).padStart(2,'0')].join('-'),30);
       return x.length===4&&x.every(group=>group.sets===2);
     }""")
     page.locator('[data-action="evo-volume-days"][data-days="7"]').click()
