@@ -12,7 +12,7 @@ Adotar a hierarquia e organização visual das duas capturas fornecidas pelo usu
 
 ## Nutrição
 - **Objetivo (kcal)**: série diária e linha horizontal da meta ativa, com seletor 7 / 30 / 90 dias.
-- **Distribuição de macros (%)**: dois anéis. Externo representa a proporção da média dos gramas registrados de lipídios, proteínas e carboidratos; interno a proporção das metas em gramas, se presentes. A legenda mostra as porcentagens. A fibra fica em um indicador separado — adicionar fibras no mesmo anel provocaria dupla contagem, uma vez que fibra já é uma fração dos carboidratos.
+- **Distribuição de macros (%)**: dois anéis. Externo representa a participação energética aproximada dos lipídios (9 kcal/g), proteínas (4 kcal/g) e carboidratos (4 kcal/g) a partir das médias em gramas registradas; interno representa a participação energética aproximada das metas, quando presentes. A energia declarada dos alimentos não é recalculada por 9/4/4. A legenda mostra as porcentagens. A fibra fica em um indicador separado — adicionar fibras no mesmo anel provocaria dupla contagem, uma vez que fibra já é uma fração dos carboidratos.
 - **Média de macronutrientes (g)**: barras das médias em gramas de lipídios, proteínas, carboidratos e fibras, com traços horizontais das metas quando disponíveis. Períodos 7 / 30 / 90 dias independentes.
 - Cada série usa `nutrition.entries`, `N.recordedBreakdown` e `G.active`, **sem inventar refeições** e sem converter dia ausente em 0.
 - Registros de baixa confiança (porções estimadas, açaí etc.) continuam aproximados e explicitados; subtotais não representam necessariamente toda a ingestão do dia.
