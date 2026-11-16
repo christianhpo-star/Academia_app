@@ -444,13 +444,10 @@
     </form>`;
   }
   function renderQueue(queue) {
-    return '<details class="queue-panel queue-panel-compact" aria-label="Andamento da rodada">'+
-      '<summary><strong>Rodada '+(queue.completedRounds+1)+'</strong><span>'+queue.completed.length+' de '+DATA.rotation.length+' concluídos · ver fila</span></summary>'+
-      '<div class="queue-chips">'+DATA.rotation.map(id=>{
-        const pending=queue.pending.includes(id);
-        return '<span class="queue-chip '+(pending?'pending':'done')+'">'+
-          (pending?'◦ ':'✓ ')+esc(id)+' · '+esc(planFor(id).title.split(' + ')[0])+'</span>';
-      }).join('')+'</div></details>';
+    const finished=queue.completed.length;
+    return '<div class="plan-rotation-status" aria-label="Rodada atual e progresso">'+
+      '<span>Rodada '+(queue.completedRounds+1)+'</span>'+
+      '<strong>'+finished+'/'+DATA.rotation.length+' concluídos</strong></div>';
   }
 
   function resumeBanner() {
@@ -724,33 +721,35 @@
     return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today(),recoverySettings());
   }
   function renderPlans() {
-    const next=getNext(), p=planFor(ui.plan);
+    const next=getNext(),p=planFor(ui.plan);
     const all=state.exercises.filter(x=>x.group===ui.plan);
-    return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>
-      <div class="plan-compact-head"><div><p class="eyebrow">PRÓXIMO TREINO</p><h1 class="page-title">Sua ficha</h1></div><button class="secondary plan-catalog" data-action="navigate" data-to="catalog">Catálogo</button></div>
-      ${resumeBanner()}
-      ${renderQueue(next)}
-      <div class="tabs plan-block-selector" role="group" aria-label="Escolher grupo de treino">
-      ${DATA.plans.map(plan => {
+    const active=all.filter(x=>x.active).length;
+    return '<div class="forja-plan-screen">'+
+      '<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>'+
+      '<div class="plan-title-row"><div><p class="eyebrow">SEU TREINO</p><h1 class="page-title">Treinos</h1></div>'+
+        '<button class="button-inline plan-catalog-link" data-action="navigate" data-to="catalog">Catálogo ↗</button></div>'+
+      resumeBanner()+renderQueue(next)+
+      '<div class="tabs plan-block-selector" role="group" aria-label="Escolher grupo de treino">'+
+      DATA.plans.map(plan=>{
         const label=plan.title.split(" ")[0];
-        return `<button type="button" class="tab-chip plan-block-choice ${ui.plan===plan.id?'selected':''}" data-action="select-plan" data-plan="${plan.id}" aria-pressed="${ui.plan===plan.id}" aria-label="Bloco ${plan.id}: ${esc(label)}">
-          <span class="plan-choice-code">${plan.id}</span><span class="plan-choice-name">${esc(label)}</span></button>`;
-      }).join('')}</div>
-      <section class="workout-banner workout-banner-compact"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino</button></section>
-      <section class="plan-exercises" aria-labelledby="plan-exercises-title">
-        <div class="section-row plan-exercises-heading"><div><h2 class="section-title" id="plan-exercises-title">Exercícios</h2></div><span class="plan-exercises-count">${all.filter(x=>x.active).length} ativos</span></div>
-        <div class="plan-exercises-list">${all.map((ex,i)=>`<article class="plan-exercise-item ${ex.active?'':'is-inactive'}">
-          <div class="plan-exercise-index" aria-hidden="true">${String(i+1).padStart(2,'0')}</div>
-          <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
-            <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
-            <p class="plan-exercise-submeta">${ex.knee?'Atenção ao joelho':''}</p>
-            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar</button></div>
-          <div class="plan-exercise-state"><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
-        </article>`).join('')}</div>
-      </section>
-      <button class="secondary full mt-16" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button>
-      <details class="plan-extra-help"><summary>Sobre a ficha</summary><p class="small muted">Aquecimentos não contam como séries efetivas. Ajustes preservam o histórico.</p></details>`;
+        return '<button type="button" class="tab-chip plan-block-choice '+(ui.plan===plan.id?'selected':'')+'" data-action="select-plan" data-plan="'+plan.id+'" aria-pressed="'+(ui.plan===plan.id)+'" aria-label="Bloco '+plan.id+': '+esc(label)+'">'+
+          '<span class="plan-choice-code">'+plan.id+'</span><span class="plan-choice-name">'+esc(label)+'</span></button>';
+      }).join('')+'</div>'+
+      '<section class="workout-banner plan-next-action"><div class="row-between"><div><span class="plan-action-kicker">BLOCO '+p.id+'</span><h2>'+esc(p.title)+'</h2></div><span class="plan-active-count">'+active+' exercícios</span></div>'+
+      '<button class="primary full mt-12" data-action="start" data-plan="'+p.id+'">Iniciar treino</button></section>'+
+      '<details class="plan-exercises plan-editor-accordion" id="plan-editor">'+
+        '<summary><span>Editar ficha</span><small>'+active+' ativos · '+all.length+' exercícios</small></summary>'+
+        '<div class="plan-exercises-list">'+all.map((ex,i)=>'<article class="plan-exercise-item '+(ex.active?'':'is-inactive')+'">'+
+          '<div class="plan-exercise-index" aria-hidden="true">'+String(i+1).padStart(2,'0')+'</div>'+
+          '<div class="plan-exercise-detail"><h3>'+esc(ex.name)+'</h3>'+
+          '<p class="plan-exercise-meta">'+ex.sets+' séries · '+ex.low+'–'+ex.high+' reps</p>'+
+          '<button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="'+esc(ex.id)+'">Editar</button></div>'+
+          '<div class="plan-exercise-state"><input class="switch" type="checkbox" aria-label="Ativar '+esc(ex.name)+'" data-ex-active="'+esc(ex.id)+'" '+(ex.active?'checked':'')+'/></div>'+
+        '</article>').join('')+'</div>'+
+        '<button class="secondary full mt-12" data-action="add-ex" data-plan="'+ui.plan+'">+ Adicionar exercício</button>'+
+      '</details></div>';
   }
+
   function seedSets(ex) {
     const h=history(ex.id);
     if(h.length){
