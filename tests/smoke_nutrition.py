@@ -309,6 +309,71 @@ with sync_playwright() as p:
     assert '≈' in shared.locator('.nd-summary').inner_text()
     shared.screenshot(path=str(ROOT/'screenshots/nutrition-shared-390.png'),full_page=True)
     shared.close()
+    # Weekly balance: only explicitly reviewed, complete days can create a temporary offer.
+    balance_seed=page.evaluate("""() => {
+      const state=JSON.parse(localStorage.getItem('forja.academia.v1'));
+      const N=window.ForjaNutrition,B=window.ForjaEnergyBalance;
+      const localNow=new Date();
+      const today=[localNow.getFullYear(),String(localNow.getMonth()+1).padStart(2,'0'),String(localNow.getDate()).padStart(2,'0')].join('-');
+      state.nutrition=N.archive();
+      const profile={heightCm:175,age:30,weightKg:80,activity:1.55,sex:'male',
+        goal:'loss',adultScope:true,confirmedAt:today};
+      state.nutrition.settings.profile=profile;
+      state.nutrition.settings.targets=[{id:'smoke-balance-goal',from:B.shift(today,-30),
+        source:'manual',profile,formula:'manual-v1',
+        values:{energyKcal:2400,proteinG:144,carbsG:307,fatG:66,fiberG:25}}];
+      [3300,2300,2300].forEach((kcal,i)=>{
+        const day=B.shift(today,i-3);
+        state.nutrition.entries.push({
+          id:'smoke-balance-meal-'+i,date:day,mealType:'dinner',
+          items:Array.from({length:3},(_,j)=>({
+            id:'smoke-balance-item-'+i+'-'+j,label:'Alimento aferido sintético',
+            quantity:1,unit:'portion',grams:null,source:{name:'Teste sintético'},
+            nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null},
+            nutrientsPerServing:{energyKcal:kcal/3,proteinG:50,carbsG:90,fatG:20,fiberG:8}
+          }))
+        });
+      });
+      if(!N.validArchive(state.nutrition))throw Error('Synthetic archive invalid');
+      return JSON.stringify(state);
+    }""")
+    balance=start(context,{'forja.academia.v1':balance_seed},errors)
+    balance.on('dialog',lambda d:d.accept())
+    balance.locator('#nav [data-tab="nutrition"]').click()
+    assert balance.locator('.nd-balance').count()==1
+    for i in (3,2,1):
+        stamp=balance.evaluate('(offset)=>{const d=new Date(),day=[d.getFullYear(),String(d.getMonth()+1).padStart(2,"0"),String(d.getDate()).padStart(2,"0")].join("-");return window.ForjaEnergyBalance.shift(day,-offset)}',i)
+        balance.locator('.nd-balance > summary').click()
+        balance.locator('[data-nd="balance-review"][data-date="'+stamp+'"]').click()
+        assert balance.locator('#nd-balance-review').is_visible()
+        balance.locator('#nd-balance-review input[name="complete"]').check()
+        balance.locator('#nd-balance-review button[type="submit"]').click()
+    assert 'Sugestão opcional disponível' in balance.locator('.nd-balance > summary').inner_text()
+    balance.locator('.nd-balance > summary').click()
+    balance.locator('[data-nd="balance-plan"]').click()
+    assert balance.locator('#nd-balance-plan').is_visible()
+    candidates=balance.locator('#nd-balance-plan input[name="dates"]')
+    assert candidates.count()>=3
+    for i in range(3):candidates.nth(i).check()
+    assert 'Proteína' in balance.locator('#nd-balance-preview').inner_text()
+    balance.locator('#nd-balance-plan input[name="accept"]').check()
+    balance.locator('#nd-balance-plan button[type="submit"]').click()
+    accepted=json.loads(balance.evaluate("localStorage.getItem('forja.academia.v1')"))
+    assert accepted['nutrition']['balance']['plan']['days']
+    assert accepted['nutrition']['settings']['targets'][0]['values']['energyKcal']==2400
+    assert accepted['nutrition']['settings']['targets'][0]['values']['proteinG']==144
+    assert balance.evaluate("""() => {
+      const n=JSON.parse(localStorage.getItem('forja.academia.v1')).nutrition;
+      const p=n.balance.plan,day=p.days[0].date;
+      const x=window.ForjaEnergyBalance.planForDay(n,{sessions:[],muay:{sessions:[]}},day);
+      return !!x&&x.values.energyKcal<2400&&x.values.proteinG===144&&x.values.fatG===66;
+    }""")
+    for width in (320,390):
+        balance.set_viewport_size({'width':width,'height':844})
+        assert balance.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+    balance.locator('.nd-balance > summary').click()
+    balance.screenshot(path=str(ROOT/'screenshots/nutrition-balance-390.png'),full_page=True)
+    balance.close()
     # Quota errors preserve original history and form.
     page.locator('[data-nd="add"][data-meal="snack"]').click()
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
