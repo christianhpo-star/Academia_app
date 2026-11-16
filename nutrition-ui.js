@@ -208,7 +208,7 @@
     const days=report.days.map(d=>
       '<div class="nd-balance-day"><div><strong>'+esc(dateBR(d.date))+'</strong><span>'+
       (d.checked?'Revisado · '+fmt(d.energyKcal)+' kcal'+
-        (d.deltaKcal>=0?' · +':' · −')+fmt(Math.abs(d.deltaKcal))+' kcal frente à meta':
+        (d.deltaKcal===null?' · sem meta compatível':(d.deltaKcal>=0?' · +':' · −')+fmt(Math.abs(d.deltaKcal))+' kcal frente à meta'):
        d.quality?'Registrado, ainda não confirmado como completo':
        'Dados insuficientes para conferir')+'</span></div>'+
       (d.checked?button('balance-unreview','Reabrir', 'data-date="'+esc(d.date)+'"','ghost'):
@@ -648,6 +648,7 @@
         if(count)count.value=row?String(row.steps):'';
         return;
       }
+      if(e.target.closest('#nd-balance-plan')){updateBalancePreview();return;}
       if(e.target.closest('#nd-catalog')){if(e.target.name==='portion')e.target.form.elements.namedItem('count').value=e.target.value==='custom'?'100':e.target.value==='customMl'?'200':'1';updatePortionPreview();return;}
       if(e.target.tagName==='SELECT'||e.target.type==='date')input(e);
     }
