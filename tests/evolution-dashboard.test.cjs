@@ -74,3 +74,40 @@ test('window limits and date movement use valid civil days',()=>{
  assert.equal(E.periodDays(15),7);
  assert.equal(E.periodDays(90),90);
 });
+
+test('measure chart switches from weight and preserves the original body-record data',()=>{
+ const state={settings,weights:[],
+  bodyMeasurements:[
+   {id:'body-2026-11-09',date:'2026-11-09',values:{abdomen:92,chest:102}},
+   {id:'body-2026-11-15',date:'2026-11-15',values:{abdomen:91,chest:104}}
+  ]};
+ const previous=JSON.stringify(state.bodyMeasurements);
+ const m=E.measuresModel(state,date,'chest');
+ assert.equal(m.field.id,'chest');assert.equal(m.all.length,2);assert.equal(m.latest.value,104);
+ const html=E.renderWeight(state,date,5,{chartMode:'measures',measureKey:'chest'});
+ for(const label of ['Evolução corporal','Medidas','Peitoral','Ver mapa corporal','104 cm','evo-measure-field'])assert.ok(html.includes(label),label);
+ assert.doesNotMatch(html,/Nenhuma pesagem disponível/);
+ assert.equal(JSON.stringify(state.bodyMeasurements),previous);
+ const empty=E.renderWeight({...state,bodyMeasurements:[]},date,5,{chartMode:'measures'});
+ assert.match(empty,/Sem medidas de abdômen/);
+});
+test('group volume counts only effective strength sets by exercise group and bounded dates',()=>{
+ const state={exercises:[{id:'pull',group:'A'},{id:'bench',group:'B'},{id:'leg',group:'C'},{id:'hip',group:'D'}],sessions:[
+  {id:'s1',day:'2026-11-15',entries:[{id:'pull',sets:[{load:20,reps:10,warmup:true},{load:40,reps:10,warmup:false},{load:45,reps:8,warmup:false}]},{id:'bench',sets:[{load:30,reps:8,warmup:false}]}]},
+  {id:'s2',day:'2026-11-01',entries:[{id:'leg',sets:[{load:70,reps:10,warmup:false}]}]},
+  {id:'s3',day:'2026-08-01',entries:[{id:'hip',sets:[{load:50,reps:12,warmup:false}]}]},
+  {id:'s4',day:'2026-11-15',entries:[{id:'hip',sets:[{load:30,reps:0,warmup:false}]}]}
+ ]};
+ const before=JSON.stringify(state.sessions);
+ const seven=E.groupVolume(state,date,7);
+ assert.deepEqual(seven.map(x=>x.sets),[2,1,0,0]);
+ assert.deepEqual(seven.map(x=>x.sessionCount),[1,1,0,0]);
+ assert.deepEqual(E.groupVolume(state,date,30).map(x=>x.sets),[2,1,1,0]);
+ assert.deepEqual(E.groupVolume(state,date,90).map(x=>x.sets),[2,1,1,1]);
+ const html=E.renderGroupVolume(state,date,30);
+ assert.match(html,/Treino por grupo/);
+ assert.match(html,/Séries efetivas registradas/);
+ assert.equal((html.match(/class="evo-volume-row"/g)||[]).length,4);
+ assert.doesNotMatch(html,/radar/i);
+ assert.equal(JSON.stringify(state.sessions),before);
+});
