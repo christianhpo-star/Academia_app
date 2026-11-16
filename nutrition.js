@@ -122,6 +122,7 @@
     if (b.plan === undefined || b.plan === null) return true;
     const p=b.plan;
     return isObject(p)&&idOk(p.id)&&dateOk(p.acceptedAt)&&idOk(p.targetId)&&
+      GOALS.validProfile(p.profile)&&
       Array.isArray(p.baseValues)&&p.baseValues.length===5 &&
       p.baseValues.every((n,i)=>numberOk(n,1,i===0?10000:1000))&&
       Array.isArray(p.sources)&&p.sources.length>=3&&p.sources.length<=7&&
