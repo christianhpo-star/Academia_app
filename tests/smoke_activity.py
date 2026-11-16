@@ -74,7 +74,6 @@ with sync_playwright() as p:
     assert state()['nutrition']['settings']['targets'][0]['profile']['activity']==1.55
 
     page.locator('#nav [data-tab="progress"]').click()
-    page.locator('.evo-extras > summary').click()
     page.locator('[data-action="body-open"]').click()
     page.locator('.bio-panel > summary').click()
     page.locator('#bio-date').fill(today.isoformat())
