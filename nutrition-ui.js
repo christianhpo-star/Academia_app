@@ -290,7 +290,7 @@
         <div class="nd-date-center"><label for="nd-date"><strong>${esc(dayName)}</strong><span>${esc(dateBR(date))}</span></label>
         <input id="nd-date" type="date" value="${date}" max="${todayDate}" aria-label="Escolher dia do diário"></div>
         ${button('next','›','aria-label="Próximo dia" '+(date>=todayDate?'disabled':''))}
-      </div><span class="nd-date-mini" aria-live="polite">${esc(compactBalance)}</span></div>
+      </div>${date!==todayDate?button('today','Hoje','aria-label="Voltar para hoje"','nd-go-today'):''}<span class="nd-date-mini" aria-live="polite">${esc(compactBalance)}</span></div>
       ${archive.draft?`<div class="callout">Há um rascunho de refeição salvo. ${button('resume','Continuar rascunho','','button-inline')}</div>`:''}
       <div class="nd-food-quick-actions">${button('shared','Dividir uma porção','data-meal="dinner"','secondary')}${button('add','+ Refeição','data-meal="lunch"','secondary')}</div>
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{
