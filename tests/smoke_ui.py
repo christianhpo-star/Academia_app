@@ -71,6 +71,9 @@ with sync_playwright() as p:
         if width in [320,390]:page.screenshot(path=str(shots/f'blocks-{width}.png'),full_page=True)
     page.set_viewport_size({'width':390,'height':800})
     page.locator('[data-action="select-plan"][data-plan="B"]').click()
+    assert page.locator('.plan-editor-accordion').count()==1
+    assert not page.locator('.plan-exercise-item').first.is_visible()
+    page.locator('.plan-editor-accordion > summary').click()
     assert page.locator('.plan-exercise-item').count()>0
     assert page.locator('.plan-exercise-item .plan-exercise-index').first.inner_text()=='01'
     assert page.locator('.plan-exercise-item h3').first.inner_text()=='Supino reto com halteres'
