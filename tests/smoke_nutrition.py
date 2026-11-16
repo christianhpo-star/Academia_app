@@ -42,6 +42,7 @@ with sync_playwright() as p:
     log=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))
     assert len(log['activitySteps'])==1 and log['activitySteps'][0]['steps']==9152
     page.locator('#nav [data-tab="progress"]').click()
+    page.locator('.evo-extras > summary').click()
     assert page.locator('.progress-steps-day').count()==14
     assert page.locator('.progress-steps-day.known').count()==1
     assert page.locator('.progress-advanced-radar').count()==1
