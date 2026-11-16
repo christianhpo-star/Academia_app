@@ -16,6 +16,7 @@
   const HEALTH = window.ForjaHealthImport;
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
+  const PERF = window.ForjaPerformanceTrends;
   const EVO = window.ForjaEvolutionDashboard;
   const NCAT = window.ForjaNutritionCatalog;
   const KEY = 'forja.academia.v1';
@@ -43,7 +44,7 @@
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(), nutrition,
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(),recoveryHistory:[], nutrition,
     };
   }
   function load() {
@@ -55,8 +56,14 @@
       const upgradedNutrition = NUTRITION.ensureArchive(parsed);
       const upgradedProfessionalTarget = window.ForjaNutritionGoals.useUserTarget(parsed.nutrition.settings,today());
       if (!M.validArchive(parsed.muay)) throw new Error('Dados Muay Thai incompatíveis');
+      const upgradedRecovery = !Array.isArray(parsed.recoveryHistory);
+      if(upgradedRecovery)parsed.recoveryHistory=[];
+      if(parsed.settings.recoveryCheckin && !parsed.recoveryHistory.some(r=>r.day===parsed.settings.recoveryCheckin.day)){
+        const revised=PERF?.upsertRecovery(parsed.recoveryHistory,parsed.settings.recoveryCheckin);
+        if(revised)parsed.recoveryHistory=revised;
+      }
       const upgradedReferences = migrateReferences(parsed);
-      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedProfessionalTarget) {
+      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedProfessionalTarget || upgradedRecovery) {
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
       }
@@ -71,6 +78,7 @@
       Array.isArray(value.weights) && value.weights.length <= 10000 &&
       value.weights.every(x => /^\d{4}-\d{2}-\d{2}$/.test(x.date || '') && Number(x.weight)>0 && Number(x.weight)<500) &&
       BODY.validRecords(value.bodyMeasurements) && BODY.validBioRecords(value.bioimpedance) && ACT.validSteps(value.activitySteps) && HEALTH.validMonthlyList(value.healthMonthly) && HEALTH.validWeightReports(value.healthWeightReports) && REM.validPrefs(value.reminderPrefs) && ROUTINE.valid(value.dailyRoutine) && NUTRITION.validArchive(value.nutrition) &&
+      (value.recoveryHistory===undefined || (Array.isArray(value.recoveryHistory)&&value.recoveryHistory.length<=1095&&value.recoveryHistory.every(r=>r&&typeof r.day==='string'&&/^\\d{4}-\\d{2}-\\d{2}$/.test(r.day)&&['boa','normal','baixa'].includes(r.energy)&&['normal','moderada','alta'].includes(r.fatigue)))) &&
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
@@ -1093,6 +1101,21 @@
       ${weightForm()}
       <div class="section-row"><h2 class="section-title">Pesagens salvas</h2></div><div class="card"><ul class="mini-list">${all.slice().reverse().slice(0,15).map(it=>`<li><span>${dateBR(it.date)}${it.initial?' · referência inicial':''}</span><strong>${fmt(it.weight)} kg</strong></li>`).join('')}</ul></div>`;
   }
+  function renderPerformanceTrends(){
+    if(!PERF)return '';
+    const r=PERF.assess(state,today()),w=r.weight,t=r.training,v=r.recovery;
+    const fmtDelta=n=>n==null?'—':(n>0?'+':'')+fmt(n)+'%';
+    const status=r.interpretation==='review'?'Vale conferir tendências':'Acompanhamento longitudinal';
+    return '<details class="evo-performance card" id="evo-performance">'+
+      '<summary><strong>Peso, desempenho e recuperação</strong><span>'+status+'</span></summary>'+
+      '<div class="evo-performance-grid">'+
+      '<div><small>Peso · últimas 4 semanas</small><strong>'+(w.ready?fmtDelta(w.pctPerWeek)+'/sem.':'Dados insuficientes')+'</strong><span>'+w.previousCount+' + '+w.recentCount+' pesagens em quinzenas</span></div>'+
+      '<div><small>Força · exercícios comparáveis</small><strong>'+t.comparisons.length+' exercícios</strong><span>'+t.decliningExercises+' com queda de 5% ou mais (regra experimental)</span></div>'+
+      '<div><small>Energia e fadiga</small><strong>'+v.recordedDays+' check-ins</strong><span>'+v.lowEnergyDays+' baixa energia · '+v.highFatigueDays+' fadiga alta</span></div></div>'+
+      (r.interpretation==='review'?'<p class="evo-performance-note">Há mudanças simultâneas de força e recuperação. Confira sono, rotina, técnicas, descanso planejado e alimentação; se persistirem, converse com os profissionais que o acompanham. Nenhuma meta foi alterada.</p>':r.interpretation==='insufficient'?'<p class="evo-performance-note">Registre pesagens ao longo das semanas e check-ins do treino para uma comparação significativa. Ausência de informação não significa piora.</p>':'<p class="evo-performance-note">Tendências para revisão, não diagnóstico. Compare o mesmo exercício e considere semanas de recuperação.</p>')+
+      (t.comparisons.length?'<details class="evo-performance-detail"><summary>Exercícios analisados</summary>'+t.comparisons.slice(0,8).map(c=>'<p>'+esc(state.exercises.find(e=>e.id===c.exerciseId)?.name||c.exerciseId)+': '+fmtDelta(c.changePct)+' · '+c.samplesBefore+' + '+c.samplesNow+' sessões</p>').join('')+'</details>':'')+
+      '<p class="small muted">Janelas de 14 dias; 5% e cobertura mínima são heurísticas do FORJA, não limites clínicos. Não estimamos calorias gastas pela carga do treino nem diagnosticamos excesso de treinamento.</p></details>';
+  }
   function renderProgress(){
     const day=today();
     const nutrition=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
@@ -1105,7 +1128,8 @@
     const goalPlan=PLANNER.plan(state,day);
     return '<div class="evo-shell">'+
       EVO.renderHeader(state,day,ui.evolutionView)+
-      '<div class="evo-main">'+(ui.evolutionView==='nutrition'?nutrition:weights)+'</div>'+
+      '<div class="evo-main">'+(ui.evolutionView==='nutrition'?nutrition:weights)+'</div>'+ 
+      (ui.evolutionView==='weight'?renderPerformanceTrends():'')+
       (ui.evolutionView==='weight'?
         '<details class="evo-more-tools" '+(ui.evolutionExtrasOpen?'open':'')+'>'+
         '<summary>Mais indicadores e ajustes <span aria-hidden="true">⌄</span></summary>'+
@@ -1632,7 +1656,9 @@
       state.settings.recoveryCheckin={
         day:today(),energy:btn.dataset.value,fatigue:existing?.fatigue||'normal',
         kneePain:existing?.kneePain??''};
-      if(!save())return;
+      const beforeHistory=(state.recoveryHistory||[]).slice();
+      state.recoveryHistory=PERF?.upsertRecovery(beforeHistory,state.settings.recoveryCheckin)||beforeHistory;
+      if(!save()){state.recoveryHistory=beforeHistory;return;}
       render();notify('Check-in de hoje salvo.');return;
     }
     if(action==='quick-previous' || action==='quick-current'){
@@ -2021,7 +2047,9 @@
         day:today(),energy:current?.energy||'normal',fatigue:current?.fatigue||'normal',
         kneePain:current?.kneePain??'', [field]:value
       };
-      if(!save()){state.settings.recoveryCheckin=previous;return;}
+      const beforeHistory=(state.recoveryHistory||[]).slice();
+      state.recoveryHistory=PERF?.upsertRecovery(beforeHistory,state.settings.recoveryCheckin)||beforeHistory;
+      if(!save()){state.settings.recoveryCheckin=previous;state.recoveryHistory=beforeHistory;return;}
       render();return;
     }
     if((el.dataset.muayProp==='unit'||el.dataset.muayProp==='category')&&state.muay.draft){
