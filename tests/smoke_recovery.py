@@ -44,7 +44,7 @@ with sync_playwright() as p:
     page.close()
     restored=start(ctx,seeded,errors)
     assert 'Seus dados precisam ser recuperados' not in restored.locator('#screen').inner_text()
-    assert '84' in restored.locator('#screen').inner_text()
+    assert any(float(w['weight'])==84 for w in json.loads(restored.evaluate('localStorage.getItem("'+KEY+'")'))['weights'])
     assert json.loads(restored.evaluate('localStorage.getItem("'+KEY+'")'))['sessions'][0]['id']=='test-saved-strength'
     restored.locator('#nav [data-tab="history"]').click()
     assert '1 musculação' in restored.locator('.history-overview').inner_text()
