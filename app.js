@@ -749,7 +749,7 @@
       <section class="plan-exercises" aria-labelledby="plan-exercises-title">
         <div class="section-row plan-exercises-heading workout-list-heading">
           <h2 class="section-title" id="plan-exercises-title">Ficha · ${activeCount} ativos</h2>
-          <button class="button-inline" data-action="navigate" data-to="catalog">Catálogo de exercícios ›</button>
+          <button class="button-inline" data-action="navigate" data-to="catalog" aria-label="Catálogo de exercícios">Catálogo ›</button>
         </div>
         <div class="plan-exercises-list">${all.map((ex,i)=>`<article class="plan-exercise-item ${ex.active?'':'is-inactive'}">
           <div class="plan-exercise-index" aria-hidden="true">${String(i+1).padStart(2,'0')}</div>
