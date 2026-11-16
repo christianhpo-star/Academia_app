@@ -31,3 +31,30 @@ test('contexto compara medidas no mesmo local sem inferir gordura',()=>{
  const c=G.context({sessions:[{timestamp:'2026-11-14T13:00:00'}],muay:{sessions:[{day:'2026-11-15'}]},bodyMeasurements:[{date:'2026-11-01',values:{abdomen:90}},{date:'2026-11-15',values:{abdomen:89}}],weights:[{date:'2026-11-01',weight:80},{date:'2026-11-15',weight:80.2}]},'2026-11-15');
  assert.equal(c.abdomenChange,-1);assert.equal(c.weightChange,.2);assert.equal(c.weeklyStrength,1);assert.equal(c.weeklyMuay,1);assert.equal(c.muay,1);assert.equal(c.bodyFat,undefined);
 });
+
+
+test('prescrição profissional permanece independente e não sobrescreve metas existentes',()=>{
+ const settings={mode:'simple'};
+ assert.equal(G.professionalDefault(settings,'2026-11-16'),true);
+ assert.equal(G.professionalDefault(settings,'2026-11-17'),false);
+ assert.equal(settings.targets.length,1);
+ assert.equal(settings.targets[0].source,'professional');
+ assert.deepEqual(settings.targets[0].values,{energyKcal:1710,proteinG:159,carbsG:146,fatG:28,fiberG:null});
+ assert.equal(G.difference(settings.targets[0].values),238);
+ assert.equal(G.validSettings(settings),true);
+ const existing={mode:'simple',targets:[target('keep','2026-10-31')]};
+ assert.equal(G.professionalDefault(existing,'2026-11-16'),false);
+ assert.equal(existing.targets[0].id,'keep');
+});
+test('repouso estimado usa pesagem mais recente e exige altura, idade e parâmetro da fórmula',()=>{
+ const st={nutrition:{settings:{mode:'simple',profile:{...profile,weightKg:79,activity:null,adultScope:false}}},
+   weights:[{date:'2026-11-05',weight:81,initial:false},{date:'2026-11-16',weight:82,initial:false}]};
+ const current=G.restingFromState(st,'2026-11-16');
+ assert.equal(current.weightKg,82);
+ assert.equal(current.weightDate,'2026-11-16');
+ assert.equal(current.valueKcal,1769);
+ assert.equal(G.restingFromState(st,'2026-11-15').weightKg,81);
+ assert.equal(G.restingFromState({...st,nutrition:{settings:{mode:'simple'}}},'2026-11-16').valueKcal,null);
+ assert.ok(G.restingFromState({...st,nutrition:{settings:{mode:'simple'}}},'2026-11-16').missing.includes('altura'));
+ assert.equal(G.restingFromState({weights:[],nutrition:{settings:{profile}}},'2026-11-16').valueKcal,1749);
+});

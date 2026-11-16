@@ -36,12 +36,14 @@
   };
   const copy = obj => JSON.parse(JSON.stringify(obj));
   function initial() {
+    const nutrition=NUTRITION.archive();
+    window.ForjaNutritionGoals.professionalDefault(nutrition.settings,today());
     return {
       version: 1,
       referenceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
-      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(), nutrition:NUTRITION.archive(),
+      sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(), nutrition,
     };
   }
   function load() {
@@ -51,9 +53,10 @@
       if (!validState(parsed)) throw new Error('Backup incompatível');
       const upgradedMuay = M.ensureArchive(parsed);
       const upgradedNutrition = NUTRITION.ensureArchive(parsed);
+      const upgradedProfessionalTarget = window.ForjaNutritionGoals.professionalDefault(parsed.nutrition.settings,today());
       if (!M.validArchive(parsed.muay)) throw new Error('Dados Muay Thai incompatíveis');
       const upgradedReferences = migrateReferences(parsed);
-      if (upgradedMuay || upgradedNutrition || upgradedReferences) {
+      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedProfessionalTarget) {
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
       }
@@ -2069,7 +2072,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-focus43',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-mealplan01',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

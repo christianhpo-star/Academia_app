@@ -32,6 +32,44 @@
         '1,8 g/kg de proteína, 25% de gordura e ajuste de energia são escolhas iniciais editáveis, não valores ótimos medidos.',
         ...(carbsG/p.weightKg<3?['Carboidratos abaixo de 3 g/kg: confira energia e desempenho se houver treinos exigentes.']:[])]};
   }
+  // Personal-use reference from a nutrition professional. This preset never changes
+  // an existing target without explicit choice and is stored in the local diary.
+  // The original prescription specifies no numeric fibre goal.
+  const PROFESSIONAL_VALUES=Object.freeze({
+    energyKcal:1710,proteinG:159,carbsG:146,fatG:28,fiberG:null,
+  });
+  function professionalTarget(from){
+    if(!date(from))return null;
+    const target={id:'professional-'+from,from,source:'professional',
+      values:{...PROFESSIONAL_VALUES},profile:null,formula:'professional-plan-20261113'};
+    return validTarget(target)?target:null;
+  }
+  function professionalDefault(settings,from){
+    if(!settings || !date(from))return false;
+    if(Array.isArray(settings.targets)&&settings.targets.length)return false;
+    settings.targets=[professionalTarget(from)];
+    return true;
+  }
+  // Mifflin-St Jeor predicts resting energy expenditure (REE/RMR), not a measured BMR
+  // or total daily expenditure. Latest dated diary weight takes priority over an old profile.
+  function restingFromState(state,day){
+    const p=state?.nutrition?.settings?.profile;
+    const weights=(state?.weights||[])
+      .filter(w=>w&&date(w.date)&&w.date<=day&&range(Number(w.weight),30,350))
+      .sort((a,b)=>b.date.localeCompare(a.date));
+    const weightRecord=weights[0]||null;
+    const weightKg=weightRecord?Number(weightRecord.weight):p?.weightKg;
+    const missing=[];
+    if(!range(weightKg,30,350))missing.push('peso');
+    if(!range(p?.heightCm,100,250))missing.push('altura');
+    if(!range(p?.age,18,100)||!Number.isInteger(p?.age))missing.push('idade');
+    if(!['male','female'].includes(p?.sex))missing.push('parâmetro da fórmula');
+    if(missing.length)return {valueKcal:null,missing,weightKg:range(weightKg,30,350)?weightKg:null,
+      weightDate:weightRecord?.date||null,formula:'mifflin-st-jeor-1990'};
+    const kcal=Math.round(10*weightKg+6.25*p.heightCm-5*p.age+(p.sex==='male'?5:-161));
+    return {valueKcal:kcal,missing:[],weightKg,weightDate:weightRecord?.date||null,
+      formula:'mifflin-st-jeor-1990'};
+  }
   function active(settings,day){return (settings.targets||[]).filter(t=>t.from<=day).sort((a,b)=>b.from.localeCompare(a.from))[0]||null;}
   function difference(v){return KEYS.slice(0,4).some(k=>v[k]==null)?null:Math.round(v.energyKcal-4*v.proteinG-4*v.carbsG-9*v.fatG);}
   function context(state,day){
@@ -51,6 +89,6 @@
     return {strength,muay,measures,abdomenChange,weeklyStrength,weeklyMuay,recentWeights:recent.length,
       weightChange:recent.length>=2&&Date.parse(recent.at(-1).date)-Date.parse(recent[0].date)>=14*86400000?Math.round((recent.at(-1).weight-recent[0].weight)*10)/10:null};
   }
-  const api={KEYS,validProfile,validTarget,validSettings,estimate,active,difference,context};root.ForjaNutritionGoals=api;
+  const api={KEYS,validProfile,validTarget,validSettings,estimate,active,difference,context,PROFESSIONAL_VALUES,professionalTarget,professionalDefault,restingFromState};root.ForjaNutritionGoals=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

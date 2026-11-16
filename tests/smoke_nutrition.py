@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-presets.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
 
 def start(context,stored,errors):
     page=context.new_page()
@@ -30,6 +30,15 @@ with sync_playwright() as p:
     errors=[]
     page=start(context,{},errors)
     page.on('dialog',lambda d:d.accept())
+    # First launch installs the professional reference without inventing personal measurements.
+    first=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')") or 'null')
+    # The in-memory initial state is persisted after a first normal interaction.
+    page.locator('#nav [data-tab="nutrition"]').click()
+    assert page.locator('.nd-metabolism').count()==1
+    assert '1.710' in page.locator('.nd-metabolism').inner_text()
+    assert 'altura' in page.locator('.nd-metabolism').inner_text()
+    assert page.locator('[data-nd="plan-confirm"]').count()>=1
+    page.locator('#nav [data-tab="home"]').click()
     # Passos: atalho diário na Home; só o usuário define 0, ausências permanecem ausentes.
     assert page.locator('#home-steps-form').count()==1
     assert page.locator('#home-step-count').input_value()==''
@@ -53,7 +62,7 @@ with sync_playwright() as p:
     assert page.locator('.nd-meal').last.locator('h2').inner_text()=='Ceia'
     page.locator('[data-nd="previous"]').click()
     day=page.locator('#nd-date').input_value()
-    page.locator('.nd-meal [data-nd="add"][data-meal="lunch"]').click()
+    page.locator('.nd-meal-top [data-nd="add"][data-meal="lunch"]').click()
     assert page.locator('[data-nd="pick"]').count()>=6, 'Catalogue must open with suggestions, not empty Recentes'
     assert 'Arroz branco' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="fruits"]').click()
@@ -145,7 +154,7 @@ with sync_playwright() as p:
     assert state()['nutrition']['entries'][1]['mealType']=='supper'
     assert state()['nutrition']['entries'][1]['date']==day
     # Draft survives navigation/restart without a fictitious meal.
-    page.locator('[data-nd="add"][data-meal="breakfast"]').click()
+    page.locator('.nd-meal-top [data-nd="add"][data-meal="breakfast"]').click()
     assert 'Itambé' in page.locator('#nd-results').inner_text(), 'Itambé should be suggested for breakfast'
     assert 'Piracanjuba' in page.locator('#nd-results').inner_text(), 'Piracanjuba should be visible without search'
     assert 'Whey Growth' in page.locator('#nd-results').inner_text(), 'Whey shortcut should be visible without search'
@@ -209,7 +218,8 @@ with sync_playwright() as p:
     page.locator('.nd-save-sticky button[type="submit"]').click()
     assert len(state()['nutrition']['entries'])==3
     # Complete profile, accept estimate, override target; edits to profile never overwrite it.
-    page.locator('[data-nd="goals"]').first.click()
+    page.evaluate('window.scrollTo(0,0)')
+    page.locator('.nd-head-goals').click()
     page.locator('#nd-heightCm').fill('175,5');page.locator('#nd-age').fill('30');page.locator('#nd-weightKg').fill('80')
     page.locator('#nd-sex').select_option('male');page.locator('#nd-activity').select_option('1.55')
     page.locator('[name="adultScope"]').check()
@@ -218,13 +228,15 @@ with sync_playwright() as p:
     page.locator('[data-nd="accept"]').click()
     assert state()['nutrition']['settings']['profile']['heightCm']==175.5
     page.locator('[data-nd="today"]').click()
-    page.locator('[data-nd="goals"]').first.click()
+    page.evaluate('window.scrollTo(0,0)')
+    page.locator('.nd-head-goals').click()
     page.locator('.nd-goals-manual > summary').click()
     page.locator('#nd-target-proteinG').fill('150')
     page.locator('#nd-target button[type="submit"]').click()
     target=state()['nutrition']['settings']['targets'][-1]
     assert target['source']=='manual' and target['values']['proteinG']==150
-    page.locator('[data-nd="goals"]').first.click()
+    page.evaluate('window.scrollTo(0,0)')
+    page.locator('.nd-head-goals').click()
     page.locator('#nd-age').fill('31');page.locator('#nd-profile button[type="submit"]').click()
     assert state()['nutrition']['settings']['targets'][-1]==target
     page.locator('[data-nd="close"]').click()
@@ -441,7 +453,7 @@ with sync_playwright() as p:
     evo.screenshot(path=str(ROOT/'screenshots/evolution-nutrition-390.png'),full_page=True)
     evo.close()
     # Quota errors preserve original history and form.
-    page.locator('[data-nd="add"][data-meal="snack"]').click()
+    page.locator('.nd-meal-top [data-nd="add"][data-meal="snack"]').click()
     page.get_by_text('Adicionar manualmente / rótulo',exact=True).click()
     page.locator('#nd-label').fill('Falha de armazenamento')
     page.locator('#nd-manual button[type="submit"]').click()

@@ -1,8 +1,8 @@
 /* FORJA offline shell: prefer current network assets; use cache only when offline. */
-const CACHE = 'forja-shell-v47-20261116-focus43-catalog';
+const CACHE = 'forja-shell-v48-20261116-mealplan01-catalog';
 const APP_FILES = [
-  './', './index.html', './styles.css?v=20261116-focus43', './body-measures.js?v=20261116-focus43', './activity.js?v=20261116-focus43', './health-import.js?v=20261116-focus43', './nutrition-goals.js?v=20261116-focus43', './goal-planner.js?v=20261116-focus43', './reminders.js?v=20261116-focus43', './daily-routine.js?v=20261116-focus43', './nutrition.js?v=20261116-focus43', './nutrition-catalog.js?v=20261116-focus43', './nutrition-balance.js?v=20261116-focus43', './nutrition-ui.js?v=20261116-focus43', './evolution-dashboard.js?v=20261116-focus43', './app.js?v=20261116-focus43', './data.js?v=20261116-focus43',
-  './engine.js?v=20261116-focus43', './muay.js?v=20261116-focus43', './calendar.js?v=20261116-focus43', './flex.js?v=20261116-focus43', './dose.js?v=20261116-focus43', './focus.js?v=20261116-focus43', './catalog-advice.js?v=20261116-focus43', './manifest.webmanifest',
+  './', './index.html', './styles.css?v=20261116-mealplan01', './body-measures.js?v=20261116-mealplan01', './activity.js?v=20261116-mealplan01', './health-import.js?v=20261116-mealplan01', './nutrition-goals.js?v=20261116-mealplan01', './goal-planner.js?v=20261116-mealplan01', './reminders.js?v=20261116-mealplan01', './daily-routine.js?v=20261116-mealplan01', './nutrition.js?v=20261116-mealplan01', './nutrition-catalog.js?v=20261116-mealplan01', './nutrition-presets.js?v=20261116-mealplan01', './nutrition-balance.js?v=20261116-mealplan01', './nutrition-ui.js?v=20261116-mealplan01', './evolution-dashboard.js?v=20261116-mealplan01', './app.js?v=20261116-mealplan01', './data.js?v=20261116-mealplan01',
+  './engine.js?v=20261116-mealplan01', './muay.js?v=20261116-mealplan01', './calendar.js?v=20261116-mealplan01', './flex.js?v=20261116-mealplan01', './dose.js?v=20261116-mealplan01', './focus.js?v=20261116-mealplan01', './catalog-advice.js?v=20261116-mealplan01', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png'
 ];
 
