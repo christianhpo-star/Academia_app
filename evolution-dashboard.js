@@ -124,12 +124,12 @@
       '<div class="evo-periods evo-volume-periods" role="group" aria-label="Período do treino">'+
       [7,30,90].map(n=>'<button type="button" data-action="evo-volume-days" data-days="'+n+'" aria-pressed="'+(n===days)+
         '" class="'+(n===days?'is-selected':'')+'">'+n+' dias</button>').join('')+'</div>'+
-      (totals?'<div class="evo-volume-bars">'+groups.map(g=>
+      '<div class="evo-volume-bars">'+groups.map(g=>
         '<div class="evo-volume-row"><div class="evo-volume-label"><strong>'+esc(g.title)+'</strong><span>'+g.sets+' séries</span></div>'+
         '<div class="evo-volume-track" role="img" aria-label="'+esc(g.title)+': '+g.sets+' séries efetivas em '+days+' dias">'+
         (g.sets?'<span style="width:'+Math.max(2,100*g.sets/max).toFixed(1)+'%"></span>':'')+
-        '</div></div>').join('')+'</div>':
-        '<p class="evo-empty">Ainda não há séries efetivas registradas nesses '+days+' dias.</p>')+
+        '</div></div>').join('')+'</div>'+
+      (!totals?'<p class="evo-empty">Ainda não há séries efetivas registradas nesses '+days+' dias.</p>':'')+
       '<p class="evo-footnote">Agrupamento pela ficha A/B/C/D. Cada barra conta séries com carga e repetições efetivamente registradas; aquecimentos são excluídos. Não representa volume individual de cada músculo nem inclui Muay Thai.</p>'+
       '</section>';
   }
