@@ -375,3 +375,54 @@ test('TACO: frutas variadas têm fonte rastreável e aceitam valores fracionados
  assert.ok(Math.abs(total.energyKcal-58.32)<.01);
  assert.ok(Math.abs(total.carbsG-14.9445)<.01);
 });
+
+
+test('TBCA: nuggets fritos e assados são distintos, com peso fracionado e referência rastreável',()=>{
+ const fried=C.find('tbca:BRC0474F'),baked=C.find('tbca:BRC0475F');
+ assert.ok(fried&&baked);
+ assert.equal(fried.nutrientsPer100g.energyKcal,339);
+ assert.equal(baked.nutrientsPer100g.energyKcal,303);
+ assert.ok(fried.source.reference.includes('BRC0474F'));
+ assert.ok(C.search('nuggets').some(f=>f.id===fried.id));
+ assert.ok(C.search('calabresa fatiada').some(f=>f.id==='tbca:BRC0898F'));
+ assert.ok(C.search('molho cheddar').some(f=>f.id==='tbca:BRC0137G'));
+ const meat=C.makeItem(fried.id,'custom',121.5,id);
+ assert.equal(meat.quantity,121.5);
+ assert.equal(meat.unit,'g');
+ assert.equal(meat.grams,121.5);
+ const meal={id:id('meal'),date:'2026-11-15',mealType:'dinner',items:[meat]};
+ assert.equal(N.validEntry(meal),true);
+ assert.ok(Math.abs(N.observedTotals([meal],meal.date).totals.energyKcal-411.885)<.01);
+});
+
+test('porção compartilhada registra apenas o consumo próprio; pesos e percentuais de cada alimento são editáveis',()=>{
+ const preset=C.SHARED_PRESETS.find(row=>row.id==='trono-dos-reis');
+ assert.ok(preset);assert.equal(preset.components.length,5);
+ const half=preset.components.map(part=>({foodId:part.foodId,totalGrams:part.wholeGrams,myGrams:part.wholeGrams/2}));
+ const out=C.makeSharedPortion(preset.id,half,id);
+ assert.ok(out);
+ assert.equal(out.items.length,5);
+ assert.equal(out.wholeGrams,830);
+ assert.equal(out.consumedGrams,415);
+ assert.ok(out.items.every(item=>item.estimate?.confidence==='low'));
+ assert.ok(out.items.every(item=>item.nutrientsPer100g.energyKcal===null));
+ const meal={id:id('meal'),date:'2026-11-15',mealType:'dinner',items:out.items};
+ assert.equal(N.validEntry(meal),true);
+ assert.equal(N.observedTotals([meal],meal.date).totals.energyKcal,null);
+ const daily=N.recordedBreakdown([meal],meal.date);
+ assert.equal(daily.counts.energyKcal.estimated,5);
+ assert.equal(daily.counts.energyKcal.confirmed,0);
+ assert.ok(daily.totals.energyKcal>1200&&daily.totals.energyKcal<1600);
+ assert.ok(daily.ranges.energyKcal.low<daily.totals.energyKcal);
+ assert.ok(daily.ranges.energyKcal.high>daily.totals.energyKcal);
+ const unfair=half.map(row=>({...row}));unfair[0].myGrams=250;unfair[1].myGrams=0;
+ const own=C.makeSharedPortion(preset.id,unfair,id);
+ assert.equal(own.items.length,4);
+ assert.equal(own.consumedGrams,465);
+ assert.equal(own.items.filter(i=>i.foodId==='tbca:BRC0474F').length,0);
+ assert.equal(C.makeSharedPortion(preset.id,[{...half[0],myGrams:400},...half.slice(1)],id),null);
+ assert.equal(C.makeSharedPortion(preset.id,half.map(row=>({...row,myGrams:0})),id),null);
+ const archive=N.archive();archive.entries.push(meal);
+ assert.equal(N.validArchive(archive),true);
+ assert.deepEqual(N.merge(archive,N.archive()).entries,archive.entries);
+});
