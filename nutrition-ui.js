@@ -222,7 +222,7 @@
         const first=group.choices[0];
         return '<div class="nd-plan-choice-row"><label class="nd-plan-choice-label">'+esc(group.label)+
           '<select data-plan-choice data-group="'+i+'" aria-label="'+esc(recipe.title+' — '+group.label)+'">'+choices+'</select></label>'+
-          '<label class="nd-plan-qty-label">Qtd. <input type="number" inputmode="decimal" data-plan-qty data-group="'+i+'" aria-label="'+esc(group.label+' quantidade')" min="0" max="10000" step="any" value="'+esc(first.qty??'')+'" placeholder="informar"></label>'+
+          '<label class="nd-plan-qty-label">Qtd. <input type="number" inputmode="decimal" data-plan-qty data-group="'+i+'" aria-label="'+esc(group.label+' quantidade')+'" min="0" max="10000" step="any" value="'+esc(first.qty??'')+'" placeholder="informar"></label>'+
           '<small class="nd-plan-unit" data-plan-unit data-group="'+i+'">'+esc(first.unit)+'</small></div>';
       }).join('');
       return '<div class="nd-plan-option'+(featured?' is-featured':'')+'" data-recipe-card="'+esc(recipe.id)+'">'+
