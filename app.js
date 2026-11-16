@@ -1091,7 +1091,7 @@
       chartMode:ui.evolutionChartMode,measureKey:ui.evolutionMeasureKey,
       stepsHTML:steps,groupsHTML:groups,
     });
-    const bm=BODY.recent(state.bodyMeasurements||[])[0],goalPlan=PLANNER.plan(state,day);
+    const goalPlan=PLANNER.plan(state,day);
     return '<div class="evo-shell">'+
       EVO.renderHeader(state,day,ui.evolutionView)+
       '<div class="evo-main">'+(ui.evolutionView==='nutrition'?nutrition:weights)+'</div>'+
@@ -1099,9 +1099,6 @@
         '<details class="evo-more-tools" '+(ui.evolutionExtrasOpen?'open':'')+'>'+
         '<summary>Mais indicadores e ajustes <span aria-hidden="true">⌄</span></summary>'+
         '<div class="evo-more-content">'+
-        '<button type="button" class="body-quick-card" data-action="body-open"><span><strong>Medidas corporais</strong><small>'+
-        (bm?'Última aferição: '+dateBR(bm.date):'Registrar e acompanhar circunferências')+
-        '</small></span><span aria-hidden="true">›</span></button>'+
         renderGoalPlannerSummary(goalPlan)+renderDosePanel()+
         '</div></details>'+
         '<details id="evo-weight-editor" class="evo-editor-fold"><summary>Registrar ou corrigir pesagem</summary>'+weightForm()+'</details>':
