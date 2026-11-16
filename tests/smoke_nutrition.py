@@ -62,7 +62,7 @@ with sync_playwright() as p:
     assert page.locator('.nd-meal').last.locator('h2').inner_text()=='Ceia'
     page.locator('[data-nd="previous"]').click()
     day=page.locator('#nd-date').input_value()
-    page.locator('.nd-meal [data-nd="add"][data-meal="lunch"]').click()
+    page.locator('.nd-meal-top [data-nd="add"][data-meal="lunch"]').click()
     assert page.locator('[data-nd="pick"]').count()>=6, 'Catalogue must open with suggestions, not empty Recentes'
     assert 'Arroz branco' in page.locator('#nd-results').inner_text()
     page.locator('[data-nd="mode"][data-mode="fruits"]').click()
@@ -154,7 +154,7 @@ with sync_playwright() as p:
     assert state()['nutrition']['entries'][1]['mealType']=='supper'
     assert state()['nutrition']['entries'][1]['date']==day
     # Draft survives navigation/restart without a fictitious meal.
-    page.locator('[data-nd="add"][data-meal="breakfast"]').click()
+    page.locator('.nd-meal-top [data-nd="add"][data-meal="breakfast"]').click()
     assert 'Itambé' in page.locator('#nd-results').inner_text(), 'Itambé should be suggested for breakfast'
     assert 'Piracanjuba' in page.locator('#nd-results').inner_text(), 'Piracanjuba should be visible without search'
     assert 'Whey Growth' in page.locator('#nd-results').inner_text(), 'Whey shortcut should be visible without search'
