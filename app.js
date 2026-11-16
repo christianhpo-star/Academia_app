@@ -37,7 +37,7 @@
   const copy = obj => JSON.parse(JSON.stringify(obj));
   function initial() {
     const nutrition=NUTRITION.archive();
-    window.ForjaNutritionGoals.professionalDefault(nutrition.settings,today());
+    window.ForjaNutritionGoals.useUserTarget(nutrition.settings,today());
     return {
       version: 1,
       referenceDefaultsVersion: 1,
@@ -53,7 +53,7 @@
       if (!validState(parsed)) throw new Error('Backup incompatível');
       const upgradedMuay = M.ensureArchive(parsed);
       const upgradedNutrition = NUTRITION.ensureArchive(parsed);
-      const upgradedProfessionalTarget = window.ForjaNutritionGoals.professionalDefault(parsed.nutrition.settings,today());
+      const upgradedProfessionalTarget = window.ForjaNutritionGoals.useUserTarget(parsed.nutrition.settings,today());
       if (!M.validArchive(parsed.muay)) throw new Error('Dados Muay Thai incompatíveis');
       const upgradedReferences = migrateReferences(parsed);
       if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedProfessionalTarget) {
