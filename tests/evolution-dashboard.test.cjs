@@ -95,7 +95,7 @@ test('group volume counts only effective strength sets by exercise group and bou
  const state={exercises:[{id:'pull',group:'A'},{id:'bench',group:'B'},{id:'leg',group:'C'},{id:'hip',group:'D'}],sessions:[
   {id:'s1',day:'2026-11-15',entries:[{id:'pull',sets:[{load:20,reps:10,warmup:true},{load:40,reps:10,warmup:false},{load:45,reps:8,warmup:false}]},{id:'bench',sets:[{load:30,reps:8,warmup:false}]}]},
   {id:'s2',day:'2026-11-01',entries:[{id:'leg',sets:[{load:70,reps:10,warmup:false}]}]},
-  {id:'s3',day:'2026-08-01',entries:[{id:'hip',sets:[{load:50,reps:12,warmup:false}]}]},
+  {id:'s3',day:'2026-09-01',entries:[{id:'hip',sets:[{load:50,reps:12,warmup:false}]}]},
   {id:'s4',day:'2026-11-15',entries:[{id:'hip',sets:[{load:30,reps:0,warmup:false}]}]}
  ]};
  const before=JSON.stringify(state.sessions);
