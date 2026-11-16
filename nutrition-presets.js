@@ -30,7 +30,7 @@
     if(choice.qty===0)return null;
     const amount=Number(choice.qty);
     if(!Number.isFinite(amount)||amount<=0 || amount>10000)return undefined;
-    if(choice.foodId && CAT){
+    if(choice.foodId && CAT && (choice.unit==='g'||choice.unit==='ml')){
       const actual=CAT.makeItem(choice.foodId,choice.unit==='ml'?'customMl':'custom',amount,makeId);
       if(actual){
         // Store the selected label, never substitute a different preparation silently.
