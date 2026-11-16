@@ -444,15 +444,15 @@
     </form>`;
   }
   function renderQueue(queue) {
-    return `<section class="queue-panel" aria-label="Treinos pendentes da rodada">
-      <div class="row-between"><strong>Rodada ${queue.completedRounds + 1}</strong><span class="tiny muted">${queue.completed.length} de ${DATA.rotation.length} blocos concluídos</span></div>
-      <div class="queue-chips">${DATA.rotation.map(id => {
-        const pending = queue.pending.includes(id);
-        return `<span class="queue-chip ${pending?'pending':'done'}">${pending?'◦':'✓'} ${esc(id)} · ${esc(planFor(id).title.split(' + ')[0])}${pending?'':' · feito'}</span>`;
-      }).join('')}</div>
-      <p class="tiny muted">Trocar a ordem não apaga os pendentes; repetir um bloco não conclui os demais.</p>
-    </section>`;
+    return '<details class="queue-panel queue-panel-compact" aria-label="Andamento da rodada">'+
+      '<summary><strong>Rodada '+(queue.completedRounds+1)+'</strong><span>'+queue.completed.length+' de '+DATA.rotation.length+' concluídos · ver fila</span></summary>'+
+      '<div class="queue-chips">'+DATA.rotation.map(id=>{
+        const pending=queue.pending.includes(id);
+        return '<span class="queue-chip '+(pending?'pending':'done')+'">'+
+          (pending?'◦ ':'✓ ')+esc(id)+' · '+esc(planFor(id).title.split(' + ')[0])+'</span>';
+      }).join('')+'</div></details>';
   }
+
   function resumeBanner() {
     if (!ui.draft) return '';
     return `<div class="callout good"><strong>Você tem um treino em andamento.</strong>
@@ -726,31 +726,30 @@
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
     const all=state.exercises.filter(x=>x.group===ui.plan);
-    return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>${headline('Seu planejamento','Treinos flexíveis.','A → C → B → D. Cada bloco realizado sai da fila; os outros continuam pendentes.')}
-      <button class="secondary full mt-12" data-action="navigate" data-to="catalog">Catálogo de exercícios</button>
+    return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>
+      <div class="plan-compact-head"><div><p class="eyebrow">PRÓXIMO TREINO</p><h1 class="page-title">Sua ficha</h1></div><button class="secondary plan-catalog" data-action="navigate" data-to="catalog">Catálogo</button></div>
       ${resumeBanner()}
       ${renderQueue(next)}
       <div class="tabs plan-block-selector" role="group" aria-label="Escolher grupo de treino">
       ${DATA.plans.map(plan => {
         const label=plan.title.split(" ")[0];
         return `<button type="button" class="tab-chip plan-block-choice ${ui.plan===plan.id?'selected':''}" data-action="select-plan" data-plan="${plan.id}" aria-pressed="${ui.plan===plan.id}" aria-label="Bloco ${plan.id}: ${esc(label)}">
-          <span class="plan-choice-code">BLOCO ${plan.id}</span><span class="plan-choice-name">${esc(label)}</span></button>`;
+          <span class="plan-choice-code">${plan.id}</span><span class="plan-choice-name">${esc(label)}</span></button>`;
       }).join('')}</div>
-      <section class="workout-banner"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><p>${esc(p.subtitle)}</p><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino ${p.id}</button></section>
+      <section class="workout-banner workout-banner-compact"><div class="row-between"><h2>${esc(p.title)}</h2>${tag(`Bloco ${p.id}`,'green')}</div><button class="primary full mt-12" data-action="start" data-plan="${p.id}">Iniciar treino</button></section>
       <section class="plan-exercises" aria-labelledby="plan-exercises-title">
-        <div class="section-row plan-exercises-heading"><div><p class="section-eyebrow">SUA FICHA · BLOCO ${p.id}</p><h2 class="section-title" id="plan-exercises-title">Exercícios do bloco</h2>
-          <p class="small muted">Organizados na ordem da sessão. Ative ou edite cada movimento sem perder os registros anteriores.</p></div><span class="plan-exercises-count">${all.filter(x=>x.active).length} ativos</span></div>
+        <div class="section-row plan-exercises-heading"><div><h2 class="section-title" id="plan-exercises-title">Exercícios</h2></div><span class="plan-exercises-count">${all.filter(x=>x.active).length} ativos</span></div>
         <div class="plan-exercises-list">${all.map((ex,i)=>`<article class="plan-exercise-item ${ex.active?'':'is-inactive'}">
           <div class="plan-exercise-index" aria-hidden="true">${String(i+1).padStart(2,'0')}</div>
           <div class="plan-exercise-detail"><h3>${esc(ex.name)}</h3>
             <p class="plan-exercise-meta"><strong>${ex.sets} séries</strong><span aria-hidden="true">·</span>${ex.low}–${ex.high} repetições</p>
-            <p class="plan-exercise-submeta">Progressão: +${fmt(ex.step)} ${esc(ex.unit)}${ex.knee?' · Atenção ao joelho':''}</p>
-            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar exercício</button></div>
-          <div class="plan-exercise-state"><span>${ex.active?'Na ficha':'Inativo'}</span><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
+            <p class="plan-exercise-submeta">${ex.knee?'Atenção ao joelho':''}</p>
+            <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}">Editar</button></div>
+          <div class="plan-exercise-state"><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
         </article>`).join('')}</div>
       </section>
       <button class="secondary full mt-16" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button>
-      <div class="callout mt-16">Aquecimentos não contam como séries efetivas. Você pode alterar exercícios, progressão e número de séries em qualquer momento.</div>`;
+      <details class="plan-extra-help"><summary>Sobre a ficha</summary><p class="small muted">Aquecimentos não contam como séries efetivas. Ajustes preservam o histórico.</p></details>`;
   }
   function seedSets(ex) {
     const h=history(ex.id);
