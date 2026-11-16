@@ -3,6 +3,7 @@
   'use strict';
   const N=root.ForjaNutrition,CAT=root.ForjaNutritionCatalog;
   const G=root.ForjaNutritionGoals||(typeof require==='function'?require('./nutrition-goals.js'):null);
+  const B=root.ForjaEnergyBalance||(typeof require==='function'?require('./nutrition-balance.js'):null);
   const BODY=root.ForjaBodyMeasures||(typeof require==='function'?require('./body-measures.js'):null);
   const ACT=root.ForjaActivity||(typeof require==='function'?require('./activity.js'):null);
   const HEALTH=root.ForjaHealthImport||(typeof require==='function'?require('./health-import.js'):null);
@@ -192,8 +193,53 @@
       rows.map((e,index)=>entryHTML(e,index)).join('')+'</details>':'';
     return '<section class="card nd-meal">'+main+macro+details+'</section>';
   }
-  function render({archive,date,limit=3,state={}}){
-    const totals=N.recordedBreakdown(archive.entries,date),target=G.active(archive.settings,date);
+
+  function balanceHTML(archive,state,currentDay){
+    const report=B.assessment(archive,state,currentDay);
+    const active=report.activePlan;
+    const status={
+      blocked:'Aguardando dados suficientes',
+      ready:'Sugestão opcional disponível',
+      steady:'Sem ajuste sugerido',
+      paused:'Metas normais mantidas',
+      plan:active?'Ajuste temporário aprovado':'Ajuste suspenso'
+    }[report.status]||'Em análise';
+    const approved=report.status==='plan'&&!!active;
+    const days=report.days.map(d=>
+      '<div class="nd-balance-day"><div><strong>'+esc(dateBR(d.date))+'</strong><span>'+
+      (d.checked?'Revisado · '+fmt(d.energyKcal)+' kcal'+
+        (d.deltaKcal>=0?' · +':' · −')+fmt(Math.abs(d.deltaKcal))+' kcal frente à meta':
+       d.quality?'Registrado, ainda não confirmado como completo':
+       'Dados insuficientes para conferir')+'</span></div>'+
+      (d.checked?button('balance-unreview','Reabrir', 'data-date="'+esc(d.date)+'"','ghost'):
+       d.quality?button('balance-review','Conferir', 'data-date="'+esc(d.date)+'"','secondary'):
+       button('balance-day','Abrir dia', 'data-date="'+esc(d.date)+'"','ghost'))+
+      '</div>').join('');
+    const actions= report.status==='ready'?button('balance-plan','Ver sugestão de ajuste','','secondary full'):
+      report.status==='plan'?button('balance-cancel',active?'Cancelar ajuste':'Descartar plano suspenso','','ghost full'):
+      report.status==='paused'?button('balance-unpause','Voltar a avaliar sugestões','','ghost full'):'';
+    return '<details class="card nd-balance" id="nd-balance"><summary>'+
+      '<span class="nd-balance-head"><strong>Equilíbrio calórico · 7 dias</strong><small>'+esc(status)+'</small></span>'+
+      '<span class="nd-balance-chevron" aria-hidden="true">⌄</span></summary>'+
+      '<div class="nd-balance-body"><p class="small">'+esc(report.reason||'Conferir o histórico e as metas.')+'</p>'+
+      '<div class="nd-balance-kpis"><div><small>Dias conferidos / 7</small><strong>'+report.reviewedCount+' / 7</strong></div>'+
+      '<div><small>Saldo parcial de '+report.usableCount+' dia(s)</small><strong>'+
+      (report.usableCount?(report.balanceKcal>0?'+':'')+fmt(report.balanceKcal)+' kcal':'—')+'</strong></div></div>'+
+      '<p class="small muted">O saldo soma somente dias conferidos e não equivale ao balanço energético real. Uma meta ultrapassada não significa necessariamente superávit. Nenhum alimento ausente vira zero.</p>'+
+      (approved?'<p class="nd-balance-note">Plano aceito em '+dateBR(active.acceptedAt)+
+        '. Ajustes apenas nas datas escolhidas e sem treino registrado. Proteínas, gorduras e fibras mantidas.</p>':'')+
+      actions+
+      (report.status==='ready'?button('balance-keep','Continuar metas normais por 7 dias','','ghost full'):'')+
+      '<details class="nd-balance-history"><summary>Conferir os últimos sete dias</summary>'+
+      '<p class="small muted">Marque um dia somente depois de registrar todas as refeições, bebidas e quantidades. Os registros incertos precisam ser corrigidos antes.</p>'+
+      days+'</details></div></details>';
+  }
+
+  function render({archive,date,limit=3,state={},balanceDate=date}){
+    const totals=N.recordedBreakdown(archive.entries,date);
+    const baseTarget=G.active(archive.settings,date);
+    const dailyAdjustment=B.planForDay(archive,state,date);
+    const target=dailyAdjustment&&baseTarget?{...baseTarget,values:dailyAdjustment.values}:baseTarget;
     const energyMeta=totals.counts.energyKcal;
     const hasEstimated=Object.values(totals.counts).some(v=>v.estimated>0);
     const hasUnknown=Object.values(totals.counts).some(v=>v.unknown>0);
@@ -203,6 +249,7 @@
     return `<div class="nutrition-screen"><div class="row-between"><div><p class="eyebrow">SEU DIÁRIO</p><h1 class="page-title">Alimentação.</h1></div>${button('goals','Minhas metas','','ghost')}</div>
       <div class="nd-date">${button('previous','‹','aria-label="Dia anterior"')}<div class="field"><label for="nd-date">${new Date(date+'T12:00:00').toLocaleDateString('pt-BR',{weekday:'long'})}</label><input id="nd-date" type="date" value="${date}" aria-label="Data do diário"></div>${button('next','›','aria-label="Próximo dia"')}</div><div class="nd-date-footer">${button('today','Hoje','','button-inline')}<span>${daily.length} registro(s)</span></div>
       <section class="card nd-summary" aria-label="Consumo registrado e metas"><div class="nd-energy">${ring('energyKcal',totals.totals.energyKcal,target?.values.energyKcal,totals.counts.energyKcal)}<div><strong>Energia registrada</strong><p class="small muted">${target?'Meta '+({manual:'ajustada por você',suggested:'sugerida e aceita',professional:'informada por profissional'}[target.source]):'Configure seu perfil ou informe suas metas.'}</p>${button('goals',target?'Rever metas':'Configurar metas','','button-inline')}</div></div><div class="nd-macros">${G.KEYS.slice(1).map(k=>ring(k,totals.totals[k],target?.values[k],totals.counts[k])).join('')}</div>
+      ${dailyAdjustment?`<p class="nd-balance-active">Ajuste opcional aceito: ${fmt(dailyAdjustment.values.energyKcal)} kcal hoje (meta original: ${fmt(dailyAdjustment.baseValues.energyKcal)} kcal). Proteína e fibras preservadas. Confira seus treinos antes de seguir.</p>`:''}
       <p class="small muted">Subtotal dos alimentos registrados. ≈ indica estimativa e/ou composição incompleta; — significa sem valor disponível, não zero. Não representa o consumo total do dia.</p>
       ${(hasEstimated||hasUnknown)?'<div class="nd-data-quality">'+
         (hasEstimated?'<span>Inclui '+energyMeta.estimated+' alimento(s) com calorias estimadas, exibidas separadamente de valores confirmados.</span>':'')+
@@ -210,6 +257,7 @@
         '<details><summary>Detalhes e incerteza</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+
         (energyMeta.estimated?'Energia estimada somada: ≈ '+fmt(N.estimatedTotals(archive.entries,date).totals.central.energyKcal)+' kcal. ':'')+
         'Valores estimados não são rótulos; refeições não registradas não entram nesta soma.</p></details></div>':''}</section>
+      ${balanceHTML(archive,state,balanceDate)}
       ${archive.draft?`<div class="callout">Há um rascunho de refeição salvo. ${button('resume','Continuar rascunho','','button-inline')}</div>`:''}
       ${button('add','+ Registrar refeição','data-meal="lunch"','primary full')}<div class="nd-share-quick">${button('shared','Dividir uma porção','data-meal="dinner"','secondary full')}</div>
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{
@@ -611,7 +659,7 @@
       if(a==='favorite'&&e){const f=CAT.makeFavorite(e,archive(),'',id);if(!f)return notify('Não foi possível criar favorito.');if(!transact(x=>{x.foods.push(...f.foodsToAdd);x.mealTemplates.push(f.favorite);} ))return;notify('Favorito salvo.');}
       const scroll=window.scrollY;refresh();window.scrollTo(0,scroll);if(a==='more')document.querySelector('#nd-history').open=true;
     }
-    return {render:()=>render({archive:archive(),date:day,limit,state:get()}),goals,
+    return {render:()=>render({archive:archive(),date:day,limit,state:get(),balanceDate:today()}),goals,
       mount(){const screen=document.querySelector('.nutrition-screen');if(!screen)return;
         screen.addEventListener('click',e=>{const b=e.target.closest('[data-nd]');if(b){e.stopPropagation();action(b);}});
         screen.querySelector('#nd-date').addEventListener('change',e=>{if(N.dateOk(e.target.value)){day=e.target.value;refresh();}});
