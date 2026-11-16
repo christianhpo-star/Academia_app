@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
 HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
+SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-presets.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
 
 def start(context,stored,errors):
     page=context.new_page()
@@ -30,6 +30,15 @@ with sync_playwright() as p:
     errors=[]
     page=start(context,{},errors)
     page.on('dialog',lambda d:d.accept())
+    # First launch installs the professional reference without inventing personal measurements.
+    first=json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')") or 'null')
+    # The in-memory initial state is persisted after a first normal interaction.
+    page.locator('#nav [data-tab="nutrition"]').click()
+    assert page.locator('.nd-metabolism').count()==1
+    assert '1.710' in page.locator('.nd-metabolism').inner_text()
+    assert 'altura' in page.locator('.nd-metabolism').inner_text()
+    assert page.locator('[data-nd="plan-confirm"]').count()>=1
+    page.locator('#nav [data-tab="home"]').click()
     # Passos: atalho diário na Home; só o usuário define 0, ausências permanecem ausentes.
     assert page.locator('#home-steps-form').count()==1
     assert page.locator('#home-step-count').input_value()==''
