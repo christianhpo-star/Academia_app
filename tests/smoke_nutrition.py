@@ -119,8 +119,8 @@ with sync_playwright() as p:
     assert lunch.locator('.nd-food-thumb').count()==2
     assert lunch.locator('[data-food-icon="drink"]').count()==1
     assert lunch.locator('[data-food-icon="egg"]').count()==1
-    assert page.locator('.nd-energy .nd-ring-goal').count()==1
-    assert page.locator('.nd-energy .nd-ring-inner').inner_text().count(' de ')==0
+    assert page.locator('.nd-energy-detail .nd-ring-goal').count()==1
+    assert page.locator('.nd-kcal-main strong').count()==1
 
     assert 'P (g)' in lunch.locator('.nd-food-table thead').inner_text()
     assert 'Fib (g)' in lunch.locator('.nd-food-table thead').inner_text()
@@ -232,10 +232,10 @@ with sync_playwright() as p:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
         assert page.evaluate("""() => {
-          const ring=document.querySelector('.nd-energy .nd-ring');
-          const value=ring?.querySelector('strong');
-          if(!ring||!value)return false;
-          const r=ring.getBoundingClientRect(),v=value.getBoundingClientRect();
+          const card=document.querySelector('.nd-energy-overview');
+          const value=card?.querySelector('.nd-kcal-main strong');
+          if(!card||!value)return false;
+          const r=card.getBoundingClientRect(),v=value.getBoundingClientRect();
           return v.left>=r.left&&v.right<=r.right&&v.top>=r.top&&v.bottom<=r.bottom;
         }"""),f'Energy ring text overflow at {width}px'
 
@@ -243,6 +243,24 @@ with sync_playwright() as p:
             assert page.evaluate("document.querySelector('.nd-meal').getBoundingClientRect().top < document.querySelector('.bottom-nav').getBoundingClientRect().top"),f'first meal below visible viewport at {width}px'
             assert page.evaluate("[...document.querySelectorAll('#nav .nav-link span')].every(el => el.scrollWidth <= el.clientWidth)"),f'bottom nav label clipped at {width}px'
     page.set_viewport_size({'width':390,'height':844})
+    # UX41: progressive scroll, compact sticky day, distinct meal icons.
+    assert page.locator('.nd-meal-symbol').count()==5
+    assert page.locator('.nd-date-stick').count()==1
+    assert page.locator('.nd-macros-overview .nd-ring').count()==4
+    assert page.locator('.nd-meal[data-meal-kind]').count()==0
+    assert page.locator('.nd-meal-symbol[data-meal-kind="breakfast"]').count()==1
+    before_scroll=page.evaluate("""() => document.querySelector('.nd-overview').getBoundingClientRect().top""")
+    page.evaluate("window.scrollTo(0,document.querySelector('.nd-meals').getBoundingClientRect().top+window.scrollY)")
+    page.wait_for_timeout(100)
+    assert page.locator('.nd-date-stick').evaluate('(e)=>e.classList.contains("nd-is-stuck")')
+    assert page.evaluate("parseFloat(document.querySelector('.nutrition-screen').style.getPropertyValue('--nd-scroll-progress'))>.7")
+    assert page.evaluate("""() => {
+      const r=document.querySelector('.nd-date-stick').getBoundingClientRect();
+      return r.top>=-1 && r.top<55;
+    }""")
+    assert page.evaluate("document.querySelector('.nd-overview').getBoundingClientRect().top < "+str(0)) 
+    page.evaluate('window.scrollTo(0,0)')
+    page.wait_for_timeout(100)
     (ROOT/'screenshots').mkdir(exist_ok=True)
     page.screenshot(path=str(ROOT/'screenshots/nutrition-390.png'),full_page=True)
     # Regression: a mixed day must show recorded subtotals even with estimated sweets.
@@ -263,10 +281,10 @@ with sync_playwright() as p:
     mixed.locator('#nav [data-tab="nutrition"]').click()
     mixed.locator('#nd-date').fill(day)
     mixed.locator('#nd-date').dispatch_event('change')
-    assert '≈486,7' in mixed.locator('.nd-energy .nd-ring-inner').inner_text()
-    assert '≈252 kcal registradas' in mixed.locator('.nd-meal').filter(has=mixed.get_by_role('heading',name='Lanche')).inner_text()
-    assert 'alimento(s) sem calorias disponíveis' in mixed.locator('.nd-summary').inner_text()
-    assert 'Detalhes e incerteza' in mixed.locator('.nd-summary').inner_text()
+    assert '≈486,7' in mixed.locator('.nd-energy-detail .nd-ring-inner').inner_text()
+    assert '≈252 kcal' in mixed.locator('.nd-meal').filter(has=mixed.get_by_role('heading',name='Lanche')).inner_text()
+    assert 'Valores aproximados ou incompletos' in mixed.locator('.nd-data-quality').inner_text()
+    assert '≈' in mixed.locator('.nd-overview').inner_text()
     for width in (320,390):
         mixed.set_viewport_size({'width':width,'height':844})
         assert mixed.evaluate('document.documentElement.scrollWidth <= innerWidth')
@@ -306,7 +324,7 @@ with sync_playwright() as p:
       const n=window.ForjaNutrition,archive=JSON.parse(localStorage.getItem('forja.academia.v1')).nutrition;
       return n.observedTotals(archive.entries,archive.entries[0].date).totals.energyKcal===null;
     }""")
-    assert '≈' in shared.locator('.nd-summary').inner_text()
+    assert '≈' in shared.locator('.nd-overview').inner_text()
     shared.screenshot(path=str(ROOT/'screenshots/nutrition-shared-390.png'),full_page=True)
     shared.close()
     # Weekly balance: only explicitly reviewed, complete days can create a temporary offer.
