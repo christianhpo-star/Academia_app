@@ -257,13 +257,13 @@
         '<details><summary>Detalhes e incerteza</summary><p>Energia com composição informada: '+fmt(totals.confirmedTotals.energyKcal)+' kcal. '+
         (energyMeta.estimated?'Energia estimada somada: ≈ '+fmt(N.estimatedTotals(archive.entries,date).totals.central.energyKcal)+' kcal. ':'')+
         'Valores estimados não são rótulos; refeições não registradas não entram nesta soma.</p></details></div>':''}</section>
-      ${balanceHTML(archive,state,balanceDate)}
       ${archive.draft?`<div class="callout">Há um rascunho de refeição salvo. ${button('resume','Continuar rascunho','','button-inline')}</div>`:''}
       ${button('add','+ Registrar refeição','data-meal="lunch"','primary full')}<div class="nd-share-quick">${button('shared','Dividir uma porção','data-meal="dinner"','secondary full')}</div>
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{
         const rows=daily.filter(e=>e.mealType===type),total=N.recordedBreakdown(rows,date).totals.energyKcal;
         return mealCardHTML(type,label,rows,total,target,date);
       }).join('')}</div>
+      ${balanceHTML(archive,state,balanceDate)}
       ${!archive.entries.length?'<p class="small muted">Ainda não há refeições registradas. Comece pelo que consumiu hoje.</p>':''}
       <details class="card"><summary>Treino, objetivo e acompanhamento</summary><p class="small">${context.strength} sessão(ões) de força e ${context.muay} de Muay registradas nesta data. Últimos 7 dias: ${context.weeklyStrength} de força e ${context.weeklyMuay} de Muay.</p>
       <p class="small">${context.strength&&context.muay?'Dia com duas modalidades: organize fontes de carboidratos nas refeições próximas aos treinos, conforme tolerância.':context.strength||context.muay?'Distribua fontes de proteína nas refeições e considere carboidratos para sustentar o treino.':'Sem treino registrado nesta data; isso não significa descanso ou menor necessidade de alimento.'} As metas não mudam automaticamente.</p>
