@@ -184,6 +184,42 @@
     portions
   }));
 
+  // User-provided photo, 16/11/2026. The photo cannot measure mass or the
+  // amount of filling. This is a recipe estimate, never a verified food label.
+  // References:
+  // https://www.receiteria.com.br/receita/joelho-salgado-de-frango/
+  // https://admin.minikalzone.com.br/uploads/product/6/62cf24ca519858.34135385.pdf
+  const photographedSnackFoods=[{
+    id:'recipe:joelho-frango-assado-2026',
+    name:'Joelho de frango assado (estimativa)',
+    category:'Salgados e lanches',
+    aliases:['joelho de frango','joelho frango','italiano de frango',
+      'salgado assado de frango','pão recheado com frango','frango com requeijão',
+      'enroladinho assado de frango','salgado joelho'],
+    preparation:'cooked',
+    note:'Estimado pela foto: massa assada com gergelim, frango e possível creme ou requeijão. O recheio exato e o peso NÃO foram medidos. Uma unidade sugerida tem ≈180 g; pese a porção quando possível. Valores de receita aproximados, não rótulo nem medição.',
+    nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null,fiberG:null},
+    estimateGramsBase:100,
+    estimate:{
+      confidence:'low',servingLabel:'100 g de joelho de frango assado',
+      assumptions:'Foto de salgado assado com frango e creme branco; massa, queijo/requeijão e óleo podem variar. Estimativa independente comparada a receita de joelho de frango (Receiteria) e salgado de frango de 220 g (Mini Kalzone). Peso de 180 g por unidade é hipótese visual, não aferição. Não confundir com dado de rótulo.',
+      low:{energyKcal:260,proteinG:14,carbsG:28,fatG:6},
+      central:{energyKcal:300,proteinG:17,carbsG:33,fatG:11},
+      high:{energyKcal:350,proteinG:24,carbsG:41,fatG:17}
+    },
+    source:{
+      name:'Estimativa pela foto e referências de receitas',
+      reference:'Receiteria joelho de frango; Mini Kalzone tabela nutricional. Foto e peso apenas estimados, sem identificação de fabricante.',
+      license:'Estimativa independente; não equivale a rótulo'
+    },
+    portions:[
+      p('one','1 unidade estimada (≈180 g)',180,1.8),
+      p('small','1 unidade menor estimada (≈140 g)',140,1.4),
+      p('large','1 unidade maior estimada (≈220 g)',220,2.2),
+      p('100g','100 g (pesar de preferência)',100,1)
+    ]
+  }];
+
   const foods = [
     {
       id:'local:doce-cascao-acai-trufado-branco-500ml',
@@ -325,7 +361,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods,drinkFoods,partyFoods);
+  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods,drinkFoods,partyFoods,photographedSnackFoods);
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -349,7 +385,7 @@
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265',...DRINK_SUGGESTIONS],
     lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','ref:generic-171477','taco:2011:429','taco:2011:539'],
-    snack:['recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+    snack:['recipe:joelho-frango-assado-2026','recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml',...DRINK_SUGGESTIONS],
     dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','taco:2011:538','taco:2011:429'],
