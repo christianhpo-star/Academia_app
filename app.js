@@ -177,7 +177,7 @@
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
     catalogContext:'browse',catalogSourceId:null,
-    catalogGroup:'all',catalogSearch:'',
+    catalogGroup:'all',catalogSearch:'',catalogLimit:12,
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
     anatomyOpen:{},
     focusedMode: false, focusedExercise: null,
@@ -737,7 +737,7 @@
     if(context==='replace'&&sourceId&&F.hasRecordedReps(ui.draft.entries[sourceId]))
       return notify('Este exercício tem repetições registradas. Ele não pode ser substituído sem preservar esses dados.');
     ui.catalogContext=context;ui.catalogSourceId=context==='replace'?(sourceId||null):null;
-    ui.catalogDetailId=null;ui.catalogConfirmId=null;ui.catalogSearch='';ui.catalogGroup='all';
+    ui.catalogDetailId=null;ui.catalogConfirmId=null;ui.catalogSearch='';ui.catalogGroup='all';ui.catalogLimit=12;
     ui.tab='catalog';ui.editor=null;render();window.scrollTo(0,0);return true;
   }
   function sessionAdvice(mode){
@@ -882,6 +882,7 @@
     const shown=all.filter(ex=>ui.catalogGroup==='all'||ex.group===ui.catalogGroup);
     const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
     const count=shown.filter(ex=>catalogSearchText(ex).includes(term)).length;
+    let shownSoFar=0;
     return `${renderCatalogContext()}${headline('Biblioteca',inSession?'Escolha um exercício.':'Explore os exercícios.',inSession?'Mesma biblioteca, agora com a finalidade de '+(context==='replace'?'substituir':context==='extra'?'acrescentar uma série':'adicionar ao treino')+'.':'Pesquise por movimento ou equipamento, sem iniciar um treino.')}
       <search class="catalog-browser-tools" aria-label="Pesquisar e filtrar exercícios">
         <label for="catalog-search">Buscar exercício ou equipamento</label>
@@ -894,7 +895,7 @@
       </div>
       <div class="catalog-browser-head">
         <h2 class="section-title">Todos os exercícios</h2>
-        <output id="catalog-count" aria-live="polite">${count} de ${all.length} movimentos</output>
+        <output id="catalog-count" aria-live="polite">Exibindo ${Math.min(count,ui.catalogLimit)} de ${count} encontrados</output>
       </div>
       <div class="catalog-browser-results" id="catalog-browser-results">
         ${shown.map(ex=>{
@@ -902,8 +903,10 @@
           const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
           const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
           const searchable=catalogSearchText(ex);
+          const matches=searchable.includes(term);
+          if(matches)shownSoFar++;
           return `<article class="catalog-browser-item" data-catalog-item
-                   data-search="${esc(searchable)}" ${searchable.includes(term)?'':'hidden'}>
+                   data-search="${esc(searchable)}" ${matches&&shownSoFar<=ui.catalogLimit?'':'hidden'}>
             <div class="catalog-browser-header">
               <span class="catalog-group-code">BLOCO ${esc(ex.group)}</span>
               <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
@@ -918,22 +921,26 @@
           </article>`;
         }).join('')}
       </div>
+      <button type="button" class="secondary full catalog-more" data-action="catalog-more" ${count>ui.catalogLimit?'':'hidden'}>Ver mais exercícios</button>
       <p class="catalog-empty-state" id="catalog-empty-state" ${count?'hidden':''}>Nenhum exercício encontrado. Experimente outro nome ou grupo.</p>
       <p class="tiny muted catalog-browser-tip">${inSession?'Abrir detalhes não muda a sessão; somente confirmar uma escolha modifica o rascunho.':'Ver detalhes não altera seus registros. Para incluir ou ativar um exercício, confirme na página do movimento.'}</p>`;
   }
   function filterCatalogDOM(){
     const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
-    let visible=0;
+    let matches=0,visible=0;
     document.querySelectorAll('[data-catalog-item]').forEach(item=>{
       const match=item.dataset.search.includes(term);
-      item.hidden=!match;
-      if(match)visible++;
+      if(match)matches++;
+      const show=match&&matches<=ui.catalogLimit;
+      item.hidden=!show;
+      if(show)visible++;
     });
-    const total=F.options(state.exercises,catalogContext()!=='browse'?ui.draft:null).length;
     const output=document.getElementById('catalog-count');
-    if(output)output.textContent=visible+' de '+total+' movimentos';
+    if(output)output.textContent='Exibindo '+visible+' de '+matches+' encontrados';
+    const more=document.querySelector('[data-action="catalog-more"]');
+    if(more)more.hidden=matches<=ui.catalogLimit;
     const empty=document.getElementById('catalog-empty-state');
-    if(empty)empty.hidden=visible>0;
+    if(empty)empty.hidden=matches>0;
   }
   function painOptions(current) {
     return [['','Não informado'],['0','0 · Sem dor'],['1','1 · Mínima'],['2','2 · Leve'],['3','3 · Moderada'],['4','4 · Importante'],['5','5+ · Forte']]
@@ -2001,9 +2008,14 @@
       ui.editor={id:ex.id};
       render();window.scrollTo(0,0);return;
     }
+    if(action==='catalog-more'){
+      if(ui.tab!=='catalog'||ui.catalogDetailId)return;
+      ui.catalogLimit=Math.min(ui.catalogLimit+12,240);
+      filterCatalogDOM();return;
+    }
     if(action==='catalog-filter'){
       if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
-      ui.catalogGroup=btn.dataset.group;render();return;
+      ui.catalogGroup=btn.dataset.group;ui.catalogLimit=12;render();return;
     }
     if(action==='flex-withdraw'){
       const choice=ui.draft?.extraChoice;
@@ -2241,6 +2253,7 @@
     }
     if(event.target.id==='catalog-search'){
       ui.catalogSearch=event.target.value;
+      ui.catalogLimit=12;
       filterCatalogDOM();
     }
     if(event.target.id==='flex-catalog-search'){
