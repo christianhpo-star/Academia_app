@@ -716,15 +716,19 @@
       </div>
       <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
   }
+  // Text aliases are discoverability aids; neither search nor viewing alters a workout.
+  function catalogSearchText(ex) {
+    return [ex.name,ex.muscle,ex.equipment,...(ex.aliases||[])]
+      .join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
+  }
   function renderCatalog() {
     // F.options merges custom exercises, active plans and curated alternatives
     // without filtering by workout-in-progress. Browsing never changes a draft.
     const all=F.options(state.exercises,null);
     const known=new Map(state.exercises.map(ex=>[ex.id,ex]));
     const shown=all.filter(ex=>ui.catalogGroup==='all'||ex.group===ui.catalogGroup);
-    const term=ui.catalogSearch.toLocaleLowerCase('pt-BR').trim();
-    const count=shown.filter(ex=>[ex.name,ex.muscle,ex.equipment].some(value=>
-      String(value||'').toLocaleLowerCase('pt-BR').includes(term))).length;
+    const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+    const count=shown.filter(ex=>catalogSearchText(ex).includes(term)).length;
     return `${headline('Biblioteca','Catálogo de exercícios.','Explore todos os movimentos sem iniciar um treino.')}
       <search class="catalog-browser-tools" aria-label="Pesquisar e filtrar exercícios">
         <label for="catalog-search">Buscar exercício ou equipamento</label>
@@ -744,7 +748,7 @@
           const existing=known.get(ex.id);
           const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
           const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
-          const searchable=[ex.name,ex.muscle,ex.equipment].join(' ').toLocaleLowerCase('pt-BR');
+          const searchable=catalogSearchText(ex);
           return `<article class="catalog-browser-item" data-catalog-item
                    data-search="${esc(searchable)}" ${searchable.includes(term)?'':'hidden'}>
             <div class="catalog-browser-header">
@@ -766,7 +770,7 @@
       <p class="tiny muted catalog-browser-tip">As alterações na ficha são opcionais. Explorar o catálogo não inicia nem modifica um treino em andamento.</p>`;
   }
   function filterCatalogDOM(){
-    const term=ui.catalogSearch.toLocaleLowerCase('pt-BR').trim();
+    const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
     let visible=0;
     document.querySelectorAll('[data-catalog-item]').forEach(item=>{
       const match=item.dataset.search.includes(term);
@@ -2161,7 +2165,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261116-joelho04',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-catalog05',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

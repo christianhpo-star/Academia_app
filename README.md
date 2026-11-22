@@ -114,7 +114,11 @@ Aplicativo web **mobile-first**, instalável como PWA, para registrar treino de 
 ## Sessão flexível e constância — experiência em revisão
 
 - Durante o treino, é possível retirar um exercício **somente hoje**, restaurá-lo, registrar um motivo opcional e adicionar movimentos existentes ou do catálogo offline; a ficha original permanece inalterada.
-- O catálogo inicial possui 21 movimentos adicionais com IDs estáveis, equipamento e região muscular. A seleção pela busca é local; qualquer exercício integrado ao histórico mantém seu identificador.
+- O catálogo inicial tinha 21 movimentos adicionais; a ampliação de novembro/2026 acrescentou **23 exercícios opcionais** (44 alternativas curadas no total), com IDs estáveis, equipamento e região muscular. A seleção pela busca é local; qualquer exercício integrado ao histórico mantém seu identificador.
+- **Voador inverso (peck deck)**: localizado no bloco A (movimentos de puxar e ombro posterior), distinto do voador de peito (bloco B). Há ainda crucifixo inverso com halteres e crucifixo inverso na polia.
+- Outras opções novas: remada com peito apoiado, puxada unilateral, rosca inclinada e no cabo, elevação lateral na polia, desenvolvimento na máquina, crucifixo e supino inclinado em variações, tríceps unilateral/coice, agachamento no Smith, leg press horizontal, extensora unilateral, panturrilha unilateral, adução na polia, flexoras unilaterais/em pé, elevação pélvica na máquina, abdução e pull-through na polia.
+- Busca por sinônimos, nomes de equipamento e texto sem acentos (por exemplo, “peck deck inverso” ou “crucifixo inverso na maquina”). Cada opção fica **desativada por padrão**; explorar não inicia treino nem insere exercícios no histórico. Exercícios de pernas com solicitação significativa do joelho preservam a exigência de informar desconforto.
+- O mapeamento por grupo muscular em `dose.js` cobre todos os 23 novos IDs; exercícios diferentes e máquinas distintas têm históricos separados. A ponderação de grupos auxiliares permanece uma convenção descritiva, não equivalência fisiológica exata.
 - Exercícios com repetições já lançadas não podem ser retirados diretamente, evitando apagar séries efetivamente realizadas sem confirmação.
 - O histórico salva quais exercícios estavam previstos (`plannedIds`) e quais foram explicitamente retirados (`skipped`), sem inventar omissões em registros antigos.
 - O painel analisa últimos 7, 14 e 28 dias e destaca **mudanças de ritmo ou omissões explicitamente frequentes**. Nenhum dia sem registro é tratado como falta ou descanso obrigatório.

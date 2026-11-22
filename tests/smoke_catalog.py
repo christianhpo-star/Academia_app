@@ -39,6 +39,23 @@ with sync_playwright() as p:
     assert page.locator('#catalog-count').count()==1
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
     initial_count=page.locator('.catalog-browser-item').count()
+    assert initial_count>=65  # new options supplement original, not overwrite
+    # Rear-delt reverse fly is distinct from the existing chest peck deck.
+    page.locator('#catalog-search').fill('voador inverso')
+    rear=page.locator('.catalog-browser-item:visible')
+    assert rear.count()==1
+    assert 'Ombros posteriores' in rear.inner_text()
+    assert rear.locator('[data-action="catalog-add-plan"][data-ex="voador-inverso"]').count()==1
+    page.locator('#catalog-search').fill('peck deck inverso')
+    assert page.locator('.catalog-browser-item:visible').count()==1
+    page.locator('#catalog-search').fill('crucifixo inverso na maquina')
+    assert page.locator('.catalog-browser-item:visible').count()==1
+    page.locator('#catalog-search').fill('voador')
+    assert page.locator('.catalog-browser-item:visible').count()==2
+    page.locator('#catalog-search').fill('hip thrust maquina')
+    assert page.locator('.catalog-browser-item:visible').count()==1
+    assert page.locator('.catalog-browser-item:visible').locator('h3').inner_text().startswith('Elevação pélvica na máquina')
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.locator('#catalog-search').fill('canadense')
     assert page.locator('.catalog-browser-item:visible').count()==1
     assert 'canadense' in page.locator('.catalog-browser-item:visible').inner_text().lower()
