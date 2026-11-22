@@ -486,9 +486,11 @@
         '<p class="small muted">Após guardar o arquivo, procure o suporte para uma recuperação segura. Não desinstale ou limpe o armazenamento local.</p></section>';
       return;
     }
-    main.innerHTML = ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
+    const trainingArea=ui.tab==='plans'||ui.tab==='catalog';
+    const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
       ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
+    main.innerHTML=(trainingArea?renderTrainingDestinations():'')+content;
     if(ui.tab==='nutrition')diary.mount();
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
       const active=btn.dataset.tab===ui.tab||(ui.tab==='catalog'&&btn.dataset.tab==='plans');
@@ -718,6 +720,18 @@
       </div>
       <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
   }
+  // The catalog remains an independent, read-only view even while a session
+  // draft exists. Switching destinations changes UI only, never local storage.
+  function renderTrainingDestinations(){
+    const inCatalog=ui.tab==='catalog';
+    const pending=Boolean(ui.draft||state.muay.draft);
+    return '<div class="training-destinations" role="group" aria-label="Áreas de Treinos">'+
+      '<button type="button" data-action="training-destination" data-to="plans" class="training-destination'+(!inCatalog?' selected':'')+'" aria-pressed="'+!inCatalog+'">Minhas fichas</button>'+
+      '<button type="button" data-action="training-destination" data-to="catalog" class="training-destination'+(inCatalog?' selected':'')+'" aria-pressed="'+inCatalog+'">Catálogo</button>'+
+      '</div>'+
+      (inCatalog&&pending?'<div class="training-draft-notice" role="status"><span>Treino em andamento preservado.</span>'+
+        '<button type="button" class="button-inline" data-action="training-destination" data-to="plans">Voltar ao treino</button></div>':'');
+  }
   // Text aliases are discoverability aids; neither search nor viewing alters a workout.
   function catalogSearchText(ex) {
     return [ex.name,ex.muscle,ex.equipment,...(ex.aliases||[])]
@@ -825,8 +839,7 @@
             <button class="button-inline plan-exercise-edit" data-action="edit-ex" data-ex="${esc(ex.id)}" aria-label="Editar ${esc(ex.name)}">Editar</button></div>
           <div class="plan-exercise-state"><input class="switch" type="checkbox" aria-label="Ativar ${esc(ex.name)}" data-ex-active="${esc(ex.id)}" ${ex.active?'checked':''}/></div>
         </article>`).join('')}</div>
-        <div class="plan-editor-actions"><button class="button-inline" data-action="navigate" data-to="catalog" aria-label="Catálogo de exercícios">Catálogo ›</button>
-        <button class="secondary" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button></div>
+        <div class="plan-editor-actions"><button class="secondary" data-action="add-ex" data-plan="${ui.plan}">+ Adicionar exercício</button></div>
       </details>`;
   }
 
@@ -1771,6 +1784,13 @@
       if(!save()){state.bioimpedance=old;return;}
       ui.bioEditDate=null;ui.bioOpen=true;render();notify('Leitura excluída.');return;
     }
+    if(action==='training-destination'){
+      const target=btn.dataset.to;
+      if(!['plans','catalog'].includes(target))return;
+      ui.tab=target;
+      ui.editor=null;
+      render();window.scrollTo(0,0);return;
+    }
     if(action==='catalog-filter'){
       if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
       ui.catalogGroup=btn.dataset.group;render();return;
@@ -2010,7 +2030,7 @@
     }
     else if(action==='resume'){if(ui.draft){ui.tab='plans';ui.plan=ui.draft.planId;render();window.scrollTo(0,0);}}
     else if(action==='cancel'){if(confirm('Descartar o treino em andamento e apagar seu rascunho salvo neste aparelho?')){clearDraft();render();}}
-    else if(action==='edit-ex'){ui.editor={id:btn.dataset.ex};render();window.scrollTo(0,0);}
+    else if(action==='edit-ex'){ui.tab='plans';ui.editor={id:btn.dataset.ex};render();window.scrollTo(0,0);}
     else if(action==='add-ex'){ui.editor={id:null,group:btn.dataset.plan};render();window.scrollTo(0,0);}
     else if(action==='exit-editor'){ui.editor=null;render();}
     else if(action==='save-knee')saveKnee(btn.dataset.id);
