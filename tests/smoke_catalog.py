@@ -60,6 +60,13 @@ with sync_playwright() as p:
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
     initial_count=page.locator('.catalog-browser-item').count()
     assert initial_count>=65  # new options supplement original, not overwrite
+    assert page.locator('.catalog-browser-item:visible').count()==12
+    baseline=page.evaluate('structuredClone(window.__testStorage)')
+    page.locator('[data-action="catalog-more"]').click()
+    assert page.locator('.catalog-browser-item:visible').count()==24
+    assert page.evaluate('window.__testStorage')==baseline
+    assert '24 de ' in page.locator('#catalog-count').inner_text()
+
     # Rear-delt reverse fly is distinct from the existing chest peck deck.
     page.locator('#catalog-search').fill('voador inverso')
     rear=page.locator('.catalog-browser-item:visible')
