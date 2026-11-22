@@ -4,6 +4,7 @@
 (function installCatalogSession(root){
   'use strict';
   const F=root.ForjaFlex||(typeof require==='function'?require('./flex.js'):null);
+  const SETS=root.ForjaTrainingSets||(typeof require==='function'?require('./training-sets.js'):null);
   const copy=v=>JSON.parse(JSON.stringify(v));
   const modes=['browse','replace','add','extra'];
   function sourceOptions(draft){
@@ -48,7 +49,7 @@
       if(old&&!old.reason)old.reason='preferencia';
     }
     const sets=Array.from({length:mode==='extra'?1:exercise.sets},()=>({
-      load:'',reps:'',rir:'',warmup:false
+      load:SETS.allowsZero(exercise)?0:'',reps:'',rir:'',warmup:false
     }));
     if(!F.addToDraft(next,targetId,exercise,{id:targetId,sets,pain:''}))
       return {ok:false,error:'Não foi possível incluir o exercício nesta sessão.'};

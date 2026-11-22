@@ -3,18 +3,18 @@ const assert=require('node:assert/strict');
 const DATA=require('../data.js');
 const F=require('../flex.js');
 const A=require('../exercise-anatomy.js');
-const all=[...DATA.exercises,...F.catalog];
+const all=[...new Map([...F.catalog,...DATA.exercises].map(ex=>[ex.id,ex])).values()];
 const ids=all.map(ex=>ex.id);
 const upperIds=all.filter(ex=>['A','B'].includes(ex.group)).map(ex=>ex.id);
 const lowerIds=all.filter(ex=>['C','D'].includes(ex.group)).map(ex=>ex.id);
 const description=svg=>(svg.match(/<desc\b[^>]*>([\s\S]*?)<\/desc>/)||[])[1]||'';
 const title=svg=>(svg.match(/<title\b[^>]*>([\s\S]*?)<\/title>/)||[])[1]||'';
 
-test('anatomical guidance covers the 41 upper and 33 lower movements with stable IDs',()=>{
-  assert.equal(A.VERSION,3);
-  assert.equal(upperIds.length,41);
+test('anatomical guidance covers the 45 upper/core and 33 lower movements with stable IDs',()=>{
+  assert.equal(A.VERSION,4);
+  assert.equal(upperIds.length,45);
   assert.equal(lowerIds.length,33);
-  assert.equal(A.coveredIds.length,74);
+  assert.equal(A.coveredIds.length,78);
   assert.equal(new Set(A.coveredIds).size,A.coveredIds.length);
   assert.ok(ids.every(id=>!!A.describe(id)),ids.filter(id=>!A.describe(id)).join(', '));
   assert.ok(A.coveredIds.every(id=>ids.includes(id)));
@@ -23,6 +23,37 @@ test('anatomical guidance covers the 41 upper and 33 lower movements with stable
   for(const id of lowerIds)assert.equal(A.describe(id).body,'lower',id);
   assert.equal(A.describe('voador-inverso').view,'back');
   assert.equal(A.describe('voador').view,'front');
+});
+
+test('abdominal guides distinguish trunk flexion from anti-rotation and stay in the front view',()=>{
+  for(const id of ['abdominal-solo','abdominal-inverso','abdominal-polia','pallof-press']){
+    const pallof=id==='pallof-press';
+    const item=A.describe(id),front=A.viewInfo(id,'front'),back=A.viewInfo(id,'back');
+    assert.equal(item.view,'front',id);
+    assert.deepEqual(item.main,[pallof?'obliques':'abs'],id);
+    assert.deepEqual(item.assist,[pallof?'abs':'obliques'],id);
+    assert.deepEqual(front.visibleMain,item.main,id);
+    assert.deepEqual(front.visibleAssist,item.assist,id);
+    assert.deepEqual(back.visibleMain,[],id);
+    assert.deepEqual(back.visibleAssist,[],id);
+    assert.match(back.note,/Sem músculos destacados nesta vista. Veja Frente/);
+    const frontSvg=A.figure(id,false,'front'),backSvg=A.figure(id,false,'back');
+    assert.match(frontSvg,/class="primary" data-muscle="(?:abs|obliques)"/);
+    assert.match(frontSvg,/class="secondary" data-muscle="(?:abs|obliques)"/);
+    assert.match(description(frontSvg),/Reto do abdômen|reto do abdômen/);
+    assert.match(description(frontSvg),/Oblíquos|oblíquos/);
+    assert.doesNotMatch(backSvg,/data-muscle="(?:abs|obliques)"/);
+    assert.doesNotMatch(description(backSvg),/abdômen|oblíquos/i);
+    assert.doesNotMatch(item.primary+item.secondary,/superior|inferior|transverso/);
+  }
+  assert.match(A.describe('abdominal-inverso').cue,/pelve.*costelas/);
+  assert.match(A.describe('pallof-press').cue,/sem girar.*dois lados.*uma série/);
+  // Compound lifts retain their prior classification: stabilizing the trunk
+  // does not manufacture recorded abdominal sets.
+  for(const id of ['agachamento-livre','stiff','remada-cavalinho','supino-barra']){
+    const item=A.describe(id);
+    assert.ok(![...item.main,...item.assist].some(region=>['abs','obliques'].includes(region)),id);
+  }
 });
 
 test('leg variants are mapped by movement rather than by their training block',()=>{

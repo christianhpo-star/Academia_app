@@ -5,7 +5,7 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 text_assets = [
-    'index.html', 'styles.css', 'app.js', 'data.js', 'engine.js',
+    'index.html', 'styles.css', 'app.js', 'data.js', 'cardio.js', 'training-sets.js', 'engine.js',
     'muay.js', 'calendar.js', 'flex.js', 'catalog-session.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-prescription-data.js', 'nutrition-presets.js', 'nutrition-balance.js','nutrition-ui.js', 'evolution-dashboard.js', 'performance-trends.js', 'exercise-anatomy.js', 'muscle-history.js', 'muscle-body.js', 'muscle-map.js', 'sw.js', 'manifest.webmanifest', 'README.md',
     'tests/engine.test.cjs', 'tests/smoke_browser.py'
 ]
@@ -16,7 +16,7 @@ for path in text_assets:
     assert '\x00' not in content, f'{path} contains binary or null data'
 
 index = (root / 'index.html').read_text(encoding='utf-8')
-for path in ['./data.js', './engine.js', './muay.js', './calendar.js', './flex.js', './catalog-session.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './activity.js', './health-import.js', './nutrition-goals.js', './goal-planner.js', './reminders.js', './daily-routine.js','./nutrition.js', './nutrition-catalog.js', './nutrition-prescription-data.js', './nutrition-presets.js', './nutrition-ui.js', './evolution-dashboard.js', './performance-trends.js', './exercise-anatomy.js', './muscle-history.js', './muscle-body.js', './muscle-map.js', './app.js', './styles.css', './manifest.webmanifest']:
+for path in ['./data.js', './cardio.js', './training-sets.js', './engine.js', './muay.js', './calendar.js', './flex.js', './catalog-session.js', './dose.js', './focus.js', './catalog-advice.js', './body-measures.js', './activity.js', './health-import.js', './nutrition-goals.js', './goal-planner.js', './reminders.js', './daily-routine.js','./nutrition.js', './nutrition-catalog.js', './nutrition-prescription-data.js', './nutrition-presets.js', './nutrition-ui.js', './evolution-dashboard.js', './performance-trends.js', './exercise-anatomy.js', './muscle-history.js', './muscle-body.js', './muscle-map.js', './app.js', './styles.css', './manifest.webmanifest']:
     assert path in index, f'index.html must reference {path}'
 
 prescription=json.loads((root / 'nutrition-prescription.json').read_text(encoding='utf-8'))
@@ -37,16 +37,16 @@ for icon in manifest['icons']:
 
 
 # Prevent stale UI versions being silently reused by the offline shell.
-release = '20261122-muscle13'
+release = '20261122-abdomen14'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
-assets = ['styles.css', 'data.js', 'engine.js', 'muay.js', 'calendar.js',
+assets = ['styles.css', 'data.js', 'cardio.js', 'training-sets.js', 'engine.js', 'muay.js', 'calendar.js',
           'flex.js', 'catalog-session.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-presets.js', 'nutrition-balance.js','nutrition-ui.js', 'evolution-dashboard.js', 'performance-trends.js', 'exercise-anatomy.js', 'muscle-history.js', 'muscle-body.js', 'muscle-map.js', 'app.js']
 for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
     assert expected in worker, f'missing asset version in offline worker: {asset}'
-assert f'forja-shell-v60-{release}' in worker, 'offline cache not version-bumped'
+assert f'forja-shell-v61-{release}' in worker, 'offline cache not version-bumped'
 assert f"./sw.js?v={release}" in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'

@@ -1086,6 +1086,8 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muscle-map-layout{display:grid;gap:17px;align-items:start;min-width:0}
 .muscle-map-visual,.muscle-map-reading{min-width:0}
 .muscle-map-canvas{border:1px solid #354e61;border-radius:14px;background:radial-gradient(ellipse at 50% 30%,#213b48 0,#122331 72%);padding:12px 8px}
+.muscle-map-canvas,.muscle-map-reading{scroll-margin-top:16px}
+.muscle-map-tap-hint{margin:8px 0 0;text-align:center;color:#d3e0e9;font-size:11px;line-height:1.5}
 .muscle-body-svg{display:block;width:100%;max-width:245px;height:auto;max-height:470px;margin:0 auto;overflow:visible}
 .muscle-body-region{cursor:pointer;outline:none;touch-action:manipulation}
 .muscle-body-region:focus-visible path{stroke:#fff;stroke-width:2.5;stroke-dasharray:3 2;paint-order:stroke fill}
@@ -1107,6 +1109,7 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muscle-map-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .muscle-map-detail strong{font-size:14px;line-height:1.4}
 .muscle-map-detail p{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ccdce7}
+.muscle-map-return{display:block;margin:10px auto 0;min-height:44px;border:1px solid #486477;border-radius:9px;padding:9px 14px;background:#142a38;color:#d9eaf4;font-size:12px;font-weight:700}
 .muscle-map-status{font-size:10px;font-weight:800;line-height:1.35;border:1px solid #5c7a8e;background:#203847;color:#ebf4fa;border-radius:6px;padding:4px 6px}
 .muscle-map-status.muscle-level-3{border-color:var(--muscle-high);color:var(--muscle-high)}
 .muscle-map-status.muscle-level-2{border-color:var(--muscle-mid);color:var(--muscle-mid)}
@@ -1115,7 +1118,7 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muscle-map-exercises li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0 0;font-size:11px;line-height:1.4;color:#d7e5ed}
 .muscle-map-exercises li span:first-child{min-width:0;overflow-wrap:anywhere}
 .muscle-map-exercises li span:last-child{flex-shrink:0;color:var(--blue);font-variant-numeric:tabular-nums;font-weight:800}
-.muscle-map-insights{display:grid;gap:14px;margin:16px 0 0}
+.muscle-map-insights{display:grid;gap:14px;margin:0 0 15px}
 .muscle-map-insight h3{margin:0 0 7px;font-size:11px;color:#bdd0dd;font-weight:750}
 .muscle-map-chips{display:flex;flex-wrap:wrap;gap:6px}
 .muscle-map-chip{display:inline-flex;align-items:center;gap:7px;min-height:44px;max-width:100%;border:1px solid #435b6d;border-radius:9px;padding:8px 9px;background:#182c3b;color:#e0eaf1;font-size:11px;line-height:1.35;text-align:left}
@@ -1126,6 +1129,7 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muscle-map-coverage{padding:11px;border:1px solid #53687c;border-radius:10px;background:#213343;font-size:12px;line-height:1.5;color:#d3e0e8}
 .muscle-map-footnote{font-size:11px;color:var(--muted);line-height:1.55;margin:14px 0}
 .muscle-map-breakdown,.muscle-map-method{border-top:1px solid #3b5266;margin:0}
+.muscle-map-breakdown{margin-top:16px}
 .muscle-map-breakdown>summary,.muscle-map-method>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:10px 1px;cursor:pointer;list-style:none;color:#cee0eb;font-size:12px;font-weight:750}
 .muscle-map-breakdown>summary::-webkit-details-marker,.muscle-map-method>summary::-webkit-details-marker{display:none}
 .muscle-map-breakdown>summary span,.muscle-map-method>summary span{font-size:19px;color:var(--muted)}
@@ -1133,7 +1137,7 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muscle-map-row{display:grid;grid-template-columns:13px minmax(0,1fr) auto;align-items:center;gap:7px;min-height:46px;padding:8px;border:1px solid #3d5364;border-radius:8px;background:#132532;color:#dde9f0;font-size:11px;text-align:left}
 .muscle-map-row>span{min-width:0;line-height:1.4}.muscle-map-row small{font-size:10px;color:#b5cad8;max-width:80px;text-align:right}
 .muscle-map-method>div{padding:0 1px 10px}.muscle-map-method p{font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 9px}
-@media(min-width:700px){.muscle-map-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.muscle-map-canvas{padding:16px}.muscle-body-svg{max-height:510px;max-width:260px}.muscle-map-region-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:700px){.muscle-map-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.muscle-map-canvas{padding:16px}.muscle-body-svg{max-height:510px;max-width:260px}.muscle-map-region-list{grid-template-columns:repeat(2,minmax(0,1fr))}.muscle-map-return{display:none}}
 @media(forced-colors:active){.muscle-body-region:focus-visible path,.muscle-body-region[aria-pressed="true"] path{stroke:Highlight;stroke-width:3}.muscle-map-status,.muscle-map-swatch{border-color:CanvasText}}
 .evo-section-description{color:var(--muted);text-align:left;font-size:11px;line-height:1.5;margin:0 0 9px}
 .evo-ring-wrap{margin:0 auto;max-width:390px}
@@ -1454,3 +1458,19 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-session-context .catalog-suggestion button{min-height:44px}
 .catalog-detail-actions .catalog-detail-status{overflow-wrap:anywhere}
 @media(max-width:359px){.session-catalog-actions{grid-template-columns:1fr}.session-catalog-actions button:last-child{grid-column:auto}.catalog-session-context{padding:10px}.catalog-session-modes button{font-size:10px;padding:7px 3px}}
+
+/* Optional cardio stays attached to the strength session. */
+.session-cardio>summary{display:flex;align-items:center;gap:12px;min-height:44px;cursor:pointer;font-weight:750;list-style:none}
+.session-cardio>summary::-webkit-details-marker{display:none}
+.session-cardio>summary:after{content:'⌄';color:var(--lime);margin-left:auto}
+.session-cardio[open]>summary:after{transform:rotate(180deg)}
+.session-cardio>summary small{font-weight:500;color:var(--muted)}
+.cardio-total{font-size:13px;color:var(--lime);white-space:nowrap}
+.cardio-row{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);gap:8px 12px;padding:12px 0;border-top:1px solid var(--line)}
+.cardio-row .field,.cardio-row input,.cardio-row select{min-width:0;width:100%}
+.cardio-remove{grid-column:1/-1;justify-self:end;min-height:40px}
+.cardio-history{border-top:1px solid var(--line);margin-top:14px;padding-top:12px}
+.cardio-history h3{font-size:14px;margin:0 0 8px}
+.cardio-history ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
+.cardio-history li{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
+.cardio-history strong{white-space:nowrap;color:var(--lime)}

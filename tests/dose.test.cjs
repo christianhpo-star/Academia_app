@@ -15,7 +15,7 @@ const ex=(id)=>Data.exercises.find(x=>x.id===id);
 test('mapeamento dos exercícios originais e extras preserva o nome de cada grupo',()=>{
   for(const x of Data.exercises)
     assert.ok(DOSE.MAP[x.id],x.id+' sem mapeamento');
-  assert.equal(DOSE.MUSCLES.length,11);
+  assert.equal(DOSE.MUSCLES.length,12);
 });
 test('conta somente séries executadas, exclui aquecimentos e valores exemplificados',()=>{
   const entry=row('supino-halteres',3);
@@ -115,4 +115,27 @@ test('pirâmide com aquecimento concluído é elegível; série em branco não r
   result=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,
     settings:{fatigue:'normal',kneePain:''}});
   assert.equal(result.candidates.length,0);
+});
+
+test('abdômen soma trabalho direto com peso corporal explícito e resistência externa válida',()=>{
+  const entries=[row('abdominal-solo',2,3,0),row('abdominal-inverso',2,3,0),
+    row('abdominal-polia',2,3,15),row('pallof-press',2,3,10),
+    row('supino-halteres',2,3,0),row('abdominal-polia',2,3,0)];
+  entries[0].sets.push({load:0,reps:10,rir:3,warmup:true},{load:0,reps:'',warmup:false});
+  const before=structuredClone(entries);
+  const volume=DOSE.volume({today,strengthSessions:[sess(19,entries)]});
+  assert.equal(volume.rows.find(x=>x.id==='abdomen').direct7,8);
+  assert.equal(volume.rows.find(x=>x.id==='abdomen').indirect7,0);
+  assert.equal(volume.rows.find(x=>x.id==='peito').direct7,0);
+  assert.equal(volume.completedSessions,1);
+  assert.deepEqual(entries,before);
+});
+
+test('séries extras de peso corporal não são liberadas por e1RM de carga adicional',()=>{
+  const e={id:'abdominal-solo',name:'Abdominal no solo',sets:2,low:10,high:15,step:2.5};
+  const sessions=[2,4,6,8,11,13,18].map(day=>sess(day,[row(e.id,2,3,5)]));
+  const draft={entries:{[e.id]:row(e.id,2,3,5)},energy:'leve'};
+  const data=DOSE.analyze({today,strengthSessions:sessions,exercises:[e],draft,settings:{fatigue:'normal',kneePain:''}});
+  assert.equal(data.summary.rows.find(x=>x.id==='abdomen').direct7,4);
+  assert.equal(data.candidates.length,0);
 });

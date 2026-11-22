@@ -40,3 +40,30 @@ test('training record comparisons ignore warmup and out-of-range rep scores',()=
  assert.equal(report.training.comparisons.length,0);
  assert.equal(report.interpretation,'insufficient');
 });
+
+test('bodyweight abdominal sets remain training sessions without producing load-based decline alerts',()=>{
+ const earlier=['2026-10-23','2026-10-28'],later=['2026-11-08','2026-11-12'];
+ const sessions=[...earlier.flatMap(day=>[
+   makeSession(day,'abdominal-solo',10),makeSession(day,'abdominal-inverso',5)]),
+ ...later.flatMap(day=>[
+   makeSession(day,'abdominal-solo',2.5),makeSession(day,'abdominal-inverso',0)])];
+ const before=structuredClone(sessions);
+ const recoveryHistory=['2026-11-04','2026-11-07','2026-11-10','2026-11-12'].map(day=>
+   ({day,energy:'baixa',fatigue:'alta'}));
+ const r=P.assess({sessions,recoveryHistory,weights:[]},'2026-11-16');
+ assert.equal(r.training.previousSessions,4);
+ assert.equal(r.training.recentSessions,4);
+ assert.deepEqual(r.training.comparisons,[]);
+ assert.equal(r.training.decliningExercises,0);
+ assert.notEqual(r.interpretation,'review');
+ assert.deepEqual(sessions,before);
+});
+
+test('abdominal cable resistance retains comparable strength scores',()=>{
+ const sessions=['2026-10-23','2026-10-28','2026-11-08','2026-11-12'].map((day,index)=>
+   makeSession(day,'abdominal-polia',index<2?20:22.5,10));
+ const r=P.assess({sessions,weights:[],recoveryHistory:[]},'2026-11-16');
+ assert.equal(r.training.comparisons.length,1);
+ assert.equal(r.training.comparisons[0].exerciseId,'abdominal-polia');
+ assert.ok(r.training.comparisons[0].changePct>0);
+});
