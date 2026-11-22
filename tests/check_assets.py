@@ -6,7 +6,7 @@ from pathlib import Path
 root = Path(__file__).resolve().parents[1]
 text_assets = [
     'index.html', 'styles.css', 'app.js', 'data.js', 'cardio.js', 'training-sets.js', 'engine.js',
-    'muay.js', 'calendar.js', 'flex.js', 'catalog-session.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-prescription-data.js', 'nutrition-presets.js', 'nutrition-balance.js','nutrition-ui.js', 'evolution-dashboard.js', 'performance-trends.js', 'exercise-anatomy.js', 'muscle-history.js', 'muscle-body.js', 'muscle-map.js', 'sw.js', 'manifest.webmanifest', 'README.md',
+    'muay.js', 'calendar.js', 'flex.js', 'catalog-session.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-prescription-data.js', 'nutrition-presets.js', 'nutrition-balance.js','nutrition-ui.js', 'evolution-dashboard.js', 'performance-trends.js', 'exercise-anatomy.js', 'muscle-history.js', 'muscle-body.js', 'muscle-map.js', 'share-summary.js', 'share-sticker.js', 'sw.js', 'manifest.webmanifest', 'README.md',
     'tests/engine.test.cjs', 'tests/smoke_browser.py'
 ]
 for path in text_assets:
@@ -37,16 +37,16 @@ for icon in manifest['icons']:
 
 
 # Prevent stale UI versions being silently reused by the offline shell.
-release = '20261122-focuscardio16'
+release = '20261122-conquista17'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
 assets = ['styles.css', 'data.js', 'cardio.js', 'training-sets.js', 'engine.js', 'muay.js', 'calendar.js',
-          'flex.js', 'catalog-session.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-presets.js', 'nutrition-balance.js','nutrition-ui.js', 'evolution-dashboard.js', 'performance-trends.js', 'exercise-anatomy.js', 'muscle-history.js', 'muscle-body.js', 'muscle-map.js', 'app.js']
+          'flex.js', 'catalog-session.js', 'dose.js', 'focus.js', 'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js', 'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js','nutrition.js', 'nutrition-catalog.js', 'nutrition-presets.js', 'nutrition-balance.js','nutrition-ui.js', 'evolution-dashboard.js', 'performance-trends.js', 'exercise-anatomy.js', 'muscle-history.js', 'muscle-body.js', 'muscle-map.js', 'share-summary.js', 'share-sticker.js', 'app.js']
 for asset in assets:
     expected = f'./{asset}?v={release}'
     assert expected in index, f'missing asset version in HTML: {asset}'
     assert expected in worker, f'missing asset version in offline worker: {asset}'
-assert f'forja-shell-v63-{release}' in worker, 'offline cache not version-bumped'
+assert f'forja-shell-v64-{release}' in worker, 'offline cache not version-bumped'
 assert f"./sw.js?v={release}" in app, 'worker registration not versioned'
 assert "updateViaCache:'none'" in app, 'worker updates may use stale HTTP cache'
 assert 'plan-block-selector' in app, 'published JavaScript has legacy workout picker'
