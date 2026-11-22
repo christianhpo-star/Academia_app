@@ -1290,23 +1290,37 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .ex-anatomy-title small{font-size:11px;color:#B8D0E2;line-height:1.3;overflow-wrap:anywhere}
 .ex-anatomy-chevron{flex:none;font-size:22px;color:#B5CFE2;line-height:1;transition:transform .15s ease}
 .ex-anatomy[open] .ex-anatomy-chevron{transform:rotate(180deg)}
-.ex-anatomy-expanded{border-top:1px solid #36546A;display:grid;grid-template-columns:minmax(110px,.9fr) minmax(0,1.1fr);gap:10px;align-items:center;padding:12px}
-.ex-anatomy-large{max-height:205px;min-height:170px;background:radial-gradient(ellipse at 50% 30%,#253E52 0%,#102030 65%,#101B29 100%);border-radius:11px;display:flex;justify-content:center;align-items:center;overflow:hidden}
-.ex-anatomy-large svg{max-width:100%;height:194px;display:block}
+.ex-anatomy-expanded{border-top:1px solid #36546A;display:grid;grid-template-columns:minmax(0,1fr);gap:12px;padding:12px}
+.ex-anatomy-viewer{display:grid;gap:10px;min-width:0}
+.ex-anatomy-view-header{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;min-width:0}
+.ex-anatomy-view-header strong{font-size:13px;line-height:1.4;color:#D9E9F5}
+.ex-anatomy-view-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;padding:3px;border:1px solid #3D5669;border-radius:13px;background:#0E1A26;min-width:164px}
+.ex-anatomy-view-button{min-height:44px;min-width:72px;padding:8px 12px;border:1px solid transparent;border-radius:9px;background:transparent;color:#B7C8D7;font-size:13px;font-weight:650;line-height:1.25;text-align:center;touch-action:manipulation}
+.ex-anatomy-view-button[aria-pressed="true"]{background:#26485D;border-color:#83CEFF;color:#E5F6FF;font-weight:800;box-shadow:0 1px 4px #0003}
+.ex-anatomy-view-button:focus-visible{outline:3px solid #C5F56B;outline-offset:2px}
+.ex-anatomy-view-button:not([aria-pressed="true"]):hover{background:#1D3041;color:#F3F6FB}
+.ex-anatomy-canvas{height:292px;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:9px;background:radial-gradient(ellipse at 50% 35%,#233F51,#112230 72%);border:1px solid #344F64;border-radius:13px}
+.ex-anatomy-canvas .ex-anatomy-svg{display:block;width:auto;max-width:100%;height:100%;flex:none}
+.ex-anatomy-view-note{margin:0;color:#B7C8D7;font-size:12px;line-height:1.5;overflow-wrap:anywhere}
+.ex-anatomy-view-note:empty{display:none}
+.ex-anatomy-legend-location{display:block;color:#A5CCDF;font-size:11px;line-height:1.45;font-weight:500}
+.ex-anatomy-canvas[data-switched="true"] .ex-anatomy-svg{animation:anatomy-view-in .18s ease-out both}
+@keyframes anatomy-view-in{from{opacity:.35}to{opacity:1}}
 .ex-anatomy-svg .primary{fill:#83CEFF;stroke:#C4ECFF;stroke-width:1.3;stroke-linejoin:round}
 .ex-anatomy-svg .secondary{fill:#397C9C;stroke:#75B8D5;stroke-width:1;stroke-linejoin:round}
-.ex-anatomy-info{display:flex;flex-direction:column;gap:8px;min-width:0}
-.ex-anatomy-legend{font-size:11px;line-height:1.45;color:#D3E3EF;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ex-anatomy-info{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;min-width:0}
+.ex-anatomy-legend{font-size:12px;line-height:1.45;color:#D3E3EF;display:flex;flex-direction:column;gap:4px;min-width:0}
 .ex-anatomy-legend-head{display:flex;align-items:center;gap:6px}
 .ex-anatomy-legend b{color:#F3F6FB}
 .ex-anatomy-swatch{display:inline-block;width:9px;height:9px;padding:0;min-width:9px;min-height:9px;border-radius:3px;flex:none}
 .ex-anatomy-swatch.is-main{background:#83CEFF}
-.ex-anatomy-swatch.is-assist{background:#397C9C;border:1px solid #75B8D5}
-.ex-anatomy-cue{font-size:11px;line-height:1.5;color:#DFEAF2;margin:3px 0}
-.ex-anatomy-disclaimer{font-size:10px;line-height:1.45;color:#9CB8CB;margin:3px 0}
+.ex-anatomy-swatch.is-assist{background:repeating-linear-gradient(135deg,#397C9C 0 3px,#75B8D5 3px 4px);border:1px solid #75B8D5}
+.ex-anatomy-cue{grid-column:1/-1;font-size:12px;line-height:1.5;color:#DFEAF2;margin:3px 0}
+.ex-anatomy-disclaimer{grid-column:1/-1;font-size:11px;line-height:1.45;color:#9CB8CB;margin:3px 0}
 .catalog-anatomy-note{display:block;margin:3px 0 6px;font-size:10px;color:#AFCFE1}
-@media(max-width:359px){.ex-anatomy-expanded{grid-template-columns:1fr}.ex-anatomy-large{max-height:165px;min-height:155px}.ex-anatomy-large svg{height:158px}.ex-anatomy-thumb{width:39px}.ex-anatomy-title strong{font-size:11px}}
-@media(prefers-reduced-motion:reduce){.ex-anatomy-chevron{transition:none}}
+@media(min-width:600px){.ex-anatomy-expanded{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:18px;align-items:center}.ex-anatomy-expanded .ex-anatomy-info{grid-template-columns:1fr}.ex-anatomy-expanded .ex-anatomy-legend{font-size:13px}}
+@media(max-width:359px){.ex-anatomy-view-header{gap:6px}.ex-anatomy-view-switch{width:100%}.ex-anatomy-canvas{height:260px}.ex-anatomy-thumb{width:39px}.ex-anatomy-title strong{font-size:11px}}
+@media(prefers-reduced-motion:reduce){.ex-anatomy-chevron{transition:none}.ex-anatomy-canvas .ex-anatomy-svg{animation:none;transition:none}}
 
 
 /* UX navigation P0: catalog is a first-class destination under Treinos, not inside edit mode. */
@@ -1327,18 +1341,20 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-detail-back{justify-self:start;min-height:44px;padding:10px 4px;border:0;background:transparent;color:#B9DCF8;font-size:13px;font-weight:750;text-align:left}
 .catalog-detail-back:focus-visible,.catalog-detail-actions button:focus-visible{outline:3px solid #80BEFF;outline-offset:2px}
 .catalog-detail-intro h1{font-size:clamp(21px,5vw,27px);line-height:1.25;overflow-wrap:anywhere}
+.catalog-detail-intro .lead{margin-bottom:2px;font-size:13px;line-height:1.5}
 .catalog-detail-card{padding:14px;display:grid;gap:14px}
-.catalog-detail-figure{min-height:220px;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at center top,#233F51,#112230 72%);border:1px solid #344F64;border-radius:13px}
-.catalog-detail-figure svg{display:block;width:min(100%,240px);height:230px;max-width:100%}
+.catalog-detail-figure{height:306px}
 .catalog-detail-unmapped{padding:20px 14px;color:#AAC4D4;background:#122433;border:1px dashed #46657C;border-radius:12px;font-size:12px;line-height:1.5;text-align:center}
-.catalog-detail-muscles{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}
+.catalog-detail-muscles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.catalog-detail-muscles>div:only-child{grid-column:1/-1}
 .catalog-detail-muscle-line{display:flex;align-items:flex-start;gap:9px;background:#172A3A;border-radius:11px;padding:12px;min-width:0}
 .catalog-detail-muscle-line span:last-child{display:flex;flex-direction:column;gap:4px;min-width:0}
 .catalog-detail-muscle-line small,.catalog-detail-facts small{color:#AFC6D5;font-size:10px;line-height:1.3}
+.catalog-detail-muscle-line .ex-anatomy-legend-location{color:#A5CCDF;font-size:11px;line-height:1.45}
 .catalog-detail-muscle-line strong{font-size:12px;color:#F3F6FB;line-height:1.4;overflow-wrap:anywhere}
 .catalog-muscle-dot{width:12px;height:12px;min-width:12px;margin-top:2px;border-radius:4px}
 .catalog-muscle-dot.main{background:#83CEFF}
-.catalog-muscle-dot.assist{background:#397C9C;border:1px solid #75B8D5}
+.catalog-muscle-dot.assist{background:repeating-linear-gradient(135deg,#397C9C 0 3px,#75B8D5 3px 4px);border:1px solid #75B8D5}
 .catalog-detail-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px}
 .catalog-detail-facts>div{display:flex;flex-direction:column;gap:4px;background:#1D3041;border:1px solid #364D60;border-radius:10px;padding:10px;min-width:0}
 .catalog-detail-facts strong{color:#F3F6FB;font-size:12px;line-height:1.4;overflow-wrap:anywhere}
@@ -1352,7 +1368,7 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-detail-status{padding:12px;border-radius:11px;background:#23394B;color:#E7F4FB;font-size:12px;line-height:1.5}
 .catalog-detail-confirm-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .catalog-detail-confirm-row>button{min-width:0;min-height:48px}
-@media(max-width:359px){.catalog-detail-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-detail-figure svg{height:198px}.catalog-detail-figure{min-height:205px}}
+@media(max-width:359px){.catalog-detail-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-detail-figure{height:274px}.catalog-detail-muscle-line{padding:10px 8px;gap:7px}}
 
 
 /* One shared exercise catalogue: contextual modes, never a nested second screen. */

@@ -1,6 +1,6 @@
 /* FORJA muscle guides. Original 2D educational sketches, no copied third-party artwork.
    Muscle participation is approximate: technique, grip, apparatus, range and anatomy
-   alter emphasis. Static/offline: no image downloads, animations or history writes. */
+   alter emphasis. Offline vector artwork: no downloads, timers or history writes. */
 (function installExerciseAnatomy(root){
   'use strict';
   const fam = {
@@ -64,103 +64,159 @@
   assign('triceps','triceps-testa triceps-corda triceps-maquina triceps-frances triceps-unilateral-polia triceps-coice-halter');
   assign('uprightRow','remada-alta');
 
-  // Each anatomical region is authored once. Position is educational rather than
-  // medical atlas precision; do not infer quantitative activation percentages.
-  const back={
-    rearDelts:[
-      'M65 73 C73 66 84 74 89 85 L82 104 C74 102 66 95 62 84 Z',
-      'M135 73 C127 66 116 74 111 85 L118 104 C126 102 134 95 138 84 Z'],
-    midTraps:[
-      'M91 73 L100 89 L93 125 L81 110 Z',
-      'M109 73 L100 89 L107 125 L119 110 Z'],
-    rhomboids:[
-      'M92 107 L99 117 L98 139 L83 124 Z',
-      'M108 107 L101 117 L102 139 L117 124 Z'],
-    lats:[
-      'M78 114 L91 124 L96 159 L82 181 Q70 153 72 132 Z',
-      'M122 114 L109 124 L104 159 L118 181 Q130 153 128 132 Z'],
-    triceps:[
-      'M58 104 Q70 108 68 131 L53 153 L42 147 Q48 119 58 104 Z',
-      'M142 104 Q130 108 132 131 L147 153 L158 147 Q152 119 142 104 Z'],
-    biceps:[
-      'M52 108 L64 119 L55 143 L43 139 Z',
-      'M148 108 L136 119 L145 143 L157 139 Z']
-  };
+  // Original schematic torso, authored as paired vector regions. The two views
+  // deliberately omit hidden muscles instead of moving them to the visible side.
+  // Deep regions (for example rhomboids) are indicated by approximate location;
+  // these shapes are not an atlas or a measurement of muscle activation.
+  const pair=d=>[{d},{d,mirror:true}];
   const front={
-    chest:[
-      'M78 87 Q91 79 99 87 L99 126 Q87 124 77 117 Z',
-      'M122 87 Q109 79 101 87 L101 126 Q113 124 123 117 Z'],
-    frontDelts:[
-      'M71 71 Q83 72 85 87 L79 107 L64 99 Q62 80 71 71 Z',
-      'M129 71 Q117 72 115 87 L121 107 L136 99 Q138 80 129 71 Z'],
-    sideDelts:[
-      'M64 76 Q75 75 80 84 L74 111 L58 99 Z',
-      'M136 76 Q125 75 120 84 L126 111 L142 99 Z'],
-    upperTraps:[
-      'M91 58 L100 74 L83 84 L75 70 Z',
-      'M109 58 L100 74 L117 84 L125 70 Z'],
-    biceps:[
-      'M57 102 Q66 107 64 128 L52 150 L43 142 L49 119 Z',
-      'M143 102 Q134 107 136 128 L148 150 L157 142 L151 119 Z'],
-    forearms:[
-      'M38 151 Q45 148 50 154 L38 180 L28 179 Z',
-      'M162 151 Q155 148 150 154 L162 180 L172 179 Z'],
-    triceps:[
-      'M58 106 L68 114 L59 139 L46 140 Z',
-      'M142 106 L132 114 L141 139 L154 140 Z']
+    chest:pair('M126 103 C117 99 106 98 97 101 L87 114 C87 124 84 132 87 141 C98 151 115 154 128 147 L128 108 Q128 104 126 103 Z'),
+    frontDelts:pair('M78 98 C87 98 95 103 99 110 Q92 121 88 134 L78 144 C72 138 71 132 73 121 Q74 107 78 98 Z'),
+    sideDelts:pair('M70 99 C59 102 53 114 54 130 Q54 143 60 151 C67 145 72 135 74 125 C77 114 77 105 70 99 Z'),
+    upperTraps:pair('M115 75 C112 84 102 89 89 93 L104 98 L123 95 L121 89 Z'),
+    biceps:pair('M60 151 Q69 149 74 143 C73 159 70 177 64 187 Q58 195 52 187 C48 180 50 168 54 159 Z'),
+    forearms:pair('M46 196 C51 192 58 192 62 198 C63 213 54 232 46 249 L34 253 C35 239 40 214 46 196 Z')
   };
+  const back={
+    upperTraps:pair('M117 75 Q111 86 93 93 L85 99 L110 108 L128 101 L128 88 Z'),
+    rearDelts:pair('M77 99 C87 99 96 104 101 113 L88 132 L77 144 Q65 133 68 117 C68 109 72 104 77 99 Z'),
+    sideDelts:pair('M70 99 C59 102 53 114 54 130 Q54 143 60 151 C67 145 72 135 74 125 C77 114 77 105 70 99 Z'),
+    midTraps:pair('M91 104 Q106 110 128 105 L128 123 L112 127 L99 119 Z'),
+    rhomboids:pair('M113 130 L128 127 L128 161 Q118 155 109 144 Z'),
+    lats:pair('M86 141 Q98 148 109 147 L123 178 L121 231 L105 250 Q98 228 95 205 C90 187 87 164 86 141 Z'),
+    triceps:pair('M59 151 Q69 150 75 141 C75 157 71 176 65 189 L58 194 Q48 189 49 179 C49 168 54 157 59 151 Z'),
+    forearms:pair('M45 196 C51 193 58 195 62 199 C62 214 53 234 46 249 L34 253 C35 238 39 214 45 196 Z')
+  };
+  const regionLabels={
+    chest:'Peitoral maior',frontDelts:'Deltoide anterior',sideDelts:'Deltoide lateral',
+    rearDelts:'Deltoide posterior',upperTraps:'Trapézio superior',midTraps:'Trapézio médio',
+    rhomboids:'Romboides',lats:'Latíssimo do dorso',biceps:'Bíceps',
+    triceps:'Tríceps',forearms:'Músculos do antebraço'
+  };
+  const abdomen=[
+    ...pair('M112 158 Q121 155 128 158 L128 176 L112 175 Q109 168 112 158 Z'),
+    ...pair('M112 180 L128 181 L128 200 L112 199 Q109 190 112 180 Z'),
+    ...pair('M112 204 L128 205 L128 226 Q117 225 112 217 Z'),
+    ...pair('M114 231 L128 232 L128 254 Q118 249 114 240 Z'),
+    ...pair('M91 155 L104 162 L107 181 L98 196 Q93 177 91 155 Z'),
+    ...pair('M99 202 L108 188 L109 231 L119 262 L98 242 Q102 224 99 202 Z')
+  ];
+  const lumbar=[
+    ...pair('M125 169 L128 177 L128 271 L121 282 L116 263 Q120 244 121 224 Z'),
+    ...pair('M105 254 L117 265 L120 288 L96 279 Z')
+  ];
+  const torso='M116 63 C119 80 111 85 100 89 L80 94 C72 98 71 115 77 130 L85 153 Q87 183 94 209 C99 233 95 256 90 279 L88 306 Q130 319 172 306 L170 279 C165 256 161 233 166 209 Q173 183 175 153 L183 130 C189 115 188 98 180 94 L160 89 C149 85 141 80 144 63 Z';
+  const arm='M81 94 C64 92 54 101 51 116 C48 131 48 147 44 164 L40 186 C37 194 35 203 35 212 L28 247 L23 262 C20 266 20 275 21 280 Q23 282 25 277 L28 269 L26 288 Q27 294 30 288 L33 274 L32 293 Q34 298 37 290 L40 275 L39 289 Q41 293 44 285 L48 268 Q50 262 47 255 L57 226 C63 212 66 204 64 193 C71 175 74 158 76 143 C84 131 89 118 85 105 Z';
+  const head='M111 45 C106 38 108 19 115 12 Q130 4 145 12 C152 19 154 38 149 45 L146 59 Q140 72 130 73 Q120 72 114 59 Z';
   const safe=value=>String(value).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+  const listLabel=names=>{
+    const labels=names.map((name,index)=>{
+      const label=regionLabels[name]||name;
+      return index?label.charAt(0).toLowerCase()+label.slice(1):label;
+    });
+    return labels.length<2?labels.join(''):labels.slice(0,-1).join(', ')+' e '+labels[labels.length-1];
+  };
+  let figureSequence=0;
   function describe(id){
     const type=maps[id],item=type?fam[type]:null;
     return item?{id,type,...item}:null;
   }
-  function figure(id,thumbnail=false){
-    const info=describe(id);if(!info)return '';
-    const titleId='fa-title-'+info.id+'-'+(thumbnail?'mini':'full');
-    const descId='fa-desc-'+info.id+'-'+(thumbnail?'mini':'full');
-    const area=info.view==='back'?back:front;
-    const regions=(names,cls)=>names.map(name=>(area[name]||[]).map(path=>
-      '<path d="'+path+'" class="'+cls+'"/>').join('')).join('');
-    const label=info.view==='back'?'Vista posterior':'Vista anterior';
-    return '<svg xmlns="http://www.w3.org/2000/svg" class="ex-anatomy-svg" viewBox="0 0 200 205" '+
-      (thumbnail?'aria-hidden="true" focusable="false"':'role="img" aria-labelledby="'+titleId+' '+descId+'"')+'>'+
-      (thumbnail?'':'<title id="'+titleId+'">Mapa muscular: '+safe(info.primary)+'</title>'+
-        '<desc id="'+descId+'">'+safe(label)+'. Azul vivo: '+safe(info.primary)+
-        (info.secondary?'. Azul suave: '+safe(info.secondary):'')+'. Destaque ilustrativo, sem medir ativação muscular.</desc>')+
-      '<defs><linearGradient id="fa-skin-'+info.id+'-'+(thumbnail?'mini':'full')+'" x1="0" x2="1" y1="0" y2="1">'+
-      '<stop offset="0" stop-color="#4B6276"/><stop offset=".65" stop-color="#293F50"/><stop offset="1" stop-color="#1B3142"/></linearGradient></defs>'+
-      '<g class="ex-anatomy-body" fill="url(#fa-skin-'+info.id+'-'+(thumbnail?'mini':'full')+')" stroke="#668295" stroke-width="1.1" stroke-linejoin="round">'+
-      '<path d="M84 61 Q79 61 71 69 Q62 67 56 77 C52 86 49 101 43 120 L28 167 Q22 183 33 187 Q43 189 49 175 L65 134 L71 145 L77 164 L76 182 Q86 190 100 191 Q114 190 124 182 L123 164 L129 145 L135 134 L151 175 Q157 189 167 187 Q178 183 172 167 L157 120 C151 101 148 86 144 77 Q138 67 129 69 Q121 61 116 61 Z"/>'+
-      '<path d="M91 51 L91 66 Q100 73 109 66 L109 51 Z"/>'+
-      '<ellipse cx="100" cy="32" rx="19" ry="24"/>'+
-      '</g>'+
-      '<g class="ex-anatomy-underlines" fill="none" stroke="#7C9BAE" opacity=".33" stroke-width="1.1">'+
-      (info.view==='back'?
-        '<path d="M100 66 L100 185 M76 94 L85 119 L99 134 M124 94 L115 119 L101 134 M78 125 Q87 141 93 157 M122 125 Q113 141 107 157"/>':
-        '<path d="M100 84 L100 165 M78 113 Q100 128 122 113 M88 129 Q100 136 112 129 M92 140 L92 165 M108 140 L108 165"/>')+
-      '<path d="M61 108 L45 153 M139 108 L155 153"/></g>'+
-      '<g class="ex-anatomy-secondary">'+regions(info.assist,'secondary')+'</g>'+
-      '<g class="ex-anatomy-primary">'+regions(info.main,'primary')+'</g>'+
-      '<path d="M100 69 L100 184" stroke="#91A9B7" stroke-width=".7" stroke-dasharray="2 3" opacity="'+(info.view==='back'?'0.45':'0')+'"/>'+
-      '</svg>';
+  function viewInfo(id,viewOverride=null){
+    const item=describe(id);if(!item)return null;
+    const view=viewOverride==='front'||viewOverride==='back'?viewOverride:item.view;
+    const area=view==='back'?back:front;
+    const visibleMain=item.main.filter(name=>Boolean(area[name]));
+    const visibleAssist=item.assist.filter(name=>Boolean(area[name]));
+    const hiddenMain=item.main.filter(name=>!area[name]);
+    const hiddenAssist=item.assist.filter(name=>!area[name]);
+    const hidden=[...hiddenMain,...hiddenAssist];
+    const opposite=view==='back'?'Frente':'Costas';
+    const note=!visibleMain.length&&!visibleAssist.length
+      ?'Sem músculos destacados nesta vista. Veja '+opposite+'.'
+      :hidden.length?listLabel(hidden)+' na vista '+opposite+'.':'';
+    return {view,label:view==='back'?'Costas':'Frente',visibleMain,visibleAssist,hiddenMain,hiddenAssist,
+      visiblePrimaryLabel:listLabel(visibleMain),visibleSecondaryLabel:listLabel(visibleAssist),note};
   }
-  function panel(id,expanded=false){
-    const item=describe(id);if(!item)return '';
+  function legendNote(id,view,role='main'){
+    const info=viewInfo(id,view);if(!info)return '';
+    const hidden=role==='assist'?info.hiddenAssist:info.hiddenMain;
+    const visible=role==='assist'?info.visibleAssist:info.visibleMain;
+    if(!hidden.length)return '';
+    return (visible.length?'Parte em ':'Veja em ')+(info.view==='back'?'Frente':'Costas');
+  }
+  const shape=(part,attrs='')=>'<path d="'+part.d+'"'+(part.mirror?' transform="translate(260 0) scale(-1 1)"':'')+attrs+'/>';
+  function figure(id,thumbnail=false,viewOverride=null){
+    const item=describe(id),info=viewInfo(id,viewOverride);if(!item||!info)return '';
+    const uid='fa-'+(++figureSequence),titleId=uid+'-title',descId=uid+'-desc';
+    const area=info.view==='back'?back:front;
+    const regions=(names,cls)=>names.map(name=>area[name].map(part=>shape(part,' class="'+cls+'" data-muscle="'+name+'"')).join('')).join('');
+    const neutral=Object.keys(area).map(name=>area[name].map(part=>shape(part,' data-muscle="'+name+'"')).join('')).join('');
+    const label=info.view==='back'?'Vista posterior':'Vista anterior';
+    const desc=label+'. '+
+      (info.visiblePrimaryLabel?'Principais visíveis: '+info.visiblePrimaryLabel+'. ':'')+
+      (info.visibleSecondaryLabel?'Auxiliares visíveis: '+info.visibleSecondaryLabel+'. ':'')+
+      (!info.visibleMain.length&&!info.visibleAssist.length?'Nenhum músculo destacado nesta vista. ':'')+
+      'Localização ilustrativa, sem medir ativação muscular.';
+    const fibres=info.view==='back'
+      ?'M92 151 L120 216 M93 162 L116 226 M96 181 L112 236 M98 112 L125 113 M104 119 L125 119 M115 135 L125 141 M114 141 L125 149 M80 108 L78 133 M87 112 L81 131 M61 157 L58 181 M67 155 L63 181'
+      :'M91 121 L123 107 M89 128 L124 118 M90 136 L124 129 M97 143 L124 140 M80 106 L78 133 M87 109 L81 130 M60 157 L56 180 M66 155 L62 181';
+    return '<svg xmlns="http://www.w3.org/2000/svg" class="ex-anatomy-svg" data-anatomy-figure-view="'+info.view+'" viewBox="0 0 260 320" '+
+      (thumbnail?'aria-hidden="true" focusable="false"':'role="img" aria-labelledby="'+titleId+' '+descId+'" focusable="false"')+'>'+
+      (thumbnail?'':'<title id="'+titleId+'">Mapa muscular: '+label+'</title><desc id="'+descId+'">'+safe(desc)+'</desc>')+
+      '<defs><linearGradient id="'+uid+'-skin" x1="0" x2="1" y1="0" y2=".4">'+
+      '<stop offset="0" stop-color="#273D50"/><stop offset=".47" stop-color="#41596C"/><stop offset="1" stop-color="#263D50"/>'+
+      '</linearGradient><linearGradient id="'+uid+'-head" x1="0" x2=".9" y1="0" y2="1">'+
+      '<stop offset="0" stop-color="#415A6E"/><stop offset="1" stop-color="#263D50"/></linearGradient>'+
+      '<pattern id="'+uid+'-assist" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(35)">'+
+      '<path d="M0 0 L0 6" stroke="#B6E5F8" stroke-width="1.2" opacity=".32"/></pattern></defs>'+
+      '<g class="ex-anatomy-body" fill="url(#'+uid+'-skin)" stroke="#678296" stroke-width="1.1" stroke-linejoin="round">'+
+      shape({d:arm})+shape({d:arm,mirror:true})+shape({d:torso})+
+      '<path d="'+head+'" fill="url(#'+uid+'-head)"/>'+
+      '</g>'+
+      '<g class="ex-anatomy-neutral" fill="#263D50" stroke="#6A879C" stroke-width=".8" stroke-linejoin="round" opacity=".58">'+
+      neutral+(info.view==='back'?lumbar:abdomen).map(part=>shape(part)).join('')+'</g>'+
+      '<g class="ex-anatomy-secondary">'+regions(info.visibleAssist,'secondary')+'</g>'+
+      '<g class="ex-anatomy-assist-texture" fill="url(#'+uid+'-assist)" stroke="none" pointer-events="none" aria-hidden="true">'+
+      info.visibleAssist.map(name=>area[name].map(part=>shape(part)).join('')).join('')+'</g>'+
+      '<g class="ex-anatomy-primary">'+regions(info.visibleMain,'primary')+'</g>'+
+      '<g class="ex-anatomy-fibres" fill="none" stroke="#C3DCEB" stroke-width=".7" stroke-linecap="round" opacity=".22" aria-hidden="true">'+
+      '<path d="'+fibres+'"/><path d="'+fibres+'" transform="translate(260 0) scale(-1 1)"/></g>'+
+      '<g class="ex-anatomy-contours" fill="none" stroke="#91ACBF" stroke-width=".9" stroke-linecap="round" opacity=".38" aria-hidden="true">'+
+      (info.view==='back'
+        ?'<path d="M116 61 Q130 66 144 61 M130 78 L130 281 M101 113 Q99 132 107 144 M159 113 Q161 132 153 144 M96 279 Q111 282 121 293 M164 279 Q149 282 139 293"/>'
+        :'<path d="M113 45 Q112 52 116 53 M147 45 Q148 52 144 53 M123 59 Q130 63 137 59 M115 77 L123 93 M145 77 L137 93 M104 98 Q119 96 127 102 M156 98 Q141 96 133 102 M130 108 L130 256 M129 233 L131 233 M97 270 Q117 278 130 297 Q143 278 163 270"/>')+
+      '<path d="M45 192 L58 196 M215 192 L202 196 M35 252 L45 255 M225 252 L215 255 M91 299 Q130 310 169 299"/></g></svg>';
+  }
+  function viewer(id,viewOverride=null,context='workout'){
+    const info=viewInfo(id,viewOverride);if(!info)return '';
+    const canvasClass=context==='catalog'?'catalog-detail-figure':'ex-anatomy-large';
+    return '<div class="ex-anatomy-viewer" data-anatomy-id="'+safe(id)+'" data-anatomy-view="'+info.view+'" data-anatomy-context="'+safe(context)+'">'+
+      '<div class="ex-anatomy-view-header"><strong>Mapa muscular</strong>'+
+      '<div class="ex-anatomy-view-switch" role="group" aria-label="Vista do mapa muscular">'+
+      ['front','back'].map(view=>'<button type="button" class="ex-anatomy-view-button" data-action="anatomy-view" data-view="'+view+'" aria-pressed="'+(view===info.view?'true':'false')+'">'+(view==='front'?'Frente':'Costas')+'</button>').join('')+
+      '</div></div><div class="ex-anatomy-canvas '+canvasClass+'">'+figure(id,false,info.view)+'</div>'+
+      '<p class="ex-anatomy-view-note" role="status" aria-live="polite" aria-atomic="true">'+safe(info.note)+'</p></div>';
+  }
+  function panel(id,expanded=false,viewOverride=null){
+    const item=describe(id),info=viewInfo(id,viewOverride);if(!item||!info)return '';
+    const location=role=>{
+      const note=legendNote(id,info.view,role);
+      return '<small class="ex-anatomy-legend-location" data-anatomy-location="'+role+'"'+(note?'':' hidden')+'>'+safe(note)+'</small>';
+    };
     return '<details class="ex-anatomy" data-anatomy="'+safe(item.id)+'"'+(expanded?' open':'')+'>'+
       '<summary class="ex-anatomy-summary">'+
-      '<span class="ex-anatomy-thumb">'+figure(id,true)+'</span>'+
+      '<span class="ex-anatomy-thumb">'+figure(id,true,info.view)+'</span>'+
       '<span class="ex-anatomy-title"><strong>Músculos e execução</strong>'+
       '<small>'+safe(item.primary)+'</small></span>'+
       '<span class="ex-anatomy-chevron" aria-hidden="true">⌄</span></summary>'+
-      '<div class="ex-anatomy-expanded">'+
-      '<div class="ex-anatomy-large">'+figure(id,false)+'</div>'+
-      '<div class="ex-anatomy-info"><span class="ex-anatomy-legend"><span class="ex-anatomy-legend-head"><i class="ex-anatomy-swatch is-main"></i><b>Principal</b></span><span>'+safe(item.primary)+'</span></span>'+
-      (item.secondary?'<span class="ex-anatomy-legend"><span class="ex-anatomy-legend-head"><i class="ex-anatomy-swatch is-assist"></i><b>Auxiliares</b></span><span>'+safe(item.secondary)+'</span></span>':'')+
+      '<div class="ex-anatomy-expanded">'+viewer(id,info.view,'workout')+
+      '<div class="ex-anatomy-info"><span class="ex-anatomy-legend"><span class="ex-anatomy-legend-head"><i class="ex-anatomy-swatch is-main"></i><b>Principal</b></span><span>'+safe(item.primary)+'</span>'+location('main')+'</span>'+
+      (item.secondary?'<span class="ex-anatomy-legend"><span class="ex-anatomy-legend-head"><i class="ex-anatomy-swatch is-assist"></i><b>Auxiliares</b></span><span>'+safe(item.secondary)+'</span>'+location('assist')+'</span>':'')+
       '<p class="ex-anatomy-cue">'+safe(item.cue)+'</p>'+
       '<p class="ex-anatomy-disclaimer">Ilustração orientativa: a participação muscular varia com a execução, carga e equipamento.</p>'+
       '</div></div></details>';
   }
-  const api={VERSION:1,describe,figure,panel,coveredIds:Object.keys(maps)};
+  const api={VERSION:2,describe,viewInfo,legendNote,figure,viewer,panel,coveredIds:Object.keys(maps)};
   root.ForjaExerciseAnatomy=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
