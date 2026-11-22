@@ -1,4 +1,4 @@
-/* FORJA evolution: a mobile-first weight and nutrition dashboard, based solely on
+/* FORJA evolution: body, training and nutrition dashboards, based solely on
  * the local archive. Never import reference-image data into a user's diary.
  */
 (function installForjaEvolution(root){
@@ -134,13 +134,14 @@
       '</section>';
   }
   function renderHeader(state,endDay,view){
+    const views=[['weight','Corpo'],['training','Treinos'],['nutrition','Nutrição']];
     return '<header class="evo-header">'+
       '<p class="eyebrow">ACOMPANHAMENTO</p><h1 class="page-title">Sua evolução.</h1>'+
       '<p class="evo-subhead">Corpo, alimentação e treinos em perspectiva.</p>'+
       '<div class="evo-tabs" role="tablist" aria-label="Acompanhamento de evolução">'+
-      ['weight','nutrition'].map(v=>'<button id="evo-tab-'+v+'" type="button" role="tab" aria-selected="'+(v===view?'true':'false')+
+      views.map(([v,label])=>'<button id="evo-tab-'+v+'" type="button" role="tab" aria-selected="'+(v===view?'true':'false')+'" tabindex="'+(v===view?'0':'-1')+
         '" aria-controls="evo-panel-'+v+'" data-action="evo-view" data-view="'+v+'" class="'+(v===view?'is-selected':'')+'">'+
-        (v==='weight'?'Corpo':'Nutrição')+'</button>').join('')+'</div></header>';
+        label+'</button>').join('')+'</div></header>';
   }
   function renderWeight(state,day,limit,opts={}){
     const model=weightModel(state,day,limit),chartMode=opts.chartMode==='measures'?'measures':'weight';
@@ -170,14 +171,13 @@
         '<p class="evo-footnote">Aferições em condições diferentes não comprovam alteração de gordura.</p>':
         '<p class="evo-footnote">Linha pontilhada: meta desejada. Oscilações diárias são normais.</p>')+
       '</section>'+
-      (opts.stepsHTML||'')+(opts.groupsHTML||'')+
       '<details class="evo-history-fold"><summary>Pesagens registradas <span>'+model.all.length+'</span></summary>'+
       '<div class="evo-history-list">'+(model.history.length?model.history.map(row=>
         '<div class="evo-history-row"><strong>'+fmt(row.weight)+' kg</strong><span>'+
         new Date(toUTC(row.date)).toLocaleDateString('pt-BR',{day:'numeric',month:'short',year:'numeric',timeZone:'UTC'})+
         (row.initial?' · referência':'')+'</span></div>').join(''):'<p class="evo-empty">Ainda não há pesagens.</p>')+'</div>'+
       (model.all.length>model.history.length?'<button class="evo-more-button" type="button" data-action="evo-weight-more">Ver mais pesagens ('+
-        (model.all.length-model.history.length)+')</button>':'')+'</details></section>';
+        (model.all.length-model.history.length)+')</button>':'')+'</details>'+(opts.bodyToolsHTML||'')+'</section>';
   }
   function indexedEntries(nutrition){
     const map=new Map();

@@ -1,4 +1,4 @@
-"""Testa drill-down do radar de forca, grafico por exercicio e estados vazios."""
+"""Testa indicadores de treino, gráfico corporal e estados vazios nas guias de Evolução."""
 import json
 import os
 import re
@@ -57,6 +57,7 @@ with sync_playwright() as p:
     errors=[]
     empty=open_app(context,{},errors)
     empty.get_by_role('button',name='Evolução',exact=True).click()
+    empty.locator('[data-action="evo-view"][data-view="training"]').click()
     assert empty.locator('.evo-volume-row').count()==4
     assert 'Ainda não há séries efetivas' in empty.locator('.evo-volume-card').inner_text()
     assert empty.locator('.progress-advanced-radar').count()==0
@@ -79,6 +80,7 @@ with sync_playwright() as p:
     }
     page=open_app(context,{'forja.academia.v1':json.dumps(state,ensure_ascii=False)},errors)
     page.get_by_role('button',name='Evolução',exact=True).click()
+    page.locator('[data-action="evo-view"][data-view="training"]').click()
     assert page.locator('.evo-volume-row').count()==4
     assert page.locator('.evo-volume-track span').count()==4
     assert 'Costas' in page.locator('.evo-volume-card').inner_text()
@@ -92,6 +94,7 @@ with sync_playwright() as p:
     assert page.locator('[data-action="evo-volume-days"][data-days="7"]').get_attribute('aria-pressed')=='true'
     page.locator('[data-action="evo-volume-days"][data-days="90"]').click()
     assert page.locator('[data-action="evo-volume-days"][data-days="90"]').get_attribute('aria-pressed')=='true'
+    page.locator('[data-action="evo-view"][data-view="weight"]').click()
     page.locator('[data-action="evo-chart-mode"][data-mode="measures"]').click()
     assert page.locator('#evo-measure-field').is_visible()
     assert 'Sem medidas' in page.locator('.evo-body-chart').inner_text()
@@ -99,6 +102,7 @@ with sync_playwright() as p:
     assert 'Peitoral' in page.locator('.evo-body-chart').inner_text()
     page.locator('[data-action="evo-chart-mode"][data-mode="weight"]').click()
     assert page.locator('.evo-body-chart svg[role="img"]').count()==1
+    page.locator('[data-action="evo-view"][data-view="training"]').click()
     assert page.locator('.progress-steps-card').count()==1
     path=ROOT/'screenshots';path.mkdir(exist_ok=True)
     page.screenshot(path=str(path/'evolution-groups-390.png'),full_page=True)

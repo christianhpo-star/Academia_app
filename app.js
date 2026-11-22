@@ -184,10 +184,10 @@
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
-    historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,
+    historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,historyFilter:'all',
     progressStepDays:14,progressRadarOpen:false,
     evolutionView:'weight',evolutionPeriods:{energy:7,macros:7,average:7},evolutionWeightLimit:8,evolutionExtrasOpen:false,
-    evolutionChartMode:'weight',evolutionMeasureKey:'abdomen',evolutionVolumeDays:30,
+    evolutionChartMode:'weight',evolutionMeasureKey:'abdomen',evolutionVolumeDays:30,evolutionTrainingOpen:false,
   };
   const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
     commitSteps(next){
@@ -572,9 +572,9 @@
     if(action==='reminder-open'){
       const current=REM.assess(state,today()).visible.find(x=>x.id===btn.dataset.reminder&&x.signature===btn.dataset.signature);
       if(!current)return render();
-      if(current.action==='weight'){ui.tab='progress';ui.bodyOpen=false;render();document.getElementById('weight-form')?.scrollIntoView({block:'start'});}
-      else if(current.action==='body'){ui.tab='progress';ui.bodyOpen=true;ui.bodyView='current';render();document.getElementById('body-measures-form')?.scrollIntoView({block:'start'});}
-      else if(current.action==='bio'){ui.tab='progress';ui.bodyOpen=true;ui.bodyView='current';ui.bioOpen=true;render();document.querySelector('.bio-panel')?.scrollIntoView({block:'start'});}
+      if(current.action==='weight'){openProgress('weight',{weightEditor:true});}
+      else if(current.action==='body'){ui.tab='progress';ui.evolutionView='weight';ui.bodyOpen=true;ui.bodyView='current';render();document.getElementById('body-measures-form')?.scrollIntoView({block:'start'});}
+      else if(current.action==='bio'){ui.tab='progress';ui.evolutionView='weight';ui.bodyOpen=true;ui.bodyView='current';ui.bioOpen=true;render();document.querySelector('.bio-panel')?.scrollIntoView({block:'start'});}
       else{ui.tab='nutrition';render();diary.goals();if(current.action==='activity')document.querySelector('#nd-steps-panel')?.setAttribute('open','');}
       return;
     }
@@ -659,18 +659,15 @@
     }
   }
   function homeStepsCard(){
-    const day=today(),rows=(state.activitySteps||[]).filter(row=>row.date<=day).slice().sort((a,b)=>b.date.localeCompare(a.date));
-    const current=rows.find(row=>row.date===day),recent=rows.slice(0,7);
+    const day=today(),current=(state.activitySteps||[]).find(row=>row.date===day);
     return '<section class="card home-steps-quick" aria-labelledby="home-steps-title">'+
       '<div class="row-between"><div><p class="eyebrow">REGISTRO DIÁRIO</p><h2 class="section-title" id="home-steps-title">Passos de hoje</h2></div><span class="home-steps-status">'+(current?'Registrado':'Ainda não informado')+'</span></div>'+
-      '<p class="small muted">Anote o total do Samsung Health ao final do dia. Sem sincronização automática.</p>'+
+      '<p class="small muted">Informe o total do Samsung Health ao final do dia.</p>'+
       '<form id="home-steps-form" class="home-steps-form">'+
       '<div class="field"><label for="home-step-date">Data</label><input id="home-step-date" name="date" type="date" max="'+day+'" value="'+day+'" required></div>'+
       '<div class="field"><label for="home-step-count">Número de passos</label><input id="home-step-count" name="steps" type="number" inputmode="numeric" min="0" max="100000" step="1" value="'+(current?current.steps:'')+'" placeholder="Ex.: 8500" required></div>'+
       '<button type="submit" class="primary">'+(current?'Atualizar':'Salvar')+'</button></form>'+
-      '<details class="home-steps-history"><summary>Histórico recente ('+recent.length+')</summary>'+
-      (recent.length?'<ul class="mini-list">'+recent.map(row=>'<li><span>'+dateBR(row.date)+'</span><strong>'+fmt(row.steps)+' passos</strong></li>').join('')+'</ul>':'<p class="small muted">Nenhum dia registrado ainda.</p>')+
-      '</details><p class="tiny muted">Dia sem registro é dado ausente, não zero. Registrar passos não altera automaticamente suas metas.</p></section>';
+      '<button type="button" class="button-inline home-steps-trend" data-action="progress-open-training" data-section="progress-steps-title">Ver evolução dos passos <span aria-hidden="true">›</span></button></section>';
   }
   function saveHomeSteps(form){
     const fd=new FormData(form),date=String(fd.get('date')||''),count=String(fd.get('steps')||'').trim();
@@ -683,10 +680,10 @@
   }
   function renderHome() {
     const next=getNext(),plan=next.id?planFor(next.id):null;
-    const pending=dueKnee(),last=latestSessions()[0],check=checkin();
+    const pending=dueKnee(),check=checkin();
     const checkLabel=check ? (check.energy==='baixa'?'Pouca energia':check.energy==='boa'?'Bem recuperado':'Energia normal') : 'Não informado';
     const block=ui.draft?planFor(ui.draft.planId):null;
-    return `${headline('Hoje','Seu próximo passo.','Comece o treino ou informe como está se sentindo.')}
+    return `${headline('Hoje','Seu próximo passo.')}
       <section class="home-primary card" aria-labelledby="home-primary-title">
         <div class="row-between"><span class="home-step-label">${ui.draft?'EM ANDAMENTO':next.rest?'RECUPERAÇÃO SUGERIDA':'TREINO SUGERIDO'}</span>
           ${tag(ui.draft?`Bloco ${ui.draft.planId}`:next.rest?'Descanso':`Bloco ${next.id}`,ui.draft||!next.rest?'green':'amber')}</div>
@@ -703,24 +700,20 @@
       </section>
       ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
         <p>Há ${pending.length} treino(s) aguardando registro após 24h.
-        <button class="button-inline" data-action="navigate" data-to="history">Avaliar no histórico</button></p></div>`:''}
-      ${homeStepsCard()}
-      ${renderDailyRoutine()}
-      ${renderReminderPanel('home')}
+        <button class="button-inline" data-action="history-knee">Avaliar no histórico</button></p></div>`:''}
       <details class="home-recovery" ${ui.homeRecoveryOpen?'open':''}>
         <summary><span><strong>Como está sua recuperação hoje?</strong><small>${esc(checkLabel)}</small></span>
           <span class="home-recovery-action">${check?'Atualizar':'Informar'} <span aria-hidden="true">⌄</span></span></summary>
         <div class="home-recovery-body">${renderRecoveryCheckin()}</div>
       </details>
-      <div class="home-minimal-links">
-        ${last?`<button class="home-last-session" data-action="navigate" data-to="history">
-          <span><small>ÚLTIMO TREINO · ${dateBR(last.day)}</small><strong>${esc(planFor(last.planId).title)}</strong></span><span aria-hidden="true">›</span>
-        </button>`:''}
+      <div class="home-minimal-links" role="group" aria-label="Registros rápidos">
         <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
         <button class="home-muay-link" data-action="nutrition-open"><span>Registrar alimentação</span><span aria-hidden="true">›</span></button>
-        ${!ROUTINE.status(state.dailyRoutine,today()).configured?`<button class="home-muay-link" data-action="routine-manage"><span>Configurar rotina diária (opcional)</span><span aria-hidden="true">›</span></button>`:''}
       </div>
-      <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
+      ${homeStepsCard()}
+      ${renderDailyRoutine()}
+      ${renderReminderPanel('home')}
+      ${!ROUTINE.status(state.dailyRoutine,today()).configured?`<button class="button-inline home-routine-setup" data-action="routine-manage">Configurar rotina diária (opcional)</button>`:''}`;
   }
   function catalogContext(){
     return ui.draft && ['replace','add','extra'].includes(ui.catalogContext)
@@ -1059,7 +1052,6 @@
         </div>
         <p class="small muted">A biblioteca abre fora do registro das séries. Ao voltar, suas cargas e repetições continuam no rascunho.</p>
       </section>
-      ${renderAdherencePanel(true)}
       ${renderDosePanel(true)}
       <section class="card session-review"><h2 class="section-title">Conferência antes de salvar</h2>
         <div id="workout-review" aria-live="polite">${renderReviewContent()}</div>
@@ -1291,26 +1283,44 @@
   }
   function renderProgress(){
     const day=today();
-    const nutrition=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
-    const steps=progressStepsPanel();
-    const groups=EVO.renderGroupVolume(state,day,ui.evolutionVolumeDays);
-    const weights=EVO.renderWeight(state,day,ui.evolutionWeightLimit,{
-      chartMode:ui.evolutionChartMode,measureKey:ui.evolutionMeasureKey,
-      stepsHTML:steps,groupsHTML:groups,
-    });
-    const goalPlan=PLANNER.plan(state,day);
+    let content;
+    if(ui.evolutionView==='nutrition'){
+      content=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
+    }else if(ui.evolutionView==='training'){
+      content='<section id="evo-panel-training" class="evo-pane" role="tabpanel" aria-labelledby="evo-tab-training">'+
+        EVO.renderGroupVolume(state,day,ui.evolutionVolumeDays)+progressStrengthSummary()+progressStepsPanel()+
+        renderPerformanceTrends()+
+        '<details class="evo-training-tools" '+(ui.evolutionTrainingOpen?'open':'')+'>'+
+        '<summary>Constância e volume <span aria-hidden="true">⌄</span></summary>'+
+        '<div class="evo-more-content">'+renderAdherencePanel()+renderDosePanel()+'</div></details></section>';
+    }else{
+      const bodyToolsHTML='<details class="evo-more-tools" '+(ui.evolutionExtrasOpen?'open':'')+'>'+
+        '<summary>Objetivo e planejamento <span aria-hidden="true">⌄</span></summary>'+
+        '<div class="evo-more-content">'+renderGoalPlannerSummary(PLANNER.plan(state,day))+'</div></details>'+
+        '<details id="evo-weight-editor" class="evo-editor-fold"><summary>Registrar ou corrigir pesagem</summary>'+weightForm()+'</details>';
+      content=EVO.renderWeight(state,day,ui.evolutionWeightLimit,{
+        chartMode:ui.evolutionChartMode,measureKey:ui.evolutionMeasureKey,bodyToolsHTML,
+      });
+    }
     return '<div class="evo-shell">'+
       EVO.renderHeader(state,day,ui.evolutionView)+
-      '<div class="evo-main">'+(ui.evolutionView==='nutrition'?nutrition:weights)+'</div>'+ 
-      (ui.evolutionView==='weight'?renderPerformanceTrends():'')+
-      (ui.evolutionView==='weight'?
-        '<details class="evo-more-tools" '+(ui.evolutionExtrasOpen?'open':'')+'>'+
-        '<summary>Mais indicadores e ajustes <span aria-hidden="true">⌄</span></summary>'+
-        '<div class="evo-more-content">'+
-        renderGoalPlannerSummary(goalPlan)+renderDosePanel()+
-        '</div></details>'+
-        '<details id="evo-weight-editor" class="evo-editor-fold"><summary>Registrar ou corrigir pesagem</summary>'+weightForm()+'</details>':
-        '')+'</div>';
+      '<div class="evo-main">'+content+'</div></div>';
+  }
+  function openProgress(view='weight',options={}){
+    if(!['weight','training','nutrition'].includes(view))return;
+    ui.tab='progress';ui.editor=null;ui.bodyOpen=false;ui.evolutionView=view;
+    render();
+    if(options.weightEditor){
+      const editor=document.getElementById('evo-weight-editor');
+      if(editor)editor.open=true;
+      editor?.scrollIntoView({block:'start'});
+      document.getElementById('new-weight')?.focus({preventScroll:true});
+    }else if(options.section){
+      const target=document.getElementById(options.section);
+      if(target){target.tabIndex=-1;target.focus({preventScroll:true});target.scrollIntoView({block:'start'});}
+    }else if(options.focusTab){
+      document.getElementById('evo-tab-'+view)?.focus({preventScroll:true});
+    }else window.scrollTo(0,0);
   }
   function bodyFigure(current){
     const values=current?.values||{};
@@ -1423,17 +1433,18 @@
   function renderHistory() {
     const sessions=latestSessions(), muaySessions=M.sortedSessions(state.muay.sessions);
     const shown=sessions.slice(0,ui.historyStrengthLimit);
+    const showStrength=ui.historyFilter!=='muay',showMuay=ui.historyFilter!=='strength';
+    const filters=[['all','Todos',sessions.length+muaySessions.length],['strength','Musculação',sessions.length],['muay','Muay Thai',muaySessions.length]];
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
-    return `${headline('Diário','Seu histórico.','Consulte suas sessões recentes. Abra somente a que deseja analisar.')}
-      <div class="history-overview" role="group" aria-label="Resumo dos registros">
-        <span><strong>${sessions.length}</strong> musculação</span>
-        <span><strong>${muaySessions.length}</strong> Muay Thai</span>
+    return `${headline('Sessões e calendário','Seu histórico.')}
+      <div class="history-filters" role="group" aria-label="Filtrar sessões por modalidade">
+        ${filters.map(([kind,label,count])=>`<button type="button" class="history-filter ${ui.historyFilter===kind?'selected':''}" data-action="history-filter" data-kind="${kind}" aria-pressed="${ui.historyFilter===kind}">${label}<span>${count}</span></button>`).join('')}
       </div>
       <details class="history-calendar-fold" ${ui.historyCalendarOpen?'open':''}>
         <summary>Calendário de treinos <span aria-hidden="true">⌄</span></summary>
         <div class="history-calendar-content">${calendar}</div>
       </details>
-      <div class="section-row"><h2 class="section-title">Musculação</h2><small>Mostrando ${shown.length} de ${sessions.length}</small></div>
+      ${showStrength?`<section aria-label="Sessões de musculação"><div class="section-row"><h2 class="section-title">Musculação</h2><small>Mostrando ${shown.length} de ${sessions.length}</small></div>
       ${shown.length?shown.map(session=>{
         const needsDay=session.entries.some(en=>exerciseFor(en.id)?.knee&&E.workSets(en).length)&&session.kneeNextDay==null;
         const canAssess=Date.now()-new Date(session.timestamp).getTime()>=86400000;
@@ -1466,10 +1477,11 @@
               session.kneeNextDay!=null?`<p class="small muted mt-12">Joelho no dia seguinte: ${session.kneeNextDay}/5+</p>`:''}
           </div></details>`;
       }).join(''):`<div class="empty">Nenhum treino de musculação registrado ainda.</div>`}
-      ${sessions.length>ui.historyStrengthLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="strength">Ver mais ${Math.min(5,sessions.length-ui.historyStrengthLimit)} treinos de musculação</button>`:''}
-      ${M.historySection(state.muay.sessions,ui.historyMuayLimit)}
+      ${sessions.length>ui.historyStrengthLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="strength">Ver mais ${Math.min(5,sessions.length-ui.historyStrengthLimit)} treinos de musculação</button>`:''}</section>`:''}
+      ${showMuay?`<section aria-label="Sessões de Muay Thai">${M.historySection(state.muay.sessions,ui.historyMuayLimit)}
       ${muaySessions.length>ui.historyMuayLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="muay">Ver mais ${Math.min(5,muaySessions.length-ui.historyMuayLimit)} treinos de Muay Thai</button>`:''}
-      <button class="secondary full mt-16" data-action="export-json">Exportar backup do histórico</button>`;
+      </section>`:''}
+      <button type="button" class="button-inline history-data-link" data-action="history-data">Backup e exportação <span aria-hidden="true">›</span></button>`;
   }
   function renderEditor() {
     const edit=ui.editor;
@@ -1532,7 +1544,7 @@
       <div class="field mt-12"><label for="goal-date">Data-alvo desejada</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div><p class="small muted">Prazo desejado, não garantia de resultado. Nenhuma mudança de calorias é aplicada automaticamente.</p>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
       <section class="card"><h2 class="section-title">Samsung Health · histórico importado</h2>${renderHealthSummary()}</section>
-      <section class="card"><h2 class="section-title">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
+      <section class="card" id="settings-data" aria-labelledby="settings-data-title"><h2 class="section-title" id="settings-data-title" tabindex="-1">Seus dados</h2><p class="small muted">O histórico fica somente neste navegador. Ao trocar de celular, limpar os dados do site ou usar navegação privada, ele pode se perder. Exporte um backup periodicamente.</p>
       <button class="secondary full mt-12" data-action="import-health">Importar histórico do Samsung Health (JSON)</button><p class="small muted">Importe um arquivo de transcrição dos seus registros. Os totais mensais ficam separados dos dias observados. Importação local, sem substituir treinos, refeições ou pesagens existentes.</p>
       <button class="primary full mt-12" data-action="export-ai">Exportar todos os dados para IA (JSON)</button><p class="small muted">Inclui musculação, Muay Thai, histórico corporal, bioimpedância, passos diários, alimentação, rotina diária de saúde, metas e rascunhos. Arquivo gerado localmente, não enviado pela FORJA. Contém informações pessoais: compartilhe somente com uma IA confiável. Não é um arquivo de restauração.</p><div class="btnrow mt-12"><button class="secondary" data-action="export-json">Baixar backup JSON</button><button class="secondary" data-action="export-csv">Exportar séries CSV</button><button class="secondary" data-action="import-json">Importar ou mesclar backup</button></div>
         <p class="small muted mt-12">Ao importar, a FORJA mantém os registros existentes e acrescenta apenas sessões e exercícios ainda não encontrados. Em uma instalação vazia, carrega o backup completo. Exporte seu histórico atual antes de qualquer migração.</p></section>
@@ -1631,7 +1643,7 @@
       return notify('Não foi possível salvar o histórico. O rascunho foi mantido; não feche esta página.');
     }
     const discomfort=result.some(en=>en.pain!==null && en.pain>0);
-    clearDraft();ui.tab='history';render();window.scrollTo(0,0);
+    clearDraft();ui.tab='history';ui.historyFilter='all';render();window.scrollTo(0,0);
     const skippedCount=state.sessions[state.sessions.length-1].skipped.filter(item=>item.reason==='sem-registro').length;
     notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':
       skippedCount?`Treino salvo. ${skippedCount} exercício(s) sem registro marcado(s) como pulado(s).`:
@@ -1838,7 +1850,26 @@
       ui.tab='nutrition';ui.editor=null;render();window.scrollTo(0,0);
       if(action==='nutrition-goals')diary.goals();return;
     }
-
+    if(action==='progress-open-training'){
+      openProgress('training',{section:btn.dataset.section==='progress-steps-title'?'progress-steps-title':null});return;
+    }
+    if(action==='history-filter'){
+      if(!['all','strength','muay'].includes(btn.dataset.kind))return;
+      ui.historyFilter=btn.dataset.kind;
+      render();document.querySelector('.history-filter[aria-pressed="true"]')?.focus({preventScroll:true});return;
+    }
+    if(action==='history-knee'){
+      ui.tab='history';ui.editor=null;ui.historyFilter='strength';
+      const pendingIds=new Set(dueKnee().map(s=>s.id));
+      const index=latestSessions().findIndex(s=>pendingIds.has(s.id));
+      if(index>=0)ui.historyStrengthLimit=Math.max(ui.historyStrengthLimit,index+1);
+      render();document.querySelector('.history-card[open]')?.scrollIntoView({block:'start'});return;
+    }
+    if(action==='history-data'){
+      ui.tab='settings';ui.editor=null;render();
+      document.getElementById('settings-data')?.scrollIntoView({block:'start'});
+      document.getElementById('settings-data-title')?.focus({preventScroll:true});return;
+    }
     if(action==='history-more'){
       if(btn.dataset.kind==='strength')ui.historyStrengthLimit=Math.min(state.sessions.length,ui.historyStrengthLimit+5);
       else if(btn.dataset.kind==='muay')ui.historyMuayLimit=Math.min(state.muay.sessions.length,ui.historyMuayLimit+5);
@@ -1914,7 +1945,7 @@
       render();notify(copied+' carga(s) preparadas. Registre repetições e RIR após executar.');return;
     }
     if(action==='body-open'){
-      ui.bodyOpen=true;ui.bodyView='current';ui.bodyEditDate=null;ui.tab='progress';
+      ui.bodyOpen=true;ui.bodyView='current';ui.bodyEditDate=null;ui.tab='progress';ui.evolutionView='weight';
       render();window.scrollTo(0,0);return;
     }
     if(action==='body-back'){
@@ -2122,7 +2153,7 @@
       }else state.muay.sessions.push(result.session);
       state.muay.draft=null;
       if(!save()){state.muay.draft=d;if(d.editingId){state.muay.sessions=state.muay.sessions.map(s=>s.id===d.editingId?original:s);}else state.muay.sessions.pop();return;}
-      ui.tab='history';render();notify('Treino de Muay Thai salvo.');return;
+      ui.tab='history';ui.historyFilter='all';render();notify('Treino de Muay Thai salvo.');return;
     }
     if(action==='muay-cancel'){
       if(confirm('Descartar o rascunho de Muay Thai?')){state.muay.draft=null;save();render();}
@@ -2160,9 +2191,7 @@
     }
     else if(action==='finish')finishWorkout();
     else if(action==='evo-view'){
-      if(!['weight','nutrition'].includes(btn.dataset.view))return;
-      ui.evolutionView=btn.dataset.view;
-      render();return;
+      openProgress(btn.dataset.view,{focusTab:true});return;
     }
     else if(action==='evo-chart-mode'){
       if(!['weight','measures'].includes(btn.dataset.mode))return;
@@ -2247,10 +2276,21 @@
     if(event.target.matches?.('.ex-anatomy'))ui.anatomyOpen[event.target.dataset.anatomy]=event.target.open;
     if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
     if(event.target.matches?.('.evo-more-tools'))ui.evolutionExtrasOpen=event.target.open;
+    if(event.target.matches?.('.evo-training-tools'))ui.evolutionTrainingOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
   },true);
   screen.addEventListener('click',event=>{
     const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
+  });
+  screen.addEventListener('keydown',event=>{
+    const tab=event.target.closest('[data-action="evo-view"]');
+    if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+    const views=['weight','training','nutrition'],index=views.indexOf(tab.dataset.view);
+    if(index<0)return;
+    event.preventDefault();
+    const next=event.key==='Home'?0:event.key==='End'?views.length-1:
+      (index+(event.key==='ArrowRight'?1:-1)+views.length)%views.length;
+    openProgress(views[next],{focusTab:true});
   });
   function updateMuayField(event) {
     const el=event.target,d=state.muay.draft;
@@ -2382,7 +2422,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-anatomy10',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-navigation11',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
