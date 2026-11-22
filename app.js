@@ -17,6 +17,7 @@
   const NUTRITION = window.ForjaNutrition;
   const NUI = window.ForjaNutritionUI;
   const PERF = window.ForjaPerformanceTrends;
+  const ANATOMY = window.ForjaExerciseAnatomy;
   const EVO = window.ForjaEvolutionDashboard;
   const NCAT = window.ForjaNutritionCatalog;
   const KEY = 'forja.academia.v1';
@@ -176,6 +177,7 @@
     strengthGroup: null, strengthExercise: null,
     catalogOpen: false, catalogAll: false, catalogMode:'replacement',
     catalogGroup:'all',catalogSearch:'',
+    anatomyOpen:{},
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
@@ -757,6 +759,7 @@
             </div>
             <h3>${esc(ex.name)}</h3>
             <p class="catalog-browser-description">${esc(description)}</p>
+            ${ANATOMY?.describe(ex.id)?'<small class="catalog-anatomy-note">Mapa muscular disponível na ficha do exercício</small>':''}
             <div class="catalog-browser-bottom">
               <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
               ${existing?
@@ -1021,6 +1024,7 @@
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
         <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p></div>
         <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
+      ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]))||''}
       <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
       <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
@@ -2035,6 +2039,7 @@
   const screen=document.getElementById('screen');
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
+    if(event.target.matches?.('.ex-anatomy'))ui.anatomyOpen[event.target.dataset.anatomy]=event.target.open;
     if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
     if(event.target.matches?.('.evo-more-tools'))ui.evolutionExtrasOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
@@ -2165,7 +2170,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-catalog05',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261121-anatomy06',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

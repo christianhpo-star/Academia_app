@@ -1,5 +1,16 @@
 # FORJA
 
+## Guia anatômico na ficha (piloto de membros superiores, novembro/2026)
+
+- Em **Treinos → Iniciar treino**, cada exercício conhecido dos blocos **A (costas/bíceps)** e **B (peito/ombros/tríceps)** exibe uma miniatura anatômica e o acordeão nativo **Músculos e execução**, fechado inicialmente.
+- Ao expandir, aparece uma **ilustração SVG original e offline** do tronco/braços em vista anterior ou posterior: azul vivo = grupo principal, azul suave = auxiliares. Texto descreve músculos, oferece uma dica curta e ressalta que a participação varia com técnica, carga e equipamento.
+- O **voador inverso** realça deltoide posterior, trapézio médio e romboides; o **voador de peito** realça peitoral maior e deltoide anterior. Os dois não compartilham o mesmo mapa.
+- A série, histórico de carga, recomendações, RIR e botões de registro continuam sob o painel, sem modal, animação automática ou janela dentro da janela.
+- **Cobertura explícita:** IDs de todos os movimentos atuais A/B em `exercise-anatomy.js`; C/D e movimentos personalizados sem mapeamento continuam **sem visual** até revisão específica, para evitar orientar erroneamente.
+- Abertura/fechamento do painel não lê, cria, modifica nem salva registros; o armazenamento e o backup JSON não sofrem migração. Imagem de referência enviada pelo usuário inspira apenas a ideia, não foi copiada.
+- QA: `tests/exercise-anatomy.test.cjs` e `tests/smoke_anatomy.py`, incluindo largura 320/390 px e verificação de histórico/draft.
+
+
 ## Atualização: passos, frutas e evolução por tendências (15/11/2026)
 
 - **Passos na tela inicial:** formulário direto, data editável, histórico recente e salvamento por dia. Os dados seguem locais e são incluídos no backup JSON; sem leitura automática do Samsung Health. 0 só quando informado. Valores ausentes não entram como zero na média.
