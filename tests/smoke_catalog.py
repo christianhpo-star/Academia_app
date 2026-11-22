@@ -145,66 +145,71 @@ with sync_playwright() as p:
     assert page.locator('[data-exercise="pulley-aberto"] [data-field="load"]').first.input_value()=='40'
     assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value()=='10'
     assert page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft')==snapshot
-    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
-    assert page.get_by_role('heading',name='Sugestões para este treino').count()==1
-    assert page.locator('.catalog-suggestion').count() in [1,2,3]
+    # One shared catalog now handles contextual replacement without nested lists.
+    page.locator('[data-action="catalog-session-open"][data-mode="replace"]').last.click()
+    assert page.locator('#catalog-search').count()==1
     assert page.locator('#flex-catalog-search').count()==0
-    assert page.locator('.catalog-suggestion [data-action="flex-add"]').count()>0
+    assert page.locator('.catalog-session-context').count()==1
+    assert page.locator('#catalog-source-select option').count()>=2
+    assert page.locator('#catalog-source-select option[value="pulley-aberto"]').count()==0, 'recorded reps must never be silently removed'
+    page.locator('#catalog-source-select').select_option('remada-baixa')
+    assert page.locator('.catalog-contextual').count()==1
     assert 'Histórico ainda limitado' in page.locator('.catalog-contextual').inner_text()
-    shots=ROOT/'screenshots';shots.mkdir(exist_ok=True)
-    page.screenshot(path=str(shots/'catalog-recommended-390.png'),full_page=True)
-    page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
-    page.locator('#flex-catalog-search').fill('Puxada alta')
-    assert page.locator('[data-flex-name]:visible').count()>0
-    page.screenshot(path=str(shots/'catalog-full-390.png'),full_page=True)
-    page.get_by_role('button',name='Ocultar catálogo completo').click()
-    assert page.locator('.catalog-suggestion').count()>0
-    assert page.locator('#flex-catalog-search').count()==0
-    # Real user still chooses an exercise; no auto-added entries.
-    before=page.evaluate('Object.keys(JSON.parse(window.__testStorage["forja.academia.draft.v1"]).draft.entries).length')
-    choice=page.locator('.catalog-suggestion [data-action="flex-add"]').first
-    candidate=choice.get_attribute('data-ex')
-    choice.click()
-    assert page.locator('[data-exercise="'+candidate+'"]').count()==1
-    after=page.evaluate('Object.keys(JSON.parse(window.__testStorage["forja.academia.draft.v1"]).draft.entries).length')
-    assert after==before+1
+    page.locator('#catalog-search').fill('puxada neutra')
+    assert page.locator('.catalog-browser-item:visible').count()>=1
+    before=page.evaluate('structuredClone(window.__testStorage)')
+    page.locator('[data-action="catalog-view"][data-ex="puxada-neutra"]').click()
+    assert 'Costas' in page.locator('.catalog-detail-facts').inner_text()
+    assert page.evaluate('window.__testStorage')==before
+    page.locator('[data-action="catalog-intent"]').click()
+    assert 'remada' in page.locator('#catalog-confirm-message').inner_text().lower()
+    assert page.evaluate('window.__testStorage')==before
+    page.locator('[data-action="catalog-cancel"]').click()
+    assert page.evaluate('window.__testStorage')==before
+    page.locator('[data-action="catalog-intent"]').click()
+    page.locator('[data-action="catalog-confirm"]').click()
+    assert page.locator('[data-exercise="remada-baixa"]').count()==0
+    assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value()=='10'
+    assert page.locator('[data-exercise="puxada-neutra"]').count()==1
+    assert page.locator('[data-skip-reason="remada-baixa"]').input_value()=='preferencia'
     assert page.locator('#flex-catalog-search').count()==0
     snapshot=page.evaluate('structuredClone(window.__testStorage)')
     page.close()
     page=start(ctx,snapshot,errors)
-    assert page.locator('[data-exercise="'+candidate+'"]').count()==1
-    # New session with knee concern: nothing should promote leg loading.
+    assert page.locator('[data-exercise="puxada-neutra"]').count()==1
+    assert page.locator('[data-exercise="remada-baixa"]').count()==0
+    assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value()=='10'
+    # Recovery and knee discomfort must remain visible before additional volume.
     import json
     draft=json.loads(snapshot['forja.academia.draft.v1'])
-    first_id=next(iter(draft['draft']['entries']))
-    draft['draft']['entries'][first_id]['pain']=2
+    draft['draft']['entries']['pulley-aberto']['pain']=2
     snapshot['forja.academia.draft.v1']=json.dumps(draft,ensure_ascii=False)
     page.close()
     page=start(ctx,snapshot,errors)
-    # Recover the existing A session with a recorded discomfort signal.
-    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
-    assert 'joelho' in page.locator('.catalog-caution').inner_text()
+    page.locator('[data-action="catalog-session-open"][data-mode="extra"]').click()
+    assert 'joelho' in page.locator('.catalog-caution').inner_text().lower()
+    shots=ROOT/'screenshots';shots.mkdir(exist_ok=True)
     for width in [320,390,768]:
         page.set_viewport_size({'width':width,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),f'overflow {width}'
         for card in page.locator('.catalog-suggestion').all():
             assert card.evaluate('e=>e.scrollWidth<=e.clientWidth+1'),f'clipping {width}'
-        if width==320:page.screenshot(path=str(shots/'catalog-recommended-320.png'),full_page=True)
-    import json
-    # Exercício disponível na ficha B, buscável e persistente sem criar treino realizado.
+        if width==320:page.screenshot(path=str(shots/'catalog-unified-320.png'),full_page=True)
+        if width==390:page.screenshot(path=str(shots/'catalog-unified-390.png'),full_page=True)
+    # Explicit add only affects today's draft, not the permanent B plan.
     page.close()
     page=start(ctx,{},errors)
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.locator('[data-action="select-plan"][data-plan="B"]').click()
     page.locator('[data-action="start"][data-plan="B"]').click()
-    assert page.locator('[data-exercise="supino-canadense"]').count()==0
-    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
-    # A lista automática é limitada às três melhores opções; a alternativa fica no catálogo completo.
-    page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
-    page.locator('#flex-catalog-search').fill('canadense')
-    choice=page.locator('.catalog-all [data-action="flex-add"][data-ex="supino-canadense"]')
-    assert choice.count()==1
-    choice.click()
+    page.locator('[data-action="catalog-session-open"][data-mode="add"]').click()
+    page.locator('#catalog-search').fill('canadense')
+    assert page.locator('.catalog-browser-item:visible').count()==1
+    page.locator('[data-action="catalog-view"][data-ex="supino-canadense"]').click()
+    before=page.evaluate('structuredClone(window.__testStorage)')
+    page.locator('[data-action="catalog-intent"]').click()
+    assert page.evaluate('window.__testStorage')==before
+    page.locator('[data-action="catalog-confirm"]').click()
     assert page.locator('[data-exercise="supino-canadense"]').count()==1
     snapshot=page.evaluate('structuredClone(window.__testStorage)')
     exercise=next(ex for ex in json.loads(snapshot['forja.academia.v1'])['exercises'] if ex['id']=='supino-canadense')
@@ -214,5 +219,5 @@ with sync_playwright() as p:
     page=start(ctx,snapshot,errors)
     assert page.locator('[data-exercise="supino-canadense"]').count()==1
     assert not errors,errors
-    print('PASS catalog: contextual first, 3 max, manual addition, full list search, recovery, 320/390/768, autosave')
+    print('PASS catalog: one shared library; replacement safely preserves completed reps, manual add inactive, recovery and mobile')
     browser.close()
