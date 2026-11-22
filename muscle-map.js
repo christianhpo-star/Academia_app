@@ -3,10 +3,11 @@
   'use strict';
   const H=typeof module!=='undefined'&&module.exports?require('./muscle-history.js'):root.ForjaMuscleHistory;
   const B=typeof module!=='undefined'&&module.exports?require('./muscle-body.js'):root.ForjaMuscleBody;
+  const CARDIO=typeof module!=='undefined'&&module.exports?require('./cardio.js'):root.ForjaCardio;
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=value=>Number(value||0).toLocaleString('pt-BR',{maximumFractionDigits:1});
   const date=day=>typeof day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(day)?day.slice(8)+'/'+day.slice(5,7):'—';
-  const stairPace=pace=>pace&&root.ForjaCardio?.paceLabel?.({type:'escada',...pace})||'';
+  const stairPace=pace=>pace&&CARDIO?.paceLabel?.({type:'escada',...pace})||'';
   const LEVELS=['Sem registro','Menor volume','Intermediário','Maior volume'];
   const validDays=days=>[7,30,90].includes(Number(days))?Number(days):30;
   function model(state,day,days=30){

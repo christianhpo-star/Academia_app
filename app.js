@@ -1116,7 +1116,15 @@
         option.disabled=rows.some((row,i)=>i!==index&&row?.type===option.value);
       });
       const pace=document.querySelector('[data-cardio-pace-index="'+index+'"]');
-      if(pace)pace.hidden=rows[index]?.type!=='escada';
+      if(pace) {
+        pace.hidden=rows[index]?.type!=='escada';
+        const speed=pace.querySelector('[data-cardio-field="avgSpeed"]');
+        if(speed) {
+          const byLevel=rows[index]?.speedUnit==='machine_level';
+          speed.max=byLevel?'99':'240';
+          speed.placeholder=byLevel?'Ex.: 7':'Ex.: 55';
+        }
+      }
     });
   }
   function renderReviewContent(){
@@ -1690,7 +1698,8 @@
       const row=ui.draft.cardio?.[index];
       if(!row||!Number.isInteger(index)||!['type','minutes','avgSpeed','speedUnit'].includes(field))return;
       row[field]=el.value;
-      persistDraft();if(field==='type')updateCardioChoices();updateCardioSummary();refreshReview();return;
+      persistDraft();if(field==='type'||field==='speedUnit')updateCardioChoices();
+      updateCardioSummary();refreshReview();return;
     }
     if(el.dataset.draftMeta) {ui.draft[el.dataset.draftMeta]=el.value;persistDraft();return;}
     if(el.dataset.exPain && ui.draft.entries[el.dataset.exPain]) {
