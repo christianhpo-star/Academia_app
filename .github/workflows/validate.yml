@@ -41,10 +41,13 @@ jobs:
           node --check evolution-dashboard.js
           node --check performance-trends.js
           node --check exercise-anatomy.js
+          node --check muscle-history.js
+          node --check muscle-body.js
+          node --check muscle-map.js
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/nutrition-balance.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/catalog-session.test.cjs tests/catalog-expansion.test.cjs tests/exercise-anatomy.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/joelho-frango.test.cjs tests/nutrition-presets.test.cjs tests/performance-trends.test.cjs tests/nutrition-ui.test.cjs tests/evolution-dashboard.test.cjs
+        run: node --test tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/nutrition-balance.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/catalog-session.test.cjs tests/catalog-expansion.test.cjs tests/exercise-anatomy.test.cjs tests/muscle-history.test.cjs tests/muscle-map.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/joelho-frango.test.cjs tests/nutrition-presets.test.cjs tests/performance-trends.test.cjs tests/nutrition-ui.test.cjs tests/evolution-dashboard.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
@@ -70,6 +73,7 @@ jobs:
           python3 tests/smoke_catalog_detail.py
           python3 tests/smoke_anatomy.py
           python3 tests/smoke_leg_anatomy.py
+          python3 tests/smoke_muscle_history.py
           python3 tests/smoke_body.py
           python3 tests/smoke_activity.py
           python3 tests/smoke_health.py
@@ -105,6 +109,7 @@ jobs:
             screenshots/focus-*.png
             screenshots/catalog-*.png
             screenshots/anatomy-*.png
+            screenshots/muscle-*.png
             screenshots/body-*.png
             screenshots/nutrition-*.png
             screenshots/evolution-*.png

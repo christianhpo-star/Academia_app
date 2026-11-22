@@ -85,8 +85,9 @@ with sync_playwright() as p:
     assert next(e for e in stored['exercises'] if e['id']=='puxada-neutra')['active'] is False
     page.get_by_role('button',name='Evolução',exact=True).click()
     page.locator('[data-action="evo-view"][data-view="training"]').click()
-    assert page.get_by_role('heading',name='Treino por grupo').count()==1
-    assert page.locator('.evo-volume-row').count()==4
+    assert page.get_by_role('heading',name='Mapa muscular',exact=True).count()==1
+    assert page.locator('.muscle-map-card svg[data-muscle-body-view="front"]').count()==1
+    assert page.locator('.muscle-map-card [data-muscle-region="biceps"]').get_attribute('data-level')!='0'
     page.locator('.evo-training-tools > summary').click()
     assert 'Costas' in page.locator('.dose-card').inner_text()
 
