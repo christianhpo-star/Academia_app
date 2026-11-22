@@ -154,8 +154,8 @@
       '<span class="ex-anatomy-chevron" aria-hidden="true">⌄</span></summary>'+
       '<div class="ex-anatomy-expanded">'+
       '<div class="ex-anatomy-large">'+figure(id,false)+'</div>'+
-      '<div class="ex-anatomy-info"><span class="ex-anatomy-legend"><i class="ex-anatomy-swatch primary"></i><b>Principal</b> '+safe(item.primary)+'</span>'+
-      (item.secondary?'<span class="ex-anatomy-legend"><i class="ex-anatomy-swatch secondary"></i><b>Auxiliares</b> '+safe(item.secondary)+'</span>':'')+
+      '<div class="ex-anatomy-info"><span class="ex-anatomy-legend"><span class="ex-anatomy-legend-head"><i class="ex-anatomy-swatch is-main"></i><b>Principal</b></span><span>'+safe(item.primary)+'</span></span>'+
+      (item.secondary?'<span class="ex-anatomy-legend"><span class="ex-anatomy-legend-head"><i class="ex-anatomy-swatch is-assist"></i><b>Auxiliares</b></span><span>'+safe(item.secondary)+'</span></span>':'')+
       '<p class="ex-anatomy-cue">'+safe(item.cue)+'</p>'+
       '<p class="ex-anatomy-disclaimer">Ilustração orientativa: a participação muscular varia com a execução, carga e equipamento.</p>'+
       '</div></div></details>';
