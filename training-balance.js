@@ -66,7 +66,7 @@
         direct7:lastWeek.directSets,lastDirectDay:lastDay,gapDays:gap,
         severity:missing?'unrecorded':'low',reason,
         options:options.slice(0,5).map(x=>({id:x.id,name:x.name,group:x.group,knee:!!x.knee})),
-        score:missing?100:40});
+        score:gap!=null&&gap>=21?120:missing?100:40});
     }
     alerts.sort((a,b)=>b.score-a.score||
       TARGETS.indexOf(a.id)-TARGETS.indexOf(b.id)||
