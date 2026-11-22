@@ -41,10 +41,11 @@ with sync_playwright() as p:
     assert saved['settings']['goalMode']=='muscle_gain'
     assert len(saved['nutrition']['settings'].get('targets',[]))==1 and saved['nutrition']['settings']['targets'][0]['source']=='manual'
     page.locator('#nav [data-tab="progress"]').click()
+    page.locator('.evo-more-tools > summary').click()
     assert page.locator('.goal-plan-card').count()==1
+    assert page.locator('.goal-plan-card').is_visible()
     assert 'Ganhar massa muscular' in page.locator('.goal-plan-card').inner_text()
     assert 'Treinos:' in page.locator('.goal-plan-card').inner_text()
-    page.locator('.evo-more-tools > summary').click()
     page.locator('[data-action="goal-open"]').click()
     assert page.locator('#goal-mode').input_value()=='muscle_gain'
     page.locator('#goal-mode').select_option('weight')
@@ -53,6 +54,7 @@ with sync_playwright() as p:
     page.locator('#goal-form button[type="submit"]').click()
     assert json.loads(page.evaluate("localStorage.getItem('forja.academia.v1')"))['settings']['goalMode']=='weight'
     page.locator('#nav [data-tab="progress"]').click()
+    assert page.locator('.goal-plan-card').is_visible()
     assert 'Plano por objetivo' in page.locator('.goal-plan-card').inner_text()
     assert 'Rever prazo' in page.locator('.goal-plan-card').inner_text() or 'Prazo encerrado' in page.locator('.goal-plan-card').inner_text()
     assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth')
