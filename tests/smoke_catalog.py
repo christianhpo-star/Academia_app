@@ -32,8 +32,15 @@ with sync_playwright() as p:
     page=start(ctx,{},errors)
     # Catálogo global existe fora do treino, com todos os grupos.
     page.get_by_role('button',name='Treinos',exact=True).click()
-    page.locator('.plan-editor-accordion > summary').click()
-    page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
+    assert page.locator('[data-action="training-destination"]').count()==2
+    assert page.locator('[data-action="training-destination"][data-to="plans"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('.plan-editor-accordion').count()==1
+    assert page.locator('.plan-editor-accordion').get_attribute('open') is None
+    original=page.evaluate('JSON.stringify(window.__testStorage)')
+    page.locator('[data-action="training-destination"][data-to="catalog"]').click()
+    assert page.locator('[data-action="training-destination"][data-to="catalog"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('.plan-editor-accordion').count()==0
+    assert page.evaluate('JSON.stringify(window.__testStorage)')==original
     assert page.locator('.catalog-browser-item').count()>=40
     assert page.locator('#catalog-search').count()==1
     assert page.locator('#catalog-count').count()==1
@@ -82,6 +89,19 @@ with sync_playwright() as p:
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Iniciar treino A').click()
+    assert page.locator('[data-action="training-destination"][data-to="plans"]').get_attribute('aria-pressed')=='true'
+    page.locator('[data-exercise="pulley-aberto"] [data-field="load"]').first.fill('40')
+    page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.fill('10')
+    snapshot=page.evaluate('localStorage.getItem("forja.academia.draft.v1")')
+    assert snapshot
+    page.locator('[data-action="training-destination"][data-to="catalog"]').click()
+    assert page.locator('.training-draft-notice').count()==1
+    assert 'Treino em andamento preservado' in page.locator('.training-draft-notice').inner_text()
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==snapshot
+    page.locator('.training-draft-notice [data-to="plans"]').click()
+    assert page.locator('[data-exercise="pulley-aberto"] [data-field="load"]').first.input_value()=='40'
+    assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value()=='10'
+    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==snapshot
     page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
     assert page.get_by_role('heading',name='Sugestões para este treino').count()==1
     assert page.locator('.catalog-suggestion').count() in [1,2,3]
