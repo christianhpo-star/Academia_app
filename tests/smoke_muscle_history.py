@@ -298,8 +298,12 @@ def check_populated(context, seed, errors, folder):
     row.press('Enter')
     row = card.locator('.muscle-map-row[data-muscle="adductors"]')
     assert row.get_attribute('aria-pressed') == 'true'
-    assert row.evaluate('node => document.activeElement === node')
     assert card.locator('.muscle-map-breakdown').evaluate('node => node.open')
+    assert row.evaluate('node => document.activeElement === node'), row.evaluate("""node => ({
+      active: document.activeElement?.outerHTML,
+      listOpen: node.closest('details')?.open,
+      visible: node.getClientRects().length > 0
+    })""")
     assert card.get_attribute('data-muscle-view') == 'front'
     card.locator('.muscle-map-breakdown > summary').click()
 

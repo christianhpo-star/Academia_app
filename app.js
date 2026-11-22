@@ -1327,6 +1327,10 @@
     const restoreFigure=Boolean(restoreMuscle&&focused.closest('svg'));
     const restoreRow=Boolean(restoreMuscle&&focused.classList.contains('muscle-map-row'));
     const scroll=window.scrollY;
+    // Native details.toggle is queued: read the actual open state before a
+    // synchronous selection rebuild, so the replacement focus target is visible.
+    ui.evolutionMuscleListOpen=Boolean(content.querySelector('.muscle-map-breakdown')?.open);
+    ui.evolutionMuscleMethodOpen=Boolean(content.querySelector('.muscle-map-method')?.open);
     card.dataset.muscleDays=String(ui.evolutionVolumeDays);
     card.dataset.muscleView=ui.evolutionMuscleView;
     card.querySelectorAll('[data-action="evo-volume-days"]').forEach(control=>{
