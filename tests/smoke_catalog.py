@@ -112,7 +112,7 @@ with sync_playwright() as p:
     page.locator('[data-action="catalog-filter"][data-group="B"]').click()
     assert page.locator('.catalog-browser-item').count()<initial_count
     assert page.locator('.catalog-browser-item').count()>0
-    assert page.locator('#catalog-count').inner_text().startswith(str(page.locator('.catalog-browser-item').count()))
+    assert page.locator('#catalog-count').inner_text()==('Exibindo '+str(page.locator('.catalog-browser-item:visible').count())+' de '+str(page.locator('.catalog-browser-item').count())+' encontrados')
     # Explorar não inicia nem altera sessão.
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.locator('[data-action="catalog-filter"][data-group="all"]').click()
