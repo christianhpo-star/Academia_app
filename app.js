@@ -1040,8 +1040,12 @@
           ui.draft.skipped.map(item=>'<div class="flex-skip-item"><span>' + esc(exerciseFor(item.id)?.name||item.id) + '</span><select aria-label="Motivo de retirar ' + esc(exerciseFor(item.id)?.name||item.id) + '" data-skip-reason="' + esc(item.id) + '">' +
           Object.entries(F.reasons).map(([value,label])=>'<option value="' + esc(value) + '"' + (item.reason===value?' selected':'') + '>' + esc(label) + '</option>').join('') +
           '</select><button class="secondary small-button" data-action="flex-restore" data-ex="' + esc(item.id) + '">Restaurar</button></div>').join('') + '</div>' : ''}
-        <button class="secondary full mt-12" data-action="flex-catalog-toggle" aria-expanded="${ui.catalogOpen}">${ui.catalogOpen?'Ocultar catálogo':'+ Adicionar exercício do catálogo'}</button>
-        ${ui.catalogOpen ? renderFlexCatalog() : ''}
+        <div class="session-catalog-actions" role="group" aria-label="Ajustes de exercícios">
+          <button type="button" class="secondary" data-action="catalog-session-open" data-mode="replace">Substituir exercício</button>
+          <button type="button" class="secondary" data-action="catalog-session-open" data-mode="add">+ Adicionar só hoje</button>
+          <button type="button" class="button-inline" data-action="catalog-session-open" data-mode="extra">Tenho energia para mais</button>
+        </div>
+        <p class="small muted">A biblioteca abre fora do registro das séries. Ao voltar, suas cargas e repetições continuam no rascunho.</p>
       </section>
       ${renderAdherencePanel(true)}
       ${renderDosePanel(true)}
@@ -1063,57 +1067,6 @@
   function refreshReview() {
     const node=document.querySelector('#workout-review');
     if(node)node.innerHTML=renderReviewContent();
-  }
-  function renderFlexCatalog() {
-    const choices=F.options(state.exercises,ui.draft);
-    const analysis=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
-      exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
-    const advice=ADVICE.suggest({options:choices,draft:ui.draft,exercises:state.exercises,
-      strengthSessions:state.sessions,muaySessions:state.muay.sessions,
-      settings:state.settings,today:today(),dose:DOSE,mode:ui.catalogMode,analysis});
-    const picks=advice.recommendations.map(ex=>`
-      <article class="catalog-suggestion">
-        <div class="catalog-recommend-heading">
-          <strong>${esc(ex.name)}</strong>
-          <span class="catalog-recommend-tag">${ex.kind==='extra-set'?'Série extra':ex.kind==='extra-exercise'?'Outro equipamento':ex.kind==='replacement'?'Substituição':'Variação para substituir'}</span>
-        </div>
-        <p class="small muted">${esc(ex.muscle||'Grupo muscular')} · ${esc(ex.equipment||'Equipamento não informado')}</p>
-        <p class="small">${esc(ex.reason)}</p>
-        <button type="button" class="secondary small-button" data-action="${ex.kind==='extra-set'?'dose-add-one':ex.kind==='extra-exercise'?'catalog-extra-add':'flex-add'}" data-ex="${esc(ex.id)}" ${ex.sourceId?'data-source="'+esc(ex.sourceId)+'"':''}>${ex.kind==='extra-set'?'Acrescentar uma série':ex.kind==='extra-exercise'?'Adicionar exercício opcional':'Adicionar para substituir'}</button>
-      </article>`).join('');
-    const full=choices.map(ex=>
-      '<div class="flex-catalog-row" data-flex-name="' + esc((ex.name+' '+ex.equipment+' '+ex.muscle).toLocaleLowerCase('pt-BR')) + '">' +
-      '<div><strong>' + esc(ex.name) + '</strong><small>' + esc(ex.muscle) + ' · ' + esc(ex.equipment) + '</small></div>' +
-      '<button class="secondary small-button" data-action="flex-add" data-ex="' + esc(ex.id) + '">Adicionar</button></div>'
-    ).join('');
-    return `<div class="flex-catalog mt-12">
-      <div class="catalog-mode-switch" role="group" aria-label="Tipo de recomendação">
-        <button type="button" class="secondary ${ui.catalogMode==='replacement'?'selected':''}" data-action="catalog-mode" data-mode="replacement" aria-pressed="${ui.catalogMode==='replacement'}">Substituir exercício</button>
-        <button type="button" class="secondary ${ui.catalogMode==='extra'?'selected':''}" data-action="catalog-mode" data-mode="extra" aria-pressed="${ui.catalogMode==='extra'}">Tenho energia para mais</button>
-      </div>
-      ${ui.catalogMode==='extra'?`<div class="catalog-energy"><strong>Como está sua energia agora?</strong>
-        <button type="button" class="secondary" data-action="catalog-energy" aria-pressed="${ui.draft.energy==='leve'}">${ui.draft.energy==='leve'?'Energia sobrando ✓ · alterar':'Estou com energia sobrando'}</button>
-        <p class="small muted">Energia sobrando não é autorização para volume extra. Consideramos séries, RIR e recuperação.</p></div>`:''}
-      <section class="catalog-contextual" aria-labelledby="catalog-recommended-heading">
-        <div class="row-between">
-          <h3 id="catalog-recommended-heading">${ui.catalogMode==='extra'?'Opções para acrescentar':'Sugestões para este treino'}</h3>
-          <span class="catalog-recommend-tag">${ui.catalogMode==='extra'?'Acréscimo opcional':'Substituição'}</span>
-        </div>
-        <p class="small muted">${esc(advice.message)}</p>
-        ${advice.caution?'<p class="catalog-caution">'+esc(advice.caution)+'</p>':''}
-        ${picks||'<p class="catalog-empty">Sem recomendações elegíveis com os dados disponíveis.</p>'}
-        <p class="tiny muted">${esc(advice.basis)}</p>
-      </section>
-      ${ui.catalogMode==='replacement'?`<button type="button" class="secondary full catalog-all-toggle" data-action="catalog-show-all" aria-expanded="${ui.catalogAll}">
-        ${ui.catalogAll?'Ocultar catálogo completo':'Explorar todos os exercícios ('+choices.length+')'}
-      </button>
-      ${ui.catalogAll?`<div class="catalog-all">
-        <label for="flex-catalog-search">Buscar por nome ou equipamento</label>
-        <input id="flex-catalog-search" type="search" placeholder="Buscar exercício..." aria-controls="flex-catalog-list" />
-        <div class="flex-catalog-list" id="flex-catalog-list">${full||'<p class="small muted">Sem exercícios adicionais disponíveis.</p>'}</div>
-      </div>`:''}`:''}
-      <p class="tiny muted">${ui.catalogMode==='extra'?'Escolha uma série OU outro equipamento. Sem registro de execução, a opção não entra no volume realizado.':'Para substituir, retire o movimento original que ainda não foi realizado. Não é aumento de volume.'}</p>
-    </div>`;
   }
   function renderAdherencePanel(inSession=false) {
     const insight=F.insights({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
@@ -1194,7 +1147,7 @@
       <div class="quick-log-tools"><span class="small muted">Preparo rápido · confirme as repetições depois de executar</span>
       <div class="quick-log-buttons"><button type="button" class="secondary small-button" data-action="quick-previous" data-ex="${esc(ex.id)}">Repetir cargas da última sessão</button>
       <button type="button" class="secondary small-button" data-action="quick-current" data-ex="${esc(ex.id)}">Repetir carga da série anterior</button></div></div>
-      <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button><button class="button-inline" data-action="flex-withdraw" data-ex="${esc(ex.id)}">Retirar só hoje</button></div>
+      <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button><button class="button-inline" data-action="catalog-session-open" data-mode="replace" data-source="${esc(ex.id)}" ${F.hasRecordedReps(en)?'disabled title="Este exercício já tem repetições registradas"':''}>Substituir</button><button class="button-inline" data-action="flex-withdraw" data-ex="${esc(ex.id)}">Retirar só hoje</button></div>
       ${ex.knee?`<div class="field mt-12"><label for="pain-${esc(ex.id)}">Dor no joelho durante o exercício (0–5+)</label><select id="pain-${esc(ex.id)}" data-ex-pain="${esc(ex.id)}" required>${painOptions(en.pain)}</select><span class="field-help">Informe 0 quando não sentiu dor. Este registro é necessário para salvar uma série efetiva deste exercício.</span></div>`:''}
     </section>`;
   }
