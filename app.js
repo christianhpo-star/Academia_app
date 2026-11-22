@@ -1088,6 +1088,15 @@
         <div class="field"><label for="cardio-type-${i}">Modalidade</label><select id="cardio-type-${i}" aria-label="Modalidade do cardio ${i+1}" data-cardio-field="type" data-cardio-index="${i}">
           ${CARDIO.TYPES.map(type=>`<option value="${type.id}" ${row?.type===type.id?'selected':''} ${rows.some((other,n)=>n!==i&&other?.type===type.id)?'disabled':''}>${esc(type.label)}</option>`).join('')}</select></div>
         <div class="field"><label for="cardio-minutes-${i}">Tempo (min)</label><input id="cardio-minutes-${i}" aria-label="Minutos de cardio ${i+1}" type="number" min="0" max="300" step="0.5" inputmode="decimal" placeholder="Ex.: 10" value="${esc(row?.minutes??'')}" data-cardio-field="minutes" data-cardio-index="${i}" /></div>
+        <div class="cardio-stair-pace" data-cardio-pace-index="${i}" ${row?.type==='escada'?'':'hidden'}>
+          <div class="field"><label for="cardio-speed-${i}">Ritmo médio (opcional)</label>
+            <input id="cardio-speed-${i}" aria-label="Ritmo médio da escada ${i+1}" type="number" min="1" max="240" step="any" inputmode="decimal"
+              placeholder="Ex.: 55" value="${esc(row?.avgSpeed??'')}" data-cardio-field="avgSpeed" data-cardio-index="${i}" /></div>
+          <div class="field"><label for="cardio-speed-unit-${i}">Unidade exibida</label><select id="cardio-speed-unit-${i}" data-cardio-field="speedUnit" data-cardio-index="${i}">
+            ${CARDIO.STAIR_SPEED_UNITS.map(option=>`<option value="${option.id}" ${(row?.speedUnit||'steps_min')===option.id?'selected':''}>${esc(option.label)}</option>`).join('')}
+          </select></div>
+          <p class="tiny muted">Degraus/min é cadência. Se o painel só mostrar nível, registre o nível da máquina; ele não equivale a velocidade.</p>
+        </div>
         <button type="button" class="button-inline cardio-remove" data-action="cardio-remove" data-index="${i}" aria-label="Retirar ${esc(CARDIO.label(row?.type))} deste treino">Retirar</button>
       </div>`).join('')}</div>
       <button type="button" class="secondary full" data-action="cardio-add" ${rows.length>=5?'disabled':''}>Adicionar cardio</button>
@@ -1106,6 +1115,8 @@
       [...select.options].forEach(option=>{
         option.disabled=rows.some((row,i)=>i!==index&&row?.type===option.value);
       });
+      const pace=document.querySelector('[data-cardio-pace-index="'+index+'"]');
+      if(pace)pace.hidden=rows[index]?.type!=='escada';
     });
   }
   function renderReviewContent(){
@@ -1113,7 +1124,7 @@
     const cardio=CARDIO.parse(ui.draft?.cardio);
     if(!cardio.ok)issues.push(cardio.error);
     return `<p class="small muted">${review.exercisesLogged} exercício(s) com séries · ${review.effectiveSets} série(s) efetiva(s)</p>
-    ${cardio.ok&&cardio.totalMinutes?`<p class="small">Cardio: ${cardio.entries.map(item=>esc(CARDIO.label(item.type))+' · '+fmt(item.minutes)+' min').join(' + ')}.</p>`:''}
+    ${cardio.ok&&cardio.totalMinutes?`<p class="small">Cardio: ${cardio.entries.map(item=>esc(CARDIO.label(item.type))+' · '+fmt(item.minutes)+' min'+(CARDIO.paceLabel(item)?' · '+esc(CARDIO.paceLabel(item)):'')).join(' + ')}.</p>`:''}
     ${issues.length?`<ul class="review-issues">${issues.map(item=>`<li>${esc(item)}</li>`).join('')}</ul>`:
     '<p class="small">Sem pendências de preenchimento identificadas.</p>'}`;
   }
@@ -1581,7 +1592,7 @@
                   `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${esc(loadLabel(set.load,ex||en))} × ${set.reps} ${ex?.repPerSide?'rep./lado':'rep.'}${set.rir==null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
               </div><div class="text-right"><strong>${top?esc(loadLabel(top.load,ex||en)):'—'}</strong><br><span>${top?`${top.reps} ${ex?.repPerSide?'rep./lado':'rep.'}`:''}</span></div></li>`;
             }).join('')}</ul>
-            ${cardio.entries.length?`<section class="cardio-history" aria-label="Cardio deste treino"><h3>Cardio · ${fmt(cardio.totalMinutes)} min</h3><ul>${cardio.entries.map(item=>`<li><span>${esc(CARDIO.label(item.type))}</span><strong>${fmt(item.minutes)} min</strong></li>`).join('')}</ul></section>`:''}
+            ${cardio.entries.length?`<section class="cardio-history" aria-label="Cardio deste treino"><h3>Cardio · ${fmt(cardio.totalMinutes)} min</h3><ul>${cardio.entries.map(item=>`<li><span>${esc(CARDIO.label(item.type))}</span><strong>${fmt(item.minutes)} min${CARDIO.paceLabel(item)?'<small class="cardio-pace-history">'+esc(CARDIO.paceLabel(item))+'</small>':''}</strong></li>`).join('')}</ul></section>`:''}
             ${session.skipped?.length?`<details class="history-skipped"><summary>Pulados nesta sessão · ${session.skipped.length}</summary><ul>${session.skipped.map(item=>
               `<li>${esc(exerciseFor(item.id)?.name||item.id)}<span>${item.reason==='sem-registro'?'Sem registro':esc(F.reasons[item.reason]||'Motivo não informado')}</span></li>`).join('')}</ul></details>`:''}
             ${session.notes?`<p class="small muted">Observações: ${esc(session.notes)}</p>`:''}
@@ -1677,7 +1688,7 @@
     if(el.dataset.cardioField) {
       const index=Number(el.dataset.cardioIndex), field=el.dataset.cardioField;
       const row=ui.draft.cardio?.[index];
-      if(!row||!Number.isInteger(index)||!['type','minutes'].includes(field))return;
+      if(!row||!Number.isInteger(index)||!['type','minutes','avgSpeed','speedUnit'].includes(field))return;
       row[field]=el.value;
       persistDraft();if(field==='type')updateCardioChoices();updateCardioSummary();refreshReview();return;
     }
@@ -1811,7 +1822,7 @@
         'Meses parciais (complete:false) não podem ser comparados diretamente a meses completos sem ressalvas.',
         'state.dailyRoutine contém somente confirmações manuais opcionais de medicamento/suplemento; ausência não indica dose esquecida, não demonstra efeito no desempenho e não fundamenta conclusões clínicas.',
         'Sugestões de fator de atividade são heurísticas categóricas, não PAL medido e não somam calorias de exercícios.',
-        'session.cardio, quando presente, registra somente modalidade e minutos de cardio realizados naquela sessão; ausência não significa zero atividade. Esses minutos não são séries musculares nem calorias estimadas.',
+        'session.cardio registra modalidade, minutos e, opcionalmente para escada, ritmo médio em degraus/min ou nível do aparelho. O nível é específico do equipamento. A escada aparece como atividade complementar em quadríceps, glúteos e panturrilhas, mas minutos e velocidade não viram séries musculares, calorias, força ou hipertrofia estimada.',
         'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
       ],
       counts:{strengthSessions:state.sessions.length,muaySessions:state.muay.sessions.length,

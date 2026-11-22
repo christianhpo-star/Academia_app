@@ -37,7 +37,7 @@ for icon in manifest['icons']:
 
 
 # Prevent stale UI versions being silently reused by the offline shell.
-release = '20261122-abdomen14'
+release = '20261122-stairs15'
 worker = (root / 'sw.js').read_text(encoding='utf-8')
 app = (root / 'app.js').read_text(encoding='utf-8')
 assets = ['styles.css', 'data.js', 'cardio.js', 'training-sets.js', 'engine.js', 'muay.js', 'calendar.js',

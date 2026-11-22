@@ -63,3 +63,32 @@ test('history summary safely keeps valid known entries and counts each type once
   assert.equal(CARDIO.label('escada'),'Escada');
   assert.equal(CARDIO.label('<script>'),'Cardio');
 });
+
+test('stair cadence or machine level is optional, explicit and never inferred', () => {
+  const rows=[{type:'escada',minutes:'12,5',avgSpeed:'58,5',speedUnit:'steps_min'}];
+  const before=structuredClone(rows);
+  const parsed=CARDIO.parse(rows);
+  assert.deepEqual(parsed,{ok:true,entries:[{type:'escada',minutes:12.5,avgSpeed:58.5,speedUnit:'steps_min'}],totalMinutes:12.5});
+  assert.equal(CARDIO.paceLabel(parsed.entries[0]),'58,5 degraus/min');
+  assert.deepEqual(rows,before);
+  const level=CARDIO.parse([{type:'escada',minutes:10,avgSpeed:'7',speedUnit:'machine_level'}]);
+  assert.equal(level.ok,true);
+  assert.equal(CARDIO.paceLabel(level.entries[0]),'nível 7 (máquina)');
+  assert.deepEqual(CARDIO.parse([{type:'escada',minutes:10}]).entries,[{type:'escada',minutes:10}]);
+  assert.deepEqual(CARDIO.parse([{type:'esteira',minutes:8,avgSpeed:100}]).entries,[{type:'esteira',minutes:8}]);
+  assert.deepEqual(CARDIO.summarize([{type:'escada',minutes:9,avgSpeed:52,speedUnit:'steps_min'}]).entries,
+    [{type:'escada',minutes:9,avgSpeed:52,speedUnit:'steps_min'}]);
+});
+
+test('invalid stair cadence is rejected, while old cardio history remains readable', () => {
+  for (const avgSpeed of [0,-1,241,'0x10',NaN,Infinity,true,{},'n/a']) {
+    const out=CARDIO.parse([{type:'escada',minutes:8,avgSpeed,speedUnit:'steps_min'}]);
+    assert.equal(out.ok,false,String(avgSpeed));
+    assert.match(out.error,/velocidade média da escada/);
+  }
+  assert.equal(CARDIO.parse([{type:'escada',minutes:8,avgSpeed:100,speedUnit:'km_h'}]).ok,false);
+  assert.equal(CARDIO.parse([{type:'escada',minutes:8,avgSpeed:100,speedUnit:'machine_level'}]).ok,false);
+  assert.equal(CARDIO.parse([{type:'escada',minutes:'',avgSpeed:60}]).ok,false);
+  assert.equal(CARDIO.summarize([{type:'escada',minutes:8,avgSpeed:'invalid'}]).entries[0].avgSpeed,undefined);
+  assert.equal(CARDIO.paceLabel({type:'escada',minutes:8,avgSpeed:'invalid'}),'');
+});

@@ -232,3 +232,26 @@ test('malformed figure totals cannot inject markup or expose nonfinite values as
     assert.equal(row['data-total'],'0');
   }
 });
+
+test('stair exposure outlines leg regions but never recolors or adds resistance sets',()=>{
+  const saved=[{...session(TODAY,[exercise('supino-halteres',2)],'stair-map'),
+    cardio:[{type:'escada',minutes:11,avgSpeed:62,speedUnit:'steps_min'}]}];
+  const view=MAP.content({sessions:saved},TODAY,{days:7,view:'front',selected:'quadriceps'});
+  const q=regionGroups(svgFrom(view)).find(row=>row['data-muscle-region']==='quadriceps');
+  assert.equal(q['data-total'],'0');
+  assert.equal(q['data-level'],'0');
+  assert.equal(q['data-stair-cardio'],'true');
+  assert.match(view,/Escada:.*11 min/);
+  assert.match(view,/62 degraus\/min/);
+  assert.match(view,/atividade complementar/);
+  assert.match(view,/Não conta como séries/);
+  const back=MAP.content({sessions:saved},TODAY,{days:7,view:'back',selected:'glutes'});
+  const ids=regionGroups(svgFrom(back)).filter(row=>row['data-stair-cardio']==='true').map(row=>row['data-muscle-region']).sort();
+  assert.deepEqual(ids,['calves','glutes']);
+  assert.match(back,/11 min/);
+  const plain=MAP.model({sessions:saved.map(x=>({...x,cardio:[]}))},TODAY,7);
+  const withStairs=MAP.model({sessions:saved},TODAY,7);
+  assert.equal(withStairs.byId.quadriceps.total,plain.byId.quadriceps.total);
+  assert.equal(withStairs.byId.glutes.level,plain.byId.glutes.level);
+  assert.equal(withStairs.maxTotal,plain.maxTotal);
+});
