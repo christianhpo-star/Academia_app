@@ -136,7 +136,7 @@
       '</g>'+
       '<g class="ex-anatomy-underlines" fill="none" stroke="#7C9BAE" opacity=".33" stroke-width="1.1">'+
       (info.view==='back'?
-        '<path d="M100 66 L100 185 M76 94 L85 119 L99 134 M124 94 L115 119 L101 134 M78 125 Q87 141 93 157 M122 125 Q113 141 107 157"/>'+
+        '<path d="M100 66 L100 185 M76 94 L85 119 L99 134 M124 94 L115 119 L101 134 M78 125 Q87 141 93 157 M122 125 Q113 141 107 157"/>':
         '<path d="M100 84 L100 165 M78 113 Q100 128 122 113 M88 129 Q100 136 112 129 M92 140 L92 165 M108 140 L108 165"/>')+
       '<path d="M61 108 L45 153 M139 108 L155 153"/></g>'+
       '<g class="ex-anatomy-secondary">'+regions(info.assist,'secondary')+'</g>'+
