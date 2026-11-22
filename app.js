@@ -18,6 +18,7 @@
   const NUI = window.ForjaNutritionUI;
   const PERF = window.ForjaPerformanceTrends;
   const ANATOMY = window.ForjaExerciseAnatomy;
+  const CSESSION = window.ForjaCatalogSession;
   const EVO = window.ForjaEvolutionDashboard;
   const NCAT = window.ForjaNutritionCatalog;
   const KEY = 'forja.academia.v1';
@@ -175,7 +176,7 @@
     draftSavedAt: recoveredDraft?.savedAt || null,
     draftSaveOk: Boolean(recoveredDraft),
     strengthGroup: null, strengthExercise: null,
-    catalogOpen: false, catalogAll: false, catalogMode:'replacement',
+    catalogContext:'browse',catalogSourceId:null,
     catalogGroup:'all',catalogSearch:'',
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
     anatomyOpen:{},
@@ -720,6 +721,78 @@
         ${!ROUTINE.status(state.dailyRoutine,today()).configured?`<button class="home-muay-link" data-action="routine-manage"><span>Configurar rotina diária (opcional)</span><span aria-hidden="true">›</span></button>`:''}
       </div>
       <p class="home-footer-note">Metas, peso, gráficos e análise de volume ficam na aba Evolução.</p>`;
+  }
+  function catalogContext(){
+    return ui.draft && ['replace','add','extra'].includes(ui.catalogContext)
+      ?ui.catalogContext:'browse';
+  }
+  function leaveSessionCatalog(){
+    ui.tab='plans';ui.catalogContext='browse';ui.catalogSourceId=null;
+    ui.catalogDetailId=null;ui.catalogConfirmId=null;
+    render();window.scrollTo(0,0);
+  }
+  function openSessionCatalog(context='add',sourceId=null){
+    if(!ui.draft||!['replace','add','extra'].includes(context))return false;
+    if(sourceId&&!Object.hasOwn(ui.draft.entries||{},sourceId))return false;
+    if(context==='replace'&&sourceId&&F.hasRecordedReps(ui.draft.entries[sourceId]))
+      return notify('Este exercício tem repetições registradas. Ele não pode ser substituído sem preservar esses dados.');
+    ui.catalogContext=context;ui.catalogSourceId=context==='replace'?(sourceId||null):null;
+    ui.catalogDetailId=null;ui.catalogConfirmId=null;ui.catalogSearch='';ui.catalogGroup='all';
+    ui.tab='catalog';ui.editor=null;render();window.scrollTo(0,0);return true;
+  }
+  function sessionAdvice(mode){
+    if(!ui.draft)return {recommendations:[],message:'',caution:'',basis:''};
+    const choices=F.options(state.exercises,ui.draft);
+    const analysis=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
+    return ADVICE.suggest({options:choices,draft:ui.draft,exercises:state.exercises,
+      strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      settings:state.settings,today:today(),dose:DOSE,mode:mode==='extra'?'extra':'replacement',analysis});
+  }
+  function eligibleExtraIds(){
+    return sessionAdvice('extra').recommendations
+      .filter(item=>item.kind==='extra-exercise'&&item.sourceId).map(item=>item.id);
+  }
+  function renderCatalogContext(){
+    const mode=catalogContext();if(mode==='browse')return '';
+    const source=ui.catalogSourceId&&ui.draft.entries[ui.catalogSourceId];
+    const alternatives=CSESSION.sourceOptions(ui.draft);
+    const summary=mode==='replace'?'Escolha uma alternativa para substituir um exercício não realizado.':
+      mode==='extra'?'Acréscimo opcional com recomendação de recuperação; no máximo um.':
+      'Inclua um movimento só nesta sessão, sem alterar sua ficha.';
+    const advice=sessionAdvice(mode);
+    const shown=mode==='replace'
+      ?advice.recommendations.filter(item=>item.referenceId===ui.catalogSourceId)
+      :mode==='extra'?advice.recommendations.filter(item=>item.kind==='extra-exercise'):[];
+    const recommendations=shown.map(item=>'<article class="catalog-suggestion">'+
+      '<div class="catalog-recommend-heading"><strong>'+esc(item.name)+'</strong>'+
+      '<span class="catalog-recommend-tag">'+(mode==='extra'?'Uma série opcional':'Alternativa')+'</span></div>'+
+      '<p class="small">'+esc(item.reason)+'</p>'+
+      '<button type="button" class="secondary catalog-view-button" data-action="catalog-view" data-ex="'+esc(item.id)+'">Ver detalhes</button></article>').join('');
+    return '<section class="card catalog-session-context" aria-label="Catálogo da sessão">'+
+      '<div class="row-between"><h2>Escolher exercício para esta sessão</h2>'+
+      '<button type="button" class="button-inline" data-action="catalog-return-session">Voltar ao treino</button></div>'+
+      '<div class="catalog-session-modes" role="group" aria-label="O que deseja fazer">'+
+      [['replace','Substituir'],['add','Adicionar'],['extra','Tenho energia extra']].map(([key,label])=>
+        '<button type="button" data-action="catalog-session-mode" data-mode="'+key+'" aria-pressed="'+(mode===key)+'" class="'+(mode===key?'selected':'')+'">'+label+'</button>').join('')+'</div>'+
+      '<p class="small muted">'+esc(summary)+'</p>'+
+      (mode==='replace'?'<div class="field"><label for="catalog-source-select">Exercício que será substituído</label>'+
+        '<select id="catalog-source-select" aria-label="Exercício a substituir">'+
+        '<option value="">Escolha um exercício da sessão</option>'+
+        alternatives.map(entry=>'<option value="'+esc(entry.id)+'"'+(source?.id===entry.id?' selected':'')+'>'+
+          esc(exerciseFor(entry.id)?.name||entry.id)+'</option>').join('')+'</select>'+
+        '<p class="small muted">Exercícios com repetições registradas não podem ser retirados automaticamente.</p></div>':'')+
+      (mode==='extra'?'<p class="small muted">Sua energia é '+(ui.draft.energy==='leve'?'boa':'ainda não classificada como sobrando')+
+        '. <button type="button" class="button-inline" data-action="catalog-energy">'+
+        (ui.draft.energy==='leve'?'Rever energia':'Registrar energia sobrando')+'</button></p>':'')+
+      (advice.caution?'<p class="catalog-caution">'+esc(advice.caution)+'</p>':'')+
+      (mode!=='add'?'<div class="catalog-contextual" aria-label="Sugestões para esta sessão">'+
+        '<h3>'+ (mode==='extra'?'Acréscimos elegíveis':'Sugestões para este treino')+'</h3>'+
+        (recommendations||'<p class="small muted">'+(mode==='replace'&&!ui.catalogSourceId?
+          'Selecione acima o exercício original para ver alternativas relacionadas.':
+          'Nenhuma sugestão elegível; você ainda pode consultar os detalhes de outros movimentos.')+'</p>')+
+        '<p class="small muted">'+esc(advice.basis)+'</p></div>':'')+
+      '</section>';
   }
   // The catalog remains an independent, read-only view even while a session
   // draft exists. Switching destinations changes UI only, never local storage.
