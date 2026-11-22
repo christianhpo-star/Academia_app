@@ -144,9 +144,9 @@
       '<path d="M100 69 L100 184" stroke="#91A9B7" stroke-width=".7" stroke-dasharray="2 3" opacity="'+(info.view==='back'?'0.45':'0')+'"/>'+
       '</svg>';
   }
-  function panel(id){
+  function panel(id,expanded=false){
     const item=describe(id);if(!item)return '';
-    return '<details class="ex-anatomy" data-anatomy="'+safe(item.id)+'">'+
+    return '<details class="ex-anatomy" data-anatomy="'+safe(item.id)+'"'+(expanded?' open':'')+'>'+
       '<summary class="ex-anatomy-summary">'+
       '<span class="ex-anatomy-thumb">'+figure(id,true)+'</span>'+
       '<span class="ex-anatomy-title"><strong>Músculos e execução</strong>'+
