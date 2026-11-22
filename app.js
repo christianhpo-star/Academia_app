@@ -1835,27 +1835,73 @@
       if(!['plans','catalog'].includes(target))return;
       ui.tab=target;
       ui.editor=null;
+      ui.catalogDetailId=null;
+      ui.catalogConfirmId=null;
+      render();window.scrollTo(0,0);return;
+    }
+    if(action==='catalog-view'){
+      const ex=F.options(state.exercises,null).find(item=>item.id===btn.dataset.ex);
+      if(ui.tab!=='catalog'||!ex)return;
+      ui.catalogScrollY=window.scrollY;
+      ui.catalogDetailId=ex.id;
+      ui.catalogConfirmId=null;
+      render();window.scrollTo(0,0);
+      document.getElementById('catalog-detail-heading')?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-back'){
+      if(ui.tab!=='catalog'||!ui.catalogDetailId)return;
+      const id=ui.catalogDetailId;
+      ui.catalogDetailId=null;
+      ui.catalogConfirmId=null;
+      render();window.scrollTo(0,ui.catalogScrollY||0);
+      Array.from(document.querySelectorAll('[data-action="catalog-view"]'))
+        .find(item=>item.dataset.ex===id)?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-intent'){
+      if(ui.tab!=='catalog'||ui.catalogDetailId!==btn.dataset.ex)return;
+      const current=state.exercises.find(ex=>ex.id===btn.dataset.ex);
+      if(current?.active)return;
+      ui.catalogConfirmId=btn.dataset.ex;
+      render();
+      document.querySelector('[data-action="catalog-confirm"]')?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-cancel'){
+      if(ui.tab!=='catalog'||!ui.catalogConfirmId)return;
+      ui.catalogConfirmId=null;
+      render();document.querySelector('[data-action="catalog-intent"]')?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-confirm'){
+      const id=btn.dataset.ex;
+      if(ui.tab!=='catalog'||ui.catalogDetailId!==id||ui.catalogConfirmId!==id)return;
+      const current=state.exercises.find(ex=>ex.id===id);
+      if(current?.active){ui.catalogConfirmId=null;render();return;}
+      if(current){
+        const old=current.active;current.active=true;
+        if(!save()){current.active=old;return notify('Não foi possível ativar o exercício.');}
+        notify('Exercício ativado no bloco '+current.group+'.');
+      }else{
+        if(state.exercises.length>=200)return notify('Limite de exercícios atingido.');
+        const found=F.prepareCatalog(id,state.exercises);
+        if(!found?.isNew)return;
+        const added={...found.exercise,active:true};
+        state.exercises.push(added);
+        if(!save()){state.exercises.pop();return notify('Não foi possível adicionar o exercício.');}
+        notify('Exercício incluído na ficha do bloco '+added.group+'.');
+      }
+      ui.catalogConfirmId=null;render();return;
+    }
+    if(action==='catalog-edit-in-plan'){
+      if(ui.tab!=='catalog'||ui.catalogDetailId!==btn.dataset.ex)return;
+      const ex=state.exercises.find(item=>item.id===btn.dataset.ex);
+      if(!ex?.active)return;
+      ui.plan=ex.group;ui.tab='plans';muayMode=false;
+      ui.catalogDetailId=null;ui.catalogConfirmId=null;
+      ui.editor={id:ex.id};
       render();window.scrollTo(0,0);return;
     }
     if(action==='catalog-filter'){
       if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
       ui.catalogGroup=btn.dataset.group;render();return;
-    }
-    if(action==='catalog-add-plan'){
-      const id=btn.dataset.ex;
-      if(state.exercises.some(ex=>ex.id===id)||state.exercises.length>=200)return;
-      const found=F.prepareCatalog(id,state.exercises);
-      if(!found||!found.isNew)return;
-      const added={...found.exercise,active:true};
-      state.exercises.push(added);
-      if(!save()){state.exercises.pop();return notify('Não foi possível adicionar o exercício.');}
-      render();notify('Exercício incluído na ficha do bloco '+added.group+'.');return;
-    }
-    if(action==='catalog-activate'){
-      const ex=exerciseFor(btn.dataset.ex);if(!ex)return;
-      const previous=ex.active;ex.active=true;
-      if(!save()){ex.active=previous;return;}
-      render();notify('Exercício ativado na ficha do bloco '+ex.group+'.');return;
     }
     if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;ui.catalogMode='replacement';render();return;}
     if(action==='catalog-mode'){
