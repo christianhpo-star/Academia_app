@@ -753,7 +753,7 @@
     return sessionAdvice('extra').recommendations
       .filter(item=>item.kind==='extra-exercise'&&item.sourceId).map(item=>item.id);
   }
-  function renderCatalogContext(){
+  function renderCatalogContext(inDetail=false){
     const mode=catalogContext();if(mode==='browse')return '';
     const source=ui.catalogSourceId&&ui.draft.entries[ui.catalogSourceId];
     const alternatives=CSESSION.sourceOptions(ui.draft);
@@ -786,7 +786,7 @@
         '. <button type="button" class="button-inline" data-action="catalog-energy">'+
         (ui.draft.energy==='leve'?'Rever energia':'Registrar energia sobrando')+'</button></p>':'')+
       (advice.caution?'<p class="catalog-caution">'+esc(advice.caution)+'</p>':'')+
-      (mode!=='add'?'<div class="catalog-contextual" aria-label="Sugestões para esta sessão">'+
+      (mode!=='add'&&!inDetail?'<div class="catalog-contextual" aria-label="Sugestões para esta sessão">'+
         '<h3>'+ (mode==='extra'?'Acréscimos elegíveis':'Sugestões para este treino')+'</h3>'+
         (recommendations||'<p class="small muted">'+(mode==='replace'&&!ui.catalogSourceId?
           'Selecione acima o exercício original para ver alternativas relacionadas.':
@@ -803,7 +803,7 @@
       '<button type="button" data-action="training-destination" data-to="plans" class="training-destination'+(!inCatalog?' selected':'')+'" aria-pressed="'+!inCatalog+'">Minhas fichas</button>'+
       '<button type="button" data-action="training-destination" data-to="catalog" class="training-destination'+(inCatalog?' selected':'')+'" aria-pressed="'+inCatalog+'">Catálogo</button>'+
       '</div>'+
-      (inCatalog&&pending?'<div class="training-draft-notice" role="status"><span>Treino em andamento preservado.</span>'+
+      (inCatalog&&pending&&catalogContext()==='browse'?'<div class="training-draft-notice" role="status"><span>Treino em andamento preservado.</span>'+
         '<button type="button" class="button-inline" data-action="training-destination" data-to="plans">Voltar ao treino</button></div>':'');
   }
   // Text aliases are discoverability aids; neither search nor viewing alters a workout.
@@ -825,21 +825,38 @@
       : '<p class="small muted">Grupo indicado na ficha: '+esc(ex.muscle||'Não informado')+'. Sem divisão anatômica revisada.</p>';
     const confirmation=ui.catalogConfirmId===ex.id;
     const status=current?.active?'Na minha ficha':current?'Inativo na ficha':'Disponível';
-    const action=current?.active
-      ? '<p class="catalog-detail-status">Este movimento já está ativo no bloco '+esc(ex.group)+'.</p>'+
-        '<button type="button" class="secondary full" data-action="catalog-edit-in-plan" data-ex="'+esc(ex.id)+'">Editar na minha ficha</button>'
-      : confirmation
-        ? '<p id="catalog-confirm-message" class="catalog-detail-status" role="status">'+
-          (current?'Ativar':'Adicionar')+' '+esc(ex.name)+' na ficha do bloco '+esc(ex.group)+'? Esta ação não inicia nem altera o treino em andamento.</p>'+
-          '<div class="catalog-detail-confirm-row"><button class="primary" type="button" data-action="catalog-confirm" data-ex="'+esc(ex.id)+'">Confirmar</button>'+
-          '<button class="secondary" type="button" data-action="catalog-cancel">Cancelar</button></div>'
-        : '<button type="button" class="secondary full" data-action="catalog-intent" data-ex="'+esc(ex.id)+'">'+
-          (current?'Ativar na ficha':'Adicionar à ficha')+' · Bloco '+esc(ex.group)+'</button>';
+    const mode=catalogContext(),inSession=mode!=='browse';
+    const source=mode==='replace'?ui.draft.entries[ui.catalogSourceId]:null;
+    const gate=inSession?CSESSION.canChoose({draft:ui.draft,mode,sourceId:ui.catalogSourceId,
+      targetId:ex.id,eligibleExtraIds:mode==='extra'?eligibleExtraIds():[]}):{ok:true};
+    const verb=mode==='replace'?'Substituir por este exercício':mode==='extra'?'Acrescentar uma série opcional':'Adicionar só neste treino';
+    const sourceName=source?exerciseFor(source.id)?.name||source.id:'';
+    const note=mode==='replace'?'Trocar '+sourceName+' por '+ex.name+
+      ' somente nesta sessão. As repetições anteriores não serão apagadas.':
+      mode==='extra'?'Adicionar '+ex.name+' com uma série vazia, sem mudar a ficha permanente.':
+        'Adicionar '+ex.name+' somente à sessão atual, sem alterar a ficha permanente.';
+    const action=inSession
+      ? !gate.ok?'<p class="catalog-detail-status" role="status">'+esc(gate.error)+'</p>':
+        confirmation
+          ? '<p id="catalog-confirm-message" class="catalog-detail-status" role="status">'+esc(note)+'</p>'+
+            '<div class="catalog-detail-confirm-row"><button class="primary" type="button" data-action="catalog-confirm" data-ex="'+esc(ex.id)+'">Confirmar</button>'+
+            '<button class="secondary" type="button" data-action="catalog-cancel">Cancelar</button></div>'
+          : '<button type="button" class="secondary full" data-action="catalog-intent" data-ex="'+esc(ex.id)+'">'+verb+'</button>'
+      : current?.active
+        ? '<p class="catalog-detail-status">Este movimento já está ativo no bloco '+esc(ex.group)+'.</p>'+
+          '<button type="button" class="secondary full" data-action="catalog-edit-in-plan" data-ex="'+esc(ex.id)+'">Editar na minha ficha</button>'
+        : confirmation
+          ? '<p id="catalog-confirm-message" class="catalog-detail-status" role="status">'+
+            (current?'Ativar':'Adicionar')+' '+esc(ex.name)+' na ficha do bloco '+esc(ex.group)+'? Esta ação não inicia nem altera o treino em andamento.</p>'+
+            '<div class="catalog-detail-confirm-row"><button class="primary" type="button" data-action="catalog-confirm" data-ex="'+esc(ex.id)+'">Confirmar</button>'+
+            '<button class="secondary" type="button" data-action="catalog-cancel">Cancelar</button></div>'
+          : '<button type="button" class="secondary full" data-action="catalog-intent" data-ex="'+esc(ex.id)+'">'+
+            (current?'Ativar na ficha':'Adicionar à ficha')+' · Bloco '+esc(ex.group)+'</button>';
     return '<section class="catalog-detail" aria-labelledby="catalog-detail-heading">'+
       '<button type="button" class="catalog-detail-back" data-action="catalog-back">← Voltar ao catálogo</button>'+
       '<div class="catalog-detail-intro"><p class="eyebrow">BLOCO '+esc(ex.group)+' · '+esc(status)+'</p>'+
       '<h1 class="page-title" id="catalog-detail-heading" tabindex="-1">'+esc(ex.name)+'</h1>'+
-      '<p class="lead">Consulte o movimento sem iniciar nem modificar uma sessão.</p></div>'+
+      '<p class="lead">'+(inSession?'Escolha explícita para este treino. Nenhuma série é registrada pela consulta.':'Consulte o movimento sem iniciar nem modificar uma sessão.')+'</p></div>'+
       '<section class="card catalog-detail-card" aria-label="Informações do exercício">'+
       illustration+
       '<div class="catalog-detail-muscles">'+muscleInfo+'</div>'+
@@ -851,22 +868,21 @@
         '<p>Orientação técnica específica ainda não revisada. Consulte as instruções do equipamento e um profissional habilitado.</p>')+
       (ex.knee?'<p class="catalog-detail-knee">Movimento sinalizado para atenção ao joelho no seu planejamento. Respeite desconfortos durante a execução.</p>':'')+
       '</div></section>'+
-      '<section class="card catalog-detail-actions" aria-label="Opções da ficha"><h2>Minha ficha</h2>'+
+      '<section class="card catalog-detail-actions" aria-label="Ações do catálogo"><h2>'+(inSession?'Nesta sessão':'Minha ficha')+'</h2>'+
       '<p class="small muted">Consultar este exercício não registra séries nem altera seu planejamento.</p>'+
       action+'</section></section>';
   }
   function renderCatalog() {
-    // Detail view shares the exact same catalog without starting a workout.
+    const context=catalogContext(),inSession=context!=='browse';
+    // The exact same list and details serve browsing and in-session selection.
     const selected=ui.catalogDetailId && F.options(state.exercises,null).find(ex=>ex.id===ui.catalogDetailId);
-    if(selected)return renderCatalogDetail(selected);
-    // F.options merges custom exercises, active plans and curated alternatives
-    // without filtering by workout-in-progress. Browsing never changes a draft.
-    const all=F.options(state.exercises,null);
+    if(selected)return renderCatalogContext(true)+renderCatalogDetail(selected);
+    const all=F.options(state.exercises,inSession?ui.draft:null);
     const known=new Map(state.exercises.map(ex=>[ex.id,ex]));
     const shown=all.filter(ex=>ui.catalogGroup==='all'||ex.group===ui.catalogGroup);
     const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
     const count=shown.filter(ex=>catalogSearchText(ex).includes(term)).length;
-    return `${headline('Biblioteca','Explore os exercícios.','Pesquise por movimento ou equipamento, sem iniciar um treino.')}
+    return `${renderCatalogContext()}${headline('Biblioteca',inSession?'Escolha um exercício.':'Explore os exercícios.',inSession?'Mesma biblioteca, agora com a finalidade de '+(context==='replace'?'substituir':context==='extra'?'acrescentar uma série':'adicionar ao treino')+'.':'Pesquise por movimento ou equipamento, sem iniciar um treino.')}
       <search class="catalog-browser-tools" aria-label="Pesquisar e filtrar exercícios">
         <label for="catalog-search">Buscar exercício ou equipamento</label>
         <input id="catalog-search" type="search" value="${esc(ui.catalogSearch)}" placeholder="Ex.: supino, polia, halter..." autocomplete="off" aria-controls="catalog-browser-results" />
@@ -903,7 +919,7 @@
         }).join('')}
       </div>
       <p class="catalog-empty-state" id="catalog-empty-state" ${count?'hidden':''}>Nenhum exercício encontrado. Experimente outro nome ou grupo.</p>
-      <p class="tiny muted catalog-browser-tip">Ver detalhes não altera seus registros. Para incluir ou ativar um exercício, confirme na página do movimento.</p>`;
+      <p class="tiny muted catalog-browser-tip">${inSession?'Abrir detalhes não muda a sessão; somente confirmar uma escolha modifica o rascunho.':'Ver detalhes não altera seus registros. Para incluir ou ativar um exercício, confirme na página do movimento.'}</p>`;
   }
   function filterCatalogDOM(){
     const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
@@ -913,7 +929,7 @@
       item.hidden=!match;
       if(match)visible++;
     });
-    const total=F.options(state.exercises,null).length;
+    const total=F.options(state.exercises,catalogContext()!=='browse'?ui.draft:null).length;
     const output=document.getElementById('catalog-count');
     if(output)output.textContent=visible+' de '+total+' movimentos';
     const empty=document.getElementById('catalog-empty-state');
