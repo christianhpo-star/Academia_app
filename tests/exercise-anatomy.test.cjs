@@ -30,6 +30,8 @@ test('rear fly correctly distinguishes posterior shoulder vs chest fly',()=>{
 test('guide is native keyboard accessible and static, with proper SVG semantics',()=>{
   const p=A.panel('voador-inverso');
   assert.match(p,/^<details class="ex-anatomy"[^>]*>/);
+  assert.match(A.panel('voador-inverso',true),/^<details class="ex-anatomy"[^>]* open>/);
+  assert.doesNotMatch(p,/^<details[^>]+ open>/);
   assert.match(p,/<summary class="ex-anatomy-summary">/);
   assert.match(p,/aria-hidden="true" focusable="false"/);
   assert.match(p,/role="img" aria-labelledby=/);
