@@ -1487,3 +1487,8 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .muscle-map-stair-note{margin-top:12px;border-top:1px dashed #877052;padding-top:10px}
 .muscle-map-stair-note strong{color:#ffd8a0}
 @media(max-width:359px){.cardio-stair-pace{grid-template-columns:minmax(0,1fr)}.cardio-stair-pace p{grid-column:1}}
+
+/* Focused session: the very same optional cardio form follows the active exercise. */
+.focus-utilities{display:flex;gap:8px;align-items:center;margin-top:12px}
+.focus-cardio-quick{flex:1;min-width:0;white-space:normal;justify-content:center}
+.session-cardio{scroll-margin-top:12px}

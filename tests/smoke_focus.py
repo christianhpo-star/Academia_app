@@ -34,10 +34,27 @@ with sync_playwright() as p:
     page.get_by_role('button',name='Ativar modo focado').click()
     assert page.locator('.exercise-card').count()==1
     assert page.locator('.focus-exercise-pill').count()==total
+    assert page.locator('#session-cardio-panel').count()==1
+    shortcut=page.locator('[data-action="focus-cardio"]')
+    assert shortcut.count()==1 and shortcut.is_visible()
+    shortcut.click()
+    panel=page.locator('#session-cardio-panel')
+    assert panel.evaluate('node => node.open')
+    assert panel.locator('summary').evaluate('node => document.activeElement === node')
+    assert page.locator('.session-exercises + #session-cardio-panel').count()==1
+    panel.locator('[data-action="cardio-add"]').click()
+    panel.locator('[data-cardio-field="type"]').first.select_option('escada')
+    panel.locator('[data-cardio-field="minutes"]').first.fill('12')
+    panel.locator('[data-cardio-field="avgSpeed"]').first.fill('56')
+    assert 'Escada · 12 min · 56 degraus/min' in page.locator('#workout-review').inner_text()
+    assert '12 min' in page.locator('[data-action="focus-cardio"]').inner_text()
+    assert page.locator('[data-exercise]').count()>=1
     first=page.locator('.exercise-card').get_attribute('data-exercise')
     page.locator('[data-action="focus-next"]').click()
     assert page.locator('.exercise-card').count()==1
     assert page.locator('.exercise-card').get_attribute('data-exercise')!=first
+    assert page.locator('.session-cardio').count()==1
+    assert page.locator('[data-cardio-field="minutes"]').first.input_value()=='12'
     page.locator('[data-action="focus-select"][data-ex="'+first+'"]').click()
     entry=page.locator('[data-exercise="'+first+'"]')
     # Fill first working set. Quick copy must prepare only load for remaining rows.
@@ -55,7 +72,14 @@ with sync_playwright() as p:
     assert data['entries'][first]['sets'][1]['reps']==''
     page.get_by_role('button',name='Ver ficha completa').click()
     assert page.locator('.exercise-card').count()==total
+    assert page.locator('.session-cardio').count()==1
+    assert page.locator('[data-cardio-field="minutes"]').first.input_value()=='12'
+    assert page.locator('[data-cardio-field="avgSpeed"]').first.input_value()=='56'
+    assert page.locator('[data-action="focus-cardio"]').count()==0
     page.get_by_role('button',name='Ativar modo focado').click()
+    assert page.locator('.session-cardio').count()==1
+    assert page.locator('[data-action="focus-cardio"]').count()==1
+    assert page.locator('[data-cardio-field="avgSpeed"]').first.input_value()=='56'
     shots=ROOT/'screenshots';shots.mkdir(exist_ok=True)
     for width in [320,390,768]:
         page.set_viewport_size({'width':width,'height':844})
@@ -67,11 +91,16 @@ with sync_playwright() as p:
     assert page.locator('.exercise-card').count()==total # default full mode on new session
     assert page.locator('[data-exercise="'+first+'"] [data-field="reps"]').nth(0).input_value()=='10'
     assert page.locator('[data-exercise="'+first+'"] [data-field="reps"]').nth(1).input_value()==''
+    assert page.locator('[data-cardio-field="minutes"]').first.input_value()=='12'
+    assert page.locator('[data-cardio-field="avgSpeed"]').first.input_value()=='56'
     page.get_by_role('button',name='Salvar treino',exact=True).click()
     state=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
     assert len(state['sessions'])==1
     saved=next(x for x in state['sessions'][0]['entries'] if x['id']==first)
     assert len(saved['sets'])==1, saved
+    assert state['sessions'][0]['cardio']==[{'type':'escada','minutes':12,'avgSpeed':56,'speedUnit':'steps_min'}]
+    page.locator('.history-card > summary').first.click()
+    assert '56 degraus/min' in page.locator('.cardio-history').inner_text()
     assert not errors,errors
-    print('PASS focus: single exercise, switches, quick load without invented reps, recovery and history, 320/390/768px')
+    print('PASS focus: single exercise, cardio shortcut, stair pace and minutes shared with complete mode, draft/recovery/history preserved, 320/390/768px')
     browser.close()
