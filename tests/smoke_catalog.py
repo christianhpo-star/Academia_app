@@ -116,6 +116,8 @@ with sync_playwright() as p:
     # Explorar não inicia nem altera sessão.
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.locator('[data-action="catalog-filter"][data-group="all"]').click()
+    page.locator('#catalog-search').fill('canadense')  # paginated browse: reveal by query
+    assert page.locator('.catalog-browser-item:visible').count()==1
     before_confirm=page.evaluate('JSON.stringify(window.__testStorage)')
     page.locator('[data-action="catalog-view"][data-ex="supino-canadense"]').click()
     assert page.locator('.catalog-detail').count()==1
