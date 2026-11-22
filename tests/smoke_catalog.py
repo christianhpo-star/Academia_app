@@ -3,9 +3,10 @@ import re,os,shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
-HTML=HTML.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
+RAW=(ROOT/'index.html').read_text(encoding='utf-8')
+FILES=re.findall(r'<script defer src="\\./([^?"#]+)(?:\\?[^"]*)?"></script>',RAW)
+HTML=re.sub(r'<script defer src="\\./[^"]+"></script>','',RAW)
+HTML=re.sub(r'<link rel="stylesheet" href="\\./styles\\.css\\?v=[^"]+" />','',HTML)
 def start(context,stored,errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
