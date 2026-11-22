@@ -1,5 +1,13 @@
 # FORJA
 
+## Corpo completo: mapa dos seus treinos (novembro/2026)
+
+- **Evolução → Treinos** abre um mapa de corpo completo em **Frente / Costas**, com janelas de **7, 30 e 90 dias** e cores calculadas a partir das séries de musculação salvas neste aparelho.
+- **17 regiões** compartilham uma escala relativa: cinza sem registro, azul menor volume, ciano intermediário e verde claro maior volume. Abdômen, oblíquos e lombar ficam hachurados como **não estimados**, separados de zero registros.
+- Toque em um músculo ou use **Explorar músculo** para ver quais exercícios contribuíram, as séries principais/auxiliares e a última data. A lista textual e o método de cálculo ficam recolhidos; o quadro numérico anterior continua em **Constância e volume**.
+- Participação principal soma 1 e auxiliar 0,5, usando as classificações das ilustrações dos 74 exercícios. O mapa é descritivo: regiões com menos registros não geram aumento automático de treino nem conclusões de recuperação/hipertrofia. Séries sem carga positiva, aquecimentos, pulados, rascunho e Muay não entram.
+- Consulta local, teclado/toque, foco preservado, sem gravações nos registros e com SVG offline. [Modelo, limites e validação](docs/muscle-history-map.md). Versão de recursos: `20261122-muscle13`.
+
 ## Ilustrações de pernas (novembro/2026)
 
 - Os **33 exercícios de pernas dos blocos C/D** agora têm ilustração própria da cintura aos pés, com **Frente / Costas**, tanto no catálogo quanto no painel **Músculos e execução** durante a sessão.
@@ -15,7 +23,7 @@
 | **Início** | Próximo treino ou sessão em andamento, recuperação, atalhos de registro, passos do dia e rotina configurada. |
 | **Treinos** | Minhas fichas, musculação, Muay Thai e catálogo único para consultar, adicionar ou substituir. |
 | **Evolução → Corpo** | Peso, medidas corporais, pesagens e objetivo. |
-| **Evolução → Treinos** | Séries por grupo, força por exercício, passos e análises de constância, volume e recuperação. |
+| **Evolução → Treinos** | Mapa muscular de 7/30/90 dias, força por exercício, passos e análises de constância, volume e recuperação. |
 | **Evolução → Nutrição** | Tendências dos registros alimentares; o registro de refeições permanece em Alimentação. |
 | **Histórico** | Calendário e sessões anteriores, com filtros Todos, Musculação e Muay Thai e expansão de 3 para mais 5 por modalidade. |
 | **Ajustes → Seus dados** | Backup, importação e exportação. O Histórico oferece um atalho para esse mesmo destino. |
@@ -51,7 +59,7 @@
 - Ao expandir, aparece uma **ilustração SVG original e offline** do tronco/braços em vista anterior ou posterior: azul vivo = grupo principal, azul suave = auxiliares. Texto descreve músculos, oferece uma dica curta e ressalta que a participação varia com técnica, carga e equipamento.
 - O **voador inverso** realça deltoide posterior, trapézio médio e romboides; o **voador de peito** realça peitoral maior e deltoide anterior. Os dois não compartilham o mesmo mapa.
 - A série, histórico de carga, recomendações, RIR e botões de registro continuam sob o painel, sem modal, animação automática ou janela dentro da janela.
-- **Cobertura explícita:** IDs de todos os movimentos atuais A/B em `exercise-anatomy.js`; C/D e movimentos personalizados sem mapeamento continuam **sem visual** até revisão específica, para evitar orientar erroneamente.
+- **Cobertura do piloto:** inicialmente A/B; a extensão de pernas acima passou a incluir todos os 74 movimentos A/B/C/D. Exercícios personalizados sem mapeamento continuam sem atribuição anatômica automática.
 - Abertura/fechamento do painel não lê, cria, modifica nem salva registros; o armazenamento e o backup JSON não sofrem migração. Imagem de referência enviada pelo usuário inspira apenas a ideia, não foi copiada.
 - QA: `tests/exercise-anatomy.test.cjs` e `tests/smoke_anatomy.py`, incluindo largura 320/390 px e verificação de histórico/draft.
 

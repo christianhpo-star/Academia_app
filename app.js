@@ -18,6 +18,8 @@
   const NUI = window.ForjaNutritionUI;
   const PERF = window.ForjaPerformanceTrends;
   const ANATOMY = window.ForjaExerciseAnatomy;
+  const MUSCLE_MAP = window.ForjaMuscleMap;
+  const MUSCLE_BODY = window.ForjaMuscleBody;
   const CSESSION = window.ForjaCatalogSession;
   const EVO = window.ForjaEvolutionDashboard;
   const NCAT = window.ForjaNutritionCatalog;
@@ -188,6 +190,7 @@
     progressStepDays:14,progressRadarOpen:false,
     evolutionView:'weight',evolutionPeriods:{energy:7,macros:7,average:7},evolutionWeightLimit:8,evolutionExtrasOpen:false,
     evolutionChartMode:'weight',evolutionMeasureKey:'abdomen',evolutionVolumeDays:30,evolutionTrainingOpen:false,
+    evolutionMuscleView:'front',evolutionMuscleSelected:null,evolutionMuscleListOpen:false,evolutionMuscleMethodOpen:false,
   };
   const diary=NUI.controller({get:()=>state,today,refresh:render,notify,
     commitSteps(next){
@@ -1288,7 +1291,7 @@
       content=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
     }else if(ui.evolutionView==='training'){
       content='<section id="evo-panel-training" class="evo-pane" role="tabpanel" aria-labelledby="evo-tab-training">'+
-        EVO.renderGroupVolume(state,day,ui.evolutionVolumeDays)+progressStrengthSummary()+progressStepsPanel()+
+        renderMuscleMap()+progressStrengthSummary()+progressStepsPanel()+
         renderPerformanceTrends()+
         '<details class="evo-training-tools" '+(ui.evolutionTrainingOpen?'open':'')+'>'+
         '<summary>Constância e volume <span aria-hidden="true">⌄</span></summary>'+
@@ -1305,6 +1308,54 @@
     return '<div class="evo-shell">'+
       EVO.renderHeader(state,day,ui.evolutionView)+
       '<div class="evo-main">'+content+'</div></div>';
+  }
+  function muscleMapOptions(){
+    return {days:ui.evolutionVolumeDays,view:ui.evolutionMuscleView,selected:ui.evolutionMuscleSelected,
+      listOpen:ui.evolutionMuscleListOpen,methodOpen:ui.evolutionMuscleMethodOpen};
+  }
+  function renderMuscleMap(){
+    // Preserve a readable overview if a new presentation asset is unavailable.
+    return MUSCLE_MAP&&MUSCLE_BODY?MUSCLE_MAP.render(state,today(),muscleMapOptions()):
+      EVO.renderGroupVolume(state,today(),ui.evolutionVolumeDays);
+  }
+  function refreshMuscleMap(focusSource=null){
+    const card=document.querySelector('.muscle-map-card'),content=card?.querySelector('.muscle-map-content');
+    if(!MUSCLE_MAP||!content)return;
+    const focused=focusSource||document.activeElement;
+    const restoreSelect=focused?.id==='muscle-map-select';
+    const restoreMuscle=focused?.dataset?.action==='muscle-region'?focused.dataset.muscle:null;
+    const restoreFigure=Boolean(restoreMuscle&&focused.closest('svg'));
+    const restoreRow=Boolean(restoreMuscle&&focused.classList.contains('muscle-map-row'));
+    const scroll=window.scrollY;
+    card.dataset.muscleDays=String(ui.evolutionVolumeDays);
+    card.dataset.muscleView=ui.evolutionMuscleView;
+    card.querySelectorAll('[data-action="evo-volume-days"]').forEach(control=>{
+      const selected=Number(control.dataset.days)===ui.evolutionVolumeDays;
+      control.setAttribute('aria-pressed',String(selected));control.classList.toggle('is-selected',selected);
+    });
+    card.querySelectorAll('[data-action="muscle-map-view"]').forEach(control=>{
+      control.setAttribute('aria-pressed',String(control.dataset.view===ui.evolutionMuscleView));
+    });
+    // Controls stay mounted; only this read-only visualization changes.
+    content.innerHTML=MUSCLE_MAP.content(state,today(),muscleMapOptions());
+    if(restoreSelect)content.querySelector('#muscle-map-select')?.focus({preventScroll:true});
+    else if(restoreMuscle){
+      const choices=[...content.querySelectorAll('[data-action="muscle-region"]')];
+      const target=choices.find(el=>el.dataset.muscle===restoreMuscle&&Boolean(el.closest('svg'))===restoreFigure&&
+        el.classList.contains('muscle-map-row')===restoreRow);
+      (target||content.querySelector('#muscle-map-select'))?.focus({preventScroll:true});
+    }
+    window.scrollTo(0,scroll);
+  }
+  function selectMuscleRegion(id,source=null){
+    if(!MUSCLE_MAP||!MUSCLE_BODY)return;
+    const regions=MUSCLE_MAP.model(state,today(),ui.evolutionVolumeDays).byId;
+    const row=Object.hasOwn(regions,id)?regions[id]:null;
+    if(id&&!row)return;
+    ui.evolutionMuscleSelected=id||null;
+    if(row&&!MUSCLE_BODY.visibleIds(ui.evolutionMuscleView).includes(id))
+      ui.evolutionMuscleView=row.views.includes('front')?'front':'back';
+    refreshMuscleMap(source);
   }
   function openProgress(view='weight',options={}){
     if(!['weight','training','nutrition'].includes(view))return;
@@ -1811,6 +1862,17 @@
       }
       return;
     }
+    if(action==='muscle-map-view'){
+      const view=btn.dataset.view;
+      if(!MUSCLE_BODY||!['front','back'].includes(view)||view===ui.evolutionMuscleView)return;
+      ui.evolutionMuscleView=view;
+      if(ui.evolutionMuscleSelected&&!MUSCLE_BODY.visibleIds(view).includes(ui.evolutionMuscleSelected))
+        ui.evolutionMuscleSelected=null;
+      refreshMuscleMap();return;
+    }
+    if(action==='muscle-region'){
+      selectMuscleRegion(btn.dataset.muscle,btn);return;
+    }
     if(action==='anatomy-view'){
       const viewer=btn.closest('.ex-anatomy-viewer');
       const id=viewer?.dataset.anatomyId,view=btn.dataset.view;
@@ -2200,7 +2262,9 @@
     else if(action==='evo-volume-days'){
       const days=Number(btn.dataset.days);
       if(![7,30,90].includes(days))return;
-      ui.evolutionVolumeDays=days;render();return;
+      ui.evolutionVolumeDays=days;
+      if(document.querySelector('.muscle-map-card'))refreshMuscleMap();else render();
+      return;
     }
     else if(action==='evo-period'){
       const kind=btn.dataset.kind,days=Number(btn.dataset.days);
@@ -2277,12 +2341,18 @@
     if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
     if(event.target.matches?.('.evo-more-tools'))ui.evolutionExtrasOpen=event.target.open;
     if(event.target.matches?.('.evo-training-tools'))ui.evolutionTrainingOpen=event.target.open;
+    if(event.target.matches?.('.muscle-map-breakdown'))ui.evolutionMuscleListOpen=event.target.open;
+    if(event.target.matches?.('.muscle-map-method'))ui.evolutionMuscleMethodOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
   },true);
   screen.addEventListener('click',event=>{
     const btn=event.target.closest('[data-action]');if(btn)handleAction(btn);
   });
   screen.addEventListener('keydown',event=>{
+    const region=event.target.closest('[data-action="muscle-region"][role="button"]');
+    if(region&&['Enter',' '].includes(event.key)){
+      event.preventDefault();if(!event.repeat)handleAction(region);return;
+    }
     const tab=event.target.closest('[data-action="evo-view"]');
     if(!tab||!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
     const views=['weight','training','nutrition'],index=views.indexOf(tab.dataset.view);
@@ -2337,6 +2407,9 @@
   });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
+    if(event.target.id==='muscle-map-select'){
+      selectMuscleRegion(event.target.value,event.target);return;
+    }
     if(event.target.id==='evo-measure-field'){
       const id=event.target.value;
       if(BODY.FIELDS.some(f=>f.id===id)){ui.evolutionMeasureKey=id;render();}
@@ -2407,6 +2480,7 @@
     lastVisibleDay=currentDay;
     ui.routineHidden=false;
     if(ui.tab==='home')render();
+    else if(ui.tab==='progress'&&ui.evolutionView==='training')refreshMuscleMap();
   }
   document.addEventListener('visibilitychange',()=>{
     if(document.visibilityState==='visible')refreshOnNewDay();
@@ -2422,7 +2496,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-legs12',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-muscle13',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

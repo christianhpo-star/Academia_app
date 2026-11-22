@@ -8,8 +8,10 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-INDEX = re.sub(r'<script defer src="\./[^\"]+"></script>', '', (ROOT / 'index.html').read_text())
-INDEX = INDEX.replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />', '')
+RAW = (ROOT / 'index.html').read_text(encoding='utf-8')
+SCRIPTS = re.findall(r'<script defer src="\./([^?"#]+)(?:\?[^"]*)?"></script>', RAW)
+INDEX = re.sub(r'<script defer src="\./[^"]+"></script>', '', RAW)
+INDEX = re.sub(r'<link rel="stylesheet" href="\./styles\.css\?v=[^"]+" />', '', INDEX)
 
 
 def open_app(context, storage, errors):
@@ -28,7 +30,7 @@ def open_app(context, storage, errors):
       });
     }""", storage)
     page.add_style_tag(path=str(ROOT / 'styles.css'))
-    for name in ['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']:
+    for name in SCRIPTS:
         page.add_script_tag(path=str(ROOT / name))
     page.wait_for_selector('#screen h1')
     return page
@@ -58,8 +60,8 @@ with sync_playwright() as p:
     empty=open_app(context,{},errors)
     empty.get_by_role('button',name='Evolução',exact=True).click()
     empty.locator('[data-action="evo-view"][data-view="training"]').click()
-    assert empty.locator('.evo-volume-row').count()==4
-    assert 'Ainda não há séries efetivas' in empty.locator('.evo-volume-card').inner_text()
+    assert empty.locator('.muscle-map-card').count()==1
+    assert 'Mapa sem registros neste período' in empty.locator('.muscle-map-card').inner_text()
     assert empty.locator('.progress-advanced-radar').count()==0
     assert empty.locator('.strength-radar-plot').count()==0
     assert empty.locator('.evo-hero').count()==0
@@ -81,9 +83,10 @@ with sync_playwright() as p:
     page=open_app(context,{'forja.academia.v1':json.dumps(state,ensure_ascii=False)},errors)
     page.get_by_role('button',name='Evolução',exact=True).click()
     page.locator('[data-action="evo-view"][data-view="training"]').click()
-    assert page.locator('.evo-volume-row').count()==4
-    assert page.locator('.evo-volume-track span').count()==4
-    assert 'Costas' in page.locator('.evo-volume-card').inner_text()
+    assert page.get_by_role('heading',name='Mapa muscular',exact=True).count()==1
+    assert page.locator('.muscle-map-card svg[data-muscle-body-view="front"]').count()==1
+    assert page.locator('.muscle-map-card [data-muscle-region="chest"]').get_attribute('data-level')!='0'
+    assert page.locator('.muscle-map-card [data-muscle-region="quadriceps"]').get_attribute('data-level')!='0'
     assert page.evaluate("""() => {
       const x=window.ForjaEvolutionDashboard.groupVolume(
         JSON.parse(window.__testStorage['forja.academia.v1']),
@@ -111,4 +114,4 @@ with sync_playwright() as p:
         assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth'),f'overflow at {width}px'
     assert not errors,errors
     browser.close()
-    print('PASS evolução: grupos A-D por séries efetivas, seletor de medidas, sem radar, 320px e 390px')
+    print('PASS evolução: mapa muscular por séries efetivas, seletor de medidas, sem radar, 320px e 390px')

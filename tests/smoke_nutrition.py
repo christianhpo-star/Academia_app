@@ -3,9 +3,10 @@ import json,os,re,shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text(encoding='utf-8'))
-HTML=re.sub(r'<link rel="stylesheet" href="./styles.css\?v=[^"]+" />','',HTML)
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-prescription-data.js','nutrition-presets.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','performance-trends.js','app.js']
+RAW=(ROOT/'index.html').read_text(encoding='utf-8')
+SCRIPTS=re.findall(r'<script defer src="\./([^?"#]+)(?:\?[^"]*)?"></script>',RAW)
+HTML=re.sub(r'<script defer src="\./[^"]+"></script>','',RAW)
+HTML=re.sub(r'<link rel="stylesheet" href="\./styles\.css\?v=[^"]+" />','',HTML)
 
 def start(context,stored,errors):
     page=context.new_page()
@@ -79,7 +80,8 @@ with sync_playwright() as p:
     assert page.locator('.progress-steps-day').count()==14
     assert page.locator('.progress-steps-day.known').count()==1
     assert page.locator('.progress-advanced-radar').count()==0
-    assert page.locator('.evo-volume-row').count()==4
+    assert page.locator('.muscle-map-card').count()==1
+    assert 'Mapa sem registros neste período' in page.locator('.muscle-map-card').inner_text()
     page.locator('[data-action="progress-steps-days"][data-days="28"]').click()
     assert page.locator('.progress-steps-day').count()==28
     page.locator('#nav [data-tab="nutrition"]').click()
@@ -453,7 +455,8 @@ with sync_playwright() as p:
     assert 'Peitoral' in evo.locator('#evo-weight-heading').locator('..').inner_text() or 'Peitoral' in evo.locator('.evo-body-chart').inner_text()
     evo.locator('[data-action="evo-chart-mode"][data-mode="weight"]').click()
     evo.locator('[data-action="evo-view"][data-view="training"]').click()
-    assert evo.locator('.evo-volume-row').count()==4
+    assert evo.locator('.muscle-map-card').count()==1
+    assert evo.get_by_role('heading',name='Mapa muscular',exact=True).count()==1
     assert evo.locator('.progress-steps-card').count()==1
     evo.locator('[data-action="evo-volume-days"][data-days="90"]').click()
     assert evo.locator('[data-action="evo-volume-days"][data-days="90"]').get_attribute('aria-pressed')=='true'

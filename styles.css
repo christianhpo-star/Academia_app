@@ -1076,6 +1076,65 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .evo-periods{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;margin:0 0 12px;border:1px solid #3a4f62;background:#0c1722;border-radius:12px;max-width:none}
 .evo-periods button{background:transparent;color:#c5d4e3;border:0;border-radius:8px;min-height:42px;font-size:12px;font-weight:800}
 .evo-periods button.is-selected{background:var(--lime);color:#152314}
+/* Read-only muscular history: one body, shared relative scale for both views. */
+.muscle-map-card{--muscle-zero:#263d50;--muscle-low:#487aa4;--muscle-mid:#76d6e3;--muscle-high:#c5f56b}
+.muscle-map-card .evo-periods button{min-height:44px}
+.muscle-map-view{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;border:1px solid #435c70;border-radius:12px;background:#0e1a25;max-width:280px;margin:0 auto}
+.muscle-map-view button{min-height:44px;border:0;border-radius:8px;background:transparent;color:#c4d5e3;font-weight:800;font-size:13px}
+.muscle-map-view button[aria-pressed="true"]{background:#28495d;color:#eff9ff;box-shadow:inset 0 0 0 1px #88c7ec}
+.muscle-map-period-label{font-size:11px;color:var(--muted);text-align:center;margin:11px 0 8px}
+.muscle-map-layout{display:grid;gap:17px;align-items:start;min-width:0}
+.muscle-map-visual,.muscle-map-reading{min-width:0}
+.muscle-map-canvas{border:1px solid #354e61;border-radius:14px;background:radial-gradient(ellipse at 50% 30%,#213b48 0,#122331 72%);padding:12px 8px}
+.muscle-body-svg{display:block;width:100%;max-width:245px;height:auto;max-height:470px;margin:0 auto;overflow:visible}
+.muscle-body-region{cursor:pointer;outline:none;touch-action:manipulation}
+.muscle-body-region:focus-visible path{stroke:#fff;stroke-width:2.5;stroke-dasharray:3 2;paint-order:stroke fill}
+.muscle-body-region[aria-pressed="true"] path{stroke:#fff;stroke-width:2;paint-order:stroke fill}
+.muscle-map-legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:12px 0 8px}
+.muscle-map-legend>span{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;color:#c7d7e2;font-size:10px;line-height:1.35}
+.muscle-map-swatch{display:inline-block;flex:0 0 auto;width:13px;height:13px;border-radius:4px;border:1px solid #718b9c}
+.muscle-map-swatch.muscle-level-0{background:var(--muscle-zero)}
+.muscle-map-swatch.muscle-level-1{background:var(--muscle-low)}
+.muscle-map-swatch.muscle-level-2{background:var(--muscle-mid)}
+.muscle-map-swatch.muscle-level-3{background:var(--muscle-high)}
+.muscle-map-swatch.is-untracked{background:repeating-linear-gradient(135deg,#1f303c,#1f303c 3px,#6b7f8d 3px,#6b7f8d 4px)}
+.muscle-map-untracked{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--muted);font-size:10px;line-height:1.5;margin:9px 0 0}
+.muscle-map-scale-note{font-size:10px;text-align:center;color:var(--muted);line-height:1.5;margin:6px 0 0}
+.muscle-map-picker{display:grid;gap:7px;margin:0 0 10px;min-width:0}
+.muscle-map-picker label{font-size:12px;font-weight:750;color:#d3e0e9}
+.muscle-map-picker select{min-width:0;max-width:100%;width:100%;min-height:46px;background:#101d2a;color:var(--text);border:1px solid #486477;border-radius:10px;padding:10px;font-size:12px}
+.muscle-map-detail{padding:13px;border:1px solid #3c576b;border-radius:13px;background:#152a38;min-width:0}
+.muscle-map-detail-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.muscle-map-detail strong{font-size:14px;line-height:1.4}
+.muscle-map-detail p{font-size:12px;line-height:1.6;margin:9px 0 0;color:#ccdce7}
+.muscle-map-status{font-size:10px;font-weight:800;line-height:1.35;border:1px solid #5c7a8e;background:#203847;color:#ebf4fa;border-radius:6px;padding:4px 6px}
+.muscle-map-status.muscle-level-3{border-color:var(--muscle-high);color:var(--muscle-high)}
+.muscle-map-status.muscle-level-2{border-color:var(--muscle-mid);color:var(--muscle-mid)}
+.muscle-map-last,.muscle-map-detail .muscle-map-last{font-size:11px;line-height:1.45;color:var(--muted);margin:8px 0 0}
+.muscle-map-exercises{list-style:none;margin:10px 0 0;padding:0;border-top:1px solid #365163}
+.muscle-map-exercises li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 0 0;font-size:11px;line-height:1.4;color:#d7e5ed}
+.muscle-map-exercises li span:first-child{min-width:0;overflow-wrap:anywhere}
+.muscle-map-exercises li span:last-child{flex-shrink:0;color:var(--blue);font-variant-numeric:tabular-nums;font-weight:800}
+.muscle-map-insights{display:grid;gap:14px;margin:16px 0 0}
+.muscle-map-insight h3{margin:0 0 7px;font-size:11px;color:#bdd0dd;font-weight:750}
+.muscle-map-chips{display:flex;flex-wrap:wrap;gap:6px}
+.muscle-map-chip{display:inline-flex;align-items:center;gap:7px;min-height:44px;max-width:100%;border:1px solid #435b6d;border-radius:9px;padding:8px 9px;background:#182c3b;color:#e0eaf1;font-size:11px;line-height:1.35;text-align:left}
+.muscle-map-chip span{min-width:0;overflow-wrap:anywhere}
+.muscle-map-chip[aria-pressed="true"],.muscle-map-row[aria-pressed="true"]{border-color:#d9f2ff;background:#253f50}
+.muscle-map-empty{padding:12px 13px;border:1px dashed #567084;border-radius:11px;margin:12px 0;background:#152735}
+.muscle-map-empty strong{font-size:13px}.muscle-map-empty p{font-size:12px;color:var(--muted);line-height:1.5;margin:7px 0 0}
+.muscle-map-coverage{padding:11px;border:1px solid #53687c;border-radius:10px;background:#213343;font-size:12px;line-height:1.5;color:#d3e0e8}
+.muscle-map-footnote{font-size:11px;color:var(--muted);line-height:1.55;margin:14px 0}
+.muscle-map-breakdown,.muscle-map-method{border-top:1px solid #3b5266;margin:0}
+.muscle-map-breakdown>summary,.muscle-map-method>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:48px;padding:10px 1px;cursor:pointer;list-style:none;color:#cee0eb;font-size:12px;font-weight:750}
+.muscle-map-breakdown>summary::-webkit-details-marker,.muscle-map-method>summary::-webkit-details-marker{display:none}
+.muscle-map-breakdown>summary span,.muscle-map-method>summary span{font-size:19px;color:var(--muted)}
+.muscle-map-region-list{display:grid;gap:5px;padding:2px 0 12px}
+.muscle-map-row{display:grid;grid-template-columns:13px minmax(0,1fr) auto;align-items:center;gap:7px;min-height:46px;padding:8px;border:1px solid #3d5364;border-radius:8px;background:#132532;color:#dde9f0;font-size:11px;text-align:left}
+.muscle-map-row>span{min-width:0;line-height:1.4}.muscle-map-row small{font-size:10px;color:#b5cad8;max-width:80px;text-align:right}
+.muscle-map-method>div{padding:0 1px 10px}.muscle-map-method p{font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 9px}
+@media(min-width:700px){.muscle-map-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px}.muscle-map-canvas{padding:16px}.muscle-body-svg{max-height:510px;max-width:260px}.muscle-map-region-list{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(forced-colors:active){.muscle-body-region:focus-visible path,.muscle-body-region[aria-pressed="true"] path{stroke:Highlight;stroke-width:3}.muscle-map-status,.muscle-map-swatch{border-color:CanvasText}}
 .evo-section-description{color:var(--muted);text-align:left;font-size:11px;line-height:1.5;margin:0 0 9px}
 .evo-ring-wrap{margin:0 auto;max-width:390px}
 .evo-ring-wrap svg{display:block;width:100%;height:auto}
