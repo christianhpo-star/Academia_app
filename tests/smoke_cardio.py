@@ -189,7 +189,8 @@ def check_cardio(context, seed, errors, folder):
     assert quad.get_attribute('data-stair-cardio') == 'true'
     assert quad.get_attribute('data-total') == '0'
     assert quad.get_attribute('data-level') == '0'
-    quad.click()
+    quad.focus()
+    quad.press('Enter')
     assert 'Escada · atividade complementar' in card.locator('#muscle-map-detail').inner_text()
     page.locator('.top-settings').click()
     with page.expect_download() as download_info:
