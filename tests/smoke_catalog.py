@@ -64,7 +64,20 @@ with sync_playwright() as p:
     rear=page.locator('.catalog-browser-item:visible')
     assert rear.count()==1
     assert 'Ombros posteriores' in rear.inner_text()
-    assert rear.locator('[data-action="catalog-add-plan"][data-ex="voador-inverso"]').count()==1
+    assert rear.locator('[data-action="catalog-view"][data-ex="voador-inverso"]').count()==1
+    original_store=page.evaluate('JSON.stringify(window.__testStorage)')
+    rear.locator('[data-action="catalog-view"]').click()
+    assert page.locator('#catalog-search').count()==0
+    assert 'Voador inverso' in page.locator('#catalog-detail-heading').inner_text()
+    assert 'Deltoide posterior' in page.locator('.catalog-detail-muscles').inner_text()
+    assert 'Trapézio médio e romboides' in page.locator('.catalog-detail-muscles').inner_text()
+    assert page.locator('.catalog-detail svg[role="img"]').count()==1
+    assert page.locator('.catalog-detail-technique').count()==1
+    assert page.evaluate('JSON.stringify(window.__testStorage)')==original_store
+    page.locator('[data-action="catalog-back"]').click()
+    assert page.locator('#catalog-search').input_value()=='voador inverso'
+    assert page.locator('.catalog-browser-item:visible').count()==1
+    assert page.evaluate('JSON.stringify(window.__testStorage)')==original_store
     page.locator('#catalog-search').fill('peck deck inverso')
     assert page.locator('.catalog-browser-item:visible').count()==1
     page.locator('#catalog-search').fill('crucifixo inverso na maquina')
@@ -95,10 +108,24 @@ with sync_playwright() as p:
     # Explorar não inicia nem altera sessão.
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.locator('[data-action="catalog-filter"][data-group="all"]').click()
-    page.locator('[data-action="catalog-add-plan"][data-ex="supino-canadense"]').click()
-    assert page.locator('[data-action="catalog-activate"][data-ex="supino-canadense"]').count()==0
-    assert page.locator('.catalog-browser-item').filter(has_text='Supino canadense').locator('.catalog-state').inner_text()=='Na ficha'
+    before_confirm=page.evaluate('JSON.stringify(window.__testStorage)')
+    page.locator('[data-action="catalog-view"][data-ex="supino-canadense"]').click()
+    assert page.locator('.catalog-detail').count()==1
+    assert 'Peitoral maior' in page.locator('.catalog-detail-muscles').inner_text()
+    assert page.evaluate('JSON.stringify(window.__testStorage)')==before_confirm
+    page.locator('[data-action="catalog-intent"][data-ex="supino-canadense"]').click()
+    assert 'bloco B' in page.locator('#catalog-confirm-message').inner_text()
+    assert page.evaluate('JSON.stringify(window.__testStorage)')==before_confirm
+    page.locator('[data-action="catalog-cancel"]').click()
+    assert page.locator('[data-action="catalog-confirm"]').count()==0
+    assert page.evaluate('JSON.stringify(window.__testStorage)')==before_confirm
+    page.locator('[data-action="catalog-intent"][data-ex="supino-canadense"]').click()
+    page.locator('[data-action="catalog-confirm"][data-ex="supino-canadense"]').click()
+    assert 'Na minha ficha' in page.locator('.catalog-detail-intro').inner_text()
+    assert page.locator('[data-action="catalog-edit-in-plan"]').count()==1
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
+    page.locator('[data-action="catalog-back"]').click()
+    assert page.locator('.catalog-browser-item').filter(has_text='Supino canadense').locator('.catalog-state').inner_text()=='Na ficha'
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Iniciar treino A').click()
     assert page.locator('[data-action="training-destination"][data-to="plans"]').get_attribute('aria-pressed')=='true'
