@@ -92,9 +92,9 @@
       try {image=await loadSVG(BODY.figure({view:selected,rows:model.regions,
         cardioRegions:opt.showCardio?model.stairRegions:[]}));} catch (_) { /* fallback */ }
       if(image){
-        const h=opt.style==='muscles'?380:308;
+        const h=opt.style==='muscles'?264:250;
         const w=Math.round(h*260/564),x=opt.style==='muscles'?76:80;
-        const top=opt.style==='muscles'?390:408;
+        const top=opt.style==='muscles'?385:392;
         ctx.drawImage(image,x,top,w,h);
       }
       const infoX=opt.style==='muscles'?308:300;
@@ -114,9 +114,9 @@
     text(ctx,highlight.name,92,blockY+42,withFontSize(ctx,highlight.name,890,37,22,'700'),ink,'700',890);
     text(ctx,highlight.value,92,blockY+84,withFontSize(ctx,highlight.value,890,32,22,'900'),ink,'900',890);
     if(opt.showWeek && model.weekDays>0 && opt.highlightMode!=='week') {
-      text(ctx,model.weekDays+' dia'+(model.weekDays===1?'':'s')+' com treino registrado nesta semana',80,659,20,muted,'600',915);
+      text(ctx,model.weekDays+' dia'+(model.weekDays===1?'':'s')+' com treino registrado nesta semana',main?300:80,659,20,muted,'600',main?695:915);
     } else if(opt.showCardio && model.cardioTop && opt.highlightMode!=='cardio') {
-      text(ctx,model.cardioTop.label+' · '+model.cardioTop.minutes+' min',80,659,20,muted,'600',915);
+      text(ctx,model.cardioTop.label+' · '+model.cardioTop.minutes+' min',main?300:80,659,20,muted,'600',main?695:915);
     }
     return canvas;
   }
