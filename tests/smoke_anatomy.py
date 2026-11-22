@@ -89,6 +89,10 @@ with sync_playwright() as p:
     reps=first.locator('.set-grid input[data-field="reps"]').first
     reps.fill('11')
     reps.evaluate('(node)=>{window.__anatomySetInput=node;}')
+    # Complete the edit before the baseline: input and change both save the
+    # draft, including savedAt. Blurring here isolates the later view switches
+    # so the strict storage equality below still detects any writes they make.
+    reps.press('Tab')
     before=page.evaluate('JSON.stringify(window.__testStorage)')
     viewer=guide.locator('.ex-anatomy-viewer')
     assert viewer.get_attribute('data-anatomy-view')=='back'
