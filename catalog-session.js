@@ -32,7 +32,7 @@
     }
     return {ok:true};
   }
-  function prepare({draft,mode,sourceId,targetId,exercise,eligibleExtraIds=[]}={}){
+  function prepare({draft,mode,sourceId,targetId,exercise,extraSourceId,eligibleExtraIds=[]}={}){
     const gate=canChoose({draft,mode,sourceId,targetId,eligibleExtraIds});
     if(!gate.ok)return gate;
     if(!exercise||exercise.id!==targetId||!Number.isInteger(exercise.sets)||exercise.sets<1||exercise.sets>12)
@@ -42,6 +42,8 @@
     if(mode==='replace'){
       const result=F.withdraw(next,sourceId);
       if(result.error)return {ok:false,error:result.error};
+      if(next.extraChoice?.kind==='exercise'&&next.extraChoice.id===sourceId)
+        delete next.extraChoice;
       const old=next.skipped.find(row=>row.id===sourceId);
       if(old&&!old.reason)old.reason='preferencia';
     }
@@ -50,7 +52,7 @@
     }));
     if(!F.addToDraft(next,targetId,exercise,{id:targetId,sets,pain:''}))
       return {ok:false,error:'Não foi possível incluir o exercício nesta sessão.'};
-    if(mode==='extra')next.extraChoice={kind:'exercise',id:targetId};
+    if(mode==='extra')next.extraChoice={kind:'exercise',id:targetId,sourceId:extraSourceId||''};
     return {ok:true,draft:next,removedId:mode==='replace'?sourceId:null,addedId:targetId};
   }
   const api={VERSION:1,modes,sourceOptions,canChoose,prepare};
