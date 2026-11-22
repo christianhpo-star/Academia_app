@@ -177,6 +177,7 @@
     strengthGroup: null, strengthExercise: null,
     catalogOpen: false, catalogAll: false, catalogMode:'replacement',
     catalogGroup:'all',catalogSearch:'',
+    anatomyOpen:{},
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
@@ -1023,7 +1024,7 @@
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
         <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p></div>
         <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
-      ${ANATOMY?.panel(ex.id)||''}
+      ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]))||''}
       <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
       <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
@@ -2038,6 +2039,7 @@
   const screen=document.getElementById('screen');
   screen.addEventListener('toggle',event=>{
     if(event.target.matches?.('.home-recovery'))ui.homeRecoveryOpen=event.target.open;
+    if(event.target.matches?.('.ex-anatomy'))ui.anatomyOpen[event.target.dataset.anatomy]=event.target.open;
     if(event.target.matches?.('.progress-advanced-radar'))ui.progressRadarOpen=event.target.open;
     if(event.target.matches?.('.evo-more-tools'))ui.evolutionExtrasOpen=event.target.open;
     if(event.target.matches?.('.history-calendar-fold'))ui.historyCalendarOpen=event.target.open;
