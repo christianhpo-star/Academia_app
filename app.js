@@ -2096,7 +2096,7 @@
       state.muay.sessions=backup.filter(x=>x.id!==btn.dataset.id);
       if(!save()){state.muay.sessions=backup;return;}render();notify('Registro excluído.');return;
     }
-    if(action==='navigate') {ui.tab=btn.dataset.to;ui.editor=null;ui.nutritionOpen=false;render();window.scrollTo(0,0);}
+    if(action==='navigate') {ui.tab=btn.dataset.to;ui.editor=null;ui.nutritionOpen=false;ui.catalogContext='browse';ui.catalogSourceId=null;ui.catalogDetailId=null;ui.catalogConfirmId=null;render();window.scrollTo(0,0);}
     else if(action==='select-plan') {ui.plan=btn.dataset.plan;render();}
     else if(action==='start') startWorkout(btn.dataset.plan);
     else if(action==='add-set') {const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length<12){en.sets.push({load:'',reps:'',rir:'',warmup:false});persistDraft();render();}}
@@ -2187,12 +2187,13 @@
   }
   document.querySelector('.top-settings')?.addEventListener('click',()=>{
     if (loadFailure) return;
-    ui.editor=null;ui.tab='settings';render();window.scrollTo(0,0);
+    ui.editor=null;ui.tab='settings';ui.catalogContext='browse';ui.catalogSourceId=null;render();window.scrollTo(0,0);
   });
   document.getElementById('nav').addEventListener('click',event=>{
     if (loadFailure) return;
     const btn=event.target.closest('[data-tab]');if(!btn)return;
     ui.editor=null;ui.tab=btn.dataset.tab;
+    ui.catalogContext='browse';ui.catalogSourceId=null;ui.catalogDetailId=null;ui.catalogConfirmId=null;
     if(ui.tab==='progress'){ui.bodyOpen=false;ui.nutritionOpen=false;ui.nutritionEditId=null;}
     render();window.scrollTo(0,0);
   });
@@ -2260,6 +2261,12 @@
       const previous=(state.activitySteps||[]).find(row=>row.date===event.target.value);
       const input=screen.querySelector('#home-step-count');if(input)input.value=previous?String(previous.steps):'';
       return;
+    }
+    if(event.target.id==='catalog-source-select'&&ui.tab==='catalog'&&catalogContext()==='replace'){
+      const id=event.target.value;
+      if(id&&!CSESSION.sourceOptions(ui.draft).some(entry=>entry.id===id))return;
+      ui.catalogSourceId=id||null;ui.catalogConfirmId=null;
+      const scroll=window.scrollY;render();window.scrollTo(0,scroll);return;
     }
     collectDraft(event);
     updateMuayField(event);
