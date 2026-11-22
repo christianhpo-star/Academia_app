@@ -1,5 +1,23 @@
 # FORJA
 
+## Organização das telas (P3, novembro/2026)
+
+| Área | Conteúdo principal |
+| --- | --- |
+| **Início** | Próximo treino ou sessão em andamento, recuperação, atalhos de registro, passos do dia e rotina configurada. |
+| **Treinos** | Minhas fichas, musculação, Muay Thai e catálogo único para consultar, adicionar ou substituir. |
+| **Evolução → Corpo** | Peso, medidas corporais, pesagens e objetivo. |
+| **Evolução → Treinos** | Séries por grupo, força por exercício, passos e análises de constância, volume e recuperação. |
+| **Evolução → Nutrição** | Tendências dos registros alimentares; o registro de refeições permanece em Alimentação. |
+| **Histórico** | Calendário e sessões anteriores, com filtros Todos, Musculação e Muay Thai e expansão de 3 para mais 5 por modalidade. |
+| **Ajustes → Seus dados** | Backup, importação e exportação. O Histórico oferece um atalho para esse mesmo destino. |
+
+- O registro diário de passos continua direto no Início; **Ver evolução dos passos** abre o gráfico correto. A lista recente e o cartão de último treino deixam de repetir consultas de outras áreas.
+- A análise histórica de constância passa da sessão para **Evolução → Treinos → Constância e volume**. A avaliação de dose e a ação de série extra continuam disponíveis durante o treino.
+- As três subabas de Evolução funcionam por toque e teclado (setas, Home e End), com foco preservado. Lembretes de pesagem selecionam Corpo e abrem o formulário, independentemente da última subaba consultada.
+- Filtros e navegação alteram somente a interface; não migram nem regravam histórico, metas ou séries do rascunho. Catálogo unificado e mapas Frente/Costas permanecem no mesmo fluxo.
+- [Escopo e validação da etapa](docs/navigation-responsibilities.md). Esta descrição prevalece sobre os checkpoints históricos abaixo.
+
 ## Biblioteca única (P2, novembro/2026)
 - A **mesma tela** `Treinos → Catálogo` atende consulta, edição confirmada de ficha, substituição de um movimento na sessão e adição só no treino atual. O menu de sessão não contém mais um segundo catálogo dentro da ficha.
 - Na sessão: **Substituir** em cada exercício não realizado, ou `Ajustar este treino → Substituir / Adicionar só hoje / Tenho energia para mais`, abre a biblioteca completa. Se necessário, o exercício original é escolhido explicitamente, e a troca só acontece depois de visitar o detalhe e **Confirmar**.

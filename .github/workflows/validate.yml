@@ -63,6 +63,8 @@ jobs:
           python3 tests/smoke_flex.py
           python3 tests/smoke_dose.py
           python3 tests/smoke_ui.py
+          python3 tests/smoke_navigation.py
+          python3 tests/smoke_goal.py
           python3 tests/smoke_focus.py
           python3 tests/smoke_catalog.py
           python3 tests/smoke_catalog_detail.py
@@ -105,5 +107,6 @@ jobs:
             screenshots/body-*.png
             screenshots/nutrition-*.png
             screenshots/evolution-*.png
+            screenshots/navigation-*.png
           if-no-files-found: warn
           retention-days: 3

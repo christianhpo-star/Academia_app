@@ -18,10 +18,24 @@ test('weight model only uses local weights and labels inherited initial values',
  assert.equal(model.desired,80);
  assert.equal(model.history.length,2);
  assert.equal(model.history[0].date,'2026-11-15');
- const html=E.renderWeight(state,date,2);
+ const bodyTools='<div id="body-tools">Objetivo e pesagem</div>';
+ const html=E.renderWeight(state,date,2,{stepsHTML:'<section>Movimento diário</section>',groupsHTML:'<section>Treino por grupo</section>',bodyToolsHTML:bodyTools});
  for(const part of ['Peso inicial','Peso atual','Peso desejado','Adicionar uma pesagem','Pesagens registradas','87,2','80','21/10','15/11'])assert.ok(html.includes(part),part);
  assert.match(html,/data-action="evo-weight-more"/);
  assert.match(html,/role="img"/);
+ assert.match(html,/id="evo-panel-weight"[^>]+role="tabpanel" aria-labelledby="evo-tab-weight"/);
+ assert.doesNotMatch(html,/Movimento diário|Treino por grupo/);
+ assert.ok(html.endsWith('</details>'+bodyTools+'</section>'));
+ for(const [view,label] of [['weight','Corpo'],['training','Treinos'],['nutrition','Nutrição']]){
+  const header=E.renderHeader(state,date,view);
+  assert.equal((header.match(/role="tab"/g)||[]).length,3);
+  assert.equal((header.match(/aria-selected="true"/g)||[]).length,1);
+  assert.equal((header.match(/tabindex="0"/g)||[]).length,1);
+  assert.equal((header.match(/tabindex="-1"/g)||[]).length,2);
+  assert.ok(header.includes('id="evo-tab-'+view+'" type="button" role="tab" aria-selected="true" tabindex="0"'));
+  assert.ok(header.includes('aria-controls="evo-panel-'+view+'" data-action="evo-view" data-view="'+view+'"'));
+  assert.ok(header.includes('>'+label+'</button>'));
+ }
  assert.doesNotMatch(html,/Christian Oliveira/);
 });
 test('absent weigh-ins remain absent and no invented sample screenshot values',()=>{
