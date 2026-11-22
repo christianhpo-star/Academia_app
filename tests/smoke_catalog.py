@@ -104,16 +104,19 @@ with sync_playwright() as p:
     assert page.locator('[data-action="training-destination"][data-to="plans"]').get_attribute('aria-pressed')=='true'
     page.locator('[data-exercise="pulley-aberto"] [data-field="load"]').first.fill('40')
     page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.fill('10')
-    snapshot=page.evaluate('localStorage.getItem("forja.academia.draft.v1")')
+    # Focusing away from the numeric input commits its change event. The draft
+    # envelope's savedAt changes whenever autosave runs; compare user entries.
+    page.locator('[data-action="training-destination"][data-to="plans"]').focus()
+    snapshot=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft')
     assert snapshot
     page.locator('[data-action="training-destination"][data-to="catalog"]').click()
     assert page.locator('.training-draft-notice').count()==1
     assert 'Treino em andamento preservado' in page.locator('.training-draft-notice').inner_text()
-    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==snapshot
+    assert page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft')==snapshot
     page.locator('.training-draft-notice [data-to="plans"]').click()
     assert page.locator('[data-exercise="pulley-aberto"] [data-field="load"]').first.input_value()=='40'
     assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value()=='10'
-    assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")')==snapshot
+    assert page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft')==snapshot
     page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
     assert page.get_by_role('heading',name='Sugestões para este treino').count()==1
     assert page.locator('.catalog-suggestion').count() in [1,2,3]
