@@ -4,9 +4,9 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 RAW=(ROOT/'index.html').read_text(encoding='utf-8')
-FILES=re.findall(r'<script defer src="\\./([^?"#]+)(?:\\?[^"]*)?"></script>',RAW)
-HTML=re.sub(r'<script defer src="\\./[^"]+"></script>','',RAW)
-HTML=re.sub(r'<link rel="stylesheet" href="\\./styles\\.css\\?v=[^"]+" />','',HTML)
+FILES=re.findall(r'<script defer src="\./([^?"#]+)(?:\?[^"]*)?"></script>',RAW)
+HTML=re.sub(r'<script defer src="\./[^"]+"></script>','',RAW)
+HTML=re.sub(r'<link rel="stylesheet" href="\./styles\.css\?v=[^"]+" />','',HTML)
 def start(context,stored,errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
