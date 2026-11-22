@@ -1279,7 +1279,7 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 
 
 /* FORJA anatomical guides — compact, progressive disclosure; no modal or autoplay. */
-.ex-anatomy{margin:10px 0 12px;border:1px solid #36546A;border-radius:12px;background:#142434;overflow:hidden;content-visibility:auto;contain-intrinsic-size:auto 72px}
+.ex-anatomy{margin:10px 0 12px;border:1px solid #36546A;border-radius:12px;background:#142434;overflow:hidden}
 .ex-anatomy-summary{min-height:64px;display:flex;align-items:center;gap:10px;padding:7px 11px;cursor:pointer;list-style:none}
 .ex-anatomy-summary::-webkit-details-marker{display:none}
 .ex-anatomy-summary:focus-visible{outline:3px solid #80BEFF;outline-offset:-3px;border-radius:10px}
