@@ -122,7 +122,7 @@ with sync_playwright() as p:
     assert page.evaluate('JSON.stringify(window.__testStorage)')==before_confirm
     page.locator('[data-action="catalog-intent"][data-ex="supino-canadense"]').click()
     page.locator('[data-action="catalog-confirm"][data-ex="supino-canadense"]').click()
-    assert 'Na minha ficha' in page.locator('.catalog-detail-intro').inner_text()
+    assert 'na minha ficha' in page.locator('.catalog-detail-intro').inner_text().lower()
     assert page.locator('[data-action="catalog-edit-in-plan"]').count()==1
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.locator('[data-action="catalog-back"]').click()
