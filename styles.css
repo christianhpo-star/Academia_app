@@ -1296,11 +1296,12 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .ex-anatomy-svg .primary{fill:#83CEFF;stroke:#C4ECFF;stroke-width:1.3;stroke-linejoin:round}
 .ex-anatomy-svg .secondary{fill:#397C9C;stroke:#75B8D5;stroke-width:1;stroke-linejoin:round}
 .ex-anatomy-info{display:flex;flex-direction:column;gap:8px;min-width:0}
-.ex-anatomy-legend{font-size:11px;line-height:1.5;color:#D3E3EF;display:flex;flex-wrap:wrap;column-gap:4px;align-items:baseline}
+.ex-anatomy-legend{font-size:11px;line-height:1.45;color:#D3E3EF;display:flex;flex-direction:column;gap:2px;min-width:0}
+.ex-anatomy-legend-head{display:flex;align-items:center;gap:6px}
 .ex-anatomy-legend b{color:#F3F6FB}
-.ex-anatomy-swatch{display:inline-block;width:9px;height:9px;border-radius:3px;flex:none;margin-right:3px}
-.ex-anatomy-swatch.primary{background:#83CEFF}
-.ex-anatomy-swatch.secondary{background:#397C9C;border:1px solid #75B8D5}
+.ex-anatomy-swatch{display:inline-block;width:9px;height:9px;padding:0;min-width:9px;min-height:9px;border-radius:3px;flex:none}
+.ex-anatomy-swatch.is-main{background:#83CEFF}
+.ex-anatomy-swatch.is-assist{background:#397C9C;border:1px solid #75B8D5}
 .ex-anatomy-cue{font-size:11px;line-height:1.5;color:#DFEAF2;margin:3px 0}
 .ex-anatomy-disclaimer{font-size:10px;line-height:1.45;color:#9CB8CB;margin:3px 0}
 .catalog-anatomy-note{display:block;margin:3px 0 6px;font-size:10px;color:#AFCFE1}
