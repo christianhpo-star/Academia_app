@@ -95,7 +95,7 @@ with sync_playwright() as p:
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.locator('[data-action="catalog-edit-in-plan"]').click()
     assert page.locator('[data-action="exit-editor"]').count()>0
-    assert 'Elevação pélvica na máquina' in page.locator('#screen').inner_text()
+    assert page.locator('input[name="name"]').input_value()=='Elevação pélvica na máquina'
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     assert not errors,errors
     browser.close()
