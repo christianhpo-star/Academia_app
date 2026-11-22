@@ -1492,3 +1492,36 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .focus-utilities{display:flex;gap:8px;align-items:center;margin-top:12px}
 .focus-cardio-quick{flex:1;min-width:0;white-space:normal;justify-content:center}
 .session-cardio{scroll-margin-top:12px}
+
+/* Workout achievement: transparent overlay editor (not a photo/story compositor). */
+.share-screen{max-width:760px;margin:0 auto;padding-bottom:95px}
+.share-back{margin-bottom:10px}
+.share-style-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:18px 0 12px}
+.share-style-btn{min-height:44px;border:1px solid #40596b;border-radius:12px;background:#1b2b39;color:#e4eff5;font-size:13px;font-weight:700;padding:10px;cursor:pointer}
+.share-style-btn.selected{background:#294331;color:#e9ffd8;border-color:var(--lime)}
+.share-style-btn:focus-visible,.share-view-controls button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.share-preview{display:flex;justify-content:center;align-items:center;min-height:245px;padding:10px;border-radius:18px;background-color:#65717a;background-image:linear-gradient(45deg,#849098 25%,transparent 25%),linear-gradient(-45deg,#849098 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#849098 75%),linear-gradient(-45deg,transparent 75%,#849098 75%);background-size:26px 26px;background-position:0 0,0 13px,13px -13px,-13px 0;overflow:hidden}
+.share-preview canvas{display:block;width:100%;max-width:570px;height:auto;aspect-ratio:1080/880;border:0}
+.share-render-status{text-align:center;min-height:24px;color:var(--muted);margin:9px 0 14px}
+.share-config{display:grid;gap:14px;margin:12px 0 20px}
+.share-config>.field{min-width:0}
+.share-config input,.share-config select{width:100%;min-width:0}
+.share-config-options{display:flex;flex-wrap:wrap;gap:8px 15px;padding:12px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.share-config-options label{display:flex;align-items:center;gap:7px;min-height:44px;font-size:13px;color:#e0edf6}
+.share-config-options input{width:18px;height:18px;accent-color:var(--lime);flex:0 0 auto}
+.share-view-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.share-view-controls>span{flex:0 0 100%;color:var(--muted);font-size:12px;font-weight:700}
+.share-view-controls button{flex:1;min-width:0}
+.share-view-controls button[aria-pressed="true"]{border-color:var(--lime);color:var(--lime)}
+.share-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.share-actions button{min-height:48px;white-space:normal}
+.share-actions [data-action="share-download"]{grid-column:1/-1}
+.share-actions button[disabled]{opacity:.54;cursor:wait}
+.share-howto{margin-top:17px;line-height:1.6}
+.history-share-quick{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px;margin:14px 0;border:1px solid #365c46;border-radius:13px;background:#1b2e27}
+.history-share-quick strong{font-size:14px;color:var(--lime)}
+.history-share-quick p{margin:4px 0 0;font-size:12px}
+.history-share-quick button{flex:0 0 auto;min-height:44px}
+.history-share-action{margin-bottom:12px}
+@media(max-width:390px){.history-share-quick{flex-wrap:wrap}.history-share-quick button{width:100%}.share-style-btn{font-size:12px;padding:8px 5px}}
+@media(max-width:335px){.share-config-options{display:grid;gap:6px}.share-view-controls button{font-size:11px}}

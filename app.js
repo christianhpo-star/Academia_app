@@ -22,6 +22,8 @@
   const ANATOMY = window.ForjaExerciseAnatomy;
   const MUSCLE_MAP = window.ForjaMuscleMap;
   const MUSCLE_BODY = window.ForjaMuscleBody;
+  const SHARE = window.ForjaShareSummary;
+  const STICKER = window.ForjaShareSticker;
   const CSESSION = window.ForjaCatalogSession;
   const EVO = window.ForjaEvolutionDashboard;
   const NCAT = window.ForjaNutritionCatalog;
@@ -187,6 +189,7 @@
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
     anatomyOpen:{},anatomyViews:{},
     focusedMode: false, focusedExercise: null,
+    share:null,shareBlob:null,
     cardioOpen: Boolean(recoveredDraft?.draft?.cardio?.length),
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
@@ -490,6 +493,7 @@
       <ul class="mini-list">${overview.leaders.map(item => `<li><div class="history-exercise"><strong>${esc(item.name)}</strong><br><span>${esc(item.plan.title)} · ${dateBR(item.firstDate)} → ${dateBR(item.lastDate)}</span><br><small class="leader-detail">${esc(setSummary(item.firstTop, item.unit))} → ${esc(setSummary(item.latestTop, item.unit))}</small></div><div class="text-right"><strong>${fmt(item.current)}%</strong><br><span class="strength-delta ${strengthTone(item.percent)}">${item.percent >= 0 ? '+' : ''}${fmt(item.percent)}%</span></div></li>`).join('')}</ul>
     </section>` : ''}`;
   }
+  let shareRenderVersion=0;
   function render() {
     const main = document.getElementById('screen');
     if (loadFailure) {
@@ -503,11 +507,12 @@
     const trainingArea=ui.tab==='plans'||ui.tab==='catalog';
     const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
-      ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : renderSettings();
+      ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : ui.tab === 'share' ? renderShare() : renderSettings();
     main.innerHTML=(trainingArea?renderTrainingDestinations():'')+content;
     if(ui.tab==='nutrition')diary.mount();
+    if(ui.tab==='share')mountSharePreview();else shareRenderVersion++;
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
-      const active=btn.dataset.tab===ui.tab||(ui.tab==='catalog'&&btn.dataset.tab==='plans');
+      const active=btn.dataset.tab===ui.tab||(ui.tab==='catalog'&&btn.dataset.tab==='plans')||(ui.tab==='share'&&btn.dataset.tab==='history');
       btn.classList.toggle('active',active);
       if(active) btn.setAttribute('aria-current','page'); else btn.removeAttribute('aria-current');
     });
@@ -1569,6 +1574,125 @@
     ui.bodyEditDate=null;render();notify('Medidas de '+dateBR(date)+' salvas.');
   }
 
+
+  // Share is a read-only view of one already saved strength session.
+  function shareModel(){
+    return ui.share && SHARE?.build(state,ui.share.sessionId);
+  }
+  function openShare(id) {
+    if(!STICKER || !SHARE) return notify('A geração de figurinhas não está disponível nesta versão.');
+    const model=SHARE.build(state,id);
+    if(!model)return notify('Não foi possível localizar a sessão salva.');
+    const mode=model.largest?'load':model.cardioTop?'cardio':model.weekDays>0?'week':'done';
+    ui.share={sessionId:id,...STICKER.options({view:model.preferredView,highlightMode:mode})};
+    ui.shareBlob=null;ui.tab='share';render();window.scrollTo(0,0);
+  }
+  function renderShare() {
+    const m=shareModel();
+    if(!m)return '<section class="card"><h1>Conquista indisponível</h1><button type="button" class="secondary" data-action="share-back">Voltar ao Histórico</button></section>';
+    const s=ui.share;
+    const styleNames=[['conquest','Conquista'],['muscles','Músculos'],['highlight','Destaque']];
+    const choices=styleNames.map(([id,label])=>'<button type="button" class="share-style-btn '+(s.style===id?'selected':'')+
+      '" data-action="share-style" data-value="'+id+'" aria-pressed="'+(s.style===id)+'">'+label+'</button>').join('');
+    const seen=new Set(),perExercise=m.loadChoices.filter(row=>{
+      if(seen.has(row.exerciseId))return false;
+      seen.add(row.exerciseId);return true;
+    });
+    const selected=perExercise.some(row=>row.key===s.highlightKey)?s.highlightKey:(m.largest?.key||perExercise[0]?.key||'');
+    const optModes=[
+      ...(m.largest?[['load','Maior carga registrada']]:[]),
+      ...(m.cardioTop?[['cardio','Cardio do dia']]:[]),
+      ...(m.weekDays?[['week','Constância da semana']]:[]),
+      ['done','Treino concluído']
+    ];
+    return '<section class="share-screen" aria-label="Criar figurinha do treino">'+
+      '<button type="button" class="button-inline share-back" data-action="share-back">← Voltar ao Histórico</button>'+
+      headline('CONQUISTA DO DIA','Compartilhar treino','Uma figurinha sobre a sua foto no Instagram. Não é uma reprodução da ficha.')+
+      '<div class="share-style-list" role="group" aria-label="Estilo da figurinha">'+choices+'</div>'+
+      '<div class="share-preview" aria-label="Prévia da figurinha transparente">'+
+        '<canvas id="share-canvas" width="1080" height="880" role="img" aria-label="Prévia do adesivo FORJA com a conquista e os músculos desta sessão"></canvas>'+
+      '</div><p class="share-render-status small" id="share-render-status" role="status">Preparando PNG transparente…</p>'+
+      '<div class="share-config">'+
+        '<div class="field"><label for="share-phrase">Sua frase</label><input id="share-phrase" data-share-field="phrase" maxlength="66" value="'+esc(s.phrase)+'" placeholder="Hoje eu fiz minha parte." /></div>'+
+        '<div class="field"><label for="share-mode">Destaque do treino</label><select id="share-mode" data-share-field="highlightMode">'+
+          optModes.map(([id,label])=>'<option value="'+id+'" '+(s.highlightMode===id?'selected':'')+'>'+label+'</option>').join('')+
+        '</select></div>'+
+        (s.highlightMode==='load'&&perExercise.length?'<div class="field"><label for="share-exercise">Exercício em destaque</label><select id="share-exercise" data-share-field="highlightKey">'+
+          perExercise.map(row=>'<option value="'+esc(row.key)+'" '+(row.key===selected?'selected':'')+'>'+esc(row.label)+'</option>').join('')+
+          '</select><p class="small muted">Maior número de kg registrado, não é recorde pessoal nem compara equipamentos.</p></div>':'')+
+        '<div class="share-config-options">'+
+          '<label><input type="checkbox" data-share-field="showMuscles" '+(s.showMuscles?'checked':'')+' /> Mapa muscular</label>'+
+          '<label><input type="checkbox" data-share-field="showWeek" '+(s.showWeek?'checked':'')+' /> Constância</label>'+
+          '<label><input type="checkbox" data-share-field="showCardio" '+(s.showCardio?'checked':'')+' /> Cardio, se houver</label>'+
+        '</div>'+
+        '<div class="share-view-controls" role="group" aria-label="Visual da figurinha">'+
+          '<span>Cor do texto</span>'+
+          '<button type="button" class="secondary small-button" data-action="share-tone" data-value="dark" aria-pressed="'+(s.tone==='dark')+'">Para foto clara</button>'+
+          '<button type="button" class="secondary small-button" data-action="share-tone" data-value="light" aria-pressed="'+(s.tone==='light')+'">Para foto escura</button>'+
+        '</div>'+
+        '<div class="share-view-controls" role="group" aria-label="Vista do mapa muscular">'+
+          '<span>Mapa</span>'+
+          '<button type="button" class="secondary small-button" data-action="share-view" data-value="front" aria-pressed="'+(s.view==='front')+'">Frente</button>'+
+          '<button type="button" class="secondary small-button" data-action="share-view" data-value="back" aria-pressed="'+(s.view==='back')+'">Costas</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="share-actions"><button type="button" class="primary" data-action="share-download" disabled>Salvar figurinha PNG</button>'+
+      '<button type="button" class="secondary" data-action="share-copy" disabled>Copiar imagem</button>'+
+      '<button type="button" class="secondary" data-action="share-native" disabled>Compartilhar arquivo</button></div>'+
+      '<p class="small muted share-howto">Abra o Instagram, escolha sua foto para o Story e procure Figurinhas → Foto para adicionar o PNG. A disponibilidade varia por versão do aplicativo. O FORJA não publica nem acessa sua conta.</p>'+
+      '<p class="tiny muted">Somente dados que você escolheu mostrar entram na imagem. Nenhuma foto ou informação é enviada a servidores.</p>'+
+    '</section>';
+  }
+  async function mountSharePreview() {
+    const token=++shareRenderVersion,canvas=document.getElementById('share-canvas'),m=shareModel();
+    ui.shareBlob=null;
+    if(!canvas||!m||!STICKER)return;
+    const buttons=Array.from(document.querySelectorAll('[data-action="share-download"],[data-action="share-copy"],[data-action="share-native"]'));
+    buttons.forEach(btn=>btn.disabled=true);
+    const status=document.getElementById('share-render-status');
+    if(status)status.textContent='Preparando PNG transparente…';
+    try {
+      await STICKER.render(canvas,m,{...ui.share});
+      const png=await STICKER.blob(canvas);
+      if(token!==shareRenderVersion||document.getElementById('share-canvas')!==canvas||ui.tab!=='share')return;
+      ui.shareBlob=png;
+      buttons.forEach(btn=>btn.disabled=false);
+      if(status)status.textContent='Figurinha pronta: PNG transparente, gerado no seu aparelho.';
+    }catch(err){
+      console.warn('Não foi possível preparar a figurinha',err);
+      if(token!==shareRenderVersion)return;
+      if(status)status.textContent='Não foi possível gerar o PNG. Altere o estilo e tente novamente.';
+    }
+  }
+  function downloadSharePNG() {
+    const model=shareModel(),blob=ui.shareBlob;
+    if(!model||!blob)return notify('A figurinha ainda não está pronta.');
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download=STICKER.filename(model);document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),10000);
+    notify('PNG salvo. No Instagram, adicione-o sobre sua foto usando os adesivos disponíveis.');
+  }
+  function copySharePNG() {
+    if(!ui.shareBlob)return notify('A figurinha ainda não está pronta.');
+    if(!navigator.clipboard?.write||typeof window.ClipboardItem!=='function')
+      return notify('Copiar imagem não está disponível neste navegador. Use Salvar PNG.');
+    navigator.clipboard.write([new window.ClipboardItem({'image/png':ui.shareBlob})])
+      .then(()=>notify('Imagem copiada. Cole no editor do Instagram se ele permitir.'))
+      .catch(()=>notify('O navegador não permitiu copiar a imagem. Use Salvar PNG.'));
+  }
+  function nativeSharePNG() {
+    const model=shareModel(),blob=ui.shareBlob;
+    if(!model||!blob)return notify('A figurinha ainda não está pronta.');
+    if(typeof File!=='function'||!navigator.canShare||!navigator.share)
+      return notify('Compartilhamento de arquivos indisponível. Use Salvar PNG.');
+    const file=new File([blob],STICKER.filename(model),{type:'image/png'});
+    if(!navigator.canShare({files:[file]}))
+      return notify('Seu aparelho não aceita compartilhar esse arquivo. Use Salvar PNG.');
+    navigator.share({files:[file]}).catch(err=>{
+      if(err?.name!=='AbortError')notify('Não foi possível compartilhar o arquivo. Use Salvar PNG.');
+    });
+  }
+
   function renderHistory() {
     const sessions=latestSessions(), muaySessions=M.sortedSessions(state.muay.sessions);
     const shown=sessions.slice(0,ui.historyStrengthLimit);
@@ -1576,6 +1700,7 @@
     const filters=[['all','Todos',sessions.length+muaySessions.length],['strength','Musculação',sessions.length],['muay','Muay Thai',muaySessions.length]];
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
     return `${headline('Sessões e calendário','Seu histórico.')}
+      ${sessions.length?'<section class="history-share-quick"><div><strong>Sua última conquista</strong><p class="small muted">Transforme o treino salvo em uma figurinha para sua foto no Instagram.</p></div><button type="button" class="secondary" data-action="share-open" data-id="'+esc(sessions[0].id)+'">Compartilhar conquista</button></section>':''}
       <div class="history-filters" role="group" aria-label="Filtrar sessões por modalidade">
         ${filters.map(([kind,label,count])=>`<button type="button" class="history-filter ${ui.historyFilter===kind?'selected':''}" data-action="history-filter" data-kind="${kind}" aria-pressed="${ui.historyFilter===kind}">${label}<span>${count}</span></button>`).join('')}
       </div>
@@ -1598,6 +1723,7 @@
             <span class="history-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="history-content">
+            <button type="button" class="button-inline history-share-action" data-action="share-open" data-id="${esc(session.id)}">Compartilhar conquista desta sessão</button>
             <ul class="mini-list">${session.entries.map(en=>{
               const ex=exerciseFor(en.id),top=E.topSet(en);
               return `<li><div class="history-exercise"><strong>${esc(ex?.name||en.id)}</strong><br>
@@ -1969,6 +2095,20 @@
       }
       return;
     }
+    if(action==='share-open'){openShare(btn.dataset.id);return;}
+    if(action==='share-back'){
+      ui.tab='history';ui.share=null;ui.shareBlob=null;shareRenderVersion++;
+      render();window.scrollTo(0,0);return;
+    }
+    if(action==='share-style'||action==='share-tone'||action==='share-view'){
+      if(!ui.share)return;
+      const field=action==='share-style'?'style':action==='share-tone'?'tone':'view';
+      ui.share[field]=btn.dataset.value;
+      render();return;
+    }
+    if(action==='share-download'){downloadSharePNG();return;}
+    if(action==='share-copy'){copySharePNG();return;}
+    if(action==='share-native'){nativeSharePNG();return;}
     if(action==='muscle-map-view'){
       const view=btn.dataset.view;
       if(!MUSCLE_BODY||!['front','back'].includes(view)||view===ui.evolutionMuscleView)return;
@@ -2530,6 +2670,10 @@
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
   screen.addEventListener('input',event=>{
+    if(ui.tab==='share' && event.target.dataset.shareField==='phrase' && ui.share){
+      ui.share.phrase=event.target.value.slice(0,66);
+      mountSharePreview();return;
+    }
     collectDraft(event);updateMuayField(event);
     if(ui.draft && (event.target.dataset.draftMeta==='energy' || event.target.dataset.exPain)){
       const box=document.querySelector('.dose-card');
@@ -2555,6 +2699,14 @@
   });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
+    if(ui.tab==='share' && event.target.dataset.shareField && ui.share){
+      const field=event.target.dataset.shareField;
+      if(['showMuscles','showWeek','showCardio'].includes(field))ui.share[field]=event.target.checked;
+      else if(['highlightMode','highlightKey'].includes(field))ui.share[field]=event.target.value;
+      else if(field==='phrase'){ui.share.phrase=event.target.value.slice(0,66);mountSharePreview();return;}
+      else return;
+      render();return;
+    }
     if(event.target.id==='muscle-map-select'){
       selectMuscleRegion(event.target.value,event.target);return;
     }
@@ -2644,7 +2796,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-focuscardio16',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-conquista17',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
