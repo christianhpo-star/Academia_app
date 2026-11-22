@@ -48,7 +48,8 @@
       if(!row||!lastWeek)continue;
       const lastDay=lastDirect(id,strengthSessions,today),gap=lastDay?age(today,lastDay):null;
       // Absent DIRECT sets != proof of no muscle activity: indirect sets are separate.
-      const missing=row.directSets===0,low=row.directSets>0&&row.directSets<=2&&lastWeek.directSets===0;
+      const missing=row.directSets===0,low=row.directSets>0&&lastWeek.directSets===0&&
+        (row.directSets<=2||(gap!=null&&gap>=21));
       if(!missing&&!low)continue;
       const options=catalog.filter(item=>ANATOMY?.describe?.(item.id)?.main?.includes(id))
         .sort((a,b)=>{
