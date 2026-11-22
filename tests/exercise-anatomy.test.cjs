@@ -10,11 +10,11 @@ const lowerIds=all.filter(ex=>['C','D'].includes(ex.group)).map(ex=>ex.id);
 const description=svg=>(svg.match(/<desc\b[^>]*>([\s\S]*?)<\/desc>/)||[])[1]||'';
 const title=svg=>(svg.match(/<title\b[^>]*>([\s\S]*?)<\/title>/)||[])[1]||'';
 
-test('anatomical guidance covers the 45 upper/core and 33 lower movements with stable IDs',()=>{
+test('anatomical guidance covers the 50 upper/core and 38 lower movements with stable IDs',()=>{
   assert.equal(A.VERSION,4);
-  assert.equal(upperIds.length,45);
-  assert.equal(lowerIds.length,33);
-  assert.equal(A.coveredIds.length,78);
+  assert.equal(upperIds.length,50);
+  assert.equal(lowerIds.length,38);
+  assert.equal(A.coveredIds.length,88);
   assert.equal(new Set(A.coveredIds).size,A.coveredIds.length);
   assert.ok(ids.every(id=>!!A.describe(id)),ids.filter(id=>!A.describe(id)).join(', '));
   assert.ok(A.coveredIds.every(id=>ids.includes(id)));
@@ -65,9 +65,11 @@ test('leg variants are mapped by movement rather than by their training block',(
     {ids:'stiff terra-romeno-halter',view:'back',main:['hamstrings'],assist:['glutes']},
     {ids:'elevacao-pelvica gluteo-cabo ponte-gluteo hip-thrust-maquina',view:'back',main:['glutes'],assist:[]},
     {ids:'pull-through-polia',view:'back',main:['glutes'],assist:['hamstrings']},
-    {ids:'sumo-maquina',view:'back',main:['glutes'],assist:['quadriceps','adductors']},
+    {ids:'sumo-maquina agachamento-sumo-halter',view:'back',main:['glutes'],assist:['quadriceps','adductors']},
     {ids:'abdutora abducao-polia',view:'back',main:['hipAbductors'],assist:[]},
-    {ids:'panturrilha-leg panturrilha-banco panturrilha-em-pe panturrilha-unilateral-pe',view:'back',main:['calves'],assist:[]}
+    {ids:'extensao-lombar-45',view:'back',main:['glutes','hamstrings'],assist:[]},
+    {ids:'passada-lateral-halter',view:'back',main:['hipAbductors','glutes'],assist:['quadriceps']},
+    {ids:'panturrilha-leg panturrilha-banco panturrilha-em-pe panturrilha-unilateral-pe panturrilha-smith panturrilha-sentada-maquina',view:'back',main:['calves'],assist:[]}
   ];
   const checked=[];
   for(const expected of groups){

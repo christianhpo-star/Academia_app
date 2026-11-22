@@ -14,14 +14,14 @@ const attributes=tag=>Object.fromEntries([...tag.matchAll(/\b([\w-]+)="([^"]*)"/
 const regionGroups=svg=>[...svg.matchAll(/<g\b[^>]*data-muscle-region="[^"]+"[^>]*>/g)].map(match=>attributes(match[0]));
 const svgFrom=html=>html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0]||'';
 
-test('the full-body drawing covers exactly the 19 anatomical regions used by all 78 catalog exercises',()=>{
+test('the full-body drawing covers exactly the 19 anatomical regions used by all 88 catalog exercises',()=>{
   const catalog=[...new Map([...FLEX.catalog,...DATA.exercises].map(ex=>[ex.id,ex])).values()];
   const expected=new Set(catalog.flatMap(ex=>{
     const item=ANATOMY.describe(ex.id);
     assert.ok(item,ex.id);
     return [...item.main,...item.assist];
   }));
-  assert.equal(catalog.length,78);
+  assert.equal(catalog.length,88);
   assert.equal(BODY.regions.length,19);
   assert.deepEqual(BODY.regions.map(r=>r.id).sort(),[...expected].sort());
   assert.deepEqual(BODY.regions.map(r=>r.id).sort(),HISTORY.REGIONS.map(r=>r.id).sort());

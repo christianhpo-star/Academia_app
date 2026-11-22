@@ -21,6 +21,7 @@
   const PERF = window.ForjaPerformanceTrends;
   const ANATOMY = window.ForjaExerciseAnatomy;
   const MUSCLE_MAP = window.ForjaMuscleMap;
+  const BALANCE = window.ForjaTrainingBalance;
   const MUSCLE_BODY = window.ForjaMuscleBody;
   const SHARE = window.ForjaShareSummary;
   const STICKER = window.ForjaShareSticker;
@@ -189,6 +190,7 @@
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
     anatomyOpen:{},anatomyViews:{},
     focusedMode: false, focusedExercise: null,
+    balancePending:null, balanceDismissed:false,
     share:null,shareBlob:null,
     cardioOpen: Boolean(recoveredDraft?.draft?.cardio?.length),
     calendarMonth: today().slice(0,7), calendarDay: today(),
@@ -715,6 +717,7 @@
           ${!ui.draft&&!next.rest?`<details class="home-reason"><summary>Por que este treino?</summary><p>${esc(next.reason)}</p></details>`:''}
         </div>
       </section>
+      ${renderBalanceAlert()}
       ${pending.length?`<div class="callout warn home-pending"><strong>Joelho: avaliação pendente</strong>
         <p>Há ${pending.length} treino(s) aguardando registro após 24h.
         <button class="button-inline" data-action="history-knee">Avaliar no histórico</button></p></div>`:''}
@@ -1019,6 +1022,7 @@
     ui.plan=id;
     ui.tab='plans';ui.editor=null;
     ui.focusedExercise=null;ui.focusedMode=false;ui.cardioOpen=false;
+    ui.balancePending=null;ui.balanceDismissed=false;
     ui.draft={planId:id,energy:'normal',notes:'',entries:{},plannedIds:[],skipped:[],addedIds:[]};
     currentExercises(id).forEach(ex => {ui.draft.entries[ex.id]={id:ex.id,sets:seedSets(ex),pain:''};ui.draft.plannedIds.push(ex.id);});
     persistDraft();
@@ -1055,6 +1059,7 @@
             ${ids.map((id,i)=>`<button type="button" class="focus-exercise-pill ${selected===id?'selected':''}" data-action="focus-select" data-ex="${esc(id)}" aria-pressed="${selected===id}">${i+1}. ${esc(exerciseFor(id)?.name||id)} ${focus.byExercise[id]?.finished?'✓':''}</button>`).join('')}
           </div>` : ''}
       </section>
+      ${renderSessionBalance()}
       <section class="session-exercises" aria-labelledby="session-exercises-title">
         <div class="session-exercises-header"><p class="section-eyebrow">REGISTRO DE SÉRIES</p>
           <h2 id="session-exercises-title">Exercícios da sessão</h2>
@@ -1085,6 +1090,84 @@
       <select id="session-energy" data-draft-meta="energy"><option value="leve" ${ui.draft.energy==='leve'?'selected':''}>Leve / sobrou energia</option><option value="normal" ${ui.draft.energy==='normal'?'selected':''}>Normal / esforço esperado</option><option value="intenso" ${ui.draft.energy==='intenso'?'selected':''}>Intensa / muita fadiga</option></select></div>
       <div class="field mt-12"><label for="session-notes">Observações (opcional)</label><textarea id="session-notes" data-draft-meta="notes" placeholder="Ex.: sono, dor, execução, Muay Thai no mesmo dia">${esc(ui.draft.notes)}</textarea></div></section>
       <div class="training-controls"><div class="btnrow"><button class="primary" style="flex:2" data-action="finish">Salvar treino</button><button class="ghost" style="flex:1" data-action="cancel">Cancelar</button></div></div>`;
+  }
+  function balanceReport(draft=ui.draft){
+    return BALANCE?.evaluate?.({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      exercises:state.exercises,draft,settings:state.settings,today:today()})||
+      {ready:false,alerts:[],recommendations:[],message:'Recomendações indisponíveis.'};
+  }
+  function renderBalanceAlert(){
+    const report=balanceReport(null);
+    if(!report.ready||!report.alerts.length)return '';
+    const primary=report.alerts[0],count=report.alerts.length;
+    return '<aside class="balance-home-alert" aria-label="Revisão de estímulos musculares">'+
+      '<strong>Revisar distribuição dos treinos</strong>'+
+      '<p>'+esc(primary.label)+': '+esc(primary.reason)+'. '+
+      (count>1?'Outras '+(count-1)+' regiões também merecem revisão.':'')+
+      '</p><button type="button" class="button-inline" data-action="balance-review">Ver opções na evolução</button>'+
+      '<p class="tiny muted">Baseado apenas nos treinos registrados. Não indica ausência comprovada de atividade nem exige adicionar séries.</p></aside>';
+  }
+  function renderSessionBalance(){
+    const report=balanceReport();
+    if(!report.ready||!report.alerts.length)return '';
+    const candidate=report.recommendations[0];
+    const chosen=ui.balancePending&&report.recommendations.find(x=>x.id===ui.balancePending.id);
+    return '<aside class="balance-session" aria-label="Equilibrar estímulos do treino">'+
+      '<div class="row-between"><div><strong>Equilibrar este treino</strong><p class="small muted">Trocas opcionais, somente nesta sessão.</p></div>'+
+      '<span class="balance-tag">'+(report.alerts.length)+' regiões</span></div>'+
+      '<p class="small"><strong>'+esc(report.alerts[0].label)+':</strong> '+esc(report.alerts[0].reason)+'.</p>'+
+      (report.caution?'<p class="small balance-caution">'+esc(report.caution)+'</p>':'')+
+      (!candidate||ui.balanceDismissed?
+        '<details class="balance-alternatives"><summary>'+ (ui.balanceDismissed?'Ver recomendações novamente':'Ver regiões e alternativas')+'</summary>'+
+        report.alerts.slice(0,4).map(item=>'<p class="small"><strong>'+esc(item.label)+':</strong> '+esc(item.reason)+'. '+
+          (item.options.length?'Exemplos: '+item.options.slice(0,2).map(x=>esc(x.name)).join('; ')+'.':'Sem opção mapeada.')+'</p>').join('')+
+        (ui.balanceDismissed?'<button type="button" class="button-inline" data-action="balance-show">Reexibir sugestões</button>':
+          '<button type="button" class="button-inline" data-action="catalog-session-open" data-mode="add">Explorar catálogo e adicionar só hoje</button>')+
+        '</details>':
+        '<div class="balance-candidate"><span>OPÇÃO PARA ESTE TREINO</span>'+
+        '<strong>'+esc(candidate.sourceName)+' → '+esc(candidate.targetName)+'</strong>'+
+        '<p class="small">'+esc(candidate.region)+': '+esc(candidate.reason)+'.</p>'+
+        '<details><summary>Por que sugerimos?</summary><p class="small">'+esc(candidate.explanation)+
+          ' O músculo de origem recebe estímulo de outros exercícios na sessão, mas isso não demonstra recuperação completa.</p></details>'+
+        (chosen?'<div class="balance-confirm"><p class="small"><strong>Confirmar substituição só hoje?</strong> '+
+          'Nenhuma série registrada será apagada. Sua ficha continuará igual para os próximos treinos.</p>'+
+          '<div class="balance-actions"><button type="button" class="primary" data-action="balance-apply" data-id="'+esc(chosen.id)+'">Confirmar troca</button>'+
+          '<button type="button" class="secondary" data-action="balance-cancel">Cancelar</button></div></div>':
+        '<div class="balance-actions"><button type="button" class="secondary" data-action="balance-select" data-id="'+esc(candidate.id)+'">Trocar só hoje</button>'+
+          '<button type="button" class="button-inline" data-action="balance-dismiss">Ignorar hoje</button></div>')+
+        '</div>')+
+      '<p class="tiny muted">'+esc(report.message)+'</p></aside>';
+  }
+  function applyBalanceSwap(id){
+    if(!ui.draft||!id)return;
+    const report=balanceReport(),suggestion=report.recommendations.find(x=>x.id===id);
+    if(!suggestion||!ui.balancePending||ui.balancePending.id!==id)
+      return notify('A sugestão mudou. Revise a sessão antes de confirmar.');
+    const target=F.prepareCatalog(suggestion.targetId,state.exercises);
+    if(!target)return notify('Exercício não encontrado no catálogo.');
+    const result=CSESSION.prepare({draft:ui.draft,mode:'replace',sourceId:suggestion.sourceId,
+      targetId:suggestion.targetId,exercise:target.exercise});
+    if(!result.ok)return notify(result.error);
+    const previous=ui.draft;
+    let added=false;
+    if(target.isNew){
+      if(state.exercises.length>=200)return notify('O catálogo pessoal atingiu seu limite de exercícios.');
+      state.exercises.push({...target.exercise,active:false});added=true;
+      if(!save()){
+        state.exercises.pop();
+        return notify('Não foi possível salvar o novo exercício sem alterar a ficha.');
+      }
+    }
+    ui.draft=result.draft;
+    if(!persistDraft()){
+      ui.draft=previous;
+      if(added){state.exercises.pop();save();}
+      return notify('A troca não foi salva. Sua sessão permanece como estava.');
+    }
+    ui.balancePending=null;
+    ui.balanceDismissed=true;
+    ui.focusedExercise=suggestion.targetId;
+    render();notify('Troca registrada somente nesta sessão. A ficha não foi alterada.');
   }
   function renderCardio() {
     const rows=Array.isArray(ui.draft?.cardio)?ui.draft.cardio:[];
@@ -1360,6 +1443,19 @@
       (t.comparisons.length?'<details class="evo-performance-detail"><summary>Exercícios analisados</summary>'+t.comparisons.slice(0,8).map(c=>'<p>'+esc(state.exercises.find(e=>e.id===c.exerciseId)?.name||c.exerciseId)+': '+fmtDelta(c.changePct)+' · '+c.samplesBefore+' + '+c.samplesNow+' sessões</p>').join('')+'</details>':'')+
       '<p class="small muted">Janelas de 14 dias; 5% e cobertura mínima são heurísticas do FORJA, não limites clínicos. Não estimamos calorias gastas pela carga do treino nem diagnosticamos excesso de treinamento.</p></details>';
   }
+  function renderBalanceProgress(){
+    const report=balanceReport(null);
+    if(!report.ready)return '<section class="card balance-progress"><h2>Equilíbrio muscular</h2><p class="small muted">'+esc(report.message)+'</p></section>';
+    return '<section class="card balance-progress" aria-label="Regiões com menos séries diretas">'+
+      '<h2 class="section-title">Regiões para acompanhar</h2>'+
+      '<p class="small muted">Séries diretas nos últimos 30 dias. Participações auxiliares também aparecem no mapa acima.</p>'+
+      (report.alerts.length?'<div class="balance-region-list">'+report.alerts.map(a=>
+        '<div class="balance-region"><strong>'+esc(a.label)+'</strong><span>'+esc(a.reason)+'</span>'+
+        '<small>'+fmt(a.direct30)+' séries diretas · '+fmt(a.indirect30)+' auxiliares</small>'+
+        (a.options.length?'<p class="tiny muted">Alternativas: '+a.options.slice(0,2).map(x=>esc(x.name)).join(' · ')+'</p>':'')+
+        '</div>').join('')+'</div>':'<p class="small">Não há regiões com lacuna de séries diretas nos registros recentes.</p>')+
+      '<p class="tiny muted">'+esc(report.message)+'</p></section>';
+  }
   function renderProgress(){
     const day=today();
     let content;
@@ -1367,7 +1463,7 @@
       content=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
     }else if(ui.evolutionView==='training'){
       content='<section id="evo-panel-training" class="evo-pane" role="tabpanel" aria-labelledby="evo-tab-training">'+
-        renderMuscleMap()+progressStrengthSummary()+progressStepsPanel()+
+        renderMuscleMap()+renderBalanceProgress()+progressStrengthSummary()+progressStepsPanel()+
         renderPerformanceTrends()+
         '<details class="evo-training-tools" '+(ui.evolutionTrainingOpen?'open':'')+'>'+
         '<summary>Constância e volume <span aria-hidden="true">⌄</span></summary>'+
@@ -1808,7 +1904,8 @@
       ${renderDailyRoutineSettings()}
       <form id="goal-form" class="card"><h2 class="section-title">Objetivo e prazo</h2>
       <div class="field mt-12"><label for="goal-mode">Meu objetivo</label><select id="goal-mode" name="goalMode">${Object.entries(PLANNER.MODES).map(([key,label])=>`<option value="${esc(key)}" ${(state.settings.goalMode||'weight')===key?'selected':''}>${esc(label)}</option>`).join('')}</select></div>
-      <div class="field-row mt-12"><div class="field"><label for="initial-weight">Peso inicial (kg)</label><input id="initial-weight" name="startWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.startWeight}" required /></div>
+      <p class="small muted">Peso atual: <strong>${fmt(PLANNER.latestWeight(state,today())?.weight||state.settings.startWeight)} kg</strong>, calculado pela última pesagem. O peso inicial é referência histórica e não precisa ser atualizado diariamente.</p>
+      <div class="field-row mt-12"><div class="field"><label for="initial-weight">Peso inicial de referência (kg)</label><input id="initial-weight" name="startWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.startWeight}" required /></div>
       <div class="field"><label for="target-weight">Meta (kg)</label><input id="target-weight" name="targetWeight" type="number" step="0.1" min="30" max="350" value="${state.settings.targetWeight}" required /></div></div>
       <div class="field mt-12"><label for="goal-date">Data-alvo desejada</label><input id="goal-date" name="goalDate" type="date" value="${state.settings.goalDate}" required /></div><p class="small muted">Prazo desejado, não garantia de resultado. Nenhuma mudança de calorias é aplicada automaticamente.</p>
       <button class="primary full mt-12" type="submit">Salvar meta</button></form>
@@ -1861,11 +1958,24 @@
   }
   function setWeight(form) {
     const data=new FormData(form), n=E.cleanNumber(data.get('weight')), day=String(data.get('date'));
-    if(n===null || n<30 || n>350 || !/^\d{4}-\d{2}-\d{2}$/.test(day) || day>today()) return notify('Informe um peso válido e data não futura.');
+    if(n===null || n<30 || n>350 || !PLANNER.dateOK(day) || day>today())
+      return notify('Informe um peso válido e data não futura.');
+    // A single logged weight drives evolution, goal planning and the nutrition
+    // calculation profile. Start and target weights stay unchanged.
+    const previousWeights=copy(state.weights);
+    const previousProfile=state.nutrition?.settings?.profile?copy(state.nutrition.settings.profile):null;
     const existing=state.weights.find(w=>w.date===day);
     if(existing) {existing.weight=n;existing.initial=false;}
     else state.weights.push({id:`weight-${Date.now()}`,date:day,weight:n});
-    save();render();notify('Peso registrado. Acompanhe a tendência semanal.');
+    const latest=PLANNER.latestWeight(state,today());
+    if(latest&&!latest.reference&&state.nutrition?.settings?.profile)
+      state.nutrition.settings.profile.weightKg=latest.weight;
+    if(!save()){
+      state.weights=previousWeights;
+      if(previousProfile)state.nutrition.settings.profile=previousProfile;
+      return notify('Não foi possível salvar a pesagem. O histórico anterior foi preservado.');
+    }
+    render();notify('Peso atual atualizado na evolução, objetivo e perfil nutricional. A meta alimentar permanece igual.');
   }
   function setGoal(form) {
     const data=new FormData(form), start=E.cleanNumber(data.get('startWeight')),goal=E.cleanNumber(data.get('targetWeight'));
@@ -2095,6 +2205,20 @@
       }
       return;
     }
+    if(action==='balance-review'){
+      ui.tab='progress';ui.evolutionView='training';ui.evolutionVolumeDays=30;
+      render();document.querySelector('.muscle-map-card')?.scrollIntoView({block:'start'});return;
+    }
+    if(action==='balance-select'){
+      const report=balanceReport(),candidate=report.recommendations.find(x=>x.id===btn.dataset.id);
+      if(!candidate||!ui.draft)return notify('Esta alternativa não se aplica mais à sessão.');
+      ui.balancePending={id:candidate.id};
+      render();return;
+    }
+    if(action==='balance-apply'){applyBalanceSwap(btn.dataset.id);return;}
+    if(action==='balance-dismiss'){ui.balanceDismissed=true;ui.balancePending=null;render();return;}
+    if(action==='balance-show'){ui.balanceDismissed=false;render();return;}
+    if(action==='balance-cancel'){ui.balancePending=null;render();return;}
     if(action==='share-open'){openShare(btn.dataset.id);return;}
     if(action==='share-back'){
       ui.tab='history';ui.share=null;ui.shareBlob=null;shareRenderVersion++;
@@ -2796,7 +2920,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-conquista17',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-balance18',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

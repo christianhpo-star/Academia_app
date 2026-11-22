@@ -57,6 +57,12 @@
   map('cadeira-adutora', ['adutores']);
   map('aducao-polia', ['adutores']);
   map('abdominal-solo abdominal-inverso abdominal-polia pallof-press', ['abdomen']);
+  map('abdominal-bicicleta dead-bug elevacao-joelhos-suspenso', ['abdomen']);
+  map('woodchop-polia flexao-lateral-polia', ['abdomen']);
+  map('panturrilha-smith panturrilha-sentada-maquina', ['panturrilhas']);
+  map('agachamento-sumo-halter', ['gluteos'], ['quadriceps','adutores']);
+  map('passada-lateral-halter', ['abdutores','gluteos'], ['quadriceps']);
+  map('extensao-lombar-45', ['gluteos'], ['posteriores']);
 
   const labelFor = id => MUSCLES.find(row=>row[0]===id)?.[1] || id;
   function validDate(day) {

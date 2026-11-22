@@ -80,10 +80,22 @@
       'kg', false, ['crunch na polia','abdominal com corda','cable crunch','core']],
     ['pallof-press', 'Pallof press na polia', 'B', 'Polia', 'Abdômen / oblíquos', 2, 10, 12, 2.5,
       'kg', false, ['pallof','antirrotação','anti rotação','core','oblíquos']],
+    // Cobertura do tronco: movimentos diretos e combinados, todos opcionais.
+    ['abdominal-bicicleta', 'Abdominal bicicleta alternado', 'A', 'Solo / colchonete', 'Abdômen / oblíquos', 2, 10, 20, 1, 'kg', false, ['bicicleta','crunch bicicleta','core']],
+    ['elevacao-joelhos-suspenso', 'Elevação de joelhos suspenso', 'A', 'Barra / apoio', 'Abdômen', 2, 8, 15, 1, 'kg', false, ['joelhos na barra','elevação de joelhos','hanging knee raise']],
+    ['flexao-lateral-polia', 'Flexão lateral do tronco na polia', 'A', 'Polia', 'Oblíquos / abdômen', 2, 10, 15, 2.5, 'kg', false, ['oblíquo polia','side bend cabo']],
+    ['dead-bug', 'Dead bug alternado', 'B', 'Solo / colchonete', 'Abdômen / estabilidade', 2, 10, 15, 1, 'kg', false, ['dead bug','contralateral','core']],
+    ['woodchop-polia', 'Woodchop na polia (diagonal)', 'B', 'Polia', 'Oblíquos / abdômen', 2, 10, 15, 2.5, 'kg', false, ['lenhador polia','diagonal cabo','cable wood chop']],
+    ['panturrilha-smith', 'Panturrilha em pé no Smith', 'C', 'Barra guiada', 'Panturrilhas', 3, 10, 20, 2.5, 'kg', false, ['elevação calcanhares smith','calf raise smith']],
+    ['panturrilha-sentada-maquina', 'Panturrilha sentada na máquina', 'D', 'Máquina', 'Panturrilhas', 3, 12, 20, 5, 'kg', false, ['sóleo','seated calf raise']],
+    ['agachamento-sumo-halter', 'Agachamento sumô com halter', 'D', 'Halter', 'Glúteos / adutores / quadríceps', 2, 8, 12, 2.5, 'kg', true, ['agachamento sumô goblet','sumo dumbbell']],
+    ['passada-lateral-halter', 'Passada lateral com halter', 'D', 'Halteres', 'Abdutores / glúteos / quadríceps', 2, 8, 12, 2.5, 'kg/halter', true, ['afundo lateral','lateral lunge']],
+    ['extensao-lombar-45', 'Extensão de quadril no banco 45°', 'D', 'Banco 45°', 'Glúteos / posteriores (lombar estabiliza)', 2, 10, 15, 1, 'kg', false, ['banco romano','extensão 45','hip extension']],
   ].map(([id,name,group,equipment,muscle,sets,low,high,step,unit='kg',knee=false,aliases=[]]) =>
     ({id,name,group,equipment,muscle,sets,low,high,step,unit,knee,aliases,mode:'double',active:false,
-      ...(id==='pallof-press'?{repPerSide:true}:{}),
-      ...(['abdominal-polia','pallof-press'].includes(id)?{complement:'abdomen'}:{})}));
+      ...(['pallof-press','abdominal-bicicleta','flexao-lateral-polia','dead-bug','woodchop-polia','passada-lateral-halter'].includes(id)?{repPerSide:true}:{}),
+      ...(['abdominal-bicicleta','elevacao-joelhos-suspenso','dead-bug','extensao-lombar-45'].includes(id)?{mode:'bodyweight',bodyweight:true}:{}),
+      ...(['abdominal-polia','pallof-press','abdominal-bicicleta','elevacao-joelhos-suspenso','flexao-lateral-polia','dead-bug','woodchop-polia'].includes(id)?{complement:'abdomen'}:{})}));
   const REASONS = {
     '': 'Prefiro não informar',
     tempo: 'Tempo disponível',

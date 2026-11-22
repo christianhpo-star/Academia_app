@@ -1525,3 +1525,29 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .history-share-action{margin-bottom:12px}
 @media(max-width:390px){.history-share-quick{flex-wrap:wrap}.history-share-quick button{width:100%}.share-style-btn{font-size:12px;padding:8px 5px}}
 @media(max-width:335px){.share-config-options{display:grid;gap:6px}.share-view-controls button{font-size:11px}}
+
+/* Read-only review of recorded muscle balance and optional ephemeral swaps. */
+.balance-home-alert,.balance-session,.balance-progress{border:1px solid #475e4a;background:#182722;border-radius:16px;padding:14px;margin:12px 0;color:#e4f3e9}
+.balance-home-alert strong,.balance-session>div strong{color:#d8f7b7}
+.balance-home-alert p,.balance-session p{line-height:1.5}
+.balance-home-alert button{min-height:44px}
+.balance-session{margin:14px 0;background:#14232a;border-color:#466471}
+.balance-session .row-between{gap:12px;align-items:flex-start}
+.balance-session .row-between p{margin:3px 0}
+.balance-tag{background:#2b4439;color:#d5f6ab;border-radius:9px;padding:5px 8px;font-size:12px;white-space:nowrap}
+.balance-caution{color:#ffc89f}
+.balance-candidate{border-top:1px solid #395365;margin-top:10px;padding-top:11px}
+.balance-candidate>span{font-size:10px;letter-spacing:.1em;color:#c5f56b;font-weight:750}
+.balance-candidate>strong{display:block;font-size:15px;line-height:1.4;margin:5px 0}
+.balance-candidate details,.balance-alternatives{font-size:12px}
+.balance-candidate summary,.balance-alternatives summary{cursor:pointer;padding:8px 0}
+.balance-confirm{padding:10px;background:#253b32;border-radius:12px;margin-top:8px}
+.balance-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.balance-actions button{min-height:44px;flex:1}
+.balance-region-list{display:grid;gap:8px}
+.balance-region{background:#21303a;border-radius:10px;padding:10px;display:grid;gap:5px}
+.balance-region strong{color:#c5f56b}
+.balance-region span{font-size:12px}
+.balance-region small{font-size:11px;color:#b2cbd5}
+.balance-region p{margin:3px 0}
+@media(max-width:360px){.balance-actions{display:grid}.balance-candidate>strong{font-size:14px}}
