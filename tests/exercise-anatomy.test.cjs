@@ -5,60 +5,120 @@ const F=require('../flex.js');
 const A=require('../exercise-anatomy.js');
 const all=[...DATA.exercises,...F.catalog].filter(ex=>['A','B'].includes(ex.group));
 const ids=all.map(ex=>ex.id);
+const description=svg=>(svg.match(/<desc\b[^>]*>([\s\S]*?)<\/desc>/)||[])[1]||'';
+const title=svg=>(svg.match(/<title\b[^>]*>([\s\S]*?)<\/title>/)||[])[1]||'';
+
 test('anatomical guidance covers every known A/B exercise with stable IDs',()=>{
-  assert.equal(A.VERSION,1);
+  assert.equal(A.VERSION,2);
   assert.equal(A.coveredIds.length,41);
   assert.equal(new Set(A.coveredIds).size,A.coveredIds.length);
   assert.ok(ids.every(id=>!!A.describe(id)),ids.filter(id=>!A.describe(id)).join(', '));
   assert.ok(A.coveredIds.every(id=>ids.includes(id)));
-  assert.ok(A.describe('voador-inverso').view==='back');
-  assert.ok(A.describe('voador').view==='front');
+  assert.equal(A.describe('voador-inverso').view,'back');
+  assert.equal(A.describe('voador').view,'front');
   assert.equal(A.describe('agachamento-hack'),null);
   assert.equal(A.panel('agachamento-hack'),'');
 });
-test('rear fly correctly distinguishes posterior shoulder vs chest fly',()=>{
+
+test('bench press shows the chest and anterior shoulder in front, and triceps in back',()=>{
+  const front=A.viewInfo('supino-barra','front');
+  const back=A.viewInfo('supino-barra','back');
+  assert.deepEqual(front.visibleMain,['chest']);
+  assert.deepEqual(front.visibleAssist,['frontDelts']);
+  assert.deepEqual(front.hiddenAssist,['triceps']);
+  assert.deepEqual(back.visibleMain,[]);
+  assert.deepEqual(back.visibleAssist,['triceps']);
+  assert.deepEqual(back.hiddenMain,['chest']);
+  assert.deepEqual(back.hiddenAssist,['frontDelts']);
+  assert.match(front.note,/tríceps/i);
+  assert.match(front.note,/costas/i);
+  assert.match(back.note,/peitoral/i);
+  assert.match(back.note,/frente/i);
+  const frontSvg=A.figure('supino-barra',false,'front');
+  const backSvg=A.figure('supino-barra',false,'back');
+  assert.match(title(frontSvg),/anterior|frente/i);
+  assert.match(title(backSvg),/posterior|costas/i);
+  assert.match(description(frontSvg),/Peitoral maior/);
+  assert.match(description(frontSvg),/Deltoide anterior/);
+  assert.doesNotMatch(description(frontSvg),/tríceps/i);
+  assert.match(description(backSvg),/Tríceps/i);
+  assert.doesNotMatch(description(backSvg),/Peitoral maior|Deltoide anterior/);
+});
+
+test('posterior exercises and curls do not invent highlights on the opposite side',()=>{
   const reverse=A.describe('voador-inverso');
   assert.equal(reverse.primary,'Deltoide posterior');
   assert.ok(reverse.assist.includes('midTraps')&&reverse.assist.includes('rhomboids'));
   assert.ok(!reverse.main.includes('chest'));
-  const chest=A.describe('voador');
-  assert.equal(chest.primary,'Peitoral maior');
-  assert.ok(chest.main.includes('chest'));
-  assert.ok(!chest.main.includes('rearDelts'));
-  assert.notEqual(A.figure('voador-inverso',false),A.figure('voador',false));
+  const back=A.viewInfo('voador-inverso','back');
+  const front=A.viewInfo('voador-inverso','front');
+  assert.deepEqual(back.visibleMain,['rearDelts']);
+  assert.deepEqual(front.visibleMain,[]);
+  assert.deepEqual(front.visibleAssist,[]);
+  assert.match(front.note,/sem músculos destacados/i);
+  assert.match(front.note,/costas/i);
+  const curl=A.viewInfo('rosca-w','back');
+  assert.deepEqual(curl.visibleMain,[]);
+  assert.ok(curl.hiddenMain.includes('biceps'));
+  assert.doesNotMatch(description(A.figure('rosca-w',false,'back')),/bíceps/i);
+  const pull=A.viewInfo('pulley-aberto','back');
+  assert.ok(!pull.visibleAssist.includes('biceps'));
+  assert.ok(pull.hiddenAssist.includes('biceps'));
 });
-test('guide is native keyboard accessible and static, with proper SVG semantics',()=>{
-  const p=A.panel('voador-inverso');
-  assert.match(p,/^<details class="ex-anatomy"[^>]*>/);
+
+test('guide exposes native controls and independently named SVGs without remote assets',()=>{
+  const panel=A.panel('voador-inverso');
+  assert.match(panel,/^<details class="ex-anatomy"[^>]*>/);
   assert.match(A.panel('voador-inverso',true),/^<details class="ex-anatomy"[^>]* open>/);
-  assert.doesNotMatch(p,/^<details[^>]+ open>/);
-  assert.match(p,/<summary class="ex-anatomy-summary">/);
-  assert.match(p,/aria-hidden="true" focusable="false"/);
-  assert.match(p,/role="img" aria-labelledby=/);
-  assert.match(p,/<title id="fa-title-voador-inverso-full">/);
-  assert.match(p,/<desc id="fa-desc-voador-inverso-full">/);
-  assert.match(p,/Deltoide posterior/);
-  assert.match(p,/Trapézio médio e romboides/);
-  assert.match(p,/destaque ilustrativo|Ilustração orientativa/i);
-  assert.doesNotMatch(p,/(?:<script|<iframe|<img|autoplay|data-action|data-field|(?:src|href)=["']https?:)/i);
+  assert.doesNotMatch(panel,/^<details[^>]+ open>/);
+  assert.match(panel,/<summary class="ex-anatomy-summary">/);
+  assert.match(panel,/aria-hidden="true" focusable="false"/);
+  assert.match(panel,/role="img" aria-labelledby=/);
+  assert.match(panel,/Deltoide posterior/);
+  assert.match(panel,/Trapézio médio e romboides/);
+  assert.match(panel,/destaque ilustrativo|Ilustração orientativa/i);
+  assert.equal((panel.match(/data-action="anatomy-view"/g)||[]).length,2);
+  assert.equal((panel.match(/aria-pressed="true"/g)||[]).length,1);
+  assert.equal((panel.match(/aria-pressed="false"/g)||[]).length,1);
+  assert.match(panel,/role="group"/);
+  assert.match(panel,/role="status"/);
+  assert.doesNotMatch(panel,/(?:<script|<iframe|<img|<animate\b|autoplay|data-field|(?:src|href)=["']https?:)/i);
+
+  // Repeated instances must not redirect paint references or accessible names
+  // to the SVG of a different exercise card.
+  const repeated=panel+A.panel('voador-inverso',true,'front')+A.viewer('voador-inverso','back','catalog');
+  const generatedIds=Array.from(repeated.matchAll(/\sid="([^"]+)"/g),match=>match[1]);
+  assert.equal(new Set(generatedIds).size,generatedIds.length);
+  for(const match of repeated.matchAll(/aria-labelledby="([^"]+)"/g)){
+    for(const id of match[1].split(/\s+/))assert.ok(generatedIds.includes(id),id);
+  }
+  for(const match of repeated.matchAll(/url\(#([^)]+)\)/g))assert.ok(generatedIds.includes(match[1]),match[1]);
 });
-test('guide is lightweight, deterministic and never touches workout history or targets',()=>{
-  const state=JSON.stringify({sessions:[{day:'2026-11-10',entries:[{id:'voador',sets:[{load:60,reps:12}]}]}],weights:[{weight:88.3}],nutrition:{entries:[]}});
-  const first=A.panel('voador-inverso');
-  assert.equal(first,A.panel('voador-inverso'));
-  assert.ok(first.length<10000);
-  assert.equal(state,JSON.stringify(JSON.parse(state)));
+
+test('each exercise defaults to its useful view and invalid view requests remain safe',()=>{
   for(const id of A.coveredIds){
     const item=A.describe(id);
     assert.ok(item.primary.length>2&&item.cue.length>12);
     assert.ok(['front','back'].includes(item.view));
     assert.ok(item.main.length>=1);
-    assert.ok(A.panel(id).includes('ex-anatomy-expanded'));
+    assert.equal(A.viewInfo(id).view,item.view);
+    assert.equal(A.viewInfo(id,'invalid').view,item.view);
+    assert.ok(A.viewInfo(id).visibleMain.length>0,id);
+    for(const view of ['front','back']){
+      const info=A.viewInfo(id,view);
+      assert.equal(info.view,view);
+      assert.deepEqual([...info.visibleMain,...info.hiddenMain].sort(),[...item.main].sort());
+      assert.deepEqual([...info.visibleAssist,...info.hiddenAssist].sort(),[...item.assist].sort());
+      assert.ok(A.panel(id,false,view).includes('ex-anatomy-expanded'));
+    }
   }
 });
+
 test('lower-body and unknown movements never receive misleading anatomy claims',()=>{
   assert.equal(A.describe('flexora-d'),null);
   assert.equal(A.panel('hip-thrust-maquina'),'');
   assert.equal(A.panel('this-is-unknown'),'');
-  assert.equal(A.figure('this-is-unknown'), '');
+  assert.equal(A.figure('this-is-unknown'),'');
+  assert.equal(A.viewer('this-is-unknown'),'');
+  assert.equal(A.viewInfo('this-is-unknown'),null);
 });

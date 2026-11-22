@@ -179,7 +179,7 @@
     catalogContext:'browse',catalogSourceId:null,
     catalogGroup:'all',catalogSearch:'',catalogLimit:12,
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
-    anatomyOpen:{},
+    anatomyOpen:{},anatomyViews:{},
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
@@ -816,12 +816,17 @@
   function renderCatalogDetail(ex){
     const current=state.exercises.find(item=>item.id===ex.id);
     const guide=ANATOMY?.describe(ex.id);
+    const anatomyView=ui.anatomyViews[ex.id];
+    const locationNote=role=>{
+      const note=ANATOMY?.legendNote(ex.id,anatomyView,role)||'';
+      return '<small class="ex-anatomy-legend-location" data-anatomy-location="'+role+'"'+(!note?' hidden':'')+'>'+esc(note)+'</small>';
+    };
     const illustration=guide
-      ? '<div class="catalog-detail-figure">'+ANATOMY.figure(ex.id,false)+'</div>'
+      ? ANATOMY.viewer(ex.id,anatomyView,'catalog')
       : '<div class="catalog-detail-unmapped" role="note">Mapa anatômico ainda não revisado para este exercício.</div>';
     const muscleInfo=guide
-      ? '<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot main"></span><span><small>Principal</small><strong>'+esc(guide.primary)+'</strong></span></div>'+
-        (guide.secondary?'<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot assist"></span><span><small>Auxiliares</small><strong>'+esc(guide.secondary)+'</strong></span></div>':'')
+      ? '<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot main" aria-hidden="true"></span><span><small>Principal</small><strong>'+esc(guide.primary)+'</strong>'+locationNote('main')+'</span></div>'+
+        (guide.secondary?'<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot assist" aria-hidden="true"></span><span><small>Auxiliares</small><strong>'+esc(guide.secondary)+'</strong>'+locationNote('assist')+'</span></div>':'')
       : '<p class="small muted">Grupo indicado na ficha: '+esc(ex.muscle||'Não informado')+'. Sem divisão anatômica revisada.</p>';
     const confirmation=ui.catalogConfirmId===ex.id;
     const status=current?.active?'Na minha ficha':current?'Inativo na ficha':'Disponível';
@@ -856,7 +861,7 @@
       '<button type="button" class="catalog-detail-back" data-action="catalog-back">← Voltar ao catálogo</button>'+
       '<div class="catalog-detail-intro"><p class="eyebrow">BLOCO '+esc(ex.group)+' · '+esc(status)+'</p>'+
       '<h1 class="page-title" id="catalog-detail-heading" tabindex="-1">'+esc(ex.name)+'</h1>'+
-      '<p class="lead">'+(inSession?'Escolha explícita para este treino. Nenhuma série é registrada pela consulta.':'Consulte o movimento sem iniciar nem modificar uma sessão.')+'</p></div>'+
+      '<p class="lead">'+(inSession?'Confira os músculos e a execução antes de escolher.':'Conheça os músculos trabalhados e a execução.')+'</p></div>'+
       '<section class="card catalog-detail-card" aria-label="Informações do exercício">'+
       illustration+
       '<div class="catalog-detail-muscles">'+muscleInfo+'</div>'+
@@ -1132,7 +1137,7 @@
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
         <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} repetições</p></div>
         <span class="workout-exercise-kind">${ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
-      ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]))||''}
+      ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]),ui.anatomyViews[ex.id])||''}
       <p class="workout-exercise-step">Ajuste de carga: +${fmt(ex.step)} ${esc(ex.unit)}</p>
       <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
@@ -1794,6 +1799,33 @@
       }
       return;
     }
+    if(action==='anatomy-view'){
+      const viewer=btn.closest('.ex-anatomy-viewer');
+      const id=viewer?.dataset.anatomyId,view=btn.dataset.view;
+      if(!id||!['front','back'].includes(view)||viewer.dataset.anatomyView===view)return;
+      const info=ANATOMY?.viewInfo(id,view);
+      const canvas=viewer.querySelector('.ex-anatomy-canvas');
+      if(!info||!canvas)return;
+      // Keep the controls and workout inputs mounted. A view is UI state only:
+      // no render(), storage write, draft update or change to workout selection.
+      ui.anatomyViews[id]=view;
+      viewer.dataset.anatomyView=view;
+      canvas.innerHTML=ANATOMY.figure(id,false,view);
+      canvas.dataset.switched='true';
+      viewer.querySelectorAll('[data-action="anatomy-view"]').forEach(control=>{
+        control.setAttribute('aria-pressed',String(control.dataset.view===view));
+      });
+      const status=viewer.querySelector('.ex-anatomy-view-note');
+      if(status)status.textContent=info.note;
+      const host=viewer.closest('.ex-anatomy,.catalog-detail-card');
+      host?.querySelectorAll('[data-anatomy-location]').forEach(label=>{
+        const note=ANATOMY.legendNote(id,view,label.dataset.anatomyLocation);
+        label.textContent=note;label.hidden=!note;
+      });
+      const thumb=host?.querySelector('.ex-anatomy-thumb');
+      if(thumb)thumb.innerHTML=ANATOMY.figure(id,true,view);
+      return;
+    }
     if(action==='routine-confirm'||action==='routine-hide'||action==='routine-show'||action==='routine-manage'||action==='routine-enable'){
       handleDailyRoutineAction(btn);return;
     }
@@ -2350,7 +2382,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-unified09',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-anatomy10',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
