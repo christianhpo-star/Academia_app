@@ -48,7 +48,7 @@ def run(context,seed,errors):
         assert all(ex['active']==before['active'] for before in baseline['exercises']
                    for ex in saved['exercises'] if ex['id']==before['id'])
         assert len(saved['exercises'])>=len(baseline['exercises'])
-        assert 'só nesta sessão' in page.locator('#toast').inner_text()
+        assert 'somente nesta sessão' in page.locator('#toast').inner_text()
         assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1'),width
         page.close()
 
