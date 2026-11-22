@@ -177,6 +177,7 @@
     strengthGroup: null, strengthExercise: null,
     catalogOpen: false, catalogAll: false, catalogMode:'replacement',
     catalogGroup:'all',catalogSearch:'',
+    catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
     anatomyOpen:{},
     focusedMode: false, focusedExercise: null,
     calendarMonth: today().slice(0,7), calendarDay: today(),
@@ -737,7 +738,54 @@
     return [ex.name,ex.muscle,ex.equipment,...(ex.aliases||[])]
       .join(' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR');
   }
+  // A catalog detail is informational: it reads catalog metadata and the
+  // local SVG guide only. All persisted changes require a separate confirmation.
+  function renderCatalogDetail(ex){
+    const current=state.exercises.find(item=>item.id===ex.id);
+    const guide=ANATOMY?.describe(ex.id);
+    const illustration=guide
+      ? '<div class="catalog-detail-figure">'+ANATOMY.figure(ex.id,false)+'</div>'
+      : '<div class="catalog-detail-unmapped" role="note">Mapa anatômico ainda não revisado para este exercício.</div>';
+    const muscleInfo=guide
+      ? '<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot main"></span><span><small>Principal</small><strong>'+esc(guide.primary)+'</strong></span></div>'+
+        (guide.secondary?'<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot assist"></span><span><small>Auxiliares</small><strong>'+esc(guide.secondary)+'</strong></span></div>':'')
+      : '<p class="small muted">Grupo indicado na ficha: '+esc(ex.muscle||'Não informado')+'. Sem divisão anatômica revisada.</p>';
+    const confirmation=ui.catalogConfirmId===ex.id;
+    const status=current?.active?'Na minha ficha':current?'Inativo na ficha':'Disponível';
+    const action=current?.active
+      ? '<p class="catalog-detail-status">Este movimento já está ativo no bloco '+esc(ex.group)+'.</p>'+
+        '<button type="button" class="secondary full" data-action="catalog-edit-in-plan" data-ex="'+esc(ex.id)+'">Editar na minha ficha</button>'
+      : confirmation
+        ? '<p id="catalog-confirm-message" class="catalog-detail-status" role="status">'+
+          (current?'Ativar':'Adicionar')+' '+esc(ex.name)+' na ficha do bloco '+esc(ex.group)+'? Esta ação não inicia nem altera o treino em andamento.</p>'+
+          '<div class="catalog-detail-confirm-row"><button class="primary" type="button" data-action="catalog-confirm" data-ex="'+esc(ex.id)+'">Confirmar</button>'+
+          '<button class="secondary" type="button" data-action="catalog-cancel">Cancelar</button></div>'
+        : '<button type="button" class="secondary full" data-action="catalog-intent" data-ex="'+esc(ex.id)+'">'+
+          (current?'Ativar na ficha':'Adicionar à ficha')+' · Bloco '+esc(ex.group)+'</button>';
+    return '<section class="catalog-detail" aria-labelledby="catalog-detail-heading">'+
+      '<button type="button" class="catalog-detail-back" data-action="catalog-back">← Voltar ao catálogo</button>'+
+      '<div class="catalog-detail-intro"><p class="eyebrow">BLOCO '+esc(ex.group)+' · '+esc(status)+'</p>'+
+      '<h1 class="page-title" id="catalog-detail-heading" tabindex="-1">'+esc(ex.name)+'</h1>'+
+      '<p class="lead">Consulte o movimento sem iniciar nem modificar uma sessão.</p></div>'+
+      '<section class="card catalog-detail-card" aria-label="Informações do exercício">'+
+      illustration+
+      '<div class="catalog-detail-muscles">'+muscleInfo+'</div>'+
+      '<div class="catalog-detail-facts"><div><small>Equipamento</small><strong>'+esc(ex.equipment||'Não informado')+'</strong></div>'+
+      '<div><small>Grupo da ficha</small><strong>'+esc(ex.muscle||'Não informado')+'</strong></div>'+
+      '<div><small>Sugestão inicial</small><strong>'+esc(String(ex.sets))+' séries · '+esc(String(ex.low))+'–'+esc(String(ex.high))+' reps</strong></div></div>'+
+      '<div class="catalog-detail-technique"><h2>Execução</h2>'+
+      (guide?'<p>'+esc(guide.cue)+'</p><p class="small muted">Mapa ilustrativo: a participação muscular varia com a técnica e o equipamento.</p>':
+        '<p>Orientação técnica específica ainda não revisada. Consulte as instruções do equipamento e um profissional habilitado.</p>')+
+      (ex.knee?'<p class="catalog-detail-knee">Movimento sinalizado para atenção ao joelho no seu planejamento. Respeite desconfortos durante a execução.</p>':'')+
+      '</div></section>'+
+      '<section class="card catalog-detail-actions" aria-label="Opções da ficha"><h2>Minha ficha</h2>'+
+      '<p class="small muted">Consultar este exercício não registra séries nem altera seu planejamento.</p>'+
+      action+'</section></section>';
+  }
   function renderCatalog() {
+    // Detail view shares the exact same catalog without starting a workout.
+    const selected=ui.catalogDetailId && F.options(state.exercises,null).find(ex=>ex.id===ui.catalogDetailId);
+    if(selected)return renderCatalogDetail(selected);
     // F.options merges custom exercises, active plans and curated alternatives
     // without filtering by workout-in-progress. Browsing never changes a draft.
     const all=F.options(state.exercises,null);
@@ -773,18 +821,16 @@
             </div>
             <h3>${esc(ex.name)}</h3>
             <p class="catalog-browser-description">${esc(description)}</p>
-            ${ANATOMY?.describe(ex.id)?'<small class="catalog-anatomy-note">Mapa muscular disponível na ficha do exercício</small>':''}
+            ${ANATOMY?.describe(ex.id)?'<small class="catalog-anatomy-note">Mapa muscular disponível nos detalhes</small>':''}
             <div class="catalog-browser-bottom">
               <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
-              ${existing?
-                `<button type="button" class="button-inline" data-action="${existing.active?'edit-ex':'catalog-activate'}" data-ex="${esc(ex.id)}">${existing.active?'Editar':'Ativar na ficha'}</button>`:
-                `<button type="button" class="button-inline" data-action="catalog-add-plan" data-ex="${esc(ex.id)}">Adicionar à ficha</button>`}
+              <button type="button" class="button-inline catalog-view-button" data-action="catalog-view" data-ex="${esc(ex.id)}" aria-label="Ver detalhes de ${esc(ex.name)}">Ver detalhes</button>
             </div>
           </article>`;
         }).join('')}
       </div>
       <p class="catalog-empty-state" id="catalog-empty-state" ${count?'hidden':''}>Nenhum exercício encontrado. Experimente outro nome ou grupo.</p>
-      <p class="tiny muted catalog-browser-tip">As alterações na ficha são opcionais. Explorar o catálogo não inicia nem modifica um treino em andamento.</p>`;
+      <p class="tiny muted catalog-browser-tip">Ver detalhes não altera seus registros. Para incluir ou ativar um exercício, confirme na página do movimento.</p>`;
   }
   function filterCatalogDOM(){
     const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
@@ -1789,27 +1835,73 @@
       if(!['plans','catalog'].includes(target))return;
       ui.tab=target;
       ui.editor=null;
+      ui.catalogDetailId=null;
+      ui.catalogConfirmId=null;
+      render();window.scrollTo(0,0);return;
+    }
+    if(action==='catalog-view'){
+      const ex=F.options(state.exercises,null).find(item=>item.id===btn.dataset.ex);
+      if(ui.tab!=='catalog'||!ex)return;
+      ui.catalogScrollY=window.scrollY;
+      ui.catalogDetailId=ex.id;
+      ui.catalogConfirmId=null;
+      render();window.scrollTo(0,0);
+      document.getElementById('catalog-detail-heading')?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-back'){
+      if(ui.tab!=='catalog'||!ui.catalogDetailId)return;
+      const id=ui.catalogDetailId;
+      ui.catalogDetailId=null;
+      ui.catalogConfirmId=null;
+      render();window.scrollTo(0,ui.catalogScrollY||0);
+      Array.from(document.querySelectorAll('[data-action="catalog-view"]'))
+        .find(item=>item.dataset.ex===id)?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-intent'){
+      if(ui.tab!=='catalog'||ui.catalogDetailId!==btn.dataset.ex)return;
+      const current=state.exercises.find(ex=>ex.id===btn.dataset.ex);
+      if(current?.active)return;
+      ui.catalogConfirmId=btn.dataset.ex;
+      render();
+      document.querySelector('[data-action="catalog-confirm"]')?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-cancel'){
+      if(ui.tab!=='catalog'||!ui.catalogConfirmId)return;
+      ui.catalogConfirmId=null;
+      render();document.querySelector('[data-action="catalog-intent"]')?.focus({preventScroll:true});return;
+    }
+    if(action==='catalog-confirm'){
+      const id=btn.dataset.ex;
+      if(ui.tab!=='catalog'||ui.catalogDetailId!==id||ui.catalogConfirmId!==id)return;
+      const current=state.exercises.find(ex=>ex.id===id);
+      if(current?.active){ui.catalogConfirmId=null;render();return;}
+      if(current){
+        const old=current.active;current.active=true;
+        if(!save()){current.active=old;return notify('Não foi possível ativar o exercício.');}
+        notify('Exercício ativado no bloco '+current.group+'.');
+      }else{
+        if(state.exercises.length>=200)return notify('Limite de exercícios atingido.');
+        const found=F.prepareCatalog(id,state.exercises);
+        if(!found?.isNew)return;
+        const added={...found.exercise,active:true};
+        state.exercises.push(added);
+        if(!save()){state.exercises.pop();return notify('Não foi possível adicionar o exercício.');}
+        notify('Exercício incluído na ficha do bloco '+added.group+'.');
+      }
+      ui.catalogConfirmId=null;render();return;
+    }
+    if(action==='catalog-edit-in-plan'){
+      if(ui.tab!=='catalog'||ui.catalogDetailId!==btn.dataset.ex)return;
+      const ex=state.exercises.find(item=>item.id===btn.dataset.ex);
+      if(!ex?.active)return;
+      ui.plan=ex.group;ui.tab='plans';muayMode=false;
+      ui.catalogDetailId=null;ui.catalogConfirmId=null;
+      ui.editor={id:ex.id};
       render();window.scrollTo(0,0);return;
     }
     if(action==='catalog-filter'){
       if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
       ui.catalogGroup=btn.dataset.group;render();return;
-    }
-    if(action==='catalog-add-plan'){
-      const id=btn.dataset.ex;
-      if(state.exercises.some(ex=>ex.id===id)||state.exercises.length>=200)return;
-      const found=F.prepareCatalog(id,state.exercises);
-      if(!found||!found.isNew)return;
-      const added={...found.exercise,active:true};
-      state.exercises.push(added);
-      if(!save()){state.exercises.pop();return notify('Não foi possível adicionar o exercício.');}
-      render();notify('Exercício incluído na ficha do bloco '+added.group+'.');return;
-    }
-    if(action==='catalog-activate'){
-      const ex=exerciseFor(btn.dataset.ex);if(!ex)return;
-      const previous=ex.active;ex.active=true;
-      if(!save()){ex.active=previous;return;}
-      render();notify('Exercício ativado na ficha do bloco '+ex.group+'.');return;
     }
     if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;ui.catalogMode='replacement';render();return;}
     if(action==='catalog-mode'){
@@ -2190,7 +2282,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-nav07',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-detail08',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

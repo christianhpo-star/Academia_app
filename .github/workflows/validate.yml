@@ -64,6 +64,7 @@ jobs:
           python3 tests/smoke_ui.py
           python3 tests/smoke_focus.py
           python3 tests/smoke_catalog.py
+          python3 tests/smoke_catalog_detail.py
           python3 tests/smoke_anatomy.py
           python3 tests/smoke_body.py
           python3 tests/smoke_activity.py

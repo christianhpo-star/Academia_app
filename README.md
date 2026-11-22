@@ -1,5 +1,15 @@
 # FORJA
 
+## Catálogo independente — detalhe de cada exercício (22/11/2026)
+
+- **Treinos → Catálogo → Ver detalhes** permite consultar movimento, equipamento, grupo muscular e séries/repetições de referência **sem iniciar o treino, abrir o editor ou registrar dados**.
+- Os exercícios A/B já mapeados mostram o SVG anatômico original, grupo principal, auxiliares e dica de execução. Para exercícios ainda sem mapeamento revisado, a ficha de detalhe é útil para consultar o equipamento e os parâmetros, mas **não inventa** imagem nem técnica.
+- Para alterar a ficha, a ação é separada: **Adicionar à ficha / Ativar na ficha → Confirmar ou Cancelar**, com o bloco de destino explícito. O catálogo informa quando o exercício já está ativo e permite abrir o editor.
+- Voltar ao catálogo recupera busca e filtro sem alterar as séries em andamento. As listas do catálogo não oferecem mais inclusão direta: primeiro é preciso conhecer o exercício.
+- **Sem migração de armazenamento, reset, mudança de treino ou recomendação automática**. Edição de ficha somente por confirmação expressa.
+- QA: `tests/smoke_catalog.py` e `tests/smoke_catalog_detail.py`, incluindo exploração sem gravação, cancelamento, inclusão e visual 320/390 px.
+
+
 ## Guia anatômico na ficha (piloto de membros superiores, novembro/2026)
 
 - Em **Treinos → Iniciar treino**, cada exercício conhecido dos blocos **A (costas/bíceps)** e **B (peito/ombros/tríceps)** exibe uma miniatura anatômica e o acordeão nativo **Músculos e execução**, fechado inicialmente.
