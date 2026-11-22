@@ -67,7 +67,9 @@
         options:options.slice(0,5).map(x=>({id:x.id,name:x.name,group:x.group,knee:!!x.knee})),
         score:missing?100:40});
     }
-    alerts.sort((a,b)=>b.score-a.score||((b.gapDays||0)-(a.gapDays||0))||a.label.localeCompare(b.label,'pt-BR'));
+    alerts.sort((a,b)=>b.score-a.score||
+      TARGETS.indexOf(a.id)-TARGETS.indexOf(b.id)||
+      ((b.gapDays||0)-(a.gapDays||0))||a.label.localeCompare(b.label,'pt-BR'));
     const recommendations=[];
     if(draft?.entries&&!riskInfo.blockNew){
       const entries=Object.values(draft.entries);
