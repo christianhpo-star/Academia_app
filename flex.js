@@ -9,23 +9,72 @@
     ['pullover-polia', 'Pullover na polia', 'A', 'Polia', 'Costas', 2, 10, 15, 2.5],
     ['face-pull', 'Face pull', 'A', 'Polia', 'Ombros posteriores', 2, 12, 15, 2.5],
     ['rosca-scott', 'Rosca Scott', 'A', 'Máquina / barra', 'Bíceps', 2, 10, 12, 2.5],
+    // Puxar / deltóide posterior: variações opcionais, não entram automaticamente na ficha.
+    ['voador-inverso', 'Voador inverso (peck deck)', 'A', 'Máquina', 'Ombros posteriores', 3, 12, 15, 5,
+      'kg', false, ['voador invertido','peck deck inverso','crucifixo inverso na máquina','reverse peck deck']],
+    ['crucifixo-inverso-halter', 'Crucifixo inverso com halteres', 'A', 'Halteres / banco', 'Ombros posteriores', 3, 12, 15, 2.5,
+      'kg/halter', false, ['elevação posterior','elevação posterior inclinado','rear delt fly halter']],
+    ['crucifixo-inverso-polia', 'Crucifixo inverso na polia', 'A', 'Polia', 'Ombros posteriores', 3, 12, 15, 2.5,
+      'kg', false, ['crucifixo invertido cabo','cross inverso','reverse cable fly']],
+    ['remada-peito-apoiado', 'Remada com peito apoiado', 'A', 'Banco inclinado / halteres', 'Costas', 3, 8, 12, 2.5,
+      'kg/halter', false, ['remada apoiada','remada banco inclinado','chest supported row']],
+    ['puxada-unilateral-polia', 'Puxada unilateral na polia alta', 'A', 'Polia', 'Costas', 3, 10, 12, 2.5,
+      'kg', false, ['pulldown unilateral','puxada alta um braço']],
+    ['rosca-inclinada-halter', 'Rosca inclinada com halteres', 'A', 'Halteres / banco inclinado', 'Bíceps', 3, 10, 12, 2.5,
+      'kg/halter', false, ['rosca bíceps banco inclinado','incline dumbbell curl']],
+    ['rosca-polia-baixa', 'Rosca direta na polia baixa', 'A', 'Polia', 'Bíceps', 3, 10, 15, 2.5,
+      'kg', false, ['rosca no cabo','rosca bíceps polia','cable curl']],
     ['crucifixo-cabo', 'Crucifixo no cabo', 'B', 'Polia', 'Peito', 3, 10, 15, 2.5],
     ['supino-maquina', 'Supino na máquina', 'B', 'Máquina', 'Peito', 3, 8, 12, 5],
     ['supino-canadense', 'Supino canadense (declinado) com barra', 'B', 'Barra / banco declinado', 'Peito', 3, 8, 12, 2.5],
     ['crossover-polia', 'Crossover na polia alta', 'B', 'Polia', 'Peito', 3, 10, 15, 2.5],
     ['desenvolvimento-halter', 'Desenvolvimento com halteres', 'B', 'Halteres', 'Ombros', 3, 8, 12, 2.5, 'kg/halter'],
     ['triceps-frances', 'Tríceps francês na polia', 'B', 'Polia', 'Tríceps', 3, 10, 15, 2.5],
+    // Empurrar / peito / deltoide lateral: técnicas e equipamentos distintos.
+    ['elevacao-lateral-polia', 'Elevação lateral unilateral na polia', 'B', 'Polia', 'Ombros', 3, 12, 15, 2.5,
+      'kg', false, ['elevação lateral no cabo','elevação lateral cabo','cable lateral raise']],
+    ['desenvolvimento-maquina', 'Desenvolvimento de ombros na máquina', 'B', 'Máquina', 'Ombros', 3, 8, 12, 5,
+      'kg', false, ['shoulder press máquina','desenvolvimento sentado máquina']],
+    ['crucifixo-inclinado-halter', 'Crucifixo inclinado com halteres', 'B', 'Halteres / banco inclinado', 'Peito', 3, 10, 15, 2.5,
+      'kg/halter', false, ['fly inclinado','incline dumbbell fly']],
+    ['supino-inclinado-maquina', 'Supino inclinado na máquina', 'B', 'Máquina', 'Peito', 3, 8, 12, 5,
+      'kg', false, ['chest press inclinado','máquina supino inclinado']],
+    ['triceps-unilateral-polia', 'Tríceps unilateral na polia', 'B', 'Polia', 'Tríceps', 3, 10, 15, 2.5,
+      'kg', false, ['tríceps um braço no cabo','extensão de tríceps unilateral']],
+    ['triceps-coice-halter', 'Tríceps coice com halter', 'B', 'Halteres', 'Tríceps', 2, 10, 15, 2.5,
+      'kg/halter', false, ['tríceps kickback','coice tríceps']],
     ['agachamento-goblet', 'Agachamento goblet', 'C', 'Halter', 'Quadríceps', 2, 8, 12, 2.5, 'kg', true],
     ['passada-reversa', 'Passada reversa', 'C', 'Halteres', 'Quadríceps', 2, 8, 12, 2.5, 'kg/halter', true],
     ['step-up-baixo', 'Subida em degrau baixo', 'C', 'Banco / degrau', 'Quadríceps', 2, 8, 12, 2.5, 'kg', true],
     ['cadeira-adutora', 'Cadeira adutora', 'C', 'Máquina', 'Adutores', 2, 12, 15, 5],
     ['panturrilha-em-pe', 'Panturrilha em pé', 'C', 'Máquina', 'Panturrilhas', 3, 12, 20, 5],
+    // Membros inferiores: sinalizar dor no joelho nos movimentos relevantes.
+    ['agachamento-smith', 'Agachamento no Smith', 'C', 'Máquina / barra guiada', 'Quadríceps / glúteos', 3, 8, 12, 5,
+      'kg', true, ['agachamento guiado','agachamento smith machine']],
+    ['leg-press-horizontal', 'Leg press horizontal', 'C', 'Máquina', 'Quadríceps / glúteos', 3, 10, 15, 5,
+      'kg', true, ['leg press sentado','leg horizontal']],
+    ['extensora-unilateral', 'Cadeira extensora unilateral', 'C', 'Máquina', 'Quadríceps', 2, 10, 15, 2.5,
+      'kg', true, ['extensão unilateral joelho','extensora uma perna']],
+    ['panturrilha-unilateral-pe', 'Panturrilha unilateral em pé', 'C', 'Halter / apoio', 'Panturrilhas', 3, 12, 20, 2.5,
+      'kg/halter', false, ['elevação unilateral de panturrilha','calf raise unilateral']],
+    ['aducao-polia', 'Adução de quadril na polia', 'C', 'Polia', 'Adutores', 2, 12, 15, 2.5,
+      'kg', false, ['adução cabo','adutor em pé','hip adduction cable']],
     ['terra-romeno-halter', 'Levantamento romeno com halteres', 'D', 'Halteres', 'Posteriores / glúteos', 3, 8, 12, 2.5, 'kg/halter'],
     ['flexora-sentada', 'Cadeira flexora sentada', 'D', 'Máquina', 'Posteriores', 3, 10, 15, 5],
     ['gluteo-cabo', 'Extensão de quadril na polia', 'D', 'Polia', 'Glúteos', 2, 12, 15, 2.5],
     ['ponte-gluteo', 'Ponte de glúteos', 'D', 'Solo / peso', 'Glúteos', 3, 10, 15, 2.5],
-  ].map(([id,name,group,equipment,muscle,sets,low,high,step,unit='kg',knee=false]) =>
-    ({id,name,group,equipment,muscle,sets,low,high,step,unit,knee,mode:'double',active:false}));
+    ['flexora-unilateral', 'Mesa flexora unilateral', 'D', 'Máquina', 'Posteriores', 3, 10, 15, 2.5,
+      'kg', false, ['flexão de joelho unilateral','leg curl uma perna']],
+    ['hip-thrust-maquina', 'Elevação pélvica na máquina', 'D', 'Máquina', 'Glúteos', 3, 8, 12, 5,
+      'kg', false, ['hip thrust máquina','glute bridge máquina']],
+    ['abducao-polia', 'Abdução de quadril na polia', 'D', 'Polia', 'Abdutores / glúteos', 2, 12, 20, 2.5,
+      'kg', false, ['abdutor polia','abdução em pé no cabo','cable hip abduction']],
+    ['pull-through-polia', 'Pull-through na polia', 'D', 'Polia', 'Glúteos / posteriores', 3, 10, 15, 2.5,
+      'kg', false, ['puxada entre as pernas','cable pull through']],
+    ['flexora-em-pe', 'Flexora em pé na máquina', 'D', 'Máquina', 'Posteriores', 3, 10, 15, 2.5,
+      'kg', false, ['flexora vertical','standing leg curl']],
+  ].map(([id,name,group,equipment,muscle,sets,low,high,step,unit='kg',knee=false,aliases=[]]) =>
+    ({id,name,group,equipment,muscle,sets,low,high,step,unit,knee,aliases,mode:'double',active:false}));
   const REASONS = {
     '': 'Prefiro não informar',
     tempo: 'Tempo disponível',
@@ -100,10 +149,11 @@
       merged.set(item.id,{...previous,...item,equipment:previous?.equipment||'Ficha pessoal',
         muscle:previous?.muscle||({A:'Costas / bíceps',B:'Peito / ombros / tríceps',C:'Quadríceps',D:'Posteriores / glúteos'}[item.group]||'Outro')});
     }
-    const term=String(query).toLocaleLowerCase('pt-BR').trim();
+    const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
+    const term=normalize(query);
     return [...merged.values()].filter(item=>!active.has(item.id) &&
       (group==='all' || item.group===group) &&
-      (!term || [item.name,item.muscle,item.equipment].some(v=>String(v||'').toLocaleLowerCase('pt-BR').includes(term))))
+      (!term || [item.name,item.muscle,item.equipment,...(item.aliases||[])].some(v=>normalize(v).includes(term))))
       .sort((a,b)=>a.name.localeCompare(b.name,'pt-BR'));
   }
   // Exercícios sem repetições são explicitamente pulados ao finalizar uma sessão
