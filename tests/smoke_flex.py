@@ -3,8 +3,10 @@ import os,re,shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
-SCRIPTS=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
+RAW=(ROOT/'index.html').read_text(encoding='utf-8')
+SCRIPTS=re.findall(r'<script defer src="\./([^?"#]+)(?:\?[^"]*)?"></script>',RAW)
+HTML=re.sub(r'<script defer src="\./[^"]+"></script>','',RAW)
+HTML=re.sub(r'<link rel="stylesheet" href="\./styles\.css\?v=[^"]+" />','',HTML)
 def open_app(context,data,errors):
     page=context.new_page()
     page.on('pageerror',lambda err:errors.append(str(err)))
@@ -35,12 +37,13 @@ with sync_playwright() as p:
     page.locator('[data-action="flex-withdraw"][data-ex="pulley-aberto"]').click()
     assert page.locator('[data-exercise="pulley-aberto"]').count()==0
     page.locator('[data-skip-reason="pulley-aberto"]').select_option('tempo')
-    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
-    assert page.get_by_role('heading',name='Sugestões para este treino').count()==1
-    page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
-    page.locator('#flex-catalog-search').fill('Puxada alta')
-    assert page.locator('[data-flex-name]:visible').count()>0
-    page.locator('.catalog-all [data-action="flex-add"][data-ex="puxada-neutra"]').click()
+    page.locator('[data-action="catalog-session-open"][data-mode="add"]').click()
+    assert page.locator('.catalog-session-context').count()==1
+    page.locator('#catalog-search').fill('Puxada alta')
+    assert page.locator('.catalog-browser-item:visible').count()>0
+    page.locator('[data-action="catalog-view"][data-ex="puxada-neutra"]').click()
+    page.locator('[data-action="catalog-intent"]').click()
+    page.locator('[data-action="catalog-confirm"]').click()
     target=page.locator('[data-exercise="puxada-neutra"]')
     assert target.count()==1
     target.locator('[data-field="load"]').first.fill('45')

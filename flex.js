@@ -3,7 +3,8 @@
   // Curated offline catalogue. Stable IDs prevent changing the identity of
   // an exercise when an individual workout or a future template is edited.
   const catalog = [
-    ['puxada-neutra', 'Puxada alta · pegada neutra', 'A', 'Polia', 'Costas', 3, 8, 12, 5],
+    ['puxada-neutra', 'Puxada alta · pegada neutra', 'A', 'Polia', 'Costas', 3, 8, 12, 5, 'kg', false,
+      ['puxada neutra','puxada alta neutra','pulldown neutral grip']],
     ['remada-unilateral-halter', 'Remada unilateral com halter', 'A', 'Halteres', 'Costas', 3, 8, 12, 2.5, 'kg/halter'],
     ['remada-articulada', 'Remada articulada', 'A', 'Máquina', 'Costas', 3, 8, 12, 5],
     ['pullover-polia', 'Pullover na polia', 'A', 'Polia', 'Costas', 2, 10, 15, 2.5],

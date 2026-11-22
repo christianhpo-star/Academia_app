@@ -1,5 +1,14 @@
 # FORJA
 
+## Biblioteca única (P2, novembro/2026)
+- A **mesma tela** `Treinos → Catálogo` atende consulta, edição confirmada de ficha, substituição de um movimento na sessão e adição só no treino atual. O menu de sessão não contém mais um segundo catálogo dentro da ficha.
+- Na sessão: **Substituir** em cada exercício não realizado, ou `Ajustar este treino → Substituir / Adicionar só hoje / Tenho energia para mais`, abre a biblioteca completa. Se necessário, o exercício original é escolhido explicitamente, e a troca só acontece depois de visitar o detalhe e **Confirmar**.
+- Séries com repetições registradas **não podem ser descartadas na substituição**; a decisão gera cópia do rascunho e persiste apenas após a confirmação. A ficha permanente, o histórico anterior e a meta alimentar não são alterados por selecionar opções de sessão.
+- `Adicionar só hoje` inclui séries vazias sem ativar automaticamente a ficha. `Tenho energia para mais` só permite as alternativas elegíveis de `catalog-advice.js`, com **uma série vazia** e no máximo uma escolha extra.
+- Consultar/voltar, buscar e filtrar são operações **somente de interface**, sem gravação automática. A mesma ilustração SVG e texto anatômico atendem todos os contextos, inclusive offline.
+- Implementação de transações em `catalog-session.js` com testes de proibição de perda de séries, ausência de alterações no rascunho original, bloqueio de duplicidades e verificação de recuperação após reinstanciar a página. Nenhuma mudança nas chaves de armazenamento; atualização do service worker apenas para trocar os arquivos do app.
+
+
 ## Catálogo independente — detalhe de cada exercício (22/11/2026)
 
 - **Treinos → Catálogo → Ver detalhes** permite consultar movimento, equipamento, grupo muscular e séries/repetições de referência **sem iniciar o treino, abrir o editor ou registrar dados**.

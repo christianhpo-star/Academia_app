@@ -3,11 +3,12 @@ import os, re, shutil
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
-HTML=re.sub(r'<script defer src="./[^"]+"></script>', '', (ROOT/'index.html').read_text()).replace('<link rel="stylesheet" href="./styles.css?v=20261115-diary1" />','')
-FILES=['data.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','app.js']
-DRAFT='forja.academia.draft.v1'
+RAW=(ROOT/'index.html').read_text(encoding='utf-8')
+FILES=re.findall(r'<script defer src="\./([^?"#]+)(?:\?[^"]*)?"></script>',RAW)
+HTML=re.sub(r'<script defer src="\./[^"]+"></script>','',RAW)
+HTML=re.sub(r'<link rel="stylesheet" href="\./styles\.css\?v=[^"]+" />','',HTML)
 MAIN='forja.academia.v1'
-
+DRAFT='forja.academia.draft.v1'
 def open_app(context, storage, errors):
     page=context.new_page()
     page.on('pageerror',lambda error:errors.append(str(error)))
@@ -97,24 +98,27 @@ with sync_playwright() as p:
     alternate[DRAFT]=json.dumps(baseline,ensure_ascii=False)
     page.close()
     page=open_app(context,alternate,errors)
-    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
-    page.locator('[data-action="catalog-mode"][data-mode="extra"]').click()
-    assert page.locator('.catalog-energy button[aria-pressed="true"]').count()==1
-    suggestion=page.locator('.catalog-suggestion [data-action="catalog-extra-add"]').first
+    page.locator('[data-action="catalog-session-open"][data-mode="extra"]').click()
+    assert page.locator('.catalog-session-context').count()==1
+    assert 'boa' in page.locator('.catalog-session-context').inner_text().lower()
+    suggestion=page.locator('.catalog-suggestion [data-action="catalog-view"]').first
     assert suggestion.count()==1
     optional_id=suggestion.get_attribute('data-ex')
     suggestion.click()
+    assert page.locator('.catalog-detail').count()==1
+    page.locator('[data-action="catalog-intent"]').click()
+    page.locator('[data-action="catalog-confirm"]').click()
     optional=page.locator('[data-exercise="'+optional_id+'"]')
     assert optional.count()==1
     assert optional.locator('[data-field="reps"]').count()==1
     assert optional.locator('[data-field="reps"]').first.input_value()==''
     selected=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft.extraChoice')
     assert selected['kind']=='exercise' and selected['id']==optional_id
+    assert selected['sourceId']
     assert page.locator('[data-action="dose-add-one"]').count()==0
-    page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
-    page.locator('[data-action="catalog-mode"][data-mode="extra"]').click()
-    assert page.locator('[data-action="catalog-extra-add"]').count()==0
-    page.locator('[data-action="flex-catalog-toggle"]').click()
+    page.locator('[data-action="catalog-session-open"][data-mode="extra"]').click()
+    assert page.locator('.catalog-suggestion [data-action="catalog-view"]').count()==0
+    page.locator('[data-action="catalog-return-session"]').click()
     # A escolha é apenas um rascunho, e não cria série executada no histórico.
     assert len(page.evaluate('JSON.parse(localStorage.getItem("forja.academia.v1")).sessions'))==8
 
