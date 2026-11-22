@@ -51,12 +51,14 @@ with sync_playwright() as p:
     assert page.evaluate('JSON.stringify(window.__testStorage)')==json.dumps(before,ensure_ascii=False,separators=(',',':')) or page.evaluate('window.__testStorage')==before
     page.locator('[data-exercise="pulley-aberto"] .ex-anatomy summary').click()
     assert guide.get_attribute('open') is None
-    page.get_by_role('button',name='+ Adicionar exercício do catálogo',exact=False).click()
-    page.get_by_role('button',name='Explorar todos os exercícios',exact=False).click()
-    page.locator('#flex-catalog-search').fill('voador inverso')
-    add=page.locator('[data-action="flex-add"][data-ex="voador-inverso"]')
-    assert add.count()==1
-    add.click()
+    page.locator('[data-action="catalog-session-open"][data-mode="add"]').click()
+    page.locator('#catalog-search').fill('voador inverso')
+    view=page.locator('[data-action="catalog-view"][data-ex="voador-inverso"]')
+    assert view.count()==1
+    view.click()
+    assert 'Deltoide posterior' in page.locator('.catalog-detail').inner_text()
+    page.locator('[data-action="catalog-intent"]').click()
+    page.locator('[data-action="catalog-confirm"]').click()
     reverse=page.locator('[data-exercise="voador-inverso"] .ex-anatomy')
     assert reverse.count()==1
     assert 'Deltoide posterior' in reverse.inner_text()
