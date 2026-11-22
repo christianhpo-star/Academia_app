@@ -32,9 +32,28 @@ with sync_playwright() as p:
     page=start(ctx,{},errors)
     # Catálogo global existe fora do treino, com todos os grupos.
     page.get_by_role('button',name='Treinos',exact=True).click()
-    page.locator('.plan-editor-accordion > summary').click()
-    page.get_by_role('button',name='Catálogo de exercícios',exact=True).click()
+    assert page.locator('[data-action="training-destination"]').count()==2
+    assert page.locator('[data-action="training-destination"][data-to="plans"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('.plan-editor-accordion').count()==1
+    assert page.locator('.plan-editor-accordion').get_attribute('open') is None
+    original=page.evaluate('JSON.stringify(window.__testStorage)')
+    page.locator('[data-action="training-destination"][data-to="catalog"]').click()
+    assert page.locator('[data-action="training-destination"][data-to="catalog"]').get_attribute('aria-pressed')=='true'
+    assert page.locator('.plan-editor-accordion').count()==0
+    assert page.evaluate('JSON.stringify(window.__testStorage)')==original
     assert page.locator('.catalog-browser-item').count()>=40
+    # 390px and 320px mobile layouts must keep both destinations in viewport.
+    screenshots=ROOT/'screenshots';screenshots.mkdir(exist_ok=True)
+    page.screenshot(path=str(screenshots/'catalog-direct-390.png'),full_page=True)
+    page.set_viewport_size({'width':320,'height':740})
+    buttons=page.locator('.training-destinations [data-action="training-destination"]')
+    assert buttons.count()==2
+    for button in buttons.all():
+        rect=button.bounding_box()
+        assert rect and rect['height']>=44
+        assert rect['x']>=0 and rect['x']+rect['width']<=321
+    page.screenshot(path=str(screenshots/'catalog-direct-320.png'),full_page=True)
+    page.set_viewport_size({'width':390,'height':844})
     assert page.locator('#catalog-search').count()==1
     assert page.locator('#catalog-count').count()==1
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
@@ -82,6 +101,22 @@ with sync_playwright() as p:
     assert page.evaluate('localStorage.getItem("forja.academia.draft.v1")') is None
     page.get_by_role('button',name='Treinos',exact=True).click()
     page.get_by_role('button',name='Iniciar treino A').click()
+    assert page.locator('[data-action="training-destination"][data-to="plans"]').get_attribute('aria-pressed')=='true'
+    page.locator('[data-exercise="pulley-aberto"] [data-field="load"]').first.fill('40')
+    page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.fill('10')
+    # Focusing away from the numeric input commits its change event. The draft
+    # envelope's savedAt changes whenever autosave runs; compare user entries.
+    page.locator('[data-action="training-destination"][data-to="plans"]').focus()
+    snapshot=page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft')
+    assert snapshot
+    page.locator('[data-action="training-destination"][data-to="catalog"]').click()
+    assert page.locator('.training-draft-notice').count()==1
+    assert 'Treino em andamento preservado' in page.locator('.training-draft-notice').inner_text()
+    assert page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft')==snapshot
+    page.locator('.training-draft-notice [data-to="plans"]').click()
+    assert page.locator('[data-exercise="pulley-aberto"] [data-field="load"]').first.input_value()=='40'
+    assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value()=='10'
+    assert page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft')==snapshot
     page.get_by_role('button',name='+ Adicionar exercício do catálogo').click()
     assert page.get_by_role('heading',name='Sugestões para este treino').count()==1
     assert page.locator('.catalog-suggestion').count() in [1,2,3]
