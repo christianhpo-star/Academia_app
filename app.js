@@ -1024,6 +1024,7 @@
     const p=planFor(ui.draft.planId);
     const entries=ui.draft.entries;
     const focus=FOCUS.summary(entries);
+    const cardioSummary=CARDIO.summarize(ui.draft.cardio);
     const selected=FOCUS.selectedId(entries,ui.focusedExercise);
     ui.focusedExercise=selected;
     const ids=Object.keys(entries);
@@ -1039,6 +1040,7 @@
         </div>
         <div class="focus-progress" aria-label="${focus.completed} de ${focus.total} exercícios com séries efetivas concluídas"><span style="width:${focus.total?Math.round(focus.completed/focus.total*100):0}%"></span></div>
         <p class="small muted focus-progress-label" role="status">${focus.completed} de ${focus.total} exercícios concluídos · ${focus.effectiveSets} ${focus.effectiveSets===1?'série efetiva registrada':'séries efetivas registradas'}</p>
+        ${ui.focusedMode ? `<div class="focus-utilities"><button type="button" class="secondary small-button focus-cardio-quick" data-action="focus-cardio" aria-controls="session-cardio-panel">${cardioSummary.totalMinutes?'Ver cardio · '+fmt(cardioSummary.totalMinutes)+' min':'+ Adicionar cardio (opcional)'}</button></div>` : ''}
         ${ui.focusedMode && selected ? `<div class="focus-step"><strong>Exercício ${focusIndex+1} de ${ids.length}</strong>
           <div class="focus-navigation">
             <button type="button" class="secondary small-button" data-action="focus-prev" ${focusIndex===0?'disabled':''}>Anterior</button>
@@ -1054,6 +1056,7 @@
           <p>${ui.focusedMode?'Visualização de um exercício por vez.':'Cada cartão corresponde a um exercício. Registre as séries antes de avançar.'}</p></div>
         ${ui.focusedMode ? (selected?renderExercise(entries[selected],focusIndex,ids.length):'<p class="empty">Adicione um exercício para começar.</p>') : Object.values(entries).map((en,i)=>renderExercise(en,i,ids.length)).join('')}
       </section>
+      ${ui.focusedMode ? renderCardio() : ''}
       <section class="card"><div class="row-between"><h2 class="section-title">Ajustar este treino</h2>${tag('Só hoje','green')}</div>
         <p class="small muted">Retirar ou adicionar exercícios aqui não altera sua ficha. Exercícios retirados não contam como realizados.</p>
         ${F.ensureDraft(ui.draft) && ui.draft.skipped.length ? '<div class="flex-skipped"><strong>Retirados nesta sessão</strong>' +
@@ -1068,7 +1071,7 @@
         <p class="small muted">A biblioteca abre fora do registro das séries. Ao voltar, suas cargas e repetições continuam no rascunho.</p>
       </section>
       ${renderDosePanel(true)}
-      ${renderCardio()}
+      ${!ui.focusedMode ? renderCardio() : ''}
       <section class="card session-review"><h2 class="section-title">Conferência antes de salvar</h2>
         <div id="workout-review" aria-live="polite">${renderReviewContent()}</div>
         <p class="tiny muted">As observações não são convertidas em séries reais; os registros incompletos do Muay Thai antigo permanecem intactos.</p>
@@ -1081,7 +1084,7 @@
   function renderCardio() {
     const rows=Array.isArray(ui.draft?.cardio)?ui.draft.cardio:[];
     const parsed=CARDIO.parse(rows);
-    return `<details class="card session-cardio" ${ui.cardioOpen?'open':''}>
+    return `<details id="session-cardio-panel" class="card session-cardio" ${ui.cardioOpen?'open':''}>
       <summary><span>Cardio <small>(opcional)</small></span><span class="cardio-total">${parsed.ok&&parsed.totalMinutes?fmt(parsed.totalMinutes)+' min':''}</span></summary>
       <p class="small muted">Registre o tempo de esteira, escada ou outro cardio feito nesta sessão.</p>
       <div class="cardio-rows">${rows.slice(0,5).map((row,i)=>`<div class="cardio-row">
@@ -1107,6 +1110,9 @@
     const total=document.querySelector('.session-cardio .cardio-total');
     const parsed=CARDIO.parse(ui.draft?.cardio);
     if(total)total.textContent=parsed.ok&&parsed.totalMinutes?fmt(parsed.totalMinutes)+' min':'';
+    const shortcut=document.querySelector('[data-action="focus-cardio"]');
+    if(shortcut)shortcut.textContent=parsed.ok&&parsed.totalMinutes?
+      'Ver cardio · '+fmt(parsed.totalMinutes)+' min':'+ Adicionar cardio (opcional)';
   }
   function updateCardioChoices() {
     const rows=Array.isArray(ui.draft?.cardio)?ui.draft.cardio:[];
@@ -2079,6 +2085,18 @@
       const scroll=window.scrollY;render();window.scrollTo(0,scroll);
       document.querySelector('[data-action="cardio-add"]')?.focus({preventScroll:true});return;
     }
+    if(action==='focus-cardio'){
+      if(!ui.draft||!ui.focusedMode)return;
+      // The same single cardio form is moved next to the focused exercise.
+      // Opening it changes UI state only; entries remain in the shared draft.
+      ui.cardioOpen=true;
+      const panel=document.getElementById('session-cardio-panel');
+      if(!panel)return;
+      panel.open=true;
+      panel.scrollIntoView({block:'start',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+      panel.querySelector('summary')?.focus({preventScroll:true});
+      return;
+    }
     if(action==='focus-toggle'){if(!ui.draft)return;ui.focusedMode=!ui.focusedMode;render();return;}
     if(action==='focus-select' || action==='focus-next' || action==='focus-prev'){
       if(!ui.draft)return;
@@ -2626,7 +2644,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-stairs15',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-focuscardio16',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();
