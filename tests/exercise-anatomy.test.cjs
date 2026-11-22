@@ -3,21 +3,114 @@ const assert=require('node:assert/strict');
 const DATA=require('../data.js');
 const F=require('../flex.js');
 const A=require('../exercise-anatomy.js');
-const all=[...DATA.exercises,...F.catalog].filter(ex=>['A','B'].includes(ex.group));
+const all=[...DATA.exercises,...F.catalog];
 const ids=all.map(ex=>ex.id);
+const upperIds=all.filter(ex=>['A','B'].includes(ex.group)).map(ex=>ex.id);
+const lowerIds=all.filter(ex=>['C','D'].includes(ex.group)).map(ex=>ex.id);
 const description=svg=>(svg.match(/<desc\b[^>]*>([\s\S]*?)<\/desc>/)||[])[1]||'';
 const title=svg=>(svg.match(/<title\b[^>]*>([\s\S]*?)<\/title>/)||[])[1]||'';
 
-test('anatomical guidance covers every known A/B exercise with stable IDs',()=>{
-  assert.equal(A.VERSION,2);
-  assert.equal(A.coveredIds.length,41);
+test('anatomical guidance covers the 41 upper and 33 lower movements with stable IDs',()=>{
+  assert.equal(A.VERSION,3);
+  assert.equal(upperIds.length,41);
+  assert.equal(lowerIds.length,33);
+  assert.equal(A.coveredIds.length,74);
   assert.equal(new Set(A.coveredIds).size,A.coveredIds.length);
   assert.ok(ids.every(id=>!!A.describe(id)),ids.filter(id=>!A.describe(id)).join(', '));
   assert.ok(A.coveredIds.every(id=>ids.includes(id)));
+  assert.deepEqual([...A.coveredIds].sort(),[...ids].sort());
+  for(const id of upperIds)assert.notEqual(A.describe(id).body,'lower',id);
+  for(const id of lowerIds)assert.equal(A.describe(id).body,'lower',id);
   assert.equal(A.describe('voador-inverso').view,'back');
   assert.equal(A.describe('voador').view,'front');
-  assert.equal(A.describe('agachamento-hack'),null);
-  assert.equal(A.panel('agachamento-hack'),'');
+});
+
+test('leg variants are mapped by movement rather than by their training block',()=>{
+  const groups=[
+    {ids:'agachamento-hack agachamento-livre bulgaro leg-press agachamento-goblet passada-reversa step-up-baixo agachamento-smith leg-press-horizontal',view:'front',main:['quadriceps'],assist:['glutes']},
+    {ids:'extensora extensora-d extensora-unilateral',view:'front',main:['quadriceps'],assist:[]},
+    {ids:'cadeira-adutora aducao-polia',view:'front',main:['adductors'],assist:[]},
+    {ids:'flexora-c flexora-d flexora-sentada flexora-unilateral flexora-em-pe',view:'back',main:['hamstrings'],assist:[]},
+    {ids:'stiff terra-romeno-halter',view:'back',main:['hamstrings'],assist:['glutes']},
+    {ids:'elevacao-pelvica gluteo-cabo ponte-gluteo hip-thrust-maquina',view:'back',main:['glutes'],assist:[]},
+    {ids:'pull-through-polia',view:'back',main:['glutes'],assist:['hamstrings']},
+    {ids:'sumo-maquina',view:'back',main:['glutes'],assist:['quadriceps','adductors']},
+    {ids:'abdutora abducao-polia',view:'back',main:['hipAbductors'],assist:[]},
+    {ids:'panturrilha-leg panturrilha-banco panturrilha-em-pe panturrilha-unilateral-pe',view:'back',main:['calves'],assist:[]}
+  ];
+  const checked=[];
+  for(const expected of groups){
+    for(const id of expected.ids.split(' ')){
+      const item=A.describe(id);
+      assert.equal(item.body,'lower',id);
+      assert.equal(item.view,expected.view,id);
+      assert.deepEqual(item.main,expected.main,id);
+      assert.deepEqual(item.assist,expected.assist,id);
+      checked.push(id);
+    }
+  }
+  assert.deepEqual(checked.sort(),[...lowerIds].sort());
+  // A hamstring exercise in C and a quad exercise in D must keep their own map.
+  assert.equal(all.find(ex=>ex.id==='flexora-c').group,'C');
+  assert.equal(A.describe('flexora-c').view,'back');
+  assert.equal(all.find(ex=>ex.id==='extensora-d').group,'D');
+  assert.equal(A.describe('extensora-d').view,'front');
+  assert.match(A.describe('sumo-maquina').cue,/movimento composto/i);
+  assert.match(A.describe('sumo-maquina').cue,/execução.*aparelho/i);
+});
+
+test('leg front and back views show only anatomically visible highlighted regions',()=>{
+  const front=A.viewInfo('agachamento-hack','front');
+  const back=A.viewInfo('agachamento-hack','back');
+  assert.deepEqual(front.visibleMain,['quadriceps']);
+  assert.deepEqual(front.visibleAssist,[]);
+  assert.deepEqual(front.hiddenAssist,['glutes']);
+  assert.deepEqual(back.visibleMain,[]);
+  assert.deepEqual(back.visibleAssist,['glutes']);
+  assert.deepEqual(back.hiddenMain,['quadriceps']);
+  assert.match(front.note,/glúteo/i);
+  assert.match(front.note,/costas/i);
+  assert.match(back.note,/quadríceps/i);
+  assert.match(back.note,/frente/i);
+  assert.doesNotMatch(description(A.figure('agachamento-hack',false,'front')),/glúteo/i);
+  assert.doesNotMatch(description(A.figure('agachamento-hack',false,'back')),/quadríceps/i);
+
+  for(const [id,hiddenView,region,label] of [
+    ['extensora-d','back','quadriceps',/quadríceps/i],
+    ['flexora-c','front','hamstrings',/posteriores|isquiotibiais/i],
+    ['panturrilha-leg','front','calves',/panturrilha|gastrocnêmio|sóleo/i]
+  ]){
+    const info=A.viewInfo(id,hiddenView);
+    assert.deepEqual(info.visibleMain,[],id);
+    assert.deepEqual(info.visibleAssist,[],id);
+    assert.ok(info.hiddenMain.includes(region),id);
+    assert.match(info.note,/sem músculos destacados/i);
+    assert.doesNotMatch(description(A.figure(id,false,hiddenView)),label,id);
+  }
+  assert.deepEqual(A.viewInfo('stiff','back').visibleMain,['hamstrings']);
+  assert.deepEqual(A.viewInfo('stiff','back').visibleAssist,['glutes']);
+  assert.deepEqual(A.viewInfo('sumo-maquina','front').visibleAssist,['quadriceps','adductors']);
+  assert.deepEqual(A.viewInfo('sumo-maquina','front').hiddenMain,['glutes']);
+});
+
+test('lower figures use leg regions and preserve the separate upper-body artwork',()=>{
+  const legRegions=new Set(['quadriceps','glutes','hamstrings','hipAbductors','adductors','calves']);
+  for(const id of lowerIds){
+    for(const view of ['front','back']){
+      const svg=A.figure(id,false,view);
+      assert.match(svg,/data-anatomy-body="lower"/,id);
+      assert.match(title(svg),view==='front'?/anterior|frente/i:/posterior|costas/i);
+      const regions=Array.from(svg.matchAll(/data-muscle="([^"]+)"/g),match=>match[1]);
+      assert.ok(regions.length>0,id);
+      assert.ok(regions.every(region=>legRegions.has(region)),id);
+      assert.doesNotMatch(svg,/(?:<script|<iframe|<img|<animate\b|(?:src|href)=["']https?:)/i);
+    }
+  }
+  for(const id of upperIds){
+    const svg=A.figure(id);
+    assert.match(svg,/data-anatomy-body="upper"/,id);
+    assert.doesNotMatch(svg,/data-muscle="(?:quadriceps|glutes|hamstrings|hipAbductors|adductors|calves)"/,id);
+  }
 });
 
 test('bench press shows the chest and anterior shoulder in front, and triceps in back',()=>{
@@ -86,7 +179,9 @@ test('guide exposes native controls and independently named SVGs without remote 
 
   // Repeated instances must not redirect paint references or accessible names
   // to the SVG of a different exercise card.
-  const repeated=panel+A.panel('voador-inverso',true,'front')+A.viewer('voador-inverso','back','catalog');
+  const repeated=panel+A.panel('voador-inverso',true,'front')+A.viewer('voador-inverso','back','catalog')+
+    A.panel('agachamento-hack',true,'front')+A.viewer('hip-thrust-maquina','back','catalog')+
+    A.panel('agachamento-hack',true,'back');
   const generatedIds=Array.from(repeated.matchAll(/\sid="([^"]+)"/g),match=>match[1]);
   assert.equal(new Set(generatedIds).size,generatedIds.length);
   for(const match of repeated.matchAll(/aria-labelledby="([^"]+)"/g)){
@@ -114,9 +209,10 @@ test('each exercise defaults to its useful view and invalid view requests remain
   }
 });
 
-test('lower-body and unknown movements never receive misleading anatomy claims',()=>{
-  assert.equal(A.describe('flexora-d'),null);
-  assert.equal(A.panel('hip-thrust-maquina'),'');
+test('unknown movements never receive fabricated anatomy claims',()=>{
+  assert.equal(A.describe('this-is-unknown'),null);
+  assert.equal(A.describe('agachamento-nao-catalogado'),null);
+  assert.equal(A.panel('agachamento-nao-catalogado'),'');
   assert.equal(A.panel('this-is-unknown'),'');
   assert.equal(A.figure('this-is-unknown'),'');
   assert.equal(A.viewer('this-is-unknown'),'');

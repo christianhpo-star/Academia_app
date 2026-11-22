@@ -72,13 +72,17 @@ with sync_playwright() as p:
     assert page.locator('.catalog-browser-item:visible').count()==1
     assert page.evaluate('JSON.stringify(window.__testStorage)')==before
 
-    # Unmapped lower-body movements get accurate metadata but no invented drawing.
+    # Lower-body details share the same viewer and explicit plan-edit flow.
     page.locator('#catalog-search').fill('hip thrust maquina')
     page.locator('[data-action="catalog-view"][data-ex="hip-thrust-maquina"]').click()
-    assert page.locator('.catalog-detail-unmapped').count()==1
-    assert page.locator('.catalog-detail-figure').count()==0
+    assert page.locator('.catalog-detail-unmapped').count()==0
+    lower_figure=page.locator('.catalog-detail-figure svg[role="img"][data-anatomy-body="lower"]')
+    assert lower_figure.count()==1
+    assert lower_figure.get_attribute('data-anatomy-figure-view')=='back'
+    assert lower_figure.locator('.primary[data-muscle="glutes"]').count()>0
+    assert 'Glúteo máximo' in page.locator('.catalog-detail-muscles').inner_text()
     assert 'Glúteos' in page.locator('.catalog-detail-facts').inner_text()
-    assert 'ainda não revisada' in page.locator('.catalog-detail-technique').inner_text()
+    assert 'ainda não revisada' not in page.locator('.catalog-detail-technique').inner_text()
     assert page.evaluate('JSON.stringify(window.__testStorage)')==before
     page.locator('[data-action="catalog-intent"]').click()
     assert page.locator('[data-action="catalog-confirm"]').count()==1

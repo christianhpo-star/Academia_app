@@ -1,5 +1,13 @@
 # FORJA
 
+## Ilustrações de pernas (novembro/2026)
+
+- Os **33 exercícios de pernas dos blocos C/D** agora têm ilustração própria da cintura aos pés, com **Frente / Costas**, tanto no catálogo quanto no painel **Músculos e execução** durante a sessão.
+- O mapa distingue quadríceps, posteriores da coxa, glúteos, abdutores, adutores e panturrilhas. Principais e auxiliares usam destaque, textura e legenda; músculos da outra face são indicados por uma nota.
+- A cobertura passa de 41 para **74 exercícios do catálogo de força**. Exercícios personalizados e nomes livres de atividades de Muay não recebem uma classificação automática.
+- São SVGs originais disponíveis offline, sem imagens remotas. Alternar a vista atualiza apenas o componente visual e preserva séries, cargas e foco.
+- [Cobertura, decisões e fontes](docs/anatomy-lower-body.md). Versão de recursos: `20261122-legs12`.
+
 ## Organização das telas (P3, novembro/2026)
 
 | Área | Conteúdo principal |
