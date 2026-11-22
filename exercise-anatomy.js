@@ -57,6 +57,27 @@
       cue:'Segure a corda próxima à cabeça e aproxime as costelas da pelve, com movimento controlado do tronco. Evite puxar só com os braços ou deslocar o quadril.'},
     // Primary/auxiliary roles summarize the movement; they are not measured
     // activation percentages. Deeper stabilizers are not assigned extra sets.
+    bicycleCrunch:{view:'front',main:['abs','obliques'],assist:[],
+      primary:'Reto do abdômen e oblíquos',secondary:'',
+      cue:'Alterne o tronco e o joelho contrários sem puxar a cabeça, em movimento controlado.'},
+    deadBug:{view:'front',main:['abs'],assist:['obliques'],
+      primary:'Reto do abdômen',secondary:'Oblíquos (estabilização)',
+      cue:'Mantenha o tronco estável e alterne braço e perna contrários sem arquear a lombar.'},
+    hangingKnee:{view:'front',main:['abs'],assist:[],
+      primary:'Reto do abdômen',secondary:'',
+      cue:'Eleve os joelhos com controle e leve a pelve levemente em direção às costelas, evitando embalar o tronco.'},
+    cableRotation:{view:'front',main:['obliques'],assist:['abs'],
+      primary:'Oblíquos',secondary:'Reto do abdômen (estabilização)',
+      cue:'Gire o tronco em amplitude confortável, controlando a volta e sem puxões com os braços.'},
+    sideBend:{view:'front',main:['obliques'],assist:['abs'],
+      primary:'Oblíquos',secondary:'Reto do abdômen (estabilização)',
+      cue:'Faça uma flexão lateral controlada com o quadril estável e repita do outro lado.'},
+    backExtension:{body:'lower',view:'back',main:['glutes','hamstrings'],assist:[],
+      primary:'Glúteos e posteriores da coxa',secondary:'Extensores da coluna auxiliam, mas a região lombar ainda não é quantificada no mapa.',
+      cue:'Movimente o quadril com a coluna neutra. Não hiperestenda as costas nem acrescente carga sem controle.'},
+    lateralLunge:{body:'lower',view:'back',main:['hipAbductors','glutes'],assist:['quadriceps'],
+      primary:'Abdutores do quadril e glúteos',secondary:'Quadríceps',
+      cue:'Dê um passo lateral em amplitude confortável, mantendo o pé estável e evitando forçar o joelho.'},
     pallofPress:{view:'front',main:['obliques'],assist:['abs'],
       primary:'Oblíquos',secondary:'Reto do abdômen',
       cue:'De lado para a polia na altura do peito, estenda e recolha os braços sem girar o tronco. Faça os dois lados: uma série reúne as repetições de cada lado.'},
@@ -111,16 +132,23 @@
   assign('reverseCrunch','abdominal-inverso');
   assign('cableCrunch','abdominal-polia');
   assign('pallofPress','pallof-press');
+  assign('bicycleCrunch','abdominal-bicicleta');
+  assign('deadBug','dead-bug');
+  assign('hangingKnee','elevacao-joelhos-suspenso');
+  assign('cableRotation','woodchop-polia');
+  assign('sideBend','flexao-lateral-polia');
+  assign('backExtension','extensao-lombar-45');
+  assign('lateralLunge','passada-lateral-halter');
   assign('squat','agachamento-hack agachamento-livre agachamento-goblet agachamento-smith leg-press leg-press-horizontal bulgaro passada-reversa step-up-baixo');
   assign('kneeExtension','extensora extensora-d extensora-unilateral');
   assign('kneeFlexion','flexora-c flexora-d flexora-sentada flexora-unilateral flexora-em-pe');
   assign('hipHinge','stiff terra-romeno-halter');
   assign('hipExtension','elevacao-pelvica gluteo-cabo ponte-gluteo hip-thrust-maquina');
   assign('pullThrough','pull-through-polia');
-  assign('sumo','sumo-maquina');
+  assign('sumo','sumo-maquina agachamento-sumo-halter');
   assign('hipAbduction','abdutora abducao-polia');
   assign('hipAdduction','cadeira-adutora aducao-polia');
-  assign('calfRaise','panturrilha-leg panturrilha-banco panturrilha-em-pe panturrilha-unilateral-pe');
+  assign('calfRaise','panturrilha-leg panturrilha-banco panturrilha-em-pe panturrilha-unilateral-pe panturrilha-smith panturrilha-sentada-maquina');
 
   // Original schematic torso, authored as paired vector regions. The two views
   // deliberately omit hidden muscles instead of moving them to the visible side.
