@@ -745,7 +745,7 @@
     const shown=all.filter(ex=>ui.catalogGroup==='all'||ex.group===ui.catalogGroup);
     const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
     const count=shown.filter(ex=>catalogSearchText(ex).includes(term)).length;
-    return `${headline('Biblioteca','Catálogo de exercícios.','Explore todos os movimentos sem iniciar um treino.')}
+    return `${headline('Biblioteca','Explore os exercícios.','Pesquise por movimento ou equipamento, sem iniciar um treino.')}
       <search class="catalog-browser-tools" aria-label="Pesquisar e filtrar exercícios">
         <label for="catalog-search">Buscar exercício ou equipamento</label>
         <input id="catalog-search" type="search" value="${esc(ui.catalogSearch)}" placeholder="Ex.: supino, polia, halter..." autocomplete="off" aria-controls="catalog-browser-results" />
