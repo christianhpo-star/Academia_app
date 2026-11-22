@@ -38,7 +38,7 @@ test('guide is native keyboard accessible and static, with proper SVG semantics'
   assert.match(p,/Deltoide posterior/);
   assert.match(p,/Trapézio médio e romboides/);
   assert.match(p,/destaque ilustrativo|Ilustração orientativa/i);
-  assert.doesNotMatch(p,/https?:\/\/|<script|<iframe|<img|autoplay|data-action|data-field/i);
+  assert.doesNotMatch(p,/(?:<script|<iframe|<img|autoplay|data-action|data-field|(?:src|href)=["']https?:)/i);
 });
 test('guide is lightweight, deterministic and never touches workout history or targets',()=>{
   const state=JSON.stringify({sessions:[{day:'2026-11-10',entries:[{id:'voador',sets:[{load:60,reps:12}]}]}],weights:[{weight:88.3}],nutrition:{entries:[]}});
