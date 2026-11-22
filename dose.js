@@ -23,21 +23,37 @@
   map('remada-baixa remada-cavalinho remada-unilateral-halter remada-articulada', ['costas'], ['biceps']);
   map('pullover-polia', ['costas']);
   map('face-pull', ['ombros'], ['costas']);
+  map('voador-inverso crucifixo-inverso-halter crucifixo-inverso-polia', ['ombros'], ['costas']);
+  map('remada-peito-apoiado puxada-unilateral-polia', ['costas'], ['biceps']);
   map('rosca-w rosca-martelo rosca-inversa rosca-scott', ['biceps']);
+  map('rosca-inclinada-halter rosca-polia-baixa', ['biceps']);
   map('supino-halteres supino-barra supino-inclinado supino-maquina supino-canadense', ['peito'], ['triceps','ombros']);
   map('voador crucifixo-cabo crossover-polia', ['peito']);
+  map('crucifixo-inclinado-halter', ['peito']);
+  map('supino-inclinado-maquina', ['peito'], ['triceps','ombros']);
   map('elevacao-lateral desenvolvimento-halter remada-alta', ['ombros'], ['triceps']);
+  map('elevacao-lateral-polia', ['ombros']);
+  map('desenvolvimento-maquina', ['ombros'], ['triceps']);
   map('triceps-testa triceps-corda triceps-maquina triceps-frances', ['triceps']);
+  map('triceps-unilateral-polia triceps-coice-halter', ['triceps']);
   map('agachamento-hack agachamento-livre leg-press agachamento-goblet', ['quadriceps'], ['gluteos']);
+  map('agachamento-smith leg-press-horizontal', ['quadriceps'], ['gluteos']);
   map('bulgaro passada-reversa step-up-baixo', ['quadriceps'], ['gluteos']);
   map('extensora extensora-d', ['quadriceps']);
+  map('extensora-unilateral', ['quadriceps']);
   map('flexora-c flexora-d flexora-sentada', ['posteriores']);
+  map('flexora-unilateral flexora-em-pe', ['posteriores']);
   map('panturrilha-leg panturrilha-banco panturrilha-em-pe', ['panturrilhas']);
+  map('panturrilha-unilateral-pe', ['panturrilhas']);
   map('stiff terra-romeno-halter', ['posteriores'], ['gluteos']);
   map('elevacao-pelvica gluteo-cabo ponte-gluteo', ['gluteos']);
+  map('hip-thrust-maquina', ['gluteos']);
+  map('pull-through-polia', ['gluteos'], ['posteriores']);
   map('sumo-maquina', ['gluteos'], ['quadriceps','adutores']);
   map('abdutora', ['abdutores']);
+  map('abducao-polia', ['abdutores']);
   map('cadeira-adutora', ['adutores']);
+  map('aducao-polia', ['adutores']);
 
   const labelFor = id => MUSCLES.find(row=>row[0]===id)?.[1] || id;
   function validDate(day) {
