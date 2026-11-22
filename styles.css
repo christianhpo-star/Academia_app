@@ -1474,3 +1474,16 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .cardio-history ul{list-style:none;padding:0;margin:0;display:grid;gap:8px}
 .cardio-history li{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px}
 .cardio-history strong{white-space:nowrap;color:var(--lime)}
+
+/* Stairmill cadence and complementary (non-set) muscle exposure. */
+.cardio-stair-pace{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;padding:12px;background:#172536;border:1px solid #35516a;border-radius:12px}
+.cardio-stair-pace .field,.cardio-stair-pace .field input,.cardio-stair-pace .field select{min-width:0;width:100%}
+.cardio-stair-pace p{grid-column:1/-1;margin:0;line-height:1.45}
+.cardio-pace-history{display:block;font-size:11px;line-height:1.35;color:#a8c4d5;font-weight:500;white-space:normal}
+.muscle-body-region.is-stair-cardio path{stroke:#ffc780;stroke-width:2;stroke-dasharray:4 3;paint-order:stroke fill}
+.muscle-body-region.is-stair-cardio[aria-pressed="true"] path{stroke:#fff;stroke-width:2.2;stroke-dasharray:none}
+.muscle-map-stair-summary{display:flex;align-items:flex-start;flex-wrap:wrap;gap:4px;font-size:11px;line-height:1.5;color:#e8d2b4;background:#302a25;border:1px solid #6e5539;border-radius:10px;padding:10px;margin:12px 0}
+.muscle-map-stair-key{display:inline-block;flex:0 0 auto;width:14px;height:14px;margin-right:3px;border:2px dashed #ffc780;border-radius:3px}
+.muscle-map-stair-note{margin-top:12px;border-top:1px dashed #877052;padding-top:10px}
+.muscle-map-stair-note strong{color:#ffd8a0}
+@media(max-width:359px){.cardio-stair-pace{grid-template-columns:minmax(0,1fr)}.cardio-stair-pace p{grid-column:1}}

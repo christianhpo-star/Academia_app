@@ -265,3 +265,47 @@ test('history, exercise profiles and settings are never mutated or used as a pre
   result.byId.chest.views.push('invalid');
   assert.deepEqual(HISTORY.REGIONS.find(region => region.id === 'chest').views, ['front']);
 });
+
+test('stair sessions mark complementary leg exposure without affecting resistance scores', () => {
+  const one={...session(TODAY,[entry('supino-halteres',2)],'stair-a'),cardio:[{type:'escada',minutes:10,avgSpeed:56,speedUnit:'steps_min'}]};
+  const two={...session(ago(8),[entry('extensora',3)],'stair-b'),cardio:[{type:'escada',minutes:12,avgSpeed:7,speedUnit:'machine_level'}]};
+  const three={...session(TODAY,[entry('abdominal-solo',1,{load:0})],'stair-c'),cardio:[{type:'escada',minutes:7}]};
+  const input=[one,two,three,structuredClone(one),{...session(ago(-1),[entry('stiff')],'future'),cardio:[{type:'escada',minutes:99}]}];
+  const before=structuredClone(input);
+  const short=analyze(input,{days:7});
+  assert.equal(short.stair.minutes,17);
+  assert.equal(short.stair.sessions,2);
+  assert.equal(short.stair.days,1);
+  assert.deepEqual(short.stair.primaryRegions,['quadriceps','glutes','calves']);
+  assert.deepEqual(short.stair.supportingRegions,['hamstrings']);
+  assert.deepEqual(short.stair.latestPace,{avgSpeed:56,speedUnit:'steps_min'});
+  assert.equal(short.totalSets,3);
+  assert.equal(short.byId.quadriceps.total,0);
+  assert.equal(short.byId.calves.total,0);
+  assert.equal(short.byId.glutes.total,0);
+  assert.deepEqual(input,before);
+  const long=analyze(input,{days:30});
+  assert.equal(long.stair.minutes,29);
+  assert.equal(long.stair.sessions,3);
+  assert.equal(long.byId.quadriceps.total,3);
+  assert.equal(long.totalSets,6);
+  const plain=analyze(input.map(item=>{const copy={...item};delete copy.cardio;return copy;}),{days:30});
+  for(const region of HISTORY.REGIONS) {
+    assert.equal(long.byId[region.id].total,plain.byId[region.id].total);
+    assert.equal(long.byId[region.id].level,plain.byId[region.id].level);
+  }
+  assert.equal(long.maxTotal,plain.maxTotal);
+  assert.equal(long.totalSets,plain.totalSets);
+  assert.equal(plain.stair.minutes,0);
+});
+
+test('empty or invalid stair activity never creates muscle sets or activity for future dates', () => {
+  const a=analyze([{...session(TODAY,[],'s'),cardio:[{type:'escada',minutes:'8'}]}]);
+  assert.equal(a.stair.minutes,8);
+  assert.equal(a.hasEvidence,false);
+  assert.equal(a.byId.quadriceps.level,0);
+  assert.equal(a.completedSessions,0);
+  const b=analyze([{...session(TODAY,[],'s'),cardio:[{type:'escada',minutes:'0'}]},
+    {...session(ago(-1),[],'f'),cardio:[{type:'escada',minutes:'10'}]}]);
+  assert.equal(b.stair.minutes,0);
+});

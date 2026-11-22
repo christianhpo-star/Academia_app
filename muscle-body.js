@@ -94,18 +94,21 @@
   const paths=parts=>parts.map(part=>path(part)).join('');
   const amount=value=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:1});
   let sequence=0;
-  function figure({view='front',rows=[],selected=null}={}){
+  function figure({view='front',rows=[],selected=null,cardioRegions=[]}={}){
     view=view==='back'?'back':'front';
     const uid='forja-muscle-body-'+(++sequence),viewLabel=view==='back'?'Costas':'Frente';
     const byId=new Map((Array.isArray(rows)?rows:[]).filter(row=>row&&regionNames[row.id]).map(row=>[row.id,row]));
+    const cardioIds=new Set((Array.isArray(cardioRegions)?cardioRegions:[]).filter(id=>regionNames[id]));
     const renderRegions=area=>Object.entries(area).map(([id,parts])=>{
       const row=byId.get(id),rawTotal=Number(row?.total);
       const total=Number.isFinite(rawTotal)&&rawTotal>0?rawTotal:0;
       const rawLevel=Number(row?.level),level=total>0&&Number.isInteger(rawLevel)?Math.max(1,Math.min(3,rawLevel)):0;
-      const label=regionNames[id],chosen=selected===id;
-      const description=label+': '+LABELS[level]+'. '+amount(total)+' séries equivalentes estimadas no período. Toque para ver detalhes.';
-      return '<g class="muscle-body-region'+(chosen?' is-selected':'')+'" role="button" tabindex="0" focusable="true" '+
+      const label=regionNames[id],chosen=selected===id,stairCardio=cardioIds.has(id);
+      const description=label+': '+LABELS[level]+'. '+amount(total)+' séries equivalentes estimadas no período.'+
+        (stairCardio?' Escada registrada: participação provável, sem equivalência com séries.':'')+' Toque para ver detalhes.';
+      return '<g class="muscle-body-region'+(chosen?' is-selected':'')+(stairCardio?' is-stair-cardio':'')+'" role="button" tabindex="0" focusable="true" '+
         'data-action="muscle-region" data-muscle="'+id+'" data-muscle-region="'+id+'" data-level="'+level+'" data-total="'+total+'" '+
+        (stairCardio?'data-stair-cardio="true" ':'')+
         'aria-controls="muscle-map-detail" aria-pressed="'+chosen+'" aria-label="'+safe(description)+'" '+
         'fill="'+PALETTE[level]+'" stroke="'+(chosen?'#FFFFFF':level===0?'#67869B':'#D5EAF1')+'" stroke-width="'+(chosen?'2.2':'.8')+'" stroke-linejoin="round">'+
         '<title>'+safe(description)+'</title>'+paths(parts)+'</g>';

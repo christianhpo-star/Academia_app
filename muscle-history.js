@@ -8,6 +8,7 @@
   const node = typeof module !== 'undefined' && module.exports;
   const defaultAnatomy = node ? require('./exercise-anatomy.js') : null;
   const defaultDose = node ? require('./dose.js') : null;
+  const defaultCardio = node ? require('./cardio.js') : null;
   const REGIONS = Object.freeze([
     ['chest', 'Peitoral maior', ['front']],
     ['frontDelts', 'Deltoide anterior', ['front']],
@@ -44,7 +45,8 @@
 
   function analyze({strengthSessions = [], today = '', days = 7,
     anatomy = root.ForjaExerciseAnatomy || defaultAnatomy,
-    dose = root.ForjaDose || defaultDose} = {}) {
+    dose = root.ForjaDose || defaultDose,
+    cardio = root.ForjaCardio || defaultCardio} = {}) {
     days = [7, 30, 90].includes(Number(days)) ? Number(days) : 7;
     const available = typeof anatomy?.describe === 'function' &&
       typeof dose?.workSets === 'function' && typeof dose?.validDate === 'function' &&
@@ -60,6 +62,11 @@
     const activeDays = new Set(), seenSessions = new Set();
     let knownEntries = 0, unknownEntries = 0, knownSets = 0, unknownSets = 0;
     let completedSessions = 0, mappedSessions = 0, duplicateSessions = 0;
+    // Cardio exposure is separate from resistance volume and muscle-set colors.
+    const stair = {minutes:0, sessions:0, dates:new Set(), lastDay:null,
+      latestPace:null, latestPaceKey:null};
+    const stairPrimaryRegions = ['quadriceps', 'glutes', 'calves'];
+    const stairSupportingRegions = ['hamstrings'];
     const sessions = validToday && Array.isArray(strengthSessions) ? strengthSessions : [];
     for (const [index, session] of sessions.entries()) {
       const age = dose.dayAge(today, session?.day);
@@ -68,6 +75,22 @@
       if (stableId && seenSessions.has(stableId)) { duplicateSessions++; continue; }
       if (stableId) seenSessions.add(stableId);
       const sessionKey = stableId ? 'id:' + stableId : 'row:' + index;
+      const stairItem = typeof cardio?.summarize === 'function' ?
+        cardio.summarize(session?.cardio).entries.find(entry => entry.type === 'escada') : null;
+      if (stairItem) {
+        stair.minutes += stairItem.minutes;
+        stair.sessions++;
+        stair.dates.add(session.day);
+        if (!stair.lastDay || session.day > stair.lastDay) stair.lastDay = session.day;
+        if (stairItem.avgSpeed != null) {
+          const time = typeof session.timestamp === 'string' ? session.timestamp : '';
+          const key = session.day + '/' + time;
+          if (!stair.latestPaceKey || key >= stair.latestPaceKey) {
+            stair.latestPace = {avgSpeed:stairItem.avgSpeed, speedUnit:stairItem.speedUnit};
+            stair.latestPaceKey = key;
+          }
+        }
+      }
       const skipped = new Set((Array.isArray(session.skipped) ? session.skipped : [])
         .map(item => typeof item === 'string' ? item : item?.id));
       let hasSets = false, hasMappedSets = false;
@@ -132,6 +155,11 @@
       untracked: UNTRACKED.map(region => ({...region})),
       knownEntries, unknownEntries, knownSets, unknownSets, totalSets,
       completedSessions, mappedSessions, duplicateSessions,
+      stair: {
+        minutes: Number(stair.minutes.toFixed(2)), sessions:stair.sessions,
+        days:stair.dates.size, lastDay:stair.lastDay, latestPace:stair.latestPace,
+        primaryRegions:[...stairPrimaryRegions], supportingRegions:[...stairSupportingRegions],
+      },
       activeDays: [...activeDays].sort(),
       coverage: totalSets ? knownSets / totalSets : null,
       hasEvidence: knownSets > 0,

@@ -1,7 +1,7 @@
 """Optional cardio minutes alongside a workout, with isolated synthetic data.
 
 Checks the visible form, draft recovery, saved history and backup round trip.
-Cardio durations must not create strength sets or color additional muscles.
+Cardio durations must not create strength sets or alter the color scale. Stair activity is outlined independently.
 """
 import json
 import os
@@ -79,6 +79,18 @@ def check_cardio(context, seed, errors, folder):
     assert add_row(page, 'esteira', '10') == 0
     assert add_row(page, 'escada', '8') == 1
     assert modality(page, 1).locator('option[value="esteira"]').is_disabled()
+    speed=page.locator('[data-cardio-field="avgSpeed"][data-cardio-index="1"]')
+    speed_unit=page.locator('[data-cardio-field="speedUnit"][data-cardio-index="1"]')
+    assert speed.is_visible() and speed_unit.is_visible()
+    assert not page.locator('[data-cardio-pace-index="0"]').is_visible()
+    speed_unit.select_option('machine_level')
+    assert speed.get_attribute('max') == '99'
+    speed.fill('7')
+    assert 'nível 7 (máquina)' in page.locator('#workout-review').inner_text()
+    speed_unit.select_option('steps_min')
+    assert speed.get_attribute('max') == '240'
+    speed.fill('57.5')
+    assert '57,5 degraus/min' in page.locator('#workout-review').inner_text()
     first_choice = modality(page, 0)
     first_choice.focus()
     first_choice.select_option('eliptico')
@@ -104,6 +116,11 @@ def check_cardio(context, seed, errors, folder):
         assert DRAFT_KEY in snapshot(page)
         assert 'entre 0 e 300' in page.locator('#toast').inner_text()
     minutes(page, 0).fill('10')
+    speed.fill('241')
+    page.get_by_role('button', name='Salvar treino', exact=True).click()
+    assert state_of(page)['sessions'] == []
+    assert 'velocidade média da escada' in page.locator('#toast').inner_text()
+    speed.fill('57.5')
 
     saved_draft = snapshot(page)
     page.close()
@@ -115,10 +132,12 @@ def check_cardio(context, seed, errors, folder):
         assert modality(page, index).input_value() == kind
         assert minutes(page, index).input_value() == value
     assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value() == '10'
+    assert page.locator('[data-cardio-field="avgSpeed"][data-cardio-index="1"]').input_value() == '57.5'
+    assert page.locator('[data-cardio-field="speedUnit"][data-cardio-index="1"]').input_value() == 'steps_min'
     for width in (320, 390, 412):
         page.set_viewport_size({'width': width, 'height': 900})
         assert_width(page, panel)
-        for field in panel.locator('input, select, button').all():
+        for field in panel.locator('input:visible, select:visible, button:visible').all():
             box = field.bounding_box()
             assert box and box['x'] >= -1 and box['x'] + box['width'] <= width + 1, box
         panel.screenshot(path=str(folder / f'cardio-form-{width}.png'))
@@ -133,7 +152,7 @@ def check_cardio(context, seed, errors, folder):
     state = state_of(page)
     assert len(state['sessions']) == 1
     saved = state['sessions'][0]
-    assert saved['cardio'] == [{'type': 'esteira', 'minutes': 10}, {'type': 'escada', 'minutes': 8}]
+    assert saved['cardio'] == [{'type': 'esteira', 'minutes': 10}, {'type': 'escada', 'minutes': 8, 'avgSpeed': 57.5, 'speedUnit': 'steps_min'}]
     assert len(saved['entries']) == 1 and len(saved['entries'][0]['sets']) == 1
     assert saved['entries'][0]['sets'][0]['load'] == 30
     assert DRAFT_KEY not in snapshot(page)
@@ -143,8 +162,9 @@ def check_cardio(context, seed, errors, folder):
       const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
       return same(ForjaDose.volume({strengthSessions:state.sessions, today}),
                   ForjaDose.volume({strengthSessions:plain, today})) &&
-        same(ForjaMuscleHistory.analyze({strengthSessions:state.sessions, today, days:7}),
-             ForjaMuscleHistory.analyze({strengthSessions:plain, today, days:7})) &&
+        same(ForjaMuscleHistory.analyze({strengthSessions:state.sessions, today, days:7}).regions,
+             ForjaMuscleHistory.analyze({strengthSessions:plain, today, days:7}).regions) &&
+        ForjaMuscleHistory.analyze({strengthSessions:state.sessions, today, days:7}).stair.minutes===8 &&
         same(AcademiaEngine.groupStrength(state.exercises,state.sessions),
              AcademiaEngine.groupStrength(state.exercises,plain));
     }""", TODAY.isoformat()), 'Cardio changed muscle distribution or strength estimates'
@@ -154,11 +174,24 @@ def check_cardio(context, seed, errors, folder):
     assert history.locator('li').count() == 2
     assert 'Esteira' in history.inner_text() and '10 min' in history.inner_text()
     assert 'Escada' in history.inner_text() and '8 min' in history.inner_text()
+    assert '57,5 degraus/min' in history.inner_text()
     for width in (320, 390, 412):
         page.set_viewport_size({'width': width, 'height': 900})
         assert_width(page, page.locator('.history-card').first)
         page.locator('.history-card').first.screenshot(path=str(folder / f'cardio-history-{width}.png'))
 
+    page.locator('#nav [data-tab="progress"]').click()
+    page.locator('[data-action="evo-view"][data-view="training"]').click()
+    card=page.locator('.muscle-map-card')
+    assert 'Escada:' in card.inner_text() and '8 min' in card.inner_text()
+    assert '57,5 degraus/min' in card.inner_text()
+    quad=card.locator('svg [data-muscle-region="quadriceps"]')
+    assert quad.get_attribute('data-stair-cardio') == 'true'
+    assert quad.get_attribute('data-total') == '0'
+    assert quad.get_attribute('data-level') == '0'
+    quad.focus()
+    quad.press('Enter')
+    assert 'Escada · atividade complementar' in card.locator('#muscle-map-detail').inner_text()
     page.locator('.top-settings').click()
     with page.expect_download() as download_info:
         page.locator('[data-action="export-json"]').click()
@@ -203,7 +236,7 @@ def main():
         check_cardio(context, seed, errors, folder)
         assert not errors, errors
         browser.close()
-    print('PASS cardio: optional fields, treadmill/stairs minutes, blank/zero omitted, invalid durations blocked, draft recovery, history/export/import, unchanged strength/muscle totals, 320/390/412px')
+    print('PASS cardio: optional stair speed/unit, minutes, validation, historical/backup preservation, distinct stair-map outline and unchanged resistance scores at 320/390/412px')
 
 
 if __name__ == '__main__':
