@@ -42,6 +42,18 @@ with sync_playwright() as p:
     assert page.locator('.plan-editor-accordion').count()==0
     assert page.evaluate('JSON.stringify(window.__testStorage)')==original
     assert page.locator('.catalog-browser-item').count()>=40
+    # 390px and 320px mobile layouts must keep both destinations in viewport.
+    screenshots=ROOT/'screenshots';screenshots.mkdir(exist_ok=True)
+    page.screenshot(path=str(screenshots/'catalog-direct-390.png'),full_page=True)
+    page.set_viewport_size({'width':320,'height':740})
+    buttons=page.locator('.training-destinations [data-action="training-destination"]')
+    assert buttons.count()==2
+    for button in buttons.all():
+        rect=button.bounding_box()
+        assert rect and rect['height']>=44
+        assert rect['x']>=0 and rect['x']+rect['width']<=321
+    page.screenshot(path=str(screenshots/'catalog-direct-320.png'),full_page=True)
+    page.set_viewport_size({'width':390,'height':844})
     assert page.locator('#catalog-search').count()==1
     assert page.locator('#catalog-count').count()==1
     assert page.locator('#nav [data-tab="plans"][aria-current="page"]').count()==1
