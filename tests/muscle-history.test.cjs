@@ -11,22 +11,72 @@ const session = (day, entries, id = day) => ({id, day, timestamp: day + 'T17:00:
 const ago = (days, today = TODAY) => new Date(Date.parse(today + 'T12:00:00Z') - days * 86400000).toISOString().slice(0, 10);
 const analyze = (sessions, options = {}) => HISTORY.analyze({today: TODAY, strengthSessions: sessions, ...options});
 
-test('all 74 catalog exercises contribute only to the 17 reviewed anatomical regions', () => {
-  const exercises = [...DATA.exercises, ...FLEX.catalog];
-  assert.equal(exercises.length, 74);
-  assert.equal(HISTORY.REGIONS.length, 17);
+test('all 78 catalog exercises contribute only to the 19 reviewed anatomical regions', () => {
+  const exercises = [...new Map([...FLEX.catalog, ...DATA.exercises].map(ex=>[ex.id,ex])).values()];
+  assert.equal(exercises.length, 78);
+  assert.equal(HISTORY.REGIONS.length, 19);
   const output = analyze([session(TODAY, exercises.map(exercise => entry(exercise.id)))]);
-  assert.equal(output.knownEntries, 74);
+  assert.equal(output.knownEntries, 78);
   assert.equal(output.unknownEntries, 0);
-  assert.equal(output.knownSets, 74);
+  assert.equal(output.knownSets, 78);
   assert.equal(output.coverage, 1);
   assert.equal(output.zero.length, 0);
   for (const exercise of exercises) {
     const profile = ANATOMY.describe(exercise.id);
     assert.ok([...profile.main, ...profile.assist].every(id => output.byId[id]), exercise.id);
   }
-  assert.deepEqual(output.untracked.map(region => region.id), ['abs', 'obliques', 'lumbar']);
+  assert.deepEqual(output.untracked.map(region => region.id), ['lumbar']);
   assert.ok(output.untracked.every(region => !output.byId[region.id]));
+});
+
+test('bodyweight abdominal sets keep their identity across 7, 30 and 90-day windows', () => {
+  const sessions = [
+    session(TODAY, [entry('abdominal-solo', 2, {load:0})]),
+    session(ago(6), [entry('pallof-press', 2, {load:5})]),
+    session(ago(7), [entry('abdominal-inverso', 2, {load:'0'})]),
+    session(ago(29), [entry('abdominal-polia', 2, {load:10})]),
+    session(ago(30), [entry('abdominal-solo', 2, {load:0})]),
+    session(ago(89), [entry('pallof-press', 2, {load:5})]),
+    session(ago(90), [entry('abdominal-solo', 20, {load:0})]),
+  ];
+  for(const [days,abs,obliques,sets] of [[7,3,3,4],[30,7,5,8],[90,10,8,12]]){
+    const result=analyze(sessions,{days});
+    assert.equal(result.byId.abs.total,abs,`${days} abs`);
+    assert.equal(result.byId.obliques.total,obliques,`${days} obliques`);
+    assert.equal(result.totalSets,sets,`${days} actual sets`);
+    assert.equal(result.byId.abs.lastDay,TODAY);
+    assert.equal(result.byId.obliques.lastDay,TODAY);
+    assert.equal(result.unknownSets,0);
+    assert.equal(result.coverage,1);
+  }
+  assert.deepEqual(analyze(sessions).byId.abs.views,['front']);
+  assert.deepEqual(analyze(sessions).byId.obliques.views,['front']);
+});
+
+test('zero load is specific to performed bodyweight abdominals and cannot fill blank or unsupported records', () => {
+  const invalid=[
+    {load:'',reps:10},{load:' ',reps:10},{load:false,reps:10},
+    {load:null,reps:10},{load:[],reps:10},{load:0,reps:''},
+    {load:0,reps:2.5},{load:0,reps:101},{load:0,reps:true},
+    {load:0,reps:10,warmup:true},{load:-1,reps:10},
+  ];
+  const result=analyze([session(TODAY,[
+    {id:'abdominal-solo',sets:invalid},
+    entry('abdominal-inverso',2,{load:0}),
+    entry('abdominal-polia',4,{load:0}),
+    entry('pallof-press',4,{load:0}),
+    entry('extensora',4,{load:0}),
+    entry('custom-abs',4,{load:0}),
+    entry('stiff',3),
+  ])]);
+  assert.equal(result.byId.abs.directSets,2);
+  assert.equal(result.byId.abs.indirectSets,0);
+  assert.equal(result.byId.obliques.indirectSets,2);
+  assert.equal(result.byId.obliques.directSets,0);
+  assert.equal(result.byId.quadriceps.total,0);
+  assert.equal(result.byId.hamstrings.total,3);
+  assert.equal(result.totalSets,5);
+  assert.equal(result.unknownEntries,0);
 });
 
 test('primary and auxiliary sets follow the existing 1 and 0.5 convention', () => {
@@ -171,7 +221,7 @@ test('equal positive values are not described as both most and least', () => {
   const output = analyze([session(TODAY, [entry('extensora', 2), entry('flexora-c', 2)])]);
   assert.deepEqual(output.most, ['quadriceps', 'hamstrings']);
   assert.deepEqual(output.least, []);
-  assert.equal(output.zero.length, 15);
+  assert.equal(output.zero.length, 17);
   assert.equal(output.byId.hamstrings.level, output.byId.quadriceps.level);
 });
 
@@ -183,7 +233,7 @@ test('no history, invalid today and missing dependencies return finite neutral d
     assert.equal(output.coverage, null);
     assert.deepEqual(output.most, []);
     assert.deepEqual(output.least, []);
-    assert.equal(output.zero.length, 17);
+    assert.equal(output.zero.length, 19);
     for (const region of output.regions) {
       assert.equal(region.total, 0);
       assert.equal(region.relative, 0);

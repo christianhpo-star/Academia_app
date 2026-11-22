@@ -46,6 +46,20 @@
     uprightRow:{view:'front',main:['sideDelts'],assist:['upperTraps'],
       primary:'Deltoide lateral',secondary:'Trapézio superior',
       cue:'Mantenha uma amplitude confortável, sem forçar os ombros.'},
+    crunch:{view:'front',main:['abs'],assist:['obliques'],
+      primary:'Reto do abdômen',secondary:'Oblíquos',
+      cue:'Com os joelhos flexionados e os pés apoiados, aproxime as costelas da pelve elevando pouco as escápulas. Não puxe o pescoço e desça com controle.'},
+    reverseCrunch:{view:'front',main:['abs'],assist:['obliques'],
+      primary:'Reto do abdômen',secondary:'Oblíquos',
+      cue:'Deitado, mantenha os joelhos flexionados e eleve um pouco a pelve em direção às costelas. Retorne devagar, sem embalar as pernas.'},
+    cableCrunch:{view:'front',main:['abs'],assist:['obliques'],
+      primary:'Reto do abdômen',secondary:'Oblíquos',
+      cue:'Segure a corda próxima à cabeça e aproxime as costelas da pelve, com movimento controlado do tronco. Evite puxar só com os braços ou deslocar o quadril.'},
+    // Primary/auxiliary roles summarize the movement; they are not measured
+    // activation percentages. Deeper stabilizers are not assigned extra sets.
+    pallofPress:{view:'front',main:['obliques'],assist:['abs'],
+      primary:'Oblíquos',secondary:'Reto do abdômen',
+      cue:'De lado para a polia na altura do peito, estenda e recolha os braços sem girar o tronco. Faça os dois lados: uma série reúne as repetições de cada lado.'},
     squat:{body:'lower',view:'front',main:['quadriceps'],assist:['glutes'],
       primary:'Quadríceps',secondary:'Glúteo máximo',
       cue:'Mantenha os pés apoiados e conduza os joelhos na direção dos pés, em uma amplitude confortável.'},
@@ -93,6 +107,10 @@
   assign('shoulderPress','desenvolvimento-halter desenvolvimento-maquina');
   assign('triceps','triceps-testa triceps-corda triceps-maquina triceps-frances triceps-unilateral-polia triceps-coice-halter');
   assign('uprightRow','remada-alta');
+  assign('crunch','abdominal-solo');
+  assign('reverseCrunch','abdominal-inverso');
+  assign('cableCrunch','abdominal-polia');
+  assign('pallofPress','pallof-press');
   assign('squat','agachamento-hack agachamento-livre agachamento-goblet agachamento-smith leg-press leg-press-horizontal bulgaro passada-reversa step-up-baixo');
   assign('kneeExtension','extensora extensora-d extensora-unilateral');
   assign('kneeFlexion','flexora-c flexora-d flexora-sentada flexora-unilateral flexora-em-pe');
@@ -115,7 +133,17 @@
     sideDelts:pair('M70 99 C59 102 53 114 54 130 Q54 143 60 151 C67 145 72 135 74 125 C77 114 77 105 70 99 Z'),
     upperTraps:pair('M115 75 C112 84 102 89 89 93 L104 98 L123 95 L121 89 Z'),
     biceps:pair('M60 151 Q69 149 74 143 C73 159 70 177 64 187 Q58 195 52 187 C48 180 50 168 54 159 Z'),
-    forearms:pair('M46 196 C51 192 58 192 62 198 C63 213 54 232 46 249 L34 253 C35 239 40 214 46 196 Z')
+    forearms:pair('M46 196 C51 192 58 192 62 198 C63 213 54 232 46 249 L34 253 C35 239 40 214 46 196 Z'),
+    abs:[
+      ...pair('M112 158 Q121 155 128 158 L128 176 L112 175 Q109 168 112 158 Z'),
+      ...pair('M112 180 L128 181 L128 200 L112 199 Q109 190 112 180 Z'),
+      ...pair('M112 204 L128 205 L128 226 Q117 225 112 217 Z'),
+      ...pair('M114 231 L128 232 L128 254 Q118 249 114 240 Z')
+    ],
+    obliques:[
+      ...pair('M91 155 L104 162 L107 181 L98 196 Q93 177 91 155 Z'),
+      ...pair('M99 202 L108 188 L109 231 L119 262 L98 242 Q102 224 99 202 Z')
+    ]
   };
   const back={
     upperTraps:pair('M117 75 Q111 86 93 93 L85 99 L110 108 L128 101 L128 88 Z'),
@@ -167,19 +195,11 @@
     chest:'Peitoral maior',frontDelts:'Deltoide anterior',sideDelts:'Deltoide lateral',
     rearDelts:'Deltoide posterior',upperTraps:'Trapézio superior',midTraps:'Trapézio médio',
     rhomboids:'Romboides',lats:'Latíssimo do dorso',biceps:'Bíceps',
-    triceps:'Tríceps',forearms:'Músculos do antebraço',
+    triceps:'Tríceps',forearms:'Músculos do antebraço',abs:'Reto do abdômen',obliques:'Oblíquos',
     quadriceps:'Quadríceps',glutes:'Glúteo máximo',hamstrings:'Posteriores da coxa',
     hipAbductors:'Abdutores do quadril',adductors:'Adutores da coxa',
     calves:'Panturrilhas (gastrocnêmio e sóleo)'
   };
-  const abdomen=[
-    ...pair('M112 158 Q121 155 128 158 L128 176 L112 175 Q109 168 112 158 Z'),
-    ...pair('M112 180 L128 181 L128 200 L112 199 Q109 190 112 180 Z'),
-    ...pair('M112 204 L128 205 L128 226 Q117 225 112 217 Z'),
-    ...pair('M114 231 L128 232 L128 254 Q118 249 114 240 Z'),
-    ...pair('M91 155 L104 162 L107 181 L98 196 Q93 177 91 155 Z'),
-    ...pair('M99 202 L108 188 L109 231 L119 262 L98 242 Q102 224 99 202 Z')
-  ];
   const lumbar=[
     ...pair('M125 169 L128 177 L128 271 L121 282 L116 263 Q120 244 121 224 Z'),
     ...pair('M105 254 L117 265 L120 288 L96 279 Z')
@@ -257,7 +277,7 @@
       '<path d="'+head+'" fill="url(#'+uid+'-head)"/>')+
       '</g>'+
       '<g class="ex-anatomy-neutral" fill="#263D50" stroke="#6A879C" stroke-width=".8" stroke-linejoin="round" opacity=".58">'+
-      neutral+(lower?(info.view==='back'?lowerNeutralBack:lowerNeutralFront):(info.view==='back'?lumbar:abdomen)).map(part=>shape(part)).join('')+'</g>'+
+      neutral+(lower?(info.view==='back'?lowerNeutralBack:lowerNeutralFront):(info.view==='back'?lumbar:[])).map(part=>shape(part)).join('')+'</g>'+
       '<g class="ex-anatomy-secondary">'+regions(info.visibleAssist,'secondary')+'</g>'+
       '<g class="ex-anatomy-assist-texture" fill="url(#'+uid+'-assist)" stroke="none" pointer-events="none" aria-hidden="true">'+
       info.visibleAssist.map(name=>area[name].map(part=>shape(part)).join('')).join('')+'</g>'+
@@ -302,7 +322,7 @@
       '<p class="ex-anatomy-disclaimer">Ilustração orientativa: a participação muscular varia com a execução, carga e equipamento.</p>'+
       '</div></div></details>';
   }
-  const api={VERSION:3,describe,viewInfo,legendNote,figure,viewer,panel,coveredIds:Object.keys(maps)};
+  const api={VERSION:4,describe,viewInfo,legendNote,figure,viewer,panel,coveredIds:Object.keys(maps)};
   root.ForjaExerciseAnatomy=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

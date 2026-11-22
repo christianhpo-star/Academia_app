@@ -100,7 +100,7 @@ def assert_svg(card, view):
     """), 'Each bilateral muscle must have one named, keyboard-accessible target'
     # Non-estimated regions must remain distinct from mapped regions with zero.
     unmapped = svg.locator('[data-muscle-unmapped]')
-    assert unmapped.count() >= 1
+    assert unmapped.count() == (1 if view == 'back' else 0)
     assert unmapped.evaluate_all("""nodes => nodes.every(node =>
       !node.hasAttribute('data-level') && !node.hasAttribute('data-total'))""")
     return svg
@@ -230,6 +230,8 @@ def check_populated(context, seed, errors, folder):
     assert_svg(card, 'front')
     assert card.locator('.muscle-map-coverage').is_visible()
     assert card.locator('.muscle-map-legend').is_visible()
+    assert not card.locator('.muscle-map-breakdown').evaluate('node => node.open')
+    assert card.locator('.muscle-map-row:visible, .muscle-map-chip:visible').count() == 0
     assert_total(card, 'chest', 3)
     assert_total(card, 'frontDelts', 1.5)
     assert_total(card, 'quadriceps', 4)
@@ -266,7 +268,19 @@ def check_populated(context, seed, errors, folder):
     target = region(card, 'chest')
     target.locator('path').first.tap()
     assert region(card, 'chest').get_attribute('aria-pressed') == 'true'
+    assert card.get_by_label('Explorar músculo', exact=True).input_value() == 'chest'
     assert card.locator('#muscle-map-detail').get_attribute('data-selected-muscle') == 'chest'
+    assert card.locator('#muscle-map-detail').is_visible()
+    page.wait_for_function("""() => {
+      const detail = document.getElementById('muscle-map-detail').getBoundingClientRect();
+      const picker = document.getElementById('muscle-map-select').getBoundingClientRect();
+      return picker.top >= -1 && picker.bottom < innerHeight && detail.top >= 0 && detail.top < innerHeight - 100;
+    }""", timeout=5000)
+    assert card.locator('#muscle-map-detail').count() == 1
+    assert card.get_by_label('Explorar músculo', exact=True).count() == 1
+    assert card.locator('.muscle-map-row:visible, .muscle-map-chip:visible').count() == 0
+    card.locator('[data-action="muscle-map-return"]').click()
+    assert region(card, 'chest').evaluate('node => document.activeElement === node')
     target = region(card, 'chest')
     target.focus()
     target.press('Enter')
@@ -274,11 +288,13 @@ def check_populated(context, seed, errors, folder):
     assert target.get_attribute('aria-pressed') == 'true'
     assert target.evaluate('node => document.activeElement === node')
     assert card.locator('#muscle-map-detail').is_visible()
+    assert card.get_by_label('Explorar músculo', exact=True).input_value() == 'chest'
     assert card.locator('#muscle-map-detail').inner_text().strip()
     quad = region(card, 'quadriceps')
     quad.focus()
     quad.press('Space')
     assert region(card, 'quadriceps').get_attribute('aria-pressed') == 'true'
+    assert card.get_by_label('Explorar músculo', exact=True).input_value() == 'quadriceps'
     assert region(card, 'quadriceps').evaluate('node => document.activeElement === node')
     select = card.get_by_label('Explorar músculo', exact=True)
     select.focus()

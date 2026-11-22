@@ -17,7 +17,7 @@
   }
   function regionButton(row,selected,kind='chip'){
     return '<button type="button" class="muscle-map-'+kind+'" data-action="muscle-region" data-muscle="'+escape(row.id)+
-      '" aria-pressed="'+(row.id===selected)+'"><i class="muscle-map-swatch muscle-level-'+row.level+'" aria-hidden="true"></i><span>'+escape(row.label)+
+      '" aria-controls="muscle-map-detail" aria-pressed="'+(row.id===selected)+'"><i class="muscle-map-swatch muscle-level-'+row.level+'" aria-hidden="true"></i><span>'+escape(row.label)+
       '</span>'+(kind==='row'?'<small>'+LEVELS[row.level]+'</small>':'')+'</button>';
   }
   function detail(data,selected,state){
@@ -52,21 +52,24 @@
     const figures=B.figure({view:opts.view,rows:data.regions,selected});
     return '<p class="muscle-map-period-label">'+date(data.startDay)+' a '+date(data.endDay)+' · '+data.completedSessions+' treino'+(data.completedSessions===1?'':'s')+' registrado'+(data.completedSessions===1?'':'s')+'</p>'+
       empty+'<div class="muscle-map-layout"><div class="muscle-map-visual"><div class="muscle-map-canvas">'+figures+'</div>'+
+      '<p class="muscle-map-tap-hint">Toque no corpo para escolher um músculo.</p>'+
       '<div class="muscle-map-legend" aria-label="Escala relativa de volume">'+LEVELS.map((label,i)=>'<span><i class="muscle-map-swatch muscle-level-'+i+'" aria-hidden="true"></i>'+label+'</span>').join('')+'</div>'+
       '<p class="muscle-map-untracked"><i class="muscle-map-swatch is-untracked" aria-hidden="true"></i>Hachurado: região não estimada pelo catálogo.</p>'+
       '<p class="muscle-map-scale-note">Cores comparadas entre músculos dentro deste período.</p></div>'+
-      '<div class="muscle-map-reading"><div class="muscle-map-picker"><label for="muscle-map-select">Explorar músculo</label><select id="muscle-map-select"><option value="">Escolha uma região</option>'+
+      '<div class="muscle-map-reading"><div class="muscle-map-picker"><label for="muscle-map-select">Explorar músculo</label><select id="muscle-map-select" aria-controls="muscle-map-detail"><option value="">Escolha uma região</option>'+
       data.regions.map(row=>'<option value="'+escape(row.id)+'"'+(row.id===selected?' selected':'')+'>'+escape(row.label)+' · '+LEVELS[row.level]+'</option>').join('')+'</select></div>'+
-      detail(data,selected,state)+(!noKnown?'<div class="muscle-map-insights">'+insight(data,data.most,'Mais presentes',selected)+
-        insight(data,data.least,'Menor volume registrado',selected)+insight(data,data.zero,'Sem registro no período',selected)+'</div>':'')+'</div></div>'+coverage+
-      '<p class="muscle-map-footnote">Menos registros ajudam a revisar a distribuição do treino; não indicam, por si só, falta de estímulo ou necessidade de aumentar séries.</p>'+
-      '<details class="muscle-map-breakdown"'+(opts.listOpen?' open':'')+'><summary>Ver distribuição por região <span aria-hidden="true">⌄</span></summary><div class="muscle-map-region-list">'+
+      detail(data,selected,state)+(selected?'<button type="button" class="muscle-map-return" data-action="muscle-map-return">Voltar ao corpo</button>':'')+'</div></div>'+coverage+
+      '<details class="muscle-map-breakdown"'+(opts.listOpen?' open':'')+'><summary>Ver distribuição por região <span aria-hidden="true">⌄</span></summary>'+
+      (!noKnown?'<div class="muscle-map-insights">'+insight(data,data.most,'Mais presentes',selected)+
+        insight(data,data.least,'Menor volume registrado',selected)+insight(data,data.zero,'Sem registro no período',selected)+'</div>':'')+
+      '<div class="muscle-map-region-list">'+
       data.regions.slice().sort((a,b)=>b.total-a.total||a.label.localeCompare(b.label,'pt-BR')).map(row=>regionButton(row,selected,'row')).join('')+'</div></details>'+
       '<details class="muscle-map-method"'+(opts.methodOpen?' open':'')+'><summary>Como ler o mapa <span aria-hidden="true">⌄</span></summary><div>'+ 
+      '<p>Menos registros ajudam a revisar a distribuição do treino; não indicam, por si só, falta de estímulo ou necessidade de aumentar séries.</p>'+
       '<p>O mapa usa as séries válidas dos treinos salvos: cada participação principal soma 1 e cada auxiliar soma 0,5. É a mesma convenção do quadro de volume, aplicada às regiões das ilustrações dos exercícios.</p>'+
       '<p>Menor volume: até um terço do maior valor da janela; intermediário: até dois terços; maior volume: acima disso. A escala é recalculada ao mudar o período. Um músculo pode aparecer em mais de uma vista; seu volume é o mesmo.</p>'+
-      '<p>Aquecimentos, séries em branco, exercícios pulados e o treino ainda em andamento ficam fora. Séries sem carga positiva e repetições válidas também não entram, seguindo o registro de volume atual. Muay Thai e atividades livres não são convertidos em séries musculares.</p>'+
-      '<p>Abdômen, oblíquos e lombar ficam hachurados porque o catálogo atual não estima sua participação. Isso não significa ausência de trabalho. Direita e esquerda compartilham o mesmo registro.</p>'+
+      '<p>Aquecimentos, séries em branco, exercícios pulados e o treino ainda em andamento ficam fora. Repetições válidas e carga registrada são necessárias; nos abdominais de solo e inverso, 0 kg significa peso do corpo e conta como série. Nos demais exercícios, a carga precisa ser positiva. Muay Thai e atividades livres não são convertidos em séries musculares.</p>'+
+      '<p>Reto do abdômen e oblíquos recebem volume dos exercícios específicos de abdômen. A participação estabilizadora em outros movimentos não é estimada automaticamente. A lombar permanece hachurada porque o catálogo ainda não quantifica sua participação; isso não significa ausência de trabalho. Direita e esquerda compartilham o mesmo registro.</p>'+
       '<p>As cores mostram participação estimada no treino registrado. Não medem ativação, recuperação, força ou crescimento de cada músculo. Compare também os exercícios, a técnica e seu planejamento.</p>'+
       '<p><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/" target="_blank" rel="noopener noreferrer">Referência da contagem fracionada de séries</a></p></div></details>';
   }

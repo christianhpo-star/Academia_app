@@ -6,13 +6,24 @@
   const PALETTE=Object.freeze(['#263D50','#487AA4','#76D6E3','#C5F56B']);
   const LABELS=Object.freeze(['Sem registro','Menor volume relativo','Volume intermediário','Maior volume relativo']);
   const pair=d=>[{d},{d,mirror:true}];
+  const abs=[
+    ...pair('M112 158 Q121 155 128 158 L128 176 L112 175 Q109 168 112 158 Z'),
+    ...pair('M112 180 L128 181 L128 200 L112 199 Q109 190 112 180 Z'),
+    ...pair('M112 204 L128 205 L128 226 Q117 225 112 217 Z'),
+    ...pair('M114 231 L128 232 L128 251 Q118 249 114 240 Z')
+  ];
+  const obliques=[
+    ...pair('M91 155 L104 162 L107 181 L98 196 Q93 177 91 155 Z'),
+    ...pair('M99 202 L108 188 L109 231 L119 249 L98 243 Q102 224 99 202 Z')
+  ];
   const upperFront={
     chest:pair('M126 103 C117 99 106 98 97 101 L87 114 C87 124 84 132 87 141 C98 151 115 154 128 147 L128 108 Q128 104 126 103 Z'),
     frontDelts:pair('M78 98 C87 98 95 103 99 110 Q92 121 88 134 L78 144 C72 138 71 132 73 121 Q74 107 78 98 Z'),
     sideDelts:pair('M70 99 C59 102 53 114 54 130 Q54 143 60 151 C67 145 72 135 74 125 C77 114 77 105 70 99 Z'),
     upperTraps:pair('M115 75 C112 84 102 89 89 93 L104 98 L123 95 L121 89 Z'),
     biceps:pair('M60 151 Q69 149 74 143 C73 159 70 177 64 187 Q58 195 52 187 C48 180 50 168 54 159 Z'),
-    forearms:pair('M46 196 C51 192 58 192 62 198 C63 213 54 232 46 249 L34 253 C35 239 40 214 46 196 Z')
+    forearms:pair('M46 196 C51 192 58 192 62 198 C63 213 54 232 46 249 L34 253 C35 239 40 214 46 196 Z'),
+    abs,obliques
   };
   const upperBack={
     upperTraps:pair('M117 75 Q111 86 93 93 L85 99 L110 108 L128 101 L128 88 Z'),
@@ -51,7 +62,7 @@
     chest:'Peitoral maior',frontDelts:'Deltoide anterior',sideDelts:'Deltoide lateral',
     rearDelts:'Deltoide posterior',upperTraps:'Trapézio superior',midTraps:'Trapézio médio',
     rhomboids:'Romboides',lats:'Latíssimo do dorso',biceps:'Bíceps',
-    triceps:'Tríceps',forearms:'Músculos do antebraço',quadriceps:'Quadríceps',
+    triceps:'Tríceps',forearms:'Músculos do antebraço',abs:'Reto do abdômen',obliques:'Oblíquos',quadriceps:'Quadríceps',
     glutes:'Glúteo máximo',hamstrings:'Posteriores da coxa',
     hipAbductors:'Abdutores do quadril',adductors:'Adutores da coxa',
     calves:'Panturrilhas'
@@ -61,16 +72,6 @@
   const regions=Object.freeze(Object.entries(regionNames).map(([id,label])=>Object.freeze({
     id,label,views:Object.freeze(['front','back'].filter(view=>visibleIds(view).includes(id)))
   })));
-  const abs=[
-    ...pair('M112 158 Q121 155 128 158 L128 176 L112 175 Q109 168 112 158 Z'),
-    ...pair('M112 180 L128 181 L128 200 L112 199 Q109 190 112 180 Z'),
-    ...pair('M112 204 L128 205 L128 226 Q117 225 112 217 Z'),
-    ...pair('M114 231 L128 232 L128 251 Q118 249 114 240 Z')
-  ];
-  const obliques=[
-    ...pair('M91 155 L104 162 L107 181 L98 196 Q93 177 91 155 Z'),
-    ...pair('M99 202 L108 188 L109 231 L119 249 L98 243 Q102 224 99 202 Z')
-  ];
   const lumbar=pair('M125 169 L128 177 L128 252 L121 261 L113 250 Q120 237 121 224 Z');
   const upperOutline='M96 248 C97 234 98 226 94 209 Q87 183 85 153 L77 130 C71 115 72 98 80 94 L100 89 C111 85 119 80 116 63 L144 63 C141 80 149 85 160 89 L180 94 C188 98 189 115 183 130 L175 153 Q173 183 166 209 C162 226 163 234 164 248';
   // Lower coordinates scale around the body's center, joining the torso at the
@@ -105,7 +106,7 @@
       const description=label+': '+LABELS[level]+'. '+amount(total)+' séries equivalentes estimadas no período. Toque para ver detalhes.';
       return '<g class="muscle-body-region'+(chosen?' is-selected':'')+'" role="button" tabindex="0" focusable="true" '+
         'data-action="muscle-region" data-muscle="'+id+'" data-muscle-region="'+id+'" data-level="'+level+'" data-total="'+total+'" '+
-        'aria-pressed="'+chosen+'" aria-label="'+safe(description)+'" '+
+        'aria-controls="muscle-map-detail" aria-pressed="'+chosen+'" aria-label="'+safe(description)+'" '+
         'fill="'+PALETTE[level]+'" stroke="'+(chosen?'#FFFFFF':level===0?'#67869B':'#D5EAF1')+'" stroke-width="'+(chosen?'2.2':'.8')+'" stroke-linejoin="round">'+
         '<title>'+safe(description)+'</title>'+paths(parts)+'</g>';
     }).join('');
@@ -132,7 +133,7 @@
       '<path d="'+upperOutline+' Z" stroke="none"/>'+
       '<path d="'+lowerOutline+'" transform="'+lowerTransform+'" fill="none"/>'+
       '<path d="'+upperOutline+'" fill="none"/>'+path({d:head})+'</g>'+
-      (view==='back'?unmapped('lumbar','Região lombar',lumbar):unmapped('abs','Abdômen',abs)+unmapped('obliques','Oblíquos',obliques))+
+      (view==='back'?unmapped('lumbar','Região lombar',lumbar):'')+
       '<g class="muscle-body-lower-neutral" transform="'+lowerTransform+'" fill="#2B4356" stroke="#627D90" stroke-width=".7" aria-hidden="true">'+
       paths(view==='back'?lowerNeutralBack:lowerNeutralFront)+'</g>'+
       renderRegions(view==='back'?upperBack:upperFront)+

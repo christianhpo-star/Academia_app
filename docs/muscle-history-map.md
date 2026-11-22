@@ -10,19 +10,19 @@ O mapa utiliza o histórico salvo no aparelho, sem importar dados pessoais para 
 
 `muscle-history.js` lê somente `state.sessions`; não inclui o rascunho atual nem atividades de Muay Thai. A janela inclui hoje e os N−1 dias anteriores, pela data local do app. Datas futuras, inexistentes ou fora da janela são excluídas. Sessões com o mesmo ID são contadas uma vez; duas sessões diferentes no mesmo dia somam volume, mas não duplicam o dia ativo.
 
-São válidas as séries com carga positiva até 1.500 e repetições inteiras de 1 a 100, conforme `ForjaDose.workSets`. Campos vazios, booleanos, aquecimentos e exercícios explicitamente pulados ficam fora. Séries registradas com carga zero não entram nesta versão, preservando o critério do volume atual; isso está explicado na interface. Carga, RIR e esforço não multiplicam a contribuição. Não é um cálculo de tonelagem.
+São válidas as séries com carga positiva até 1.500 e repetições inteiras de 1 a 100, conforme o contrato compartilhado `ForjaTrainingSets`, usado por `ForjaDose.workSets`. Os IDs `abdominal-solo` e `abdominal-inverso` também aceitam carga adicional **0** explicitamente registrada. Campos vazios, booleanos, aquecimentos e exercícios explicitamente pulados ficam fora. Não há crédito para carga zero em outros IDs. Carga, RIR e esforço não multiplicam a contribuição. Não é um cálculo de tonelagem; minutos de `session.cardio` não participam.
 
-O mapeamento usa `ForjaExerciseAnatomy.describe(id)`, a mesma classificação revisada das ilustrações dos 74 exercícios. Cada série soma **1** em cada região principal e **0,5** em cada auxiliar. Uma região listada nas duas funções só conta como principal. O motor `dose.js` e suas regras de recomendação permanecem independentes; os totais detalhados por região não devem ser somados como se fossem um único total de séries do corpo.
+O mapeamento usa `ForjaExerciseAnatomy.describe(id)`, a mesma classificação revisada das ilustrações dos 78 exercícios. Cada série soma **1** em cada região principal e **0,5** em cada auxiliar. Uma região listada nas duas funções só conta como principal. O motor `dose.js` e suas regras de recomendação permanecem independentes; os totais detalhados por região não devem ser somados como se fossem um único total de séries do corpo.
 
 Retorno por região: séries principais, séries auxiliares sem ponderar, total equivalente, sessões, dias ativos, última data e contribuição por exercício. Registros desconhecidos ficam fora da distribuição e produzem um aviso de cobertura parcial. `coverage` é a fração de séries conhecidas entre as séries válidas da janela.
 
 ## Regiões e incerteza
 
-São **17 regiões**: peitoral maior; deltoides anterior, lateral e posterior; trapézios superior e médio; romboides; latíssimo do dorso; bíceps; tríceps; antebraços; quadríceps; posteriores da coxa; glúteo máximo; abdutores do quadril; adutores da coxa; panturrilhas.
+São **19 regiões**: peitoral maior; deltoides anterior, lateral e posterior; trapézios superior e médio; romboides; latíssimo do dorso; bíceps; tríceps; antebraços; quadríceps; posteriores da coxa; glúteo máximo; abdutores do quadril; adutores da coxa; panturrilhas; reto do abdômen; oblíquos.
 
 Frente e Costas compartilham os mesmos totais e a mesma escala. Regiões visíveis nas duas vistas não duplicam a contagem. Os lados recebem a mesma cor porque o histórico não sustenta uma estimativa independente de direita e esquerda. A geometria é esquemática; trapézio médio e romboides aparecem em áreas adjacentes para permitir seleção, não como uma exposição literal das camadas anatômicas.
 
-Abdômen, oblíquos e lombar ficam **hachurados / não estimados**. O catálogo ainda não quantifica sua participação; não são rotulados como zero trabalho. Para as regiões mapeáveis, cinza significa ausência de séries classificadas dentro da janela, não diagnóstico de falta de estímulo.
+A lombar fica **hachurada / não estimada** porque o catálogo ainda não quantifica sua participação. Abdômen e oblíquos recebem volume apenas dos exercícios específicos revisados; estabilização em outros movimentos não gera crédito automático. Para as regiões mapeáveis, cinza significa ausência de séries classificadas dentro da janela, não diagnóstico de falta de estímulo.
 
 ## Escala e interação
 
@@ -36,7 +36,7 @@ Abdômen, oblíquos e lombar ficam **hachurados / não estimados**. O catálogo 
 
 Os terços são uma regra de visualização, não limiares fisiológicos. A escala se recalcula quando o período muda. Não permite comparar a intensidade da mesma cor entre janelas como se os valores absolutos fossem iguais. "Menos registrados" serve para revisar a distribuição da ficha, sem recomendar aumento automático de séries, diagnosticar recuperação ou estimar hipertrofia.
 
-Seleção: toque no desenho, Enter/Espaço numa região, seletor HTML ou lista textual recolhível. O detalhe mostra principais/auxiliares, última data e exercícios que contribuíram. Selecionar uma região não visível troca a vista automaticamente. Trocar Frente/Costas manualmente limpa uma seleção não visível. Os controles de período/vista permanecem montados; a atualização fica restrita ao conteúdo visual, com foco restaurado no mesmo tipo de controle.
+Seleção: toque no desenho, Enter/Espaço numa região, seletor HTML ou lista textual recolhível. O detalhe mostra principais/auxiliares, última data e exercícios que contribuíram. Selecionar uma região não visível troca a vista automaticamente. Trocar Frente/Costas manualmente limpa uma seleção não visível. O toque no corpo sincroniza o seletor e um único detalhe; em telas estreitas, o detalhe é revelado se estiver fora da área visível, respeitando movimento reduzido. Teclado mantém foco e posição. **Voltar ao corpo** retorna à região selecionada. Resumos e lista completa ficam recolhidos juntos. Os controles de período/vista permanecem montados; a atualização fica restrita ao conteúdo visual, com foco restaurado no mesmo tipo de controle.
 
 ## Referências
 
@@ -46,10 +46,12 @@ Seleção: toque no desenho, Enter/Espaço numa região, seletor HTML ou lista t
 
 ## Validação
 
-- `tests/muscle-history.test.cjs`: limites das janelas, datas reais/bissextas, principais/auxiliares, cobertura dos 74 IDs, exclusões, duplicidades, desconhecidos, níveis relativos e imutabilidade.
+- `tests/muscle-history.test.cjs`: limites das janelas, datas reais/bissextas, principais/auxiliares, cobertura dos 78 IDs, exclusões, duplicidades, desconhecidos, níveis relativos e imutabilidade.
 - `tests/muscle-map.test.cjs`: cobertura anatômica e vistas, seleção única, IDs SVG únicos, estados textuais e escape de conteúdo.
 - `tests/smoke_muscle_history.py`: dados sintéticos, calendário fixo, 7/30/90 dias, Frente/Costas, toque/teclado, foco, nenhuma gravação, rascunho preservado, vazio/desconhecido e capturas em 320/390/412/768/1440 px.
 - Smokes de força, flexibilidade da ficha e nutrição acompanham o novo painel usando a ordem de scripts publicada. As demais regressões permanecem obrigatórias na CI.
 - Testes responsivos em Chromium não equivalem a homologação física em um celular Samsung.
 
-Release de cache: `20261122-muscle13`, shell `v60`.
+Extensão: [abdômen, cardio e consulta compacta](abdomen-and-session-cardio.md).
+
+Release de cache: `20261122-abdomen14`, shell `v61`.

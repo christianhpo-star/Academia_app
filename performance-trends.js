@@ -5,6 +5,7 @@
 (function(root){
  'use strict';
  const E=root.AcademiaEngine||(typeof require==='function'?require('./engine.js'):null);
+ const SETS=root.ForjaTrainingSets||(typeof require==='function'?require('./training-sets.js'):null);
  const dayOf=(row)=>row?.day||row?.date||row?.timestamp?.slice(0,10)||'';
  const shift=(day,offset)=>{const date=new Date(day+'T12:00:00Z');date.setUTCDate(date.getUTCDate()+offset);return date.toISOString().slice(0,10);};
  const median=arr=>{const n=arr.slice().sort((a,b)=>a-b);return n.length?(n.length%2?n[(n.length-1)/2]:(n[n.length/2-1]+n[n.length/2])/2):null;};
@@ -33,7 +34,10 @@
      const map=new Map();
      for(const session of rows){
        for(const ex of session.entries||[]){
-         const scored=(ex.sets||[]).filter(set=>!set.warmup&&Number(set.load)>0&&Number(set.reps)>=1&&Number(set.reps)<=12)
+         // Added external load is only part of a bodyweight movement's resistance.
+         // It must never be treated as total load for Epley or decline alerts.
+         if(SETS.allowsZero(ex))continue;
+         const scored=SETS.workSets(ex).filter(set=>Number(set.reps)<=12)
            .map(set=>E?.estimateStrength(Number(set.load),Number(set.reps))).filter(Number.isFinite);
          if(!scored.length)continue;
          const best=Math.max(...scored),arr=map.get(ex.id)||[];arr.push(best);map.set(ex.id,arr);
@@ -65,6 +69,7 @@
      interpretation:review?'review':!comparisons.length&&!weightReady?'insufficient':'trend',
      warnings:[
        'Comparações de força só usam o mesmo exercício com >=2 sessões em cada quinzena e séries executadas de 1 a 12 repetições.',
+       'Abdominais com peso corporal não entram na força estimada, mesmo quando há carga adicional registrada.',
        'Um treino com menor carga pode refletir descanso planejado, técnica, equipamento, dor, sono ou esforço distinto.',
        'O limiar de 5% e as quantidades mínimas de dados são regras exploratórias do aplicativo, não critérios clínicos.',
        'Energia e fadiga são autorrelatos; falta de check-in não equivale a energia normal.',

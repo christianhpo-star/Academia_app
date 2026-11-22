@@ -1,12 +1,22 @@
 # FORJA
 
+## Abdômen, cardio e seleção direta no corpo (22/11/2026)
+
+- **Minhas fichas** inclui abdominal no solo no fim do bloco A e abdominal inverso no B, com 2 séries de 10–15 repetições como configuração inicial editável. Abdominal na polia e Pallof press ficam no catálogo como alternativas; no Pallof, as repetições são por lado e a dupla conta como uma série.
+- Fichas existentes recebem apenas os dois IDs ausentes, uma única vez. Configurações já editadas, exercícios desativados, sessões salvas e rascunhos em andamento são preservados. Os complementos aparecem nas próximas sessões.
+- Solo/inverso aceitam **0 kg adicionais** quando feitos com peso do corpo. Repetições vazias continuam sem contar. Histórico, foco e volume compartilham a mesma validação, e esses dois exercícios não recebem estimativas de força máxima baseadas só no lastro.
+- **Cardio (opcional)** na sessão registra minutos de esteira, escada, bicicleta, elíptico ou outro cardio. Várias modalidades podem compor o mesmo treino; os tempos acompanham o rascunho, o histórico e o backup. Campo vazio/zero não cria registro nem impede salvar a musculação.
+- **Toque no corpo** atualiza **Explorar músculo** e um único painel de detalhes. No celular o resultado é revelado quando necessário; **Voltar ao corpo** permite selecionar outra região. Resumo e lista completa ficam recolhidos em **Ver distribuição por região**.
+- Cobertura atual: **78 exercícios ilustrados, 19 regiões no mapa e 12 grupos no quadro de volume**. Cardio não é convertido em séries musculares, calorias ou intensidade presumida.
+- [Modelo, decisões, fontes e validação](docs/abdomen-and-session-cardio.md). Recursos offline: `20261122-abdomen14`, cache `v61`.
+
 ## Corpo completo: mapa dos seus treinos (novembro/2026)
 
 - **Evolução → Treinos** abre um mapa de corpo completo em **Frente / Costas**, com janelas de **7, 30 e 90 dias** e cores calculadas a partir das séries de musculação salvas neste aparelho.
-- **17 regiões** compartilham uma escala relativa: cinza sem registro, azul menor volume, ciano intermediário e verde claro maior volume. Abdômen, oblíquos e lombar ficam hachurados como **não estimados**, separados de zero registros.
+- **19 regiões** compartilham uma escala relativa: cinza sem registro, azul menor volume, ciano intermediário e verde claro maior volume. Reto do abdômen e oblíquos são calculados pelos exercícios específicos; a lombar fica hachurada como **não estimada**, separada de zero registros.
 - Toque em um músculo ou use **Explorar músculo** para ver quais exercícios contribuíram, as séries principais/auxiliares e a última data. A lista textual e o método de cálculo ficam recolhidos; o quadro numérico anterior continua em **Constância e volume**.
-- Participação principal soma 1 e auxiliar 0,5, usando as classificações das ilustrações dos 74 exercícios. O mapa é descritivo: regiões com menos registros não geram aumento automático de treino nem conclusões de recuperação/hipertrofia. Séries sem carga positiva, aquecimentos, pulados, rascunho e Muay não entram.
-- Consulta local, teclado/toque, foco preservado, sem gravações nos registros e com SVG offline. [Modelo, limites e validação](docs/muscle-history-map.md). Versão de recursos: `20261122-muscle13`.
+- Participação principal soma 1 e auxiliar 0,5, usando as classificações das ilustrações dos 78 exercícios. O mapa é descritivo: regiões com menos registros não geram aumento automático de treino nem conclusões de recuperação/hipertrofia. Exige carga positiva ou 0 kg nos dois abdominais com peso do corpo. Aquecimentos, pulados, rascunho, cardio e Muay não entram.
+- Consulta local, teclado/toque, foco preservado, sem gravações nos registros e com SVG offline. [Modelo, limites e validação](docs/muscle-history-map.md). Versão de recursos: `20261122-abdomen14`.
 
 ## Ilustrações de pernas (novembro/2026)
 

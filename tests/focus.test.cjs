@@ -61,3 +61,28 @@ test('check-in do dia anterior nunca é confundido com recuperação atual',()=>
  assert.equal(F.todayCheckin({recoveryCheckin:{day:'2026-11-14',energy:'boa',fatigue:'normal',kneePain:'9'}},'2026-11-14').kneePain,'9');
  assert.equal(F.todayCheckin({recoveryCheckin:{day:'2026-11-14',energy:'boa',fatigue:'normal',kneePain:'11'}},'2026-11-14'),null);
 });
+
+test('conclusão e revisão reconhecem abdômen com zero adicional apenas pelo ID conhecido',()=>{
+ const entries={
+  abs:{id:'abdominal-solo',sets:[row(0,12),row('0',15),row(0,10,true)]},
+  machine:{id:'abdominal-polia',sets:[row(0,12)]},
+  empty:{id:'abdominal-inverso',sets:[row('',12),row(0,'')]},
+ };
+ const summary=F.summary(entries);
+ assert.equal(summary.completed,1);
+ assert.equal(summary.effectiveSets,2);
+ assert.equal(summary.byExercise['abdominal-solo'].finished,true);
+ assert.equal(F.performed(row(0,12)),false);
+ assert.equal(F.performed(row(0,12),'abdominal-solo'),true);
+ assert.equal(F.review(entries).effectiveSets,2);
+ assert.equal(F.review(entries).partialSets,2);
+});
+
+test('copiar zero adicional preserva a série e continua recusando zero em máquinas',()=>{
+ const entry={id:'abdominal-inverso',sets:[row('', '')]};
+ assert.deepEqual(F.quickLoad(entry,0,'previous-session',[row(0,12)]),{load:'0'});
+ assert.deepEqual(entry.sets,[row('','')]);
+ entry.sets[0]=row(0,12);
+ assert.match(F.quickLoad(entry,0,'previous-session',[row(5,15)]).error,/repetições/);
+ assert.match(F.quickLoad({id:'abdominal-polia',sets:[row('','')]},0,'previous-session',[row(0,12)]).error,/referência/);
+});

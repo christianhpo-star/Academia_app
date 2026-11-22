@@ -1,7 +1,8 @@
 (function installCatalogAdvice(root) {
   'use strict';
+  const SETS = root.ForjaTrainingSets || (typeof require === 'function' ? require('./training-sets.js') : null);
   const TARGETS={
-    A:['costas','biceps'],B:['peito','triceps','ombros'],
+    A:['costas','biceps','abdomen'],B:['peito','triceps','ombros','abdomen'],
     C:['quadriceps','panturrilhas'],D:['posteriores','gluteos'],
   };
   const isPain=v=>v!==''&&v!==null&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>0;
@@ -13,8 +14,7 @@
     const found=(sessions||[]).filter(s=>{
       const a=age(today,s?.day);
       return Number.isFinite(a)&&a>=0&&a<28&&
-        (s.entries||[]).some(e=>e?.id===id&&(e.sets||[]).some(
-          t=>!t.warmup&&Number(t.load)>0&&Number(t.reps)>0));
+        (s.entries||[]).some(e=>e?.id===id&&SETS.workSets(e).length>0);
     });
     return found.sort((a,b)=>String(b.day).localeCompare(String(a.day)))[0]?.day||null;
   }
@@ -22,9 +22,7 @@
   const hasWork=(entry,dose)=>typeof dose?.workSets==='function'&&dose.workSets(entry).length>0;
   const complete=(entry,dose)=>{
     const planned=(entry?.sets||[]).filter(set=>!set?.warmup);
-    return planned.length>0 && planned.every(set=>
-      set?.reps!=='' && set?.reps!=null && Number(set.reps)>0 &&
-      Number.isInteger(Number(set.reps)) && Number(set.load)>0 && Number(set.load)<=1500);
+    return planned.length>0 && planned.every(set=>SETS.performed(set,entry));
   };
   function extraOptions({catalogue,draft,dose,analysis}) {
     if(draft?.energy!=='leve')return {recommendations:[],message:'Sinalize que está com energia sobrando para avaliar acréscimos.'};

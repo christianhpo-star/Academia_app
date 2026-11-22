@@ -1,7 +1,8 @@
 /* Motor de progressao explicavel, conservador, sem diagnosticos ou prescricao medica. */
 (function (root) {
   'use strict';
-  const workSets = (entry) => (entry?.sets || []).filter(s => !s.warmup && Number(s.load) > 0 && Number(s.reps) > 0);
+  const SETS = root.ForjaTrainingSets || (typeof require === 'function' ? require('./training-sets.js') : null);
+  const workSets = entry => SETS.workSets(entry);
   const historyOf = (sessions, id) => [...(sessions || [])]
     .filter(s => (s.entries || []).some(e => e.id === id && workSets(e).length))
     .sort((a, b) => (b.timestamp || '').localeCompare(a.timestamp || ''))
@@ -36,6 +37,19 @@
   }
   function recommend(ex, sessions) {
     const h = historyOf(sessions, ex.id);
+    if (SETS.allowsZero(ex)) {
+      if (!h.length) return {
+        level: 'start', title: 'Primeiro registro', last: null, next: null,
+        explanation: 'Registre as repetições e o RIR. Comece sem carga adicional e priorize uma execução controlada.',
+      };
+      const last = h[0], top = topSet(last.entry), load = Number(top.load);
+      return {
+        level: 'hold', title: 'Acompanhe repetições e técnica', next: null,
+        last: `${top.reps} rep. · ${load === 0 ? 'peso do corpo' : formatWeight(load) + ' kg adicionais'}`,
+        lastSets: workSets(last.entry), lastDate: last.session.day,
+        explanation: `Consolide a faixa de ${ex.low}–${ex.high} repetições com execução controlada. A carga informada é apenas o peso adicional; o app não calcula força máxima nem sugere aumentá-la automaticamente neste movimento.`,
+      };
+    }
     if (!h.length) return {
       level: 'start', title: 'Primeiro registro', last: null, next: null,
       explanation: ex.example
@@ -165,10 +179,12 @@
     return roundWeight(nLoad * (1 + Number(nReps) / 30));
   }
   function entryStrength(entry) {
+    if (SETS.allowsZero(entry)) return null;
     const scores = workSets(entry).map(set => estimateStrength(set.load, set.reps)).filter(Number.isFinite);
     return scores.length ? Math.max(...scores) : null;
   }
   function strengthSeries(exercise, sessions, days = 90, now = Date.now()) {
+    if (SETS.allowsZero(exercise)) return [];
     const cutoff = now - days * 86400000;
     return historyOf(sessions, exercise.id)
       .map(item => {

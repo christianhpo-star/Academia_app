@@ -14,15 +14,15 @@ const attributes=tag=>Object.fromEntries([...tag.matchAll(/\b([\w-]+)="([^"]*)"/
 const regionGroups=svg=>[...svg.matchAll(/<g\b[^>]*data-muscle-region="[^"]+"[^>]*>/g)].map(match=>attributes(match[0]));
 const svgFrom=html=>html.match(/<svg\b[\s\S]*?<\/svg>/)?.[0]||'';
 
-test('the full-body drawing covers exactly the 17 anatomical regions used by all 74 catalog exercises',()=>{
-  const catalog=[...DATA.exercises,...FLEX.catalog];
+test('the full-body drawing covers exactly the 19 anatomical regions used by all 78 catalog exercises',()=>{
+  const catalog=[...new Map([...FLEX.catalog,...DATA.exercises].map(ex=>[ex.id,ex])).values()];
   const expected=new Set(catalog.flatMap(ex=>{
     const item=ANATOMY.describe(ex.id);
     assert.ok(item,ex.id);
     return [...item.main,...item.assist];
   }));
-  assert.equal(catalog.length,74);
-  assert.equal(BODY.regions.length,17);
+  assert.equal(catalog.length,78);
+  assert.equal(BODY.regions.length,19);
   assert.deepEqual(BODY.regions.map(r=>r.id).sort(),[...expected].sort());
   assert.deepEqual(BODY.regions.map(r=>r.id).sort(),HISTORY.REGIONS.map(r=>r.id).sort());
   for(const view of ['front','back']){
@@ -44,6 +44,7 @@ test('front and back keep muscle locations on their actual view and bilateral pa
       assert.equal(control.role,'button');
       assert.equal(control.tabindex,'0');
       assert.equal(control['data-action'],'muscle-region');
+      assert.equal(control['aria-controls'],'muscle-map-detail');
       assert.equal(control['data-muscle'],control['data-muscle-region']);
       assert.equal(control['aria-pressed'],String(control['data-muscle']===selected));
       assert.match(control['aria-label'],/séries equivalentes estimadas no período/);
@@ -54,7 +55,28 @@ test('front and back keep muscle locations on their actual view and bilateral pa
     }
   }
   assert.doesNotMatch(front,/data-muscle-region="(?:hamstrings|glutes|calves|rearDelts|lats)"/);
-  assert.doesNotMatch(back,/data-muscle-region="(?:quadriceps|chest|frontDelts|biceps|adductors)"/);
+  assert.doesNotMatch(back,/data-muscle-region="(?:quadriceps|chest|frontDelts|biceps|adductors|abs|obliques)"/);
+});
+
+test('selection uses one shared detail panel and keeps the full distribution collapsed by default',()=>{
+  const state={sessions:[session(TODAY,[exercise('supino-halteres',3),exercise('extensora',1)])]};
+  for(const selected of ['chest','quadriceps']){
+    const html=MAP.render(state,TODAY,{days:7,selected});
+    assert.equal((html.match(/id="muscle-map-detail"/g)||[]).length,1);
+    assert.equal((html.match(/id="muscle-map-select"/g)||[]).length,1);
+    assert.match(html,new RegExp('<option value="'+selected+'" selected>'));
+    assert.match(html,new RegExp('data-selected-muscle="'+selected+'"'));
+    assert.match(html,/<select id="muscle-map-select" aria-controls="muscle-map-detail">/);
+    assert.match(html,/data-action="muscle-map-return">Voltar ao corpo/);
+    assert.match(html,/Toque no corpo para escolher um músculo/);
+    const details=html.match(/<details class="muscle-map-breakdown">([\s\S]*?)<\/details>/)?.[1];
+    assert.ok(details,'the full distribution starts closed');
+    assert.match(details,/class="muscle-map-insights"/);
+    assert.match(details,/class="muscle-map-region-list"/);
+    assert.doesNotMatch(html.slice(0,html.indexOf('<details class="muscle-map-breakdown"')),/class="muscle-map-insights"|class="muscle-map-row"/);
+  }
+  const emptySelection=MAP.render(state,TODAY,{days:7});
+  assert.doesNotMatch(emptySelection,/data-action="muscle-map-return"/);
 });
 
 test('view changes preserve one relative scale and SVG values agree with history totals',()=>{
@@ -95,15 +117,26 @@ test('each render creates unique accessible SVG definitions without hiding inter
   assert.equal(allIds.length,new Set(allIds).size,'gradients, patterns and description IDs cannot collide');
 });
 
-test('untracked core regions remain hatched and cannot acquire a colored volume or selection',()=>{
+test('only the untracked lumbar region stays hatched; abdominals have selectable front regions',()=>{
   const rows=[...HISTORY.REGIONS.map(region=>({...region,total:5,level:3})),
     {id:'abs',total:200,level:3},{id:'obliques',total:200,level:3},{id:'lumbar',total:200,level:3}];
   for(const view of ['front','back']){
     const svg=BODY.figure({view,rows,selected:view==='front'?'abs':'lumbar'});
-    assert.doesNotMatch(svg,/data-muscle-region="(?:abs|obliques|lumbar)"/);
-    assert.doesNotMatch(svg,/aria-pressed="true"/);
+    assert.doesNotMatch(svg,/data-muscle-region="lumbar"/);
+    if(view==='front'){
+      const controls=regionGroups(svg);
+      for(const id of ['abs','obliques']){
+        const region=controls.find(row=>row['data-muscle-region']===id);
+        assert.equal(region['data-total'],'200');
+        assert.equal(region['data-level'],'3');
+        assert.equal(region['aria-pressed'],String(id==='abs'));
+      }
+    }else{
+      assert.doesNotMatch(svg,/data-muscle-region="(?:abs|obliques)"/);
+      assert.doesNotMatch(svg,/aria-pressed="true"/);
+    }
     const unmapped=[...svg.matchAll(/<g\b[^>]*data-muscle-unmapped="[^"]+"[^>]*>/g)].map(match=>attributes(match[0]));
-    assert.deepEqual(unmapped.map(row=>row['data-muscle-unmapped']),view==='front'?['abs','obliques']:['lumbar']);
+    assert.deepEqual(unmapped.map(row=>row['data-muscle-unmapped']),view==='front'?[]:['lumbar']);
     for(const region of unmapped){
       assert.match(region.fill,/^url\(#forja-muscle-body-\d+-unmapped\)$/);
       assert.match(region['aria-label'],/não estimado pelo catálogo/);
@@ -111,6 +144,28 @@ test('untracked core regions remain hatched and cannot acquire a colored volume 
       assert.equal(region.role,undefined);
     }
   }
+});
+
+test('abdominal map colors, details and method use recorded bodyweight and anti-rotation sets',()=>{
+  const state={sessions:[session(TODAY,[
+    {id:'abdominal-solo',sets:[{load:0,reps:12},{load:0,reps:12}]},
+    {id:'pallof-press',sets:[{load:5,reps:10},{load:5,reps:10}]}
+  ])],exercises:[{id:'abdominal-solo',name:'Abdominal no solo'},{id:'pallof-press',name:'Pallof press'}]};
+  const html=MAP.render(state,TODAY,{days:7,selected:'abs'});
+  const controls=regionGroups(svgFrom(html));
+  for(const id of ['abs','obliques']){
+    const region=controls.find(row=>row['data-muscle-region']===id);
+    assert.equal(region['data-total'],'3');
+    assert.equal(region['data-level'],'3');
+    assert.match(html,new RegExp('<option value="'+id+'"'));
+  }
+  assert.match(html,/data-selected-muscle="abs"/);
+  assert.match(html,/3<\/b> séries equivalentes · 2 principais \+ 2 auxiliares × 0,5/);
+  assert.match(html,/Abdominal no solo/);
+  assert.match(html,/Pallof press/);
+  assert.match(html,/0 kg significa peso do corpo e conta como série/);
+  assert.match(html,/A participação estabilizadora em outros movimentos não é estimada automaticamente/);
+  assert.doesNotMatch(html,/Abdômen, oblíquos e lombar ficam hachurados/);
 });
 
 test('the period controls use exact 7/30/90 windows and retain a valid selected muscle with no recent work',()=>{

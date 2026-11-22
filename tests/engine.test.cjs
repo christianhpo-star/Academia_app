@@ -222,3 +222,29 @@ test('demais exercícios permanecem sem cargas presumidas',()=>{
   assert.equal(ex('triceps-corda').example,undefined);
   assert.equal(ex('elevacao-lateral').example,undefined);
 });
+
+test('abdominal com peso corporal mantém histórico e rodada sem exigir carga fictícia',()=>{
+  const s=session(1,0,12,2,{exId:'abdominal-solo',planId:'A'});
+  s.entries[0].sets=[{load:0,reps:12,rir:2,warmup:false}];
+  assert.equal(Engine.historyOf([s],'abdominal-solo').length,1);
+  assert.equal(Engine.topSet(s.entries[0]).load,0);
+  assert.deepEqual(Engine.pendingWorkouts([s],Data.rotation).completed,['A']);
+  assert.equal(Engine.workSets({id:'supino-halteres',sets:s.entries[0].sets}).length,0);
+});
+
+test('abdômen de peso corporal nunca recebe aumento automático nem e1RM do peso adicional',()=>{
+  const exercise={id:'abdominal-solo',name:'Abdominal no solo',sets:2,low:10,high:15,step:2.5,unit:'kg',mode:'double',group:'A'};
+  const history=[1,2].map(day=>session(day,0,15,3,{exId:exercise.id,planId:'A'}));
+  for(const s of history)s.entries[0].sets=Array.from({length:2},()=>({load:0,reps:15,rir:3,warmup:false}));
+  const next=Engine.recommend(exercise,history);
+  assert.equal(next.next,null);
+  assert.notEqual(next.level,'increase');
+  assert.match(next.last,/peso do corpo/);
+  assert.match(next.explanation,/repetições/);
+  assert.equal(Engine.recommend(exercise,[]).next,null);
+  for(const s of history)for(const set of s.entries[0].sets)set.load=5;
+  assert.equal(Engine.entryStrength(history[0].entries[0]),null);
+  assert.deepEqual(Engine.strengthSeries(exercise,history,3650),[]);
+  assert.equal(Engine.exerciseStrength(exercise,history,3650).current,null);
+  assert.equal(Engine.recommend(exercise,history).next,null);
+});

@@ -1,5 +1,6 @@
 (function installDose(root) {
   'use strict';
+  const SETS = root.ForjaTrainingSets || (typeof require === 'function' ? require('./training-sets.js') : null);
   /*
    * FORJA / dose-analysis v1. References:
    * ACSM 2026, DOI 10.1249/MSS.0000000000003897
@@ -14,6 +15,7 @@
     ['biceps','Bíceps'],['triceps','Tríceps'],['quadriceps','Quadríceps'],
     ['posteriores','Posteriores'],['gluteos','Glúteos'],
     ['panturrilhas','Panturrilhas'],['adutores','Adutores'],['abdutores','Abdutores'],
+    ['abdomen','Abdômen'],
   ];
   const MAP = Object.create(null);
   const map = (ids, direct, indirect=[]) => {
@@ -54,6 +56,7 @@
   map('abducao-polia', ['abdutores']);
   map('cadeira-adutora', ['adutores']);
   map('aducao-polia', ['adutores']);
+  map('abdominal-solo abdominal-inverso abdominal-polia pallof-press', ['abdomen']);
 
   const labelFor = id => MUSCLES.find(row=>row[0]===id)?.[1] || id;
   function validDate(day) {
@@ -66,11 +69,7 @@
   const number=v=>v==null||v===''?null:
     (Number.isFinite(Number(v))?Number(v):null);
   function workSets(entry) {
-    return (Array.isArray(entry?.sets)?entry.sets:[]).filter(set=>{
-      const load=number(set?.load), reps=number(set?.reps);
-      return !set?.warmup && load!==null && load>0 && load<=1500 &&
-        reps!==null && Number.isInteger(reps) && reps>=1 && reps<=100;
-    });
+    return SETS.workSets(entry);
   }
   function doseItem(id,entry) {
     const profile=MAP[id];
@@ -152,6 +151,7 @@
     return load>0&&reps>=1&&reps<=30 ? load*(1+reps/30):null;
   };
   function bestEffort(entry) {
+    if (SETS.allowsZero(entry)) return null;
     const ranked=workSets(entry).map(s=>({set:s,score:estimatedStrength(s)}))
       .filter(row=>row.score!==null).sort((a,b)=>b.score-a.score);
     return ranked[0]||null;

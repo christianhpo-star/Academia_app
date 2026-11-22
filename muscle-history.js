@@ -20,6 +20,8 @@
     ['biceps', 'Bíceps', ['front']],
     ['triceps', 'Tríceps', ['back']],
     ['forearms', 'Músculos do antebraço', ['front', 'back']],
+    ['abs', 'Reto do abdômen', ['front']],
+    ['obliques', 'Oblíquos', ['front']],
     ['quadriceps', 'Quadríceps', ['front']],
     ['hamstrings', 'Posteriores da coxa', ['back']],
     ['glutes', 'Glúteo máximo', ['back']],
@@ -28,15 +30,13 @@
     ['calves', 'Panturrilhas', ['back']],
   ].map(([id, label, views]) => Object.freeze({id, label, views: Object.freeze(views)})));
   const UNTRACKED = Object.freeze([
-    {id: 'abs', label: 'Abdômen'},
-    {id: 'obliques', label: 'Oblíquos'},
     {id: 'lumbar', label: 'Região lombar'},
   ].map(Object.freeze));
   const LEVELS = Object.freeze(['Sem registro', 'Menor volume relativo', 'Volume intermediário', 'Maior volume relativo']);
   const regionIds = new Set(REGIONS.map(region => region.id));
   const numeric = value => (typeof value === 'number' ||
     (typeof value === 'string' && value.trim() !== '')) && Number.isFinite(Number(value));
-  const setsFor = (entry, dose) => dose.workSets({sets: (Array.isArray(entry?.sets) ? entry.sets : [])
+  const setsFor = (entry, dose) => dose.workSets({id: entry?.id, sets: (Array.isArray(entry?.sets) ? entry.sets : [])
     .filter(set => set && numeric(set.load) && numeric(set.reps))});
   const uniqueRegions = values => [...new Set((Array.isArray(values) ? values : [])
     .filter(id => regionIds.has(id)))];

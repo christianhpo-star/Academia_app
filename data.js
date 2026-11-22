@@ -14,6 +14,11 @@
     ex('rosca-w', 'Rosca direta · barra W', 'A', 3, 10, 12, 2.5),
     ex('rosca-martelo', 'Rosca martelo', 'A', 3, 10, 12, 2.5, { unit: 'kg/halter' }),
     ex('rosca-inversa', 'Rosca inversa', 'A', 2, 10, 12, 2.5, { active: false }),
+    ex('abdominal-solo', 'Abdominal no solo (crunch)', 'A', 2, 10, 15, 1, {
+      mode: 'bodyweight', bodyweight: true, complement: 'abdomen',
+      equipment: 'Solo / colchonete', muscle: 'Abdômen',
+      aliases: ['abdominal', 'crunch', 'reto abdominal', 'core', 'peso do corpo'],
+    }),
     // B — peito, triceps e ombros
     ex('supino-halteres', 'Supino reto com halteres', 'B', 4, 10, 12, 2.5, {
       mode: 'pyramid', unit: 'kg/halter',
@@ -40,6 +45,11 @@
     ex('triceps-corda', 'Tríceps corda', 'B', 3, 10, 15, 2.5),
     ex('triceps-maquina', 'Tríceps na máquina', 'B', 3, 10, 12, 5, { active: false }),
     ex('remada-alta', 'Remada alta', 'B', 3, 10, 12, 2.5, { active: false }),
+    ex('abdominal-inverso', 'Abdominal inverso', 'B', 2, 10, 15, 1, {
+      mode: 'bodyweight', bodyweight: true, complement: 'abdomen',
+      equipment: 'Solo / colchonete', muscle: 'Abdômen',
+      aliases: ['abdominal', 'reverse crunch', 'elevação do quadril', 'core', 'peso do corpo'],
+    }),
     // C — quadriceps
     ex('agachamento-hack', 'Agachamento hack / máquina', 'C', 3, 8, 12, 5, { knee: true }),
     ex('agachamento-livre', 'Agachamento livre', 'C', 3, 8, 12, 2.5, { knee: true, active: false }),
@@ -58,11 +68,22 @@
     ex('extensora-d', 'Cadeira extensora (alternativa)', 'D', 3, 10, 12, 5, { knee: true, active: false }),
   ];
   const plans = [
-    { id: 'A', title: 'Costas + bíceps', subtitle: 'Puxadas, remadas e braços', type: 'upper' },
+    { id: 'A', title: 'Costas + bíceps', subtitle: 'Puxadas, remadas e complemento de abdômen', type: 'upper' },
     { id: 'C', title: 'Quadríceps', subtitle: 'Pernas com atenção ao joelho', type: 'lower' },
-    { id: 'B', title: 'Peito + tríceps', subtitle: 'Supinos, ombros e braços', type: 'upper' },
+    { id: 'B', title: 'Peito + tríceps', subtitle: 'Supinos, ombros e complemento de abdômen', type: 'upper' },
     { id: 'D', title: 'Posteriores + glúteos', subtitle: 'Cadeia posterior e estabilidade', type: 'lower' },
   ];
-  root.AcademiaData = { plans, exercises, rotation: ['A', 'C', 'B', 'D'] };
+  // One additive upgrade for existing installations. Existing IDs (including
+  // disabled or personalized versions), saved sessions and drafts stay intact.
+  function ensureAbdomen(value) {
+    if (!value || value.abdomenDefaultsVersion >= 1 || !Array.isArray(value.exercises)) return false;
+    const existing = new Set(value.exercises.map(item => item.id));
+    const missing = exercises.filter(item => item.complement === 'abdomen' && !existing.has(item.id));
+    if (value.exercises.length + missing.length > 200) return false;
+    value.exercises.push(...missing.map(item => JSON.parse(JSON.stringify(item))));
+    value.abdomenDefaultsVersion = 1;
+    return true;
+  }
+  root.AcademiaData = { plans, exercises, rotation: ['A', 'C', 'B', 'D'], ensureAbdomen };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.AcademiaData;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

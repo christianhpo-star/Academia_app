@@ -1,5 +1,7 @@
 (function installFlex(root) {
   'use strict';
+  const SETS = typeof module !== 'undefined' && module.exports
+    ? require('./training-sets.js') : root.ForjaTrainingSets;
   // Curated offline catalogue. Stable IDs prevent changing the identity of
   // an exercise when an individual workout or a future template is edited.
   const catalog = [
@@ -74,8 +76,14 @@
       'kg', false, ['puxada entre as pernas','cable pull through']],
     ['flexora-em-pe', 'Flexora em pé na máquina', 'D', 'Máquina', 'Posteriores', 3, 10, 15, 2.5,
       'kg', false, ['flexora vertical','standing leg curl']],
+    ['abdominal-polia', 'Abdominal na polia', 'A', 'Polia alta / corda', 'Abdômen', 2, 10, 15, 2.5,
+      'kg', false, ['crunch na polia','abdominal com corda','cable crunch','core']],
+    ['pallof-press', 'Pallof press na polia', 'B', 'Polia', 'Abdômen / oblíquos', 2, 10, 12, 2.5,
+      'kg', false, ['pallof','antirrotação','anti rotação','core','oblíquos']],
   ].map(([id,name,group,equipment,muscle,sets,low,high,step,unit='kg',knee=false,aliases=[]]) =>
-    ({id,name,group,equipment,muscle,sets,low,high,step,unit,knee,aliases,mode:'double',active:false}));
+    ({id,name,group,equipment,muscle,sets,low,high,step,unit,knee,aliases,mode:'double',active:false,
+      ...(id==='pallof-press'?{repPerSide:true}:{}),
+      ...(['abdominal-polia','pallof-press'].includes(id)?{complement:'abdomen'}:{})}));
   const REASONS = {
     '': 'Prefiro não informar',
     tempo: 'Tempo disponível',
@@ -95,10 +103,8 @@
   }
   const hasRecordedReps = entry => (entry?.sets || []).some(set =>
     set && set.reps !== '' && set.reps != null && Number(set.reps) > 0);
-  const hasWork = entry => (entry?.sets || []).some(set =>
-    set && !set.warmup && Number(set.load) > 0 && Number(set.reps) > 0);
-  const effectiveSets = entry => (entry?.sets || []).filter(set =>
-    set && !set.warmup && Number(set.load) > 0 && Number(set.reps) > 0).length;
+  const hasWork = entry => SETS.workSets(entry).length > 0;
+  const effectiveSets = entry => SETS.workSets(entry).length;
   function withdraw(draft,id) {
     if (!ensureDraft(draft) || !Object.hasOwn(draft.entries || {},id)) return {error:'Exercício não encontrado.'};
     const entry=draft.entries[id];
@@ -147,8 +153,8 @@
     for (const item of catalog)merged.set(item.id,{...item});
     for (const item of exercises) {
       const previous=merged.get(item.id);
-      merged.set(item.id,{...previous,...item,equipment:previous?.equipment||'Ficha pessoal',
-        muscle:previous?.muscle||({A:'Costas / bíceps',B:'Peito / ombros / tríceps',C:'Quadríceps',D:'Posteriores / glúteos'}[item.group]||'Outro')});
+      merged.set(item.id,{...previous,...item,equipment:previous?.equipment||item.equipment||'Ficha pessoal',
+        muscle:previous?.muscle||item.muscle||({A:'Costas / bíceps',B:'Peito / ombros / tríceps',C:'Quadríceps',D:'Posteriores / glúteos'}[item.group]||'Outro')});
     }
     const normalize=value=>String(value||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
     const term=normalize(query);
