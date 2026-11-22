@@ -1747,6 +1747,37 @@
       notify('Não foi possível importar: verifique o backup FORJA e os registros informados.');}
     document.getElementById('import-file').value='';
   }
+  function commitSessionCatalogChoice(id){
+    const mode=catalogContext();
+    if(mode==='browse'||!ui.draft||ui.catalogDetailId!==id)return false;
+    const found=F.prepareCatalog(id,state.exercises);
+    if(!found)return notify('Exercício indisponível no catálogo.');
+    if(found.isNew&&state.exercises.length>=200)return notify('Limite de exercícios atingido.');
+    const approved=mode==='extra'?sessionAdvice('extra').recommendations.find(item=>
+      item.kind==='extra-exercise'&&item.id===id&&item.sourceId):null;
+    const result=CSESSION.prepare({draft:ui.draft,mode,sourceId:ui.catalogSourceId,
+      targetId:id,exercise:found.exercise,eligibleExtraIds:mode==='extra'?eligibleExtraIds():[],
+      extraSourceId:approved?.sourceId});
+    if(!result.ok)return notify(result.error);
+    const before=ui.draft;
+    let added=false;
+    if(found.isNew){
+      // In-session exercises remain inactive in the permanent training plan.
+      state.exercises.push({...found.exercise,active:false});added=true;
+      if(!save()){state.exercises.pop();return notify('Não foi possível salvar o exercício.');}
+    }
+    ui.draft=result.draft;
+    if(!persistDraft()){
+      ui.draft=before;
+      if(added){state.exercises.pop();save();}
+      return notify('O rascunho não foi salvo. Sua sessão anterior foi preservada.');
+    }
+    ui.focusedExercise=id;
+    const message=mode==='replace'?'Exercício substituído só nesta sessão. O original permanece no histórico da ficha.':
+      mode==='extra'?'Exercício opcional adicionado com uma série vazia.':'Exercício adicionado somente ao treino de hoje.';
+    leaveSessionCatalog();notify(message);
+    return true;
+  }
   function handleAction(btn) {
     const action=btn.dataset.action;
     if (loadFailure) {
@@ -1872,13 +1903,34 @@
       if(!save()){state.bioimpedance=old;return;}
       ui.bioEditDate=null;ui.bioOpen=true;render();notify('Leitura excluída.');return;
     }
+    if(action==='catalog-session-open'){
+      if(!ui.draft)return;
+      openSessionCatalog(btn.dataset.mode||'add',btn.dataset.source||null);return;
+    }
+    if(action==='catalog-session-mode'){
+      if(ui.tab!=='catalog'||catalogContext()==='browse'||!['replace','add','extra'].includes(btn.dataset.mode))return;
+      ui.catalogContext=btn.dataset.mode;
+      ui.catalogDetailId=null;ui.catalogConfirmId=null;
+      render();window.scrollTo(0,0);return;
+    }
+    if(action==='catalog-return-session'){
+      if(ui.tab!=='catalog'||!ui.draft)return;
+      leaveSessionCatalog();return;
+    }
+    if(action==='catalog-energy'){
+      if(!ui.draft||ui.tab!=='catalog'||catalogContext()!=='extra')return;
+      const before=ui.draft.energy;
+      ui.draft.energy=before==='leve'?'normal':'leve';
+      if(!persistDraft()){ui.draft.energy=before;return notify('Não foi possível salvar a energia da sessão.');}
+      render();return;
+    }
     if(action==='training-destination'){
       const target=btn.dataset.to;
       if(!['plans','catalog'].includes(target))return;
+      if(target==='plans'&&catalogContext()!=='browse'){leaveSessionCatalog();return;}
       ui.tab=target;
-      ui.editor=null;
-      ui.catalogDetailId=null;
-      ui.catalogConfirmId=null;
+      ui.editor=null;ui.catalogContext='browse';ui.catalogSourceId=null;
+      ui.catalogDetailId=null;ui.catalogConfirmId=null;
       render();window.scrollTo(0,0);return;
     }
     if(action==='catalog-view'){
@@ -1901,8 +1953,15 @@
     }
     if(action==='catalog-intent'){
       if(ui.tab!=='catalog'||ui.catalogDetailId!==btn.dataset.ex)return;
-      const current=state.exercises.find(ex=>ex.id===btn.dataset.ex);
-      if(current?.active)return;
+      if(catalogContext()==='browse'){
+        const current=state.exercises.find(ex=>ex.id===btn.dataset.ex);
+        if(current?.active)return;
+      }else{
+        const check=CSESSION.canChoose({draft:ui.draft,mode:catalogContext(),
+          sourceId:ui.catalogSourceId,targetId:btn.dataset.ex,
+          eligibleExtraIds:catalogContext()==='extra'?eligibleExtraIds():[]});
+        if(!check.ok)return notify(check.error);
+      }
       ui.catalogConfirmId=btn.dataset.ex;
       render();
       document.querySelector('[data-action="catalog-confirm"]')?.focus({preventScroll:true});return;
@@ -1915,6 +1974,7 @@
     if(action==='catalog-confirm'){
       const id=btn.dataset.ex;
       if(ui.tab!=='catalog'||ui.catalogDetailId!==id||ui.catalogConfirmId!==id)return;
+      if(catalogContext()!=='browse'){commitSessionCatalogChoice(id);return;}
       const current=state.exercises.find(ex=>ex.id===id);
       if(current?.active){ui.catalogConfirmId=null;render();return;}
       if(current){
@@ -1944,60 +2004,6 @@
     if(action==='catalog-filter'){
       if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
       ui.catalogGroup=btn.dataset.group;render();return;
-    }
-    if(action==='flex-catalog-toggle'){if(!ui.draft)return;ui.catalogOpen=!ui.catalogOpen;ui.catalogAll=false;ui.catalogMode='replacement';render();return;}
-    if(action==='catalog-mode'){
-      if(!ui.draft||!ui.catalogOpen||!['replacement','extra'].includes(btn.dataset.mode))return;
-      ui.catalogMode=btn.dataset.mode;ui.catalogAll=false;render();return;
-    }
-    if(action==='catalog-energy'){
-      if(!ui.draft||!ui.catalogOpen||ui.catalogMode!=='extra')return;
-      const previous=ui.draft.energy;
-      ui.draft.energy=previous==='leve'?'normal':'leve';
-      if(!persistDraft()){ui.draft.energy=previous;return notify('Não foi possível salvar a energia da sessão.');}
-      render();return;
-    }
-    if(action==='catalog-show-all'){if(!ui.draft||!ui.catalogOpen)return;ui.catalogAll=!ui.catalogAll;render();return;}
-    if(action==='catalog-extra-add'){
-      if(!ui.draft||ui.catalogMode!=='extra'||ui.draft.extraChoice)return;
-      const analysis=DOSE.analyze({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
-        exercises:state.exercises,draft:ui.draft,settings:state.settings,today:today()});
-      const options=F.options(state.exercises,ui.draft);
-      const suggested=ADVICE.suggest({options,draft:ui.draft,exercises:state.exercises,
-        strengthSessions:state.sessions,muaySessions:state.muay.sessions,
-        settings:state.settings,today:today(),dose:DOSE,mode:'extra',analysis});
-      if(!suggested.recommendations.some(item=>item.kind==='extra-exercise'&&
-          item.id===btn.dataset.ex&&item.sourceId===btn.dataset.source))
-        return notify('A recomendação mudou. Revise sua execução e recuperação.');
-      const id=btn.dataset.ex,found=F.prepareCatalog(id,state.exercises);
-      if(!found||found.isNew&&state.exercises.length>=200)return notify('Exercício indisponível no catálogo.');
-      if(!F.addToDraft(ui.draft,id,found.exercise,{
-        id,sets:[{load:'',reps:'',rir:'',warmup:false}],pain:''
-      }))return notify('Exercício já incluído ou limite alcançado.');
-      if(found.isNew){
-        state.exercises.push(found.exercise);
-        if(!save()){state.exercises.pop();delete ui.draft.entries[id];
-          ui.draft.addedIds=ui.draft.addedIds.filter(x=>x!==id);return;}
-      }
-      ui.draft.extraChoice={kind:'exercise',id,sourceId:btn.dataset.source};
-      if(!persistDraft()){delete ui.draft.extraChoice;delete ui.draft.entries[id];
-        ui.draft.addedIds=ui.draft.addedIds.filter(x=>x!==id);
-        return notify('Não foi possível salvar o rascunho.');}
-      ui.catalogOpen=false;render();notify('Exercício opcional adicionado com uma série em branco.');return;
-    }
-    if(action==='flex-add'){
-      const draft=ui.draft,id=btn.dataset.ex;if(!draft)return;
-      const found=F.prepareCatalog(id,state.exercises);
-      if(!found)return notify('Exercício não encontrado no catálogo.');
-      if(found.isNew && state.exercises.length>=200)return notify('Limite de exercícios atingido.');
-      if(!F.addToDraft(draft,id,found.exercise,{id,sets:found.exercise.example?copy(found.exercise.example):
-        Array.from({length:found.exercise.sets},()=>({load:'',reps:'',rir:'',warmup:false})),pain:''}))return notify('Exercício já incluído ou limite alcançado.');
-      if(found.isNew){
-        state.exercises.push(found.exercise);
-        if(!save()){state.exercises.pop();delete draft.entries[id];draft.addedIds=draft.addedIds.filter(v=>v!==id);return;}
-      }
-      if(!persistDraft())return notify('Não foi possível salvar o rascunho. Não feche a página.');
-      ui.catalogOpen=false;render();notify('Exercício adicionado apenas ao treino do dia.');return;
     }
     if(action==='flex-withdraw'){
       const choice=ui.draft?.extraChoice;
