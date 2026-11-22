@@ -1353,3 +1353,25 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-detail-confirm-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .catalog-detail-confirm-row>button{min-width:0;min-height:48px}
 @media(max-width:359px){.catalog-detail-facts{grid-template-columns:repeat(2,minmax(0,1fr))}.catalog-detail-figure svg{height:198px}.catalog-detail-figure{min-height:205px}}
+
+
+/* One shared exercise catalogue: contextual modes, never a nested second screen. */
+.session-catalog-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:12px 0 8px}
+.session-catalog-actions button{min-height:48px;min-width:0;text-align:center}
+.session-catalog-actions button:last-child{grid-column:1 / -1;text-align:center}
+.catalog-session-context{padding:14px;display:grid;gap:11px;margin:12px 0 16px}
+.catalog-session-context h2{font-size:15px;line-height:1.35;margin:0}
+.catalog-session-context>.row-between{gap:10px;align-items:start}
+.catalog-session-context>.row-between button{min-height:44px;font-size:12px}
+.catalog-session-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:4px;border:1px solid #36556a;border-radius:13px;background:#152635}
+.catalog-session-modes button{border:1px solid transparent;border-radius:9px;background:transparent;color:#c1d5e3;min-height:46px;padding:8px 5px;font-size:11px;font-weight:650;line-height:1.3}
+.catalog-session-modes button.selected{background:#c5f56b;color:#15251b;border-color:#e0ffa6}
+.catalog-session-modes button:focus-visible,.catalog-session-context select:focus-visible{outline:3px solid #80beff;outline-offset:2px}
+.catalog-session-context .field{margin:0;min-width:0}
+.catalog-session-context .field select{width:100%;min-height:46px}
+.catalog-session-context .catalog-contextual{background:#11202d;border-radius:11px;padding:12px;display:grid;gap:9px}
+.catalog-session-context .catalog-contextual h3{font-size:13px;margin:0}
+.catalog-session-context .catalog-suggestion{padding:11px;border:1px solid #354f63;border-radius:11px;background:#1d2e40;min-width:0}
+.catalog-session-context .catalog-suggestion button{min-height:44px}
+.catalog-detail-actions .catalog-detail-status{overflow-wrap:anywhere}
+@media(max-width:359px){.session-catalog-actions{grid-template-columns:1fr}.session-catalog-actions button:last-child{grid-column:auto}.catalog-session-context{padding:10px}.catalog-session-modes button{font-size:10px;padding:7px 3px}}
