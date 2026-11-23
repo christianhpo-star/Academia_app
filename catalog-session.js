@@ -53,7 +53,7 @@
       load:SETS.allowsZero(exercise)?0:'',reps:'',rir:'',warmup:false
     }));
     if(!F.addToDraft(next,targetId,exercise,{id:targetId,sets,pain:'',
-      ...(dayPrescription&&mode!=='extra'?{dayPrescription:{sets:targetSets,low:dayPrescription.low,high:dayPrescription.high,rirTarget:dayPrescription.rirTarget,reason:dayPrescription.reason,scope:'session-only'}}:{})}))
+      ...(dayPrescription&&mode!=='extra'?{dayPrescription:{sets:targetSets,low:dayPrescription.low,high:dayPrescription.high,rirTarget:dayPrescription.rirTarget,reason:dayPrescription.reason,level:dayPrescription.level||'consider',goal:dayPrescription.goal||'recomposition',scope:'session-only'}}:{})}))
       return {ok:false,error:'Não foi possível incluir o exercício nesta sessão.'};
     if(mode==='extra')next.extraChoice={kind:'exercise',id:targetId,sourceId:extraSourceId||''};
     return {ok:true,draft:next,removedId:mode==='replace'?sourceId:null,addedId:targetId};
