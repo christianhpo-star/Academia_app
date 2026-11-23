@@ -18,7 +18,7 @@
   const create=({day,afterMuayId=null}={})=>{
     if(!validDay(day))return {error:'Informe uma data válida.'};
     return {planId:PLAN_ID,day,afterMuayId:typeof afterMuayId==='string'&&afterMuayId?afterMuayId:null,
-      energy:'normal',notes:'',entries:{},plannedIds:[],skipped:[],addedIds:[]};
+      energy:'',notes:'',entries:{},plannedIds:[],skipped:[],addedIds:[]};
   };
   const fold=text=>String(text||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
   function options(exercises=[],draft=null,search='',all=false){
@@ -42,6 +42,16 @@
     if(!F.addToDraft(next,exercise.id,exercise,entry))return {error:'Não foi possível adicionar este exercício.'};
     return {draft:next,entry};
   }
+  function custom(name,bodyweight=false){
+    const cleaned=String(name||'').trim().replace(/\\s+/g,' ');
+    if(!cleaned||cleaned.length>100)return {error:'Informe um nome com até 100 caracteres.'};
+    const id=(bodyweight?'free-bodyweight-':'free-custom-')+
+      Date.now()+'-'+Math.random().toString(36).slice(2,8);
+    return {exercise:{id,name:cleaned,group:PLAN_ID,sets:1,low:8,high:20,step:1,
+      unit:'kg',mode:bodyweight?'bodyweight':'double',active:false,knee:false,
+      muscle:'Não classificado',equipment:bodyweight?'Peso do corpo':'Carga livre'}};
+  }
+
   function remove(draft,id){
     if(!isFree(draft)||!Object.hasOwn(draft.entries||{},id))
       return {error:'Exercício não encontrado neste treino.'};
@@ -63,7 +73,7 @@
     const done=entries.filter(row=>SETS.workSets(row).length);
     return {selected:entries.length,performed:done.length,sets:done.reduce((n,row)=>n+SETS.workSets(row).length,0)};
   }
-  const api=Object.freeze({VERSION:1,PLAN_ID,isFree,validDay,create,options,add,remove,linkedMuay,count});
+  const api=Object.freeze({VERSION:1,PLAN_ID,isFree,validDay,create,options,add,custom,remove,linkedMuay,count});
   root.ForjaFreeWorkout=api;
   if(node)module.exports=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
