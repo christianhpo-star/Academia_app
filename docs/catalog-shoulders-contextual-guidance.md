@@ -33,3 +33,25 @@ Os valores numéricos usados pelo software são **heurísticas conservadoras de 
 - Não salvar recomendações ao navegar, nem transitar dados do usuário para servidor externo.
 - Testes unitários de dez IDs anatômicos, badges, ausência de dados e RIR, proteção do rascunho e composição de séries.
 - Smoke browser Android 320/390/412 px, filtro de músculos, badges somente com histórico sintético suficiente, detalhe sem gravação e CI completa.
+
+
+## Atualização de 23/11/2026 — variações e objetivo do usuário
+
+A biblioteca recebeu mais **nove** opções além das dez originais (total de 19 novas variações), mantendo os quatro blocos A/B/C/D e filtro transversal **Ombro e trapézio**:
+- Máquina e polia: desenvolvimento com pegada neutra, elevação lateral unilateral na polia, encolhimento na polia.
+- Halteres com suporte: desenvolvimento sentado, elevação lateral sentada, elevação frontal.
+- Em casa com elásticos: crucifixo inverso, face pull e elevação em Y.
+
+Filtros **Mais simples**, **Em casa**, **Máquina e polia** e **Pesos livres** destacam alternativas, mas dificuldade é uma classificação prática de interface, não ranking científico universal. Exercícios de elástico permitem registrar 0 kg para tensão **não mensurada**, desde que repetições executadas sejam informadas; não se equipara a ausência de resistência ou ao peso do corpo.
+
+### Contagem de trabalho e recomendação
+- Fonte: histórico local de musculação nos **últimos 7 dias corridos incluindo hoje** e rascunho atual. Contam somente séries com carga válida e repetições reais, sem aquecimentos, exclusões e duplicidades por ID da sessão. Exemplos de cargas pré-preenchidas **não** são trabalho feito.
+- O painel apresenta **exercícios distintos** executados e total de **séries efetivas** hoje e nos 7 dias. Para cada região anatômica revisada, estímulo direto soma 1 série e auxiliar 0,5, heurística de modelagem; não é equivalência fisiológica exata.
+- Objetivo: usa `settings.goalMode` quando selecionado (recomposição, perda de gordura, ganho muscular, manutenção). O modo genérico "atingir peso" herda `nutrition.settings.profile.goal` quando configurado; caso contrário usa recomposição como referência explícita. A meta de peso ou calorias não gera automaticamente aumento de volume.
+- Regras de cautela do produto, **não metas clínicas**: recomposição (4 equivalentes no dia/10 em 7 dias); redução de gordura (3/8), ganho de massa (5/12), manutenção (3/8). São limites conservadores para **suspender a sugestão de acréscimo de volume naquela região**, não limites máximos obrigatórios de treinamento. O desempenho, histórico individual, recuperação e preferência do usuário precisam prevalecer.
+- Se uma região recebeu estímulo suficiente hoje ou na semana, a sugestão identifica **"não acrescentar"**, com informação contextual; se recebeu trabalho recente ontem/hoje, oferece dose menor **somente para uma troca escolhida**. No ganho de massa, com pouca execução observada e sem alertas de recuperação, pode indicar até três séries como ponto de partida. Não transforma 21 dias sem registros em compensação automática.
+- Repetições seguem a faixa própria do exercício e, quando há pelo menos duas sessões comparáveis, podem refletir repetições anteriores. Para ganho muscular e faixas originalmente amplas, o intervalo inferior pode ser ajustado para facilitar a execução, **sem afirmar superioridade fisiológica da faixa**.
+- Muay Thai recente, fadiga e desconfortos reduzem a possibilidade de acréscimo. Treinos de Muay Thai são contados como sessões de atividade, **não** convertidos artificialmente em séries diretas de deltóide/trapézio.
+- Mostrar/filtrar detalhes não escreve no armazenamento. Aplicar um exercício na sessão requer confirmação e `dayPrescription` no rascunho, preservando ficha permanente e histórico. O usuário mantém escolha manual: o FORJA indica cautela e explica os números, mas não impede a substituição consciente por recomendação heurística.
+
+**Limitação:** apenas registros fornecidos ao FORJA são avaliados; dados incompletos não comprovam falta de treino. A janela móvel de 7 dias não representa necessariamente semana civil de segunda a domingo. As heurísticas não substituem acompanhamento profissional.
