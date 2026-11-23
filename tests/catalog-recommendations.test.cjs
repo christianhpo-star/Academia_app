@@ -145,7 +145,7 @@ test('nine added options span simple, machine, free-weight and home without dupl
    assert.equal(SETS.workSets({id,sets:[{load:0,reps:15,rir:3,warmup:false}]}).length,1);
  }
 });
-test('actual volume excludes blank presets and warmups and includes previous sessions and today's draft',()=>{
+test('actual volume excludes blank presets and warmups and includes previous sessions and the current draft',()=>{
  const day='2026-11-23';
  const entry=(id,sets)=>({id,sets});
  const full=(load=10)=>({load,reps:12,rir:2,warmup:false});
