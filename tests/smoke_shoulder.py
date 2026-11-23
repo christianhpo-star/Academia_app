@@ -20,6 +20,17 @@ def verify(context,seed,errors,history):
     assert cards.count()>=12
     assert any('Encolhimento de ombros com halteres' in card.inner_text() for card in cards.all())
     assert any('Desenvolvimento de ombros' in card.inner_text() for card in cards.all())
+    overview=page.locator('.catalog-overview')
+    assert overview.count()==1
+    assert 'Hoje:' in overview.inner_text() and 'Últimos 7 dias:' in overview.inner_text()
+    page.locator('[data-action="catalog-style"][data-style="easy"]').click()
+    assert page.locator('.catalog-browser-item:visible').count()>=3
+    page.locator('[data-action="catalog-style"][data-style="home"]').click()
+    visible=' '.join(x.inner_text() for x in page.locator('.catalog-browser-item:visible').all())
+    assert 'elástico' in visible.lower(),visible
+    page.locator('[data-action="catalog-style"][data-style="machine"]').click()
+    assert page.locator('.catalog-browser-item:visible').count()>0
+    page.locator('[data-action="catalog-style"][data-style="all"]').click()
     badges=page.locator('.catalog-recommended-tag')
     assert (badges.count()>0)==history
     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth+1')
@@ -28,8 +39,8 @@ def verify(context,seed,errors,history):
         name=first.locator('h3').inner_text()
         first.locator('[data-action="catalog-view"]').click()
         assert page.locator('.catalog-detail-advice').count()==1
-        assert page.locator('.catalog-detail-plan').count()==1
-        assert 'RIR' in page.locator('.catalog-detail-plan').inner_text()
+        assert page.locator('.catalog-volume-context').count()==1
+        assert 'RIR' in page.locator('.catalog-volume-context').inner_text()
         page.locator('[data-action="catalog-back"]').click()
         assert page.locator('.catalog-browser-item h3').filter(has_text=name).count()>0
     # Reading catalog must not write any stored state.
