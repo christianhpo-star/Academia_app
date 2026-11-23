@@ -148,9 +148,12 @@
   function volumeText(a) {
     const part = a.quantity == null || a.quantity === '' ? '' : String(a.quantity) + ' ' + units[a.unit] +
       (a.unit==='reps' && a.side==='each' ? ' por lado' : '');
-    if(a.category==='sparring')return (a.sets||1)+' round(s) × '+(a.quantity||'—')+' min';
+    if(a.category==='sparring')return (a.sets||1)+' round(s) × '+(a.quantity||'—')+' min'+
+      (a.contact?' · '+(SPARRING_CONTACT[a.contact]||'contato não informado'):'');
     const series = a.sets == null || a.sets === '' ? '' : String(a.sets) + ' séries';
-    return [series, part].filter(Boolean).join(' × ') || 'Volume não informado';
+    const pattern=a.pattern==='ladder'?' · escada 1→'+a.ladderTo:
+      a.pattern==='ladderCumulative'?' · escada 1, 12, 123…':'';
+    return ([series, part].filter(Boolean).join(' × ') || 'Volume não informado')+pattern;
   }
   // Backup anterior a categorias e lateralidade: campos ausentes e unidades
   // suspeitas são qualidade limitada de registro, não sinal de recuperação.
@@ -408,9 +411,7 @@
       '<div class="muay-academy-records">'+d.activities.map((a,i)=>
         '<div class="muay-academy-record"><div><span class="muay-record-index">'+(i+1)+' · '+
         esc(categories[a.category]||'Atividade')+'</span><strong>'+esc(a.name)+'</strong>'+
-        '<small>'+esc(volumeText(a))+(a.pattern==='ladder'?' · escada 1→'+a.ladderTo:
-          a.pattern==='ladderCumulative'?' · escada 1, 12, 123…':'')+
-        (a.contact?' · '+esc(SPARRING_CONTACT[a.contact]||''):'')+'</small></div>'+
+        '<small>'+esc(volumeText(a))+'</small></div>'+
         '<button type="button" class="button-inline" data-action="muay-remove" data-id="'+esc(a.id)+
         '" aria-label="Remover bloco '+(i+1)+'">Remover</button></div>').join('')+'</div>':
       '<p class="small muted">Nenhum bloco registrado nesta sessão ainda.</p>';
