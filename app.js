@@ -2912,6 +2912,11 @@
       d.quick[field]=el.value;
       if(field==='quantity')d.quick.preset='custom';
       if(!save())notify('Rascunho não salvo. Revise o campo informado.');
+      if(['rounds','roundMinutes'].includes(field)){
+        const total=Number(d.quick.rounds)*Number(d.quick.roundMinutes);
+        const label=document.getElementById('muay-spar-total');
+        if(label)label.textContent=Number.isFinite(total)&&total>0?total+' min':'—';
+      }
       return;
     }else if(el.dataset.muayField){
       const field=el.dataset.muayField;
@@ -3008,9 +3013,6 @@
       render();return;
     }
     if((el.dataset.muayProp==='unit'||el.dataset.muayProp==='category')&&state.muay.draft){
-      render();return;
-    }
-    if(['rounds','roundMinutes'].includes(el.dataset.muayQuickField) && state.muay.draft?.quick){
       render();return;
     }
     if(el.dataset.skipReason && ui.draft){
