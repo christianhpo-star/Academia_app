@@ -915,7 +915,7 @@
       '<div class="catalog-detail-facts"><div><small>Equipamento</small><strong>'+esc(ex.equipment||'Não informado')+'</strong></div>'+
       '<div><small>Grupo da ficha</small><strong>'+esc(ex.muscle||'Não informado')+'</strong></div>'+
       '<div><small>Sugestão inicial</small><strong>'+esc(String(ex.sets))+' séries · '+esc(String(ex.low))+'–'+esc(String(ex.high))+' '+repsLabel(ex)+'</strong></div></div>'+
-      (SETS.allowsZero(ex)?'<p class="small muted">Peso do corpo: registre 0 kg quando não usar carga adicional.</p>':'')+
+      (SETS.allowsZero(ex)?'<p class="small muted">'+(ex.id.endsWith('-elastico')?'Resistência elástica: 0 kg registra uma série executada com a banda sem quantificar a tensão.':'Peso do corpo: registre 0 kg quando não usar carga adicional.')+'</p>':'')+
       (ex.repPerSide?'<p class="small muted">Faça os dois lados e registre as repetições por lado. A dupla conta como uma série.</p>':'')+
       '<div class="catalog-detail-technique"><h2>Execução</h2>'+
       (guide?'<p>'+esc(guide.cue)+'</p><p class="small muted">Mapa ilustrativo: a participação muscular varia com a técnica e o equipamento.</p>':
@@ -1105,6 +1105,8 @@
     const entries=ui.draft.entries;
     const focus=FOCUS.summary(entries);
     const cardioSummary=CARDIO.summarize(ui.draft.cardio);
+    const workToday=CRECO?.workload?.({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      draft:ui.draft,today:today()})||{today:{exercises:0,sets:0},week:{exercises:0,sets:0}};
     const selected=FOCUS.selectedId(entries,ui.focusedExercise);
     ui.focusedExercise=selected;
     const ids=Object.keys(entries);
@@ -1139,6 +1141,7 @@
       </section>
       ${ui.focusedMode ? renderCardio() : ''}
       <section class="card"><div class="row-between"><h2 class="section-title">Ajustar este treino</h2>${tag('Só hoje','green')}</div>
+        <p class="small muted">Hoje: <strong>${workToday.today.exercises} exercícios · ${workToday.today.sets} séries</strong> executadas. Últimos 7 dias: <strong>${workToday.week.exercises} exercícios · ${workToday.week.sets} séries</strong>, sem contar aquecimento. Isso orienta as sugestões do catálogo.</p>
         <p class="small muted">Retirar ou adicionar exercícios aqui não altera sua ficha. Exercícios retirados não contam como realizados.</p>
         ${F.ensureDraft(ui.draft) && ui.draft.skipped.length ? '<div class="flex-skipped"><strong>Retirados nesta sessão</strong>' +
           ui.draft.skipped.map(item=>'<div class="flex-skip-item"><span>' + esc(exerciseFor(item.id)?.name||item.id) + '</span><select aria-label="Motivo de retirar ' + esc(exerciseFor(item.id)?.name||item.id) + '" data-skip-reason="' + esc(item.id) + '">' +
@@ -1359,6 +1362,7 @@
     const ex=exerciseFor(en.id), reco=E.recommend(ex,state.sessions), previousSession=history(ex.id)[0], previousEntry=previousSession?.entry, hasData=!!previousEntry;
     const cls=reco.level==='protect'?'protect':['hold','confirm'].includes(reco.level)?'warn':'';
     const completedSets=FOCUS.summary({[en.id]:en}).effectiveSets;
+    const elastic=ex.id.endsWith('-elastico');
     return `<section class="exercise-card workout-exercise-card" data-exercise="${esc(ex.id)}" aria-label="Exercício ${index+1} de ${total}: ${esc(ex.name)}">
       <div class="workout-exercise-heading"><span class="workout-exercise-number">${String(index+1).padStart(2,'0')} <small>/ ${String(total).padStart(2,'0')}</small></span>
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
@@ -1366,9 +1370,9 @@
         ${en.dayPrescription?'<p class="small workout-day-guidance"><strong>Ajuste para hoje:</strong> '+esc(en.dayPrescription.reason)+
           ' Faixa '+en.dayPrescription.low+'–'+en.dayPrescription.high+' repetições, RIR '+esc(en.dayPrescription.rirTarget)+
           '. A ficha original não mudou.</p>':''}</div>
-        <span class="workout-exercise-kind">${SETS.allowsZero(ex)?'Peso do corpo':ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
+        <span class="workout-exercise-kind">${elastic?'Elástico':SETS.allowsZero(ex)?'Peso do corpo':ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
       ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]),ui.anatomyViews[ex.id])||''}
-      <p class="workout-exercise-step">${SETS.allowsZero(ex)?'Carga extra: 0 kg = peso do corpo. Registre apenas o peso adicionado.':'Ajuste de carga: +'+fmt(ex.step)+' '+esc(ex.unit)}</p>
+      <p class="workout-exercise-step">${elastic?'Elástico: registre 0 kg quando a tensão não for mensurada; informe repetições executadas e RIR.':SETS.allowsZero(ex)?'Carga extra: 0 kg = peso do corpo. Registre apenas o peso adicionado.':'Ajuste de carga: +'+fmt(ex.step)+' '+esc(ex.unit)}</p>
       ${ex.repPerSide?'<p class="small muted">Faça os dois lados. Registre as repetições por lado; a dupla conta como uma série.</p>':''}
       <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
@@ -1929,12 +1933,13 @@
       id:'',name:'',group:edit.group,sets:3,low:8,high:12,step:2.5,unit:'kg',mode:'double',active:true,knee:false,
     };
     const bodyweight=SETS.allowsZero(ex);
+    const elastic=ex.id.endsWith('-elastico');
     return `${headline('Personalização',edit.id?'Editar exercício':'Novo exercício','Adapte seu plano à sua academia, sem apagar os registros anteriores.')}
       <form class="card" id="exercise-form"><div class="field"><label for="ex-name">Nome do exercício</label><input id="ex-name" name="name" type="text" maxlength="100" required value="${esc(ex.name)}" /></div>
       <div class="field-row three mt-12"><div class="field"><label for="ex-sets">Séries</label><input id="ex-sets" name="sets" type="number" min="1" max="12" step="1" required value="${ex.sets}" /></div>
       <div class="field"><label for="ex-low">Reps mín.</label><input id="ex-low" name="low" type="number" min="1" max="50" step="1" required value="${ex.low}" /></div>
       <div class="field"><label for="ex-high">Reps máx.</label><input id="ex-high" name="high" type="number" min="1" max="50" step="1" required value="${ex.high}" /></div></div>
-      ${bodyweight?`<p class="small muted mt-12">Peso do corpo · ajuste as séries e repetições. Durante o treino, 0 kg significa sem carga adicional.</p>
+      ${bodyweight?`<p class="small muted mt-12">${elastic?'Resistência elástica: 0 kg = tensão não quantificada do elástico. Registre repetições reais.':'Peso do corpo · ajuste as séries e repetições. Durante o treino, 0 kg significa sem carga adicional.'}</p>
       <input type="hidden" name="step" value="${ex.step}" /><input type="hidden" name="unit" value="kg" /><input type="hidden" name="mode" value="bodyweight" />`:`<div class="field-row mt-12"><div class="field"><label for="ex-step">Incremento de carga</label><input id="ex-step" name="step" type="number" min="0.5" max="50" step="0.5" required value="${ex.step}" /></div>
       <div class="field"><label for="ex-unit">Unidade da carga</label><select id="ex-unit" name="unit"><option value="kg" ${ex.unit==='kg'?'selected':''}>kg (total/máquina)</option><option value="kg/halter" ${ex.unit==='kg/halter'?'selected':''}>kg por halter</option></select></div></div>
       <div class="field mt-12"><label for="ex-mode">Método de progressão</label><select id="ex-mode" name="mode"><option value="double" ${ex.mode==='double'?'selected':''}>Séries com carga estável</option><option value="pyramid" ${ex.mode==='pyramid'?'selected':''}>Pirâmide crescente</option></select></div>`}
