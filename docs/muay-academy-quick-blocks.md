@@ -12,7 +12,7 @@ A UI mobile tem uma única área de entrada contextual, sem segunda janela. Há 
 - Tipo: soco, chute, agachamento bilateral e joelho (adição útil para a modalidade).
 - Lateralidade: ambos com quantidade **por lado**, esquerdo ou direito; agachamento é bilateral.
 - Atalhos 20, 50, Outro (valor editável) ou Escada.
-- **Escada adotada = rodadas de 1, depois 2, ... até 10 repetições**, total `1+2+...+10=55` repetições por lado escolhido. A UI explica o significado para evitar interpretar “1,12,123” como números literais 12 ou 123. Se a aula usar uma progressão diferente, deve-se registrar como `Outro` até existir outro protocolo específico.
+- **Duas escadas claramente diferenciadas:** (a) Simples: rodadas de 1, 2, ... 10, total `1+2+...+10=55` repetições por lado; (b) Acumulada: rodadas `1`, `1+2`, `1+2+3`, ... até `1+...+10`, total de **220 repetições por lado** se todas as etapas forem concluídas. A acumulada corresponde ao exemplo escrito “1, 12, 123 ...”; o app identifica o protocolo escolhido para não confundir 55 e 220 ou representar 12/123 como contagem literal de uma só rodada.
 - `quantity` continua sendo **repetições por lado** quando `side='each'`; não são minutos nem séries de força. `movement`, `limb`, `pattern`, `ladderTo` guardam o protocolo.
 
 ### Sequência cronometrada
