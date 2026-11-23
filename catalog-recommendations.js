@@ -193,6 +193,13 @@
     const defaultLow=Number.isInteger(exercise.low)?exercise.low:8;
     const defaultHigh=Number.isInteger(exercise.high)?exercise.high:12;
     let low=defaultLow,high=defaultHigh;
+    const selectedGoal=context?.goal||resolveGoal(settings);
+    // Broad repetition ranges work across goals; a modest, narrower starting
+    // range for muscle gain is a UI convenience, not a superior rep formula.
+    if(selectedGoal==='muscle_gain'&&defaultHigh-defaultLow>=6){
+      low=Math.min(defaultHigh-3,Math.max(defaultLow,Math.round(defaultLow+(defaultHigh-defaultLow)*.2)));
+      high=defaultHigh;
+    }
     // Only personalize the repetition window when the SAME exercise has at
     // least two previous recorded sessions; estimated effort is not a 1RM.
     const previous=(strengthSessions||[]).filter(s=>{
@@ -221,7 +228,7 @@
       }
     }
     const regions=A?.describe?.(exercise.id)?.main||[];
-    const goal=context?.goal||resolveGoal(settings);
+    const goal=selectedGoal;
     const guard=GUARDS[goal]||GUARDS.recomposition;
     const observed=context?.workload||workload({strengthSessions,muaySessions,draft,today});
     const used=regions.map(id=>observed.byRegion[id]||{today:0,week:0,yesterday:0,directToday:0,directWeek:0});
@@ -248,7 +255,7 @@
       level==='reduce'?'Este grupo já recebeu estímulo hoje ou ontem; se precisar trocar, use uma dose menor.':
       'Opção conservadora para esta sessão, sem mudar a ficha permanente.';
     const objective=GOAL_LABELS[goal]||GOAL_LABELS.recomposition;
-    const reason=headline+' Objetivo: '+objective+'. Hoje: '+observed.today.exercises+
+    const reason=headline+' Objetivo: '+objective+'. A faixa de repetições foi definida pelo exercício e pelos seus registros anteriores quando disponíveis; não aumentamos repetições para compensar déficit calórico. Hoje: '+observed.today.exercises+
       ' exercícios e '+observed.today.sets+' séries efetivas no total; últimos 7 dias: '+
       observed.week.exercises+' exercícios e '+observed.week.sets+
       ' séries. Nesta região: '+fmt(dayEquivalent)+' séries equivalentes hoje e '+
