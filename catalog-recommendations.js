@@ -84,8 +84,8 @@
     if(previous.length===2 && defaultHigh-defaultLow>=3){
       const recorded=previous.flatMap(x=>x.sets.map(set=>Number(set.reps)))
         .filter(reps=>Number.isInteger(reps)&&reps>=defaultLow&&reps<=defaultHigh);
-      const effort=previous.flatMap(x=>x.sets.map(set=>Number(set.rir)))
-        .filter(x=>Number.isFinite(x)&&x>=0&&x<=10);
+      const effort=previous.flatMap(x=>x.sets.filter(set=>set.rir!==''&&set.rir!=null)
+        .map(set=>Number(set.rir))).filter(x=>Number.isFinite(x)&&x>=0&&x<=10);
       if(recorded.length>=2){
         const ordered=recorded.sort((a,b)=>a-b);
         const midpoint=ordered[Math.floor(ordered.length/2)];
