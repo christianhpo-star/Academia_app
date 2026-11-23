@@ -50,10 +50,15 @@ test('exhaustion 20/50 per limb and unilateral, squat bilateral and explicit 1-t
  a=add(d);
  assert.equal(a.quantity,55);assert.equal(a.side,'total');
  assert.equal(a.limb,'left');
+ d.quick.preset='ladderCumulative';d.quick.movement='chute';d.quick.limb='both';
+ a=add(d);
+ assert.equal(a.quantity,220,'1, 12, 123... até o 10 completa 220 repetições por lado');
+ assert.equal(a.pattern,'ladderCumulative');
+ assert.equal(a.side,'each');
  const original=structuredClone(d);
  const session=save(d);
  assert.deepEqual(d,original,'save must never change the draft');
- assert.equal(session.activities.length,4);
+ assert.equal(session.activities.length,5);
  assert.equal(session.fastVersion,2);
  assert.ok(M.validArchive({sessions:[session],draft:null}));
  const replay=M.draftFromSession(session);
