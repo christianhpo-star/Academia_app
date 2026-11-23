@@ -20,11 +20,11 @@
   const validQuick = q => !!q && typeof q==='object' && !Array.isArray(q) &&
     Object.hasOwn(QUICK_MODES,q.mode) && Object.hasOwn(QUICK_MOVEMENTS,q.movement) &&
     Object.hasOwn(QUICK_LIMBS,q.limb) && ['20','50','ladder','custom'].includes(q.preset) &&
-    optional(q.quantity,1,3000,true) && integer(q.ladderTo,2,20) &&
+    optional(q.quantity,1,3000,true) && optional(q.ladderTo,2,20,true) &&
     Array.isArray(q.combo) && q.combo.length<=12 && q.combo.every(v=>Object.hasOwn(COMBO_STRIKES,v)) &&
-    integer(q.sequenceMinutes,1,90) && Object.hasOwn(SPARRING_EXCHANGE,q.exchange) &&
-    Object.hasOwn(SPARRING_RULES,q.rules) && integer(q.rounds,1,30) &&
-    integer(q.roundMinutes,1,30) && Object.hasOwn(SPARRING_CONTACT,q.contact);
+    optional(q.sequenceMinutes,1,90,true) && Object.hasOwn(SPARRING_EXCHANGE,q.exchange) &&
+    Object.hasOwn(SPARRING_RULES,q.rules) && optional(q.rounds,1,30,true) &&
+    optional(q.roundMinutes,1,30,true) && Object.hasOwn(SPARRING_CONTACT,q.contact);
   const PRESETS = [
     { name: 'Polichinelos', unit: 'reps' },
     { name: 'Agachamento com salto', unit: 'reps' },
@@ -206,6 +206,7 @@
       const limb=squat?'bilateral':q.limb;
       const side=limb==='both'?'each':'total';
       const ladder=q.preset==='ladder',to=Number(q.ladderTo);
+      if(ladder&&!integer(q.ladderTo,2,20))return {error:'Informe o último degrau da escada.'};
       const quantity=ladder?to*(to+1)/2:Number(q.preset==='custom'?q.quantity:q.preset);
       if(!integer(quantity,1,3000))return {error:'Informe uma quantidade válida de repetições.'};
       const label=QUICK_MOVEMENTS[q.movement]+' · '+QUICK_LIMBS[limb];
@@ -214,10 +215,13 @@
     }
     if(q.mode==='combination'){
       if(!q.combo.length)return {error:'Adicione pelo menos um golpe à sequência.'};
+      if(!integer(q.sequenceMinutes,1,90))return {error:'Informe os minutos da sequência.'};
       const name=q.combo.map(key=>COMBO_STRIKES[key]).join(' → ').slice(0,100);
       return {activity:{...activity(name,'min',{category:'combination',quantity:Number(q.sequenceMinutes)}),
         combo:[...q.combo]}};
     }
+    if(!integer(q.rounds,1,30)||!integer(q.roundMinutes,1,30))
+      return {error:'Informe rounds e minutos por round.'};
     const name='Sparring · '+SPARRING_EXCHANGE[q.exchange]+' · '+SPARRING_RULES[q.rules];
     return {activity:{...activity(name,'min',{category:'sparring',quantity:Number(q.roundMinutes)}),
       sets:Number(q.rounds),exchange:q.exchange,rules:q.rules,contact:q.contact}};
