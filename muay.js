@@ -19,7 +19,7 @@
     roundMinutes:'3',contact:'light'});
   const validQuick = q => !!q && typeof q==='object' && !Array.isArray(q) &&
     Object.hasOwn(QUICK_MODES,q.mode) && Object.hasOwn(QUICK_MOVEMENTS,q.movement) &&
-    Object.hasOwn(QUICK_LIMBS,q.limb) && ['20','50','ladder','custom'].includes(q.preset) &&
+    Object.hasOwn(QUICK_LIMBS,q.limb) && ['20','50','ladder','ladderCumulative','custom'].includes(q.preset) &&
     optional(q.quantity,1,3000,true) && optional(q.ladderTo,2,20,true) &&
     Array.isArray(q.combo) && q.combo.length<=12 && q.combo.every(v=>Object.hasOwn(COMBO_STRIKES,v)) &&
     optional(q.sequenceMinutes,1,90,true) && Object.hasOwn(SPARRING_EXCHANGE,q.exchange) &&
@@ -76,7 +76,7 @@
     (value.side!=='each' || value.unit==='reps') &&
     (value.movement===undefined || Object.hasOwn(QUICK_MOVEMENTS,value.movement)) &&
     (value.limb===undefined || Object.hasOwn(QUICK_LIMBS,value.limb)) &&
-    (value.pattern===undefined || ['fixed','ladder'].includes(value.pattern)) &&
+    (value.pattern===undefined || ['fixed','ladder','ladderCumulative'].includes(value.pattern)) &&
     (value.ladderTo===undefined || integer(value.ladderTo,2,20)) &&
     (value.combo===undefined || (Array.isArray(value.combo) && value.combo.length<=12 &&
       value.combo.every(v=>Object.hasOwn(COMBO_STRIKES,v)) && value.category==='combination')) &&
@@ -205,13 +205,14 @@
       const squat=q.movement==='agachamento';
       const limb=squat?'bilateral':q.limb;
       const side=limb==='both'?'each':'total';
-      const ladder=q.preset==='ladder',to=Number(q.ladderTo);
+      const ladder=['ladder','ladderCumulative'].includes(q.preset),to=Number(q.ladderTo);
       if(ladder&&!integer(q.ladderTo,2,20))return {error:'Informe o último degrau da escada.'};
-      const quantity=ladder?to*(to+1)/2:Number(q.preset==='custom'?q.quantity:q.preset);
+      const quantity=ladder?(q.preset==='ladderCumulative'?to*(to+1)*(to+2)/6:to*(to+1)/2):
+        Number(q.preset==='custom'?q.quantity:q.preset);
       if(!integer(quantity,1,3000))return {error:'Informe uma quantidade válida de repetições.'};
       const label=QUICK_MOVEMENTS[q.movement]+' · '+QUICK_LIMBS[limb];
       return {activity:{...activity(label,'reps',{category:'exhaustion',side,quantity}),
-        movement:q.movement,limb,pattern:ladder?'ladder':'fixed',...(ladder?{ladderTo:to}:{})}};
+        movement:q.movement,limb,pattern:ladder?q.preset:'fixed',...(ladder?{ladderTo:to}:{})}};
     }
     if(q.mode==='combination'){
       if(!q.combo.length)return {error:'Adicione pelo menos um golpe à sequência.'};
@@ -356,17 +357,20 @@
       '<p class="small muted">Agachamento: repetições bilaterais, sem divisão por lado.</p>':
       academyChips({both:'Ambos (por lado)',left:'Esquerdo',right:'Direito'},
         'limb',q.limb,'Lado que executou o movimento');
-    const reps=academyChips({'20':'20','50':'50',ladder:'Escada 1→10',custom:'Outro'},
+    const reps=academyChips({'20':'20','50':'50',ladder:'1→10 · 55',ladderCumulative:'1, 12, 123… · 220',custom:'Outro'},
       'preset',q.preset,'Quantidade ou escada de repetições');
-    const ladderSum=Number(q.ladderTo)*(Number(q.ladderTo)+1)/2;
+    const to=Number(q.ladderTo);
+    const ladderSum=q.preset==='ladderCumulative'?to*(to+1)*(to+2)/6:to*(to+1)/2;
     const exhaustion='<div class="muay-academy-form" aria-label="Bloco de exaustão">'+
       '<h3>Movimento</h3>'+movement+
       '<h3>Contagem</h3>'+limbs+reps+
       (q.preset==='custom'?'<div class="field muay-academy-number"><label for="muay-quick-quantity">Repetições '+(q.movement==='agachamento'?'totais':'no lado escolhido')+'</label>'+
         '<input id="muay-quick-quantity" type="number" min="1" max="3000" step="1" inputmode="numeric" value="'+esc(q.quantity)+'" data-muay-quick-field="quantity"></div>':'')+
-      (q.preset==='ladder'?'<p class="muay-academy-help" role="note">Escada: 1, depois 2, depois 3 ... até '+
-        q.ladderTo+'. São <strong>'+ladderSum+' repetições '+(q.movement==='agachamento'?'no total':'por lado selecionado')+
-        '</strong>, e não 123 repetições numa única etapa.</p>':'')+
+      (['ladder','ladderCumulative'].includes(q.preset)?'<p class="muay-academy-help" role="note">'+
+        (q.preset==='ladderCumulative'?'Escada acumulada: rodada 1 faz 1; rodada 2 faz 1+2; rodada 3 faz 1+2+3; e assim até '+q.ladderTo+'. ':
+          'Escada simples: rodada 1 faz 1; rodada 2 faz 2; e assim até '+q.ladderTo+'. ')+
+        'São <strong>'+ladderSum+' repetições '+(q.movement==='agachamento'?'no total':'por lado selecionado')+
+        '</strong> no protocolo completo.</p>':'')+
       '</div>';
     const strikes=Object.entries(COMBO_STRIKES).map(([key,label])=>
       '<button type="button" class="muay-strike-add" data-action="muay-combo-add" data-value="'+key+
@@ -404,7 +408,8 @@
       '<div class="muay-academy-records">'+d.activities.map((a,i)=>
         '<div class="muay-academy-record"><div><span class="muay-record-index">'+(i+1)+' · '+
         esc(categories[a.category]||'Atividade')+'</span><strong>'+esc(a.name)+'</strong>'+
-        '<small>'+esc(volumeText(a))+(a.pattern==='ladder'?' · escada 1→'+a.ladderTo:'')+
+        '<small>'+esc(volumeText(a))+(a.pattern==='ladder'?' · escada 1→'+a.ladderTo:
+          a.pattern==='ladderCumulative'?' · escada 1, 12, 123…':'')+
         (a.contact?' · '+esc(SPARRING_CONTACT[a.contact]||''):'')+'</small></div>'+
         '<button type="button" class="button-inline" data-action="muay-remove" data-id="'+esc(a.id)+
         '" aria-label="Remover bloco '+(i+1)+'">Remover</button></div>').join('')+'</div>':
