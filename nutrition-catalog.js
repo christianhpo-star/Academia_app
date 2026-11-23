@@ -184,6 +184,47 @@
     portions
   }));
 
+  // User-supplied nutritional labels, 22/11/2026. Branding is not legible
+  // in the photos, so the entries are explicitly unbranded. Per-100 g values
+  // are from the label. The printed serving values can differ slightly from
+  // grams × 100 g due to legally permitted tabular rounding. Never infer
+  // unpictured fat/fiber values for the bread.
+  const photographedPackagedFoods=[
+    {
+      id:'photo:hamburguer-frango-56g',
+      name:'Hambúrguer de frango (congelado) — rótulo 56 g',
+      category:'Frango e aves',
+      aliases:['hamburguer de frango','hambúrguer de frango','hamburger frango',
+        'carne de hamburguer de frango','bife de hamburguer frango','hamburguer frango',
+        'hambúrguer frango','carne hamburguer de frango','frango para sanduiche'],
+      preparation:'other',
+      note:'Rótulo fotografado: 1 unidade de 56 g = 85 kcal, 7,6 g de proteína, 1,8 g de carboidratos e 5,3 g de gorduras. Por 100 g: 154 kcal, 14 g de proteína, 3,2 g de carboidratos, 9,5 g de gorduras, 0 g de fibras; 4,2 g de gorduras saturadas e 564 mg de sódio. Produto congelado, marca não identificada. Fritura, óleo e molhos adicionados devem ser lançados separadamente.',
+      nutrientsPer100g:{energyKcal:154,proteinG:14,carbsG:3.2,fatG:9.5,fiberG:0},
+      nutrientsPerServing:{energyKcal:85,proteinG:7.6,carbsG:1.8,fatG:5.3,fiberG:0},
+      servingPortionId:'one',
+      source:{name:'Fotografia do rótulo enviada pelo usuário',
+        reference:'Hambúrguer de frango congelado; porção de 56 g (1 unidade), imagem 22/11/2026',
+        license:'Transcrição do rótulo pessoal, fabricante não confirmado'},
+      portions:[p('one','1 unidade (56 g)',56),p('half','½ unidade (28 g)',28),p('100g','100 g',100)],
+    },
+    {
+      id:'photo:pao-forma-tradicional-50g',
+      name:'Pão de forma tradicional — rótulo 50 g (2 fatias)',
+      category:'Pães',
+      aliases:['pão de forma','pao de forma','pao de forma tradicional','pão de sanduíche',
+        'pao sanduiche','pão fatiado tradicional','pao fatiado','2 fatias','pão de hambúrguer fatiado'],
+      preparation:'other',
+      note:'Rótulo fotografado: 2 fatias (50 g) = 138 kcal, 25 g de carboidratos, 4,5 g de proteínas, 5,5 g de açúcares totais e 2,3 g de açúcares adicionados. Por 100 g: 275 kcal, 50 g de carboidratos, 9 g de proteínas, 11 g de açúcares totais e 4,5 g de açúcares adicionados. Gorduras e fibras NÃO puderam ser lidas na foto; não equivalem a zero. Marca não identificada. A porção é do pão sem recheios.',
+      nutrientsPer100g:{energyKcal:275,proteinG:9,carbsG:50,fatG:null,fiberG:null},
+      nutrientsPerServing:{energyKcal:138,proteinG:4.5,carbsG:25,fatG:null,fiberG:null},
+      servingPortionId:'two',
+      source:{name:'Fotografia do rótulo enviada pelo usuário',
+        reference:'Pão de forma tradicional; porção de 50 g (2 fatias), imagem 22/11/2026',
+        license:'Transcrição do rótulo pessoal, fabricante não confirmado'},
+      portions:[p('two','2 fatias (50 g)',50),p('slice','1 fatia (25 g)',25),p('100g','100 g',100)],
+    }
+  ];
+
   // User-provided photo, 16/11/2026. The photo cannot measure mass or the
   // amount of filling. This is a recipe estimate, never a verified food label.
   // References:
@@ -361,7 +402,7 @@
       nutrientsPer100g:{energyKcal:61,proteinG:3.15,carbsG:4.8,fatG:3.25},
       portions:[p('cup','1 copo (≈200 g, volume não aferido)',200),p('small','1 xícara menor (≈100 g)',100),p('100g','100 g',100)],
     },
-  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods,drinkFoods,partyFoods,photographedSnackFoods);
+  ].map(row=>({...row,source:row.source||source(row.fdc)})).concat(tacoFoods,sweetFoods,growthFoods,drinkFoods,partyFoods,photographedSnackFoods,photographedPackagedFoods);
   if (!N || foods.some(food=>!N.validFood(food))) throw new Error('Catálogo alimentar incompatível.');
   const normalize = value => String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
   const find = id => foods.find(food=>food.id===id)||null;
@@ -383,12 +424,12 @@
   const DRINK_SUGGESTIONS=['drink:cafe-coado-sem-acucar','drink:itambe-uht-desnatado','drink:itambe-uht-integral','drink:monster-zero-sugar-473ml','drink:monster-ultra-white-473ml'];
   const mealFirst={
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
-      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265',...DRINK_SUGGESTIONS],
-    lunch:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','ref:generic-171477','taco:2011:429','taco:2011:539'],
-    snack:['recipe:joelho-frango-assado-2026','recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+      'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265',...DRINK_SUGGESTIONS],
+    lunch:['ref:generic-169757','taco:2011:561','photo:hamburguer-frango-56g','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','ref:generic-171477','taco:2011:429','taco:2011:539'],
+    snack:['recipe:joelho-frango-assado-2026','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml',...DRINK_SUGGESTIONS],
-    dinner:['ref:generic-169757','taco:2011:561','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','taco:2011:538','taco:2011:429'],
+    dinner:['ref:generic-169757','taco:2011:561','photo:hamburguer-frango-56g','photo:pao-forma-tradicional-50g','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','taco:2011:538','taco:2011:429'],
     supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'ref:generic-171265',...GROWTH_TOP_IDS,'growth:whey-unknown',...DRINK_SUGGESTIONS]
   };
@@ -411,7 +452,7 @@
     const food=find(foodId),qty=Number(count);
     if(!food || !Number.isFinite(qty) || qty<=0 || qty>10000 || typeof makeId!=='function')return null;
     const portion=food.portions.find(row=>row.id===portionId);
-    if(portionId==='custom' && (food.nutrientsPerServing||food.nutrientsPerMl||(food.estimate&&!food.estimateGramsBase)))return null;
+    if(portionId==='custom' && ((food.nutrientsPerServing&&!food.servingPortionId)||food.nutrientsPerMl||(food.estimate&&!food.estimateGramsBase)))return null;
     if(portionId==='customMl'&&!food.nutrientsPerMl)return null;
     if(!['custom','customMl'].includes(portionId)&&!portion)return null;
     const liquid=!!food.nutrientsPerMl;
@@ -424,7 +465,7 @@
       unit:liquid?'ml':portionId==='custom'?'g':'portion',grams,
       nutrientsPer100g:{...food.nutrientsPer100g},
       ...(liquid?{nutrientsPerMl:{...food.nutrientsPerMl}}:{}),
-      ...(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
+      ...(food.nutrientsPerServing&&(!food.servingPortionId||portionId===food.servingPortionId)?{nutrientsPerServing:{...food.nutrientsPerServing}}:{}),
       ...(food.estimate?{estimate:copyEstimate(food.estimate,portionId==='custom'?1/food.estimateGramsBase:(portion?.factor??1),portionId==='custom'?5:1)}:{}),
       source:{...food.source},
     };
@@ -468,7 +509,7 @@
         quantity:item.quantity,unit:item.unit,grams:item.grams,
         nutrientsPer100g:{...food.nutrientsPer100g},
         ...(item.nutrientsPerMl?{nutrientsPerMl:{...item.nutrientsPerMl}}:(food.nutrientsPerMl?{nutrientsPerMl:{...food.nutrientsPerMl}}:{})),
-        ...(item.nutrientsPerServing?{nutrientsPerServing:{...item.nutrientsPerServing}}:(food.nutrientsPerServing?{nutrientsPerServing:{...food.nutrientsPerServing}}:{})),
+        ...(item.nutrientsPerServing?{nutrientsPerServing:{...item.nutrientsPerServing}}:(food.nutrientsPerServing&&!food.servingPortionId?{nutrientsPerServing:{...food.nutrientsPerServing}}:{})),
         ...(item.estimate?{estimate:copyEstimate(item.estimate)}:{}),
         source:{...food.source},
       }:null;

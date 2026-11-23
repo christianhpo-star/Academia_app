@@ -426,3 +426,68 @@ test('porção compartilhada registra apenas o consumo próprio; pesos e percent
  assert.equal(N.validArchive(archive),true);
  assert.deepEqual(N.merge(archive,N.archive()).entries,archive.entries);
 });
+
+test('rótulos fotografados: hambúrguer de frango 56 g e pão de forma 50 g entram no catálogo com medidas flexíveis',()=>{
+ const meatId='photo:hamburguer-frango-56g',breadId='photo:pao-forma-tradicional-50g';
+ const meat=C.find(meatId),bread=C.find(breadId);
+ assert.ok(meat&&bread);
+ assert.equal(N.validFood(meat),true);
+ assert.equal(N.validFood(bread),true);
+ assert.equal(C.search('carne de hamburguer de frango').some(f=>f.id===meatId),true);
+ assert.equal(C.search('pao de forma tradicional').some(f=>f.id===breadId),true);
+ assert.ok(C.orderedForMeal('breakfast').some(f=>f.id===breadId));
+ assert.ok(C.orderedForMeal('dinner').some(f=>f.id===meatId));
+ assert.equal(meat.nutrientsPer100g.energyKcal,154);
+ assert.equal(meat.nutrientsPer100g.proteinG,14);
+ assert.equal(meat.nutrientsPer100g.carbsG,3.2);
+ assert.equal(meat.nutrientsPer100g.fatG,9.5);
+ assert.equal(meat.nutrientsPer100g.fiberG,0);
+ assert.equal(bread.nutrientsPer100g.energyKcal,275);
+ assert.equal(bread.nutrientsPer100g.carbsG,50);
+ assert.equal(bread.nutrientsPer100g.proteinG,9);
+ assert.equal(bread.nutrientsPer100g.fatG,null);
+ assert.equal(bread.nutrientsPer100g.fiberG,null);
+ // A porção do rótulo é a fonte dos valores arredondados declarados.
+ const one=C.makeItem(meatId,'one',1,id),two=C.makeItem(breadId,'two',1,id);
+ assert.equal(one.grams,56);assert.equal(two.grams,50);
+ assert.equal(one.unit,'portion');assert.equal(two.unit,'portion');
+ const m=N.observedTotals([entry(one)],'2026-11-14').totals;
+ const b=N.observedTotals([entry(two)],'2026-11-14').totals;
+ assert.deepEqual([m.energyKcal,m.proteinG,m.carbsG,m.fatG,m.fiberG],[85,7.6,1.8,5.3,0]);
+ assert.deepEqual([b.energyKcal,b.proteinG,b.carbsG,b.fatG,b.fiberG],[138,4.5,25,null,null]);
+ // 1 fatia, meia unidade e gramas arbitrárias usam 100g; nunca recebem
+ // os valores inteiros do rótulo da porção de 50g ou 56g.
+ const slice=C.makeItem(breadId,'slice',1,id),half=C.makeItem(meatId,'half',1,id);
+ assert.equal(slice.nutrientsPerServing,undefined);
+ assert.equal(half.nutrientsPerServing,undefined);
+ assert.equal(N.observedTotals([entry(slice)],'2026-11-14').totals.energyKcal,68.75);
+ assert.equal(N.observedTotals([entry(half)],'2026-11-14').totals.energyKcal,43.12);
+ const weighed=C.makeItem(breadId,'custom',32.5,id);
+ const weighedMeat=C.makeItem(meatId,'custom',121.5,id);
+ assert.equal(weighed.nutrientsPerServing,undefined);
+ assert.equal(weighed.grams,32.5);
+ assert.equal(weighedMeat.grams,121.5);
+ assert.equal(N.observedTotals([entry(weighed)],'2026-11-14').totals.energyKcal,89.38);
+ assert.equal(N.observedTotals([entry(weighedMeat)],'2026-11-14').totals.energyKcal,187.11);
+ assert.equal(N.validEntry(entry(weighed)),true);
+ assert.equal(N.validEntry(entry(weighedMeat)),true);
+ assert.equal(C.makeItem(breadId,'custom',0,id),null);
+ assert.equal(C.makeItem(meatId,'custom',-5,id),null);
+});
+test('favoritos e histórico preservam o rótulo fotografado sem alterar pesagens anteriores',()=>{
+ const bread=C.makeItem('photo:pao-forma-tradicional-50g','two',1,id);
+ const original=entry(bread),immutable=structuredClone(original);
+ const saved=C.makeFavorite(original,N.archive(),'Meu pão',id);
+ assert.ok(saved);
+ const archive=N.archive();
+ archive.mealTemplates.push(saved.favorite);
+ assert.equal(N.validArchive(archive),true);
+ const repeat=C.fromFavorite(saved.favorite,'2026-11-15',archive,id);
+ assert.ok(repeat);
+ assert.equal(N.validEntry(repeat),true);
+ assert.equal(N.observedTotals([repeat],'2026-11-15').totals.energyKcal,138);
+ assert.equal(N.observedTotals([repeat],'2026-11-15').totals.fatG,null);
+ assert.deepEqual(original,immutable);
+ const merged=N.merge({...N.archive(),entries:[original]},N.archive());
+ assert.deepEqual(merged.entries[0],original);
+});
