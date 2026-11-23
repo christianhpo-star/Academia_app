@@ -2215,8 +2215,13 @@
     if(found.isNew&&state.exercises.length>=200)return notify('Limite de exercícios atingido.');
     const approved=mode==='extra'?sessionAdvice('extra').recommendations.find(item=>
       item.kind==='extra-exercise'&&item.id===id&&item.sourceId):null;
-    const dayGuide=mode!=='extra'?CRECO?.prescription?.({exercise:found.exercise,
-      context:catalogAdviceContext(),draft:ui.draft,strengthSessions:state.sessions,
+    const context=mode!=='extra'?catalogAdviceContext():null;
+    const motivated=mode!=='extra'&&CRECO?.forExercise?.(found.exercise,context);
+    // Regular manual catalog selections must retain their authored series and
+    // repetitions. Only a specifically recommended alternative gets today's
+    // temporary 2–3-set plan.
+    const dayGuide=motivated?CRECO?.prescription?.({exercise:found.exercise,
+      context,draft:ui.draft,strengthSessions:state.sessions,
       muaySessions:state.muay.sessions,settings:state.settings,today:today()}):null;
     const result=CSESSION.prepare({draft:ui.draft,mode,sourceId:ui.catalogSourceId,
       targetId:id,exercise:found.exercise,dayPrescription:dayGuide,
