@@ -1089,6 +1089,88 @@
       </details>`;
   }
 
+
+  function renderFreeOptions(){
+    const available=FREE.options(state.exercises,ui.draft,ui.freeSearch,ui.freeAll);
+    const typed=ui.freeSearch.trim();
+    return available.length?available.map(ex=>{
+      const core=ex.complement==='abdomen'||/abdom|core|obl[ií]qu|dead.bug/i.test(
+        [ex.name,ex.muscle,...(ex.aliases||[])].join(' '));
+      return '<button type="button" class="free-exercise-choice" data-action="free-add" data-ex="'+esc(ex.id)+'">'+
+        '<span><strong>'+esc(ex.name)+'</strong><small>'+esc(ex.muscle||ex.group||'Exercício')+
+        (SETS.allowsZero(ex)?' · sem carga adicional':' · '+esc(ex.unit||'kg'))+'</small></span>'+
+        '<span class="free-exercise-choice-add" aria-hidden="true">+</span></button>';
+    }).join(''):'<p class="small muted">'+(typed?'Nenhum exercício encontrado. Experimente outro termo.':
+      'Não há mais sugestões de abdômen disponíveis; abra o catálogo completo.')+'</p>';
+  }
+  function renderFreeWorkout(){
+    const d=ui.draft,stats=FREE.count(d);
+    const muay=state.muay.sessions.find(s=>s.id===d.afterMuayId&&s.day===d.day);
+    const entries=Object.values(d.entries);
+    const last=entries.length?entries.at(-1).id:null;
+    const setsBody=entries.map((en,i)=>{
+      const ex=exerciseFor(en.id);
+      if(!ex)return '';
+      const completed=SETS.workSets(en).length;
+      return '<section class="card free-exercise-card" data-free-exercise="'+esc(ex.id)+'">'+
+        '<div class="row-between free-exercise-head"><div><span class="section-eyebrow">EXERCÍCIO '+(i+1)+'</span>'+
+        '<h3>'+esc(ex.name)+'</h3><small>'+completed+' série(s) efetiva(s) registrada(s)</small></div>'+
+        '<button type="button" class="button-inline" data-action="free-remove" data-ex="'+esc(ex.id)+'" aria-label="Retirar '+esc(ex.name)+'">Retirar</button></div>'+
+        '<p class="small muted">'+(SETS.allowsZero(ex)?
+          'Peso do corpo: use 0 kg se não adicionou carga.':'Informe a carga utilizada; sem carga e repetições, a série não será considerada executada.')+
+          (ex.repPerSide?' Repetições por lado.':'')+'</p>'+
+        '<div class="free-set-table" role="group" aria-label="Séries de '+esc(ex.name)+'">'+
+        '<div class="free-set-labels"><span>Série</span><span>Carga '+(SETS.allowsZero(ex)?'extra':'')+' ('+esc(ex.unit||'kg')+')</span>'+
+        '<span>'+(ex.repPerSide?'Reps/lado':'Reps')+'</span><span>RIR</span></div>'+
+        en.sets.map((set,index)=>
+          '<div class="free-set-row"><span class="free-set-number">'+(index+1)+'</span>'+
+          '<input aria-label="Série '+(index+1)+', carga de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="load" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="'+(SETS.allowsZero(ex)?'0':'kg')+
+          '" value="'+esc(set.load)+'">'+
+          '<input aria-label="Série '+(index+1)+', repetições de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="reps" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Reps" value="'+esc(set.reps)+'">'+
+          '<input aria-label="Série '+(index+1)+', RIR de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="rir" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" value="'+esc(set.rir)+'"></div>').join('')+'</div>'+
+        (ex.knee?'<div class="field mt-12"><label for="free-knee-'+esc(ex.id)+'">Dor no joelho durante este exercício (0–5+)</label>'+
+          '<select id="free-knee-'+esc(ex.id)+'" data-ex-pain="'+esc(ex.id)+'">'+
+          painOptions(en.pain)+'</select></div>':'')+
+        '<div class="free-set-actions"><button type="button" class="secondary small-button" data-action="add-set" data-ex="'+esc(ex.id)+'" '+
+          (en.sets.length>=12?'disabled':'')+'>+ Série</button>'+
+        '<button type="button" class="button-inline" data-action="remove-set" data-ex="'+esc(ex.id)+'" '+
+          (en.sets.length<=1?'disabled':'')+'>− Última série</button></div></section>';
+    }).join('');
+    return '<div class="free-workout" aria-label="Registro de treino livre">'+
+      headline('Registro rápido','Treino livre','Inclua somente os exercícios que fez. Nenhum bloco A/B/C/D será concluído.')+
+      '<div class="callout workout-status-callout '+(ui.draftSaveOk?'good':'warn')+'"><strong>'+
+      (ui.recovered?'Treino livre recuperado.':'Rascunho salvo neste aparelho.')+'</strong>'+
+      '<span class="draft-status" id="draft-status" role="status">'+esc(draftStatusText())+'</span></div>'+
+      '<section class="card free-workout-meta"><div class="row-between"><div><strong>Registro avulso</strong>'+
+      '<p class="small muted">Pode ser depois do Muay ou em outro momento do dia.</p></div>'+
+      '<span class="pill green">Só hoje</span></div>'+
+      '<div class="field mt-12"><label for="free-day">Data do treino</label>'+
+      '<input id="free-day" type="date" data-free-day value="'+esc(d.day)+'" max="'+today()+'"></div>'+
+      (muay?'<p class="free-workout-linked">Após Muay Thai em '+dateBR(muay.day)+'. Os treinos ficam separados no histórico.</p>':'')+
+      '</section>'+
+      '<section class="card free-catalog"><h2 class="section-title">Adicionar exercícios</h2>'+
+      '<p class="small muted">Selecione pelo nome. Abdominais aparecem primeiro para facilitar registros curtos.</p>'+
+      '<div class="field"><label for="free-search">Buscar no catálogo</label>'+
+      '<input id="free-search" data-free-search type="search" autocomplete="off" placeholder="Ex.: abdominal, crunch, prancha" value="'+esc(ui.freeSearch)+'"></div>'+
+      '<div id="free-exercise-results" class="free-exercise-results" aria-label="Exercícios disponíveis">'+renderFreeOptions()+'</div>'+
+      '<button type="button" class="button-inline free-catalog-expand" data-action="free-expand">'+
+      (ui.freeAll?'Ver apenas sugestões rápidas':'Ver catálogo completo')+'</button></section>'+
+      '<section aria-label="Exercícios deste treino"><div class="row-between free-exercises-title"><h2 class="section-title">O que você fez</h2>'+
+      '<span id="free-count" class="pill">'+stats.performed+' exercícios · '+stats.sets+' séries</span></div>'+
+      (entries.length?setsBody:'<div class="card free-empty">Nenhum exercício adicionado. Escolha um abdominal ou pesquise qualquer exercício.</div>')+
+      '</section>'+
+      '<section class="card free-completion"><h2 class="section-title">Concluir registro</h2>'+
+      '<p id="free-completion-status" class="small muted">'+stats.performed+' exercício(s) com séries executadas. '+
+      'Séries em branco não serão salvas como realizadas.</p>'+
+      '<div class="field mt-12"><label for="free-session-notes">Observações (opcional)</label>'+
+      '<textarea id="free-session-notes" maxlength="1000" data-draft-meta="notes" placeholder="Ex.: abdominal depois da aula de Muay">'+esc(d.notes)+'</textarea></div>'+
+      '<div class="free-completion-actions"><button type="button" class="primary full" data-action="finish">Salvar treino livre</button>'+
+      '<button type="button" class="button-inline" data-action="cancel">Descartar rascunho</button></div></section></div>';
+  }
+
   function seedSets(ex) {
     const h=history(ex.id);
     if(h.length){
