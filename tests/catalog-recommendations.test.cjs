@@ -110,3 +110,15 @@ test('manual catalog addition without a specific balance recommendation retains 
  assert.equal(Object.hasOwn(result.draft.entries[exercise.id],'dayPrescription'),false);
  assert.deepEqual(draft.entries,{});
 });
+
+test('indirect chest pressing stimulus blocks false anterior-shoulder deficit badge',()=>{
+ const status=C.status(args);
+ assert.equal(status.ready,true);
+ assert.ok(status.totals.frontDelts.indirectSets>0);
+ const front=F.options(DATA.exercises).find(x=>x.id==='elevacao-frontal-polia');
+ // This sample trained pressing frequently: anterior deltoid has auxiliary
+ // recorded work even without isolated sets; do not prescribe extra work.
+ assert.equal(C.forExercise(front,status),null);
+ const traps=F.options(DATA.exercises).find(x=>x.id==='encolhimento-barra');
+ assert.ok(C.forExercise(traps,status));
+});
