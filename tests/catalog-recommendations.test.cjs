@@ -100,3 +100,13 @@ test('two previous sessions with the same exercise inform a narrower rep target;
  assert.match(personalized.reason,/duas sessões anteriores/);
  assert.ok(personalized.sets>=2&&personalized.sets<=3);
 });
+
+test('manual catalog addition without a specific balance recommendation retains original sets',()=>{
+ const exercise=F.options(DATA.exercises).find(x=>x.id==='desenvolvimento-barra');
+ const draft={planId:'B',energy:'normal',entries:{},skipped:[],plannedIds:[],addedIds:[]};
+ const result=CSESSION.prepare({draft,mode:'add',targetId:exercise.id,exercise});
+ assert.equal(result.ok,true);
+ assert.equal(result.draft.entries[exercise.id].sets.length,exercise.sets);
+ assert.equal(Object.hasOwn(result.draft.entries[exercise.id],'dayPrescription'),false);
+ assert.deepEqual(draft.entries,{});
+});
