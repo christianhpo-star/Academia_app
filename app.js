@@ -495,6 +495,94 @@
       <ul class="mini-list">${overview.leaders.map(item => `<li><div class="history-exercise"><strong>${esc(item.name)}</strong><br><span>${esc(item.plan.title)} · ${dateBR(item.firstDate)} → ${dateBR(item.lastDate)}</span><br><small class="leader-detail">${esc(setSummary(item.firstTop, item.unit))} → ${esc(setSummary(item.latestTop, item.unit))}</small></div><div class="text-right"><strong>${fmt(item.current)}%</strong><br><span class="strength-delta ${strengthTone(item.percent)}">${item.percent >= 0 ? '+' : ''}${fmt(item.percent)}%</span></div></li>`).join('')}</ul>
     </section>` : ''}`;
   }
+  // Keep browser/Android Back aligned with the visible app destination.
+  // Route snapshots contain UI identifiers only: never sets, notes, weights or
+  // any other personal records. Local data remains exclusively in localStorage.
+  const BROWSER_TABS=['home','plans','catalog','nutrition','progress','history','settings','share'];
+  let browserRouteKey=null;
+  let restoringBrowserRoute=false;
+  function browserRoute(){
+    const tab=BROWSER_TABS.includes(ui.tab)?ui.tab:'home';
+    const route={tab};
+    if(tab==='plans'){
+      route.muay=Boolean(muayMode);
+      if(ui.editor){
+        route.editorId=ui.editor.id||null;
+        route.editorGroup=ui.editor.group||null;
+      }
+    }else if(tab==='catalog'){
+      route.context=catalogContext();
+      route.source=route.context==='replace'?ui.catalogSourceId||null:null;
+      route.detail=ui.catalogDetailId||null;
+    }else if(tab==='progress'){
+      route.view=ui.evolutionView;
+      route.body=Boolean(ui.bodyOpen);
+    }else if(tab==='history'){
+      route.filter=ui.historyFilter;
+    }
+    return route;
+  }
+  function syncBrowserRoute(){
+    // Inline Playwright fixtures are about:blank; only real app origins use
+    // browser history. A failed History API must never block rendering.
+    if(!['http:','https:'].includes(window.location.protocol))return;
+    const route=browserRoute(),key=JSON.stringify(route);
+    if(key===browserRouteKey)return;
+    if(restoringBrowserRoute){browserRouteKey=key;return;}
+    try{
+      if(browserRouteKey===null)window.history.replaceState({forjaRoute:route},'');
+      else window.history.pushState({forjaRoute:route},'');
+      browserRouteKey=key;
+    }catch(err){console.warn('Histórico de navegação indisponível; registros preservados.',err);}
+  }
+  function restoreBrowserRoute(route){
+    if(loadFailure||!route||typeof route!=='object'||!BROWSER_TABS.includes(route.tab))return;
+    const previousDetail=ui.tab==='catalog'?ui.catalogDetailId:null;
+    restoringBrowserRoute=true;
+    try{
+      ui.tab=route.tab;
+      ui.editor=null;ui.catalogContext='browse';ui.catalogSourceId=null;
+      ui.catalogDetailId=null;ui.catalogConfirmId=null;ui.bodyOpen=false;
+      if(route.tab==='plans'){
+        muayMode=Boolean(route.muay);
+        if(!muayMode && typeof route.editorId==='string' &&
+          state.exercises.some(ex=>ex.id===route.editorId))ui.editor={id:route.editorId};
+        else if(!muayMode && !route.editorId && DATA.rotation.includes(route.editorGroup))
+          ui.editor={id:null,group:route.editorGroup};
+      }else if(route.tab==='catalog'){
+        if(ui.draft&&['replace','add','extra'].includes(route.context)){
+          const validSource=route.context!=='replace'||!route.source||
+            Object.hasOwn(ui.draft.entries||{},route.source);
+          if(validSource){
+            ui.catalogContext=route.context;
+            ui.catalogSourceId=route.context==='replace'?(route.source||null):null;
+          }
+        }
+        if(typeof route.detail==='string' &&
+          F.options(state.exercises,null).some(ex=>ex.id===route.detail))
+          ui.catalogDetailId=route.detail;
+      }else if(route.tab==='progress'){
+        ui.evolutionView=['weight','training','nutrition'].includes(route.view)?route.view:'weight';
+        ui.bodyOpen=Boolean(route.body);
+      }else if(route.tab==='history'){
+        ui.historyFilter=['all','strength','muay'].includes(route.filter)?route.filter:'all';
+      }else if(route.tab==='share'&&!ui.share){
+        // The share composition is ephemeral and deliberately not in history.
+        ui.tab='history';
+      }
+      render();
+    }finally{
+      restoringBrowserRoute=false;
+      browserRouteKey=JSON.stringify(browserRoute());
+    }
+    if(previousDetail&&ui.tab==='catalog'&&!ui.catalogDetailId){
+      window.scrollTo(0,ui.catalogScrollY||0);
+      Array.from(document.querySelectorAll('[data-action="catalog-view"]'))
+        .find(item=>item.dataset.ex===previousDetail)?.focus({preventScroll:true});
+    }else window.scrollTo(0,0);
+  }
+  window.addEventListener('popstate',event=>restoreBrowserRoute(event.state?.forjaRoute));
+
   let shareRenderVersion=0;
   function render() {
     const main = document.getElementById('screen');
@@ -518,6 +606,7 @@
       btn.classList.toggle('active',active);
       if(active) btn.setAttribute('aria-current','page'); else btn.removeAttribute('aria-current');
     });
+    syncBrowserRoute();
   }
   function headline(kicker,title,desc='') {
     return `<p class="eyebrow">${esc(kicker)}</p><h1 class="page-title">${esc(title)}</h1>${desc?`<p class="lead">${esc(desc)}</p>`:''}`;
