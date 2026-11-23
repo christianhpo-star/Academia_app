@@ -2694,6 +2694,43 @@
     if(action==='mode-muay'){muayMode=true;ui.editor=null;render();return;}
     if(action==='mode-strength'){muayMode=false;render();return;}
     if(action==='muay-start'){state.muay.draft=M.draft(today(),btn.dataset.place);save();render();return;}
+    if(['muay-quick-mode','muay-quick-choice','muay-combo-add','muay-combo-remove','muay-quick-add'].includes(action)){
+      const draft=state.muay.draft,quick=draft?.place==='academia'?draft.quick:null;
+      if(!quick)return;
+      const before=copy(quick);
+      if(action==='muay-quick-mode'){
+        if(!Object.hasOwn(M.QUICK_MODES,btn.dataset.value))return;
+        quick.mode=btn.dataset.value;
+      }else if(action==='muay-quick-choice'){
+        const field=btn.dataset.quickField,value=btn.dataset.value;
+        const catalogs={movement:M.QUICK_MOVEMENTS,limb:M.QUICK_LIMBS,
+          preset:{20:1,50:1,ladder:1,custom:1},exchange:M.SPARRING_EXCHANGE,
+          rules:M.SPARRING_RULES,contact:M.SPARRING_CONTACT};
+        if(!Object.hasOwn(catalogs[field]||{},value))return;
+        quick[field]=value;
+        if(field==='movement'){
+          if(value==='agachamento')quick.limb='bilateral';
+          else if(quick.limb==='bilateral')quick.limb='both';
+        }
+        if(field==='preset'&&['20','50'].includes(value))quick.quantity=value;
+      }else if(action==='muay-combo-add'){
+        if(!Object.hasOwn(M.COMBO_STRIKES,btn.dataset.value)||quick.combo.length>=12)return;
+        quick.combo.push(btn.dataset.value);
+      }else if(action==='muay-combo-remove'){
+        const index=Number(btn.dataset.index);
+        if(!Number.isInteger(index)||index<0||index>=quick.combo.length)return;
+        quick.combo.splice(index,1);
+      }else{
+        if(draft.activities.length>=30)return notify('Limite de 30 blocos por sessão.');
+        const prepared=M.quickActivity(quick);
+        if(prepared.error)return notify(prepared.error);
+        draft.activities.push(prepared.activity);
+        if(!save()){draft.activities.pop();return notify('Não foi possível salvar este bloco.');}
+        render();return;
+      }
+      if(!save()){draft.quick=before;return notify('Não foi possível atualizar o registro.');}
+      render();return;
+    }
     if(action==='muay-preset' || action==='muay-custom'){
       const d=state.muay.draft;
       if(!d||d.activities.length>=30)return notify('Limite de 30 exercícios por sessão.');
@@ -2869,7 +2906,14 @@
   function updateMuayField(event) {
     const el=event.target,d=state.muay.draft;
     if(!d)return;
-    if(el.dataset.muayField){
+    if(el.dataset.muayQuickField && d.quick && d.place==='academia'){
+      const field=el.dataset.muayQuickField;
+      if(!['quantity','sequenceMinutes','rounds','roundMinutes'].includes(field))return;
+      d.quick[field]=el.value;
+      if(field==='quantity')d.quick.preset='custom';
+      if(!save())notify('Rascunho não salvo. Revise o campo informado.');
+      return;
+    }else if(el.dataset.muayField){
       const field=el.dataset.muayField;
       if(!['day','place','kind','duration','intensity','fatigue','kneePain','notes'].includes(field))return;
       d[field]=el.value;
@@ -2964,6 +3008,9 @@
       render();return;
     }
     if((el.dataset.muayProp==='unit'||el.dataset.muayProp==='category')&&state.muay.draft){
+      render();return;
+    }
+    if(['rounds','roundMinutes'].includes(el.dataset.muayQuickField) && state.muay.draft?.quick){
       render();return;
     }
     if(el.dataset.skipReason && ui.draft){
