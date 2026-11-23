@@ -1194,6 +1194,41 @@
     if(ex.example) return copy(ex.example);
     return Array.from({length:ex.sets},()=>({load:SETS.allowsZero(ex)?0:'',reps:'',rir:'',warmup:false}));
   }
+  function startFreeWorkout(origin=''){
+    if(ui.draft){
+      if(FREE.isFree(ui.draft)){
+        muayMode=false;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;
+      }
+      if(!confirm('Existe uma ficha em andamento. Descartar esse rascunho e começar um treino livre?'))return;
+      clearDraft();
+    }
+    const linked=origin==='muay'?FREE.linkedMuay(state.muay.sessions,today()):null;
+    const draft=FREE.create({day:today(),afterMuayId:linked?.id||null});
+    if(draft.error)return notify(draft.error);
+    ui.draft=draft;muayMode=false;ui.tab='plans';ui.editor=null;
+    ui.freeSearch='';ui.freeAll=false;ui.focusedMode=false;ui.focusedExercise=null;
+    if(!persistDraft())notify('Rascunho não salvo: não feche o aplicativo sem guardar os dados.');
+    render();window.scrollTo(0,0);
+  }
+  function addFreeExercise(exercise,isNew=false){
+    if(!FREE.isFree(ui.draft))return;
+    const result=FREE.add(ui.draft,exercise);
+    if(result.error)return notify(result.error);
+    if(isNew&&state.exercises.length>=200)return notify('O catálogo pessoal atingiu o limite de exercícios.');
+    if(isNew){
+      state.exercises.push({...exercise,active:false});
+      if(!save()){state.exercises.pop();return notify('Não foi possível salvar o novo exercício.');}
+    }
+    const original=ui.draft;
+    ui.draft=result.draft;
+    if(!persistDraft()){
+      ui.draft=original;
+      if(isNew){state.exercises.pop();save();}
+      return notify('Não foi possível salvar o novo rascunho; o treino anterior foi preservado.');
+    }
+    ui.freeSearch='';ui.freeAll=false;
+    render();document.querySelector('[data-free-exercise="'+exercise.id+'"]')?.scrollIntoView({block:'nearest'});
+  }
   function startWorkout(id) {
     if (!DATA.rotation.includes(id)) return;
     if (ui.draft && !confirm('Existe um treino em andamento. Descartar esse rascunho e começar outro?')) return;
@@ -2798,6 +2833,27 @@
       document.getElementById('calendar-selected-heading')?.scrollIntoView({block:'nearest'});
       return;
     }
+    if(action==='free-start'){startFreeWorkout(btn.dataset.origin||'');return;}
+    if(action==='free-expand'&&FREE.isFree(ui.draft)){ui.freeAll=!ui.freeAll;render();return;}
+    if(action==='free-add'&&FREE.isFree(ui.draft)){
+      const found=F.prepareCatalog(btn.dataset.ex,state.exercises);
+      if(!found)return notify('Exercício não encontrado no catálogo.');
+      addFreeExercise(found.exercise,found.isNew);return;
+    }
+    if(action==='free-custom-add'&&FREE.isFree(ui.draft)){
+      const name=document.getElementById('free-custom-name')?.value||'';
+      const bodyweight=document.getElementById('free-custom-mode')?.value==='bodyweight';
+      const result=FREE.custom(name,bodyweight);
+      if(result.error)return notify(result.error);
+      addFreeExercise(result.exercise,true);return;
+    }
+    if(action==='free-remove'&&FREE.isFree(ui.draft)){
+      const result=FREE.remove(ui.draft,btn.dataset.ex);
+      if(result.error)return notify(result.error);
+      const old=ui.draft;ui.draft=result.draft;
+      if(!persistDraft()){ui.draft=old;return notify('Não foi possível salvar a retirada do exercício.');}
+      render();return;
+    }
     if(action==='open-muay'){muayMode=true;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;}
     if(action==='mode-muay'){muayMode=true;ui.editor=null;render();return;}
     if(action==='mode-strength'){muayMode=false;render();return;}
@@ -2953,7 +3009,9 @@
       render();
       document.getElementById('strength-radar-title')?.scrollIntoView({behavior:'smooth',block:'start'});
     }
-    else if(action==='resume'){if(ui.draft){ui.tab='plans';ui.plan=ui.draft.planId;render();window.scrollTo(0,0);}}
+    else if(action==='resume'){if(ui.draft){ui.tab='plans';
+      if(DATA.rotation.includes(ui.draft.planId))ui.plan=ui.draft.planId;
+      muayMode=false;render();window.scrollTo(0,0);}}
     else if(action==='cancel'){if(confirm('Descartar o treino em andamento e apagar seu rascunho salvo neste aparelho?')){clearDraft();render();}}
     else if(action==='edit-ex'){ui.tab='plans';ui.editor={id:btn.dataset.ex};render();window.scrollTo(0,0);}
     else if(action==='add-ex'){ui.editor={id:null,group:btn.dataset.plan};render();window.scrollTo(0,0);}
