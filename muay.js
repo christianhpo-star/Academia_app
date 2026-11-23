@@ -395,7 +395,7 @@
       '<input id="muay-spar-rounds" type="number" min="1" max="30" step="1" inputmode="numeric" data-muay-quick-field="rounds" value="'+esc(q.rounds)+'"></div>'+
       '<div class="field"><label for="muay-spar-minutes">Minutos por round</label>'+
       '<input id="muay-spar-minutes" type="number" min="1" max="30" step="1" inputmode="numeric" data-muay-quick-field="roundMinutes" value="'+esc(q.roundMinutes)+'"></div></div>'+
-      '<p class="muay-academy-help">Tempo de rounds: <strong>'+rounds+' min</strong> (intervalos não incluídos).</p>'+
+      '<p class="muay-academy-help">Tempo de rounds: <strong id="muay-spar-total">'+rounds+' min</strong> (intervalos não incluídos).</p>'+
       '<details class="muay-advanced"><summary>Contato do sparring (opcional)</summary>'+
       academyChips(SPARRING_CONTACT,'contact',q.contact,'Intensidade de contato relatada')+
       '</details></div>';
