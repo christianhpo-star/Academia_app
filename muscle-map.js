@@ -4,6 +4,7 @@
   const H=typeof module!=='undefined'&&module.exports?require('./muscle-history.js'):root.ForjaMuscleHistory;
   const B=typeof module!=='undefined'&&module.exports?require('./muscle-body.js'):root.ForjaMuscleBody;
   const CARDIO=typeof module!=='undefined'&&module.exports?require('./cardio.js'):root.ForjaCardio;
+  const MUAY=typeof module!=='undefined'&&module.exports?require('./muay.js'):root.AcademiaMuay;
   const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const fmt=value=>Number(value||0).toLocaleString('pt-BR',{maximumFractionDigits:1});
   const date=day=>typeof day==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(day)?day.slice(8)+'/'+day.slice(5,7):'—';
@@ -11,7 +12,9 @@
   const LEVELS=['Sem registro','Menor volume','Intermediário','Maior volume'];
   const validDays=days=>[7,30,90].includes(Number(days))?Number(days):30;
   function model(state,day,days=30){
-    return H.analyze({strengthSessions:state?.sessions||[],today:day,days:validDays(days)});
+    const strength=H.analyze({strengthSessions:state?.sessions||[],today:day,days:validDays(days)});
+    const muay=MUAY?.exposure?.(state?.muay?.sessions||[],day,validDays(days))||null;
+    return {...strength,muay};
   }
   function optionsFor(options={}){
     return {days:validDays(options.days),view:options.view==='back'?'back':'front',
@@ -38,13 +41,17 @@
       '. Participação '+(main?'provável':'secundária e variável')+
       ' durante a subida. Não conta como séries de musculação.</p>'+
       (stair.latestPace?'<p>Último ritmo informado: '+escape(stairPace(stair.latestPace))+'.</p>':'')+'</div>':'';
+    const muay=data.muay?.byId?.[row.id];
+    const muayNote=muay?'<div class="muscle-map-muay-note"><strong>Muay Thai · participação provável</strong>'+
+      '<p>'+muay.sessions+' sessão'+(muay.sessions===1?'':'ões')+' relacionada'+(muay.sessions===1?'':'s')+
+      ' a esta região no período. Não se converte em séries, ativação medida ou recuperação.</p></div>':'';
     return '<section id="muscle-map-detail" class="muscle-map-detail" aria-label="Detalhe do músculo selecionado" role="status" aria-live="polite" aria-atomic="true" data-selected-muscle="'+escape(row.id)+'">'+
       '<div class="muscle-map-detail-heading"><strong>'+escape(row.label)+'</strong><span class="muscle-map-status muscle-level-'+row.level+'">'+LEVELS[row.level]+'</span></div>'+
       (row.total>0?'<p><b>'+fmt(row.total)+'</b> séries equivalentes · '+fmt(row.directSets)+' principais + '+fmt(row.indirectSets)+' auxiliares × 0,5.</p>'+
         '<p class="muscle-map-last">Último registro: '+date(row.lastDay)+' · '+row.days+' dia'+(row.days===1?'':'s')+' com participação.</p>'+
         '<ul class="muscle-map-exercises">'+row.exercises.slice(0,5).map(ex=>'<li><span>'+escape(names.get(ex.id)||ex.id)+'</span><span>'+fmt(ex.total)+'</span></li>').join('')+'</ul>'+
         (row.exercises.length>5?'<p class="muscle-map-last">E mais '+(row.exercises.length-5)+' exercícios neste período.</p>':''):
-        '<p>Nenhuma série classificada para esta região nos '+data.days+' dias selecionados.</p><p class="muscle-map-last">Confira o histórico e a distribuição da sua ficha antes de ajustar o treino.</p>')+stairNote+'</section>';
+        '<p>Nenhuma série classificada para esta região nos '+data.days+' dias selecionados.</p><p class="muscle-map-last">Confira o histórico e a distribuição da sua ficha antes de ajustar o treino.</p>')+stairNote+muayNote+'</section>';
   }
   function insight(data,ids,title,selected){
     if(!ids.length)return '';
@@ -56,18 +63,24 @@
     const opts=optionsFor(options),data=model(state,day,opts.days);
     const selected=Object.hasOwn(data.byId,opts.selected)?opts.selected:null;
     const noKnown=!data.hasEvidence||!data.regions.some(r=>r.total>0);
-    const empty=noKnown?'<div class="muscle-map-empty"><strong>Mapa sem registros neste período</strong><p>'+
+    const empty=noKnown?'<div class="muscle-map-empty"><strong>Sem séries de musculação neste período</strong><p>'+
       (data.unknownEntries?'Os exercícios registrados ainda não têm classificação muscular. As regiões permanecem neutras.':
         'As cores mostram apenas séries de musculação. A escada registrada aparece com contorno âmbar, sem se converter em séries.')+'</p></div>':'';
     const coverage=data.unknownEntries?'<p class="muscle-map-coverage">'+data.unknownEntries+' registro'+(data.unknownEntries===1?'':'s')+' de exercício sem classificação ('+data.unknownSets+' série'+(data.unknownSets===1?'':'s')+') fora do mapa. A distribuição é parcial.</p>':'';
     const figures=B.figure({view:opts.view,rows:data.regions,selected,
-      cardioRegions:data.stair?.minutes>0?data.stair.primaryRegions:[]});
+      cardioRegions:data.stair?.minutes>0?data.stair.primaryRegions:[],
+      muayRegions:data.muay?.regions?.map(row=>row.id)||[]});
     const stairSummary=data.stair?.minutes>0?'<p class="muscle-map-stair-summary">'+
       '<span class="muscle-map-stair-key" aria-hidden="true"></span><strong>Escada:</strong> '+fmt(data.stair.minutes)+' min em '+data.stair.sessions+
       ' sessão'+(data.stair.sessions===1?'':'ões')+'. Contorno âmbar = participação provável, não séries.'+
       (data.stair.latestPace?' Último ritmo: '+escape(stairPace(data.stair.latestPace))+'.':'')+'</p>':'';
+    const muaySummary=data.muay?.mappedActivities?'<div class="muscle-map-muay-summary" role="note">'+
+      '<span class="muscle-map-muay-key" aria-hidden="true"></span>'+
+      '<p><strong>Muay Thai:</strong> '+data.muay.sessions+' dia'+(data.muay.sessions===1?'':'s')+
+      ' com registros estruturados; '+data.muay.regions.length+
+      ' regiões com participação provável. Contorno violeta pontilhado = atividade, não séries.</p></div>':'';
     return '<p class="muscle-map-period-label">'+date(data.startDay)+' a '+date(data.endDay)+' · '+data.completedSessions+' treino'+(data.completedSessions===1?'':'s')+' registrado'+(data.completedSessions===1?'':'s')+'</p>'+
-      empty+stairSummary+'<div class="muscle-map-layout"><div class="muscle-map-visual"><div class="muscle-map-canvas">'+figures+'</div>'+
+      empty+stairSummary+muaySummary+'<div class="muscle-map-layout"><div class="muscle-map-visual"><div class="muscle-map-canvas">'+figures+'</div>'+
       '<p class="muscle-map-tap-hint">Toque no corpo para escolher um músculo.</p>'+
       '<div class="muscle-map-legend" aria-label="Escala relativa de volume">'+LEVELS.map((label,i)=>'<span><i class="muscle-map-swatch muscle-level-'+i+'" aria-hidden="true"></i>'+label+'</span>').join('')+'</div>'+
       '<p class="muscle-map-untracked"><i class="muscle-map-swatch is-untracked" aria-hidden="true"></i>Hachurado: região não estimada pelo catálogo.</p>'+
@@ -86,6 +99,7 @@
       '<p>Menor volume: até um terço do maior valor da janela; intermediário: até dois terços; maior volume: acima disso. A escala é recalculada ao mudar o período. Um músculo pode aparecer em mais de uma vista; seu volume é o mesmo.</p>'+
       '<p>Aquecimentos, séries em branco, exercícios pulados e o treino ainda em andamento ficam fora. Repetições válidas e carga registrada são necessárias; nos abdominais de solo e inverso, 0 kg significa peso do corpo e conta como série. Nos demais exercícios, a carga precisa ser positiva. Muay Thai e atividades livres não são convertidos em séries musculares.</p>'+
       '<p>Reto do abdômen e oblíquos recebem volume dos exercícios específicos de abdômen. A participação estabilizadora em outros movimentos não é estimada automaticamente. A lombar permanece hachurada porque o catálogo ainda não quantifica sua participação; isso não significa ausência de trabalho. Direita e esquerda compartilham o mesmo registro.</p>'+
+      '<p>Muay Thai: blocos estruturados de exaustão, sequência e sparring permitem destacar regiões provavelmente envolvidas. O contorno violeta é qualitativo e preserva a escala de cores exclusiva das séries de musculação. Dados antigos sem golpes classificados não são inferidos por texto livre; ausência de detalhes não significa falta de treino.</p>'+
       '<p>Escada: minutos e ritmo médio (quando informados) aparecem separadamente. O contorno âmbar representa participação provável de quadríceps, glúteos e panturrilhas na subida; posteriores podem auxiliar. Nenhuma duração ou velocidade vira séries equivalentes ou muda a escala de cores. Níveis de máquinas diferentes não são diretamente comparáveis.</p>'+
       '<p>As cores mostram participação estimada no treino registrado. Não medem ativação, recuperação, força ou crescimento de cada músculo. Compare também os exercícios, a técnica e seu planejamento.</p>'+
       '<p><a href="https://pubmed.ncbi.nlm.nih.gov/41343037/" target="_blank" rel="noopener noreferrer">Referência da contagem fracionada de séries</a></p></div></details>';
