@@ -122,3 +122,88 @@ test('indirect chest pressing stimulus blocks false anterior-shoulder deficit ba
  const traps=F.options(DATA.exercises).find(x=>x.id==='encolhimento-barra');
  assert.ok(C.forExercise(traps,status));
 });
+
+test('nine added options span simple, machine, free-weight and home without duplicate IDs',()=>{
+ const options=F.options(DATA.exercises),byId=new Map(options.map(x=>[x.id,x]));
+ const ids=['desenvolvimento-maquina-neutro','desenvolvimento-halter-sentado',
+   'elevacao-lateral-sentado','elevacao-lateral-unilateral-polia','elevacao-frontal-halteres',
+   'encolhimento-polia','crucifixo-inverso-elastico','face-pull-elastico','elevacao-y-elastico'];
+ for(const id of ids){
+   const ex=byId.get(id);
+   assert.ok(ex,id);assert.equal(ex.active,false);
+   assert.ok(DOSE.MAP[id],id);
+   const anatomy=A.describe(id);
+   assert.ok(anatomy?.main?.length,id);
+   assert.match(A.figure(id,false,anatomy.view),/<svg/,id);
+   const style=C.variant(ex);
+   assert.ok(['easy','regular'].includes(style?.difficulty),id);
+   assert.ok(['home','free','machine'].includes(style?.setting),id);
+ }
+ assert.equal(new Set(options.map(x=>x.id)).size,options.length);
+ for(const id of ['crucifixo-inverso-elastico','face-pull-elastico','elevacao-y-elastico']){
+   assert.equal(SETS.allowsZero(id),true);
+   assert.equal(SETS.workSets({id,sets:[{load:0,reps:15,rir:3,warmup:false}]}).length,1);
+ }
+});
+test('actual volume excludes blank presets and warmups and includes previous sessions and today's draft',()=>{
+ const day='2026-11-23';
+ const entry=(id,sets)=>({id,sets});
+ const full=(load=10)=>({load,reps:12,rir:2,warmup:false});
+ const session={id:'today',day,entries:[entry('elevacao-lateral',[full(),{load:10,reps:'',rir:2,warmup:false},
+   {load:10,reps:12,rir:2,warmup:true}])]};
+ const yesterday={id:'yesterday',day:'2026-11-22',entries:[entry('elevacao-lateral',[full(),full()])]};
+ const older={id:'older',day:'2026-11-15',entries:[entry('elevacao-lateral',[full()])]};
+ const draft={planId:'B',entries:{'elevacao-lateral-maquina':entry('elevacao-lateral-maquina',[full(20),
+   {load:20,reps:'',rir:2,warmup:false}])}};
+ const before=structuredClone(draft);
+ const result=C.workload({today:day,strengthSessions:[session,yesterday,older,session],draft});
+ assert.equal(result.today.sets,2);assert.equal(result.week.sets,4);
+ assert.equal(result.today.exercises,2);assert.equal(result.week.exercises,2);
+ assert.equal(result.byRegion.sideDelts.today,2);
+ assert.equal(result.byRegion.sideDelts.week,4);
+ assert.equal(result.byRegion.sideDelts.yesterday,2);
+ assert.deepEqual(draft,before);
+});
+test('goal and seven-day performed sets prevent automatic extra shoulder work',()=>{
+ const ex=F.options(DATA.exercises).find(x=>x.id==='elevacao-lateral-maquina');
+ const day='2026-11-23';
+ const done=n=>({id:'elevacao-lateral',sets:Array.from({length:n},()=>({
+   load:8,reps:14,rir:2,warmup:false
+ }))});
+ const strengthSessions=[{id:'today',day,entries:[done(3)]},
+   {id:'yesterday',day:'2026-11-22',entries:[done(2)]}];
+ const loss=C.status({today:day,strengthSessions,exercises:DATA.exercises,
+   settings:{goalMode:'fat_loss'},nutritionGoal:'gain'});
+ assert.equal(loss.goal,'fat_loss');
+ assert.equal(loss.workload.today.sets,3);
+ assert.equal(loss.workload.week.sets,5);
+ assert.equal(loss.workload.byRegion.sideDelts.today,3);
+ const held=C.prescription({today:day,strengthSessions,exercise:ex,context:loss});
+ assert.equal(held.level,'hold');assert.equal(held.sets,1);
+ assert.match(held.reason,/Perda de gordura/);
+ assert.equal(held.todaySets,3);assert.equal(held.weekSets,5);
+ const alternative=C.status({today:day,strengthSessions:[],
+   settings:{goalMode:'weight'},nutritionGoal:'gain',exercises:DATA.exercises});
+ assert.equal(alternative.goal,'muscle_gain');
+ const growth=C.prescription({today:day,exercise:ex,context:alternative,strengthSessions:[]});
+ assert.equal(growth.sets,3);
+ const empty={planId:'B',entries:{},skipped:[],plannedIds:[],addedIds:[]};
+ const snapshot=structuredClone(empty);
+ const prepared=CSESSION.prepare({draft:empty,mode:'add',targetId:ex.id,exercise:ex,dayPrescription:held});
+ assert.equal(prepared.ok,true);
+ assert.equal(prepared.draft.entries[ex.id].sets.length,1);
+ assert.equal(prepared.draft.entries[ex.id].dayPrescription.level,'hold');
+ assert.equal(prepared.draft.entries[ex.id].dayPrescription.goal,'fat_loss');
+ assert.deepEqual(empty,snapshot);
+});
+test('blank sets from an active draft do not masquerade as training volume',()=>{
+ const ex=F.options(DATA.exercises).find(x=>x.id==='encolhimento-halteres');
+ const draft={planId:'A',entries:{[ex.id]:{id:ex.id,sets:[
+   {load:25,reps:'',rir:'',warmup:false},{load:25,reps:'',rir:'',warmup:false}]}}};
+ const status=C.status({today:'2026-11-23',strengthSessions:[],
+   exercises:DATA.exercises,draft,settings:{goalMode:'recomposition'}});
+ assert.equal(status.workload.today.sets,0);
+ const proposal=C.prescription({today:'2026-11-23',exercise:ex,context:status,draft});
+ assert.equal(proposal.todaySets,0);
+ assert.equal(proposal.sets,2);
+});
