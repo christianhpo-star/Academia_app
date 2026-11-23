@@ -1583,3 +1583,57 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-volume-context details{border-top:1px solid #3c5668;padding-top:7px;margin-top:8px;font-size:12px}
 .catalog-volume-context summary{cursor:pointer;color:var(--lime);min-height:36px;display:flex;align-items:center}
 @media(max-width:359px){.catalog-overview{padding:12px}.catalog-volume-context{padding:10px}.catalog-style-chip{padding:8px 10px}}
+
+
+/* Muay Thai academy v2: one purpose-built editor, legacy home editor unchanged. */
+.muay-academy-editor,.muay-academy-session{min-width:0;overflow-wrap:anywhere}
+.muay-academy-editor{background:linear-gradient(152deg,#1c3133,#151f2d 65%);border-color:#415e60}
+.muay-academy-editor>.row-between{align-items:flex-start;flex-wrap:wrap}
+.muay-academy-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:17px 0 15px}
+.muay-academy-mode{border-radius:12px;border:1px solid #4b6675;background:#223343;color:#cfdeeb;min-height:50px;padding:10px 6px;font-weight:800;font-size:12px;min-width:0;white-space:normal}
+.muay-academy-mode.selected{background:var(--lime);border-color:var(--lime);color:#13251c}
+.muay-academy-form{padding:3px 0 8px}
+.muay-academy-form h3{font-size:12px;color:#d5e4ed;letter-spacing:.02em;margin:16px 0 9px}
+.muay-academy-chips{display:flex;flex-wrap:wrap;gap:7px}
+.muay-academy-chip{min-height:46px;min-width:64px;flex:1 1 auto;background:#203240;color:#e2ecf3;border:1px solid #486577;border-radius:11px;font-size:12px;font-weight:750;line-height:1.3;padding:9px 12px;white-space:normal}
+.muay-academy-chip.selected{border-color:var(--lime);background:#2b4a35;color:#d7ffb0;box-shadow:inset 0 0 0 1px #b7eb81}
+.muay-academy-number{margin-top:13px;max-width:270px}
+.muay-academy-number-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:13px}
+.muay-academy-number-row .field{min-width:0}
+.muay-academy-number-row input,.muay-academy-number-row select{width:100%;min-width:0}
+.muay-academy-help{font-size:12px;line-height:1.6;padding:11px 12px;border-radius:11px;background:#213342;color:#d9e6f3;margin:13px 0 0}
+.muay-academy-add{margin-top:13px;min-height:52px;font-size:14px}
+.muay-strike-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:9px 0 11px}
+.muay-strike-add{min-width:0;min-height:46px;padding:9px 10px;font-size:12px;text-align:left;color:#dceaf4;background:#21374a;border:1px solid #4c6576;border-radius:11px;white-space:normal}
+.muay-strike-add:hover{border-color:var(--lime)}
+.muay-combo-steps{display:grid;gap:5px;padding:0;list-style:none;margin:10px 0 14px;counter-reset:none}
+.muay-combo-steps li{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0;background:#263b42;border-radius:9px;padding:7px 10px;font-size:12px}
+.muay-combo-steps li span{overflow-wrap:anywhere}
+.muay-combo-steps li button{min-height:40px;flex:0 0 auto}
+.muay-combo-empty{padding:12px;border-radius:10px;border:1px dashed #4e6374;color:#b2c8d6;font-size:12px}
+.muay-academy-session{margin-top:13px}
+.muay-academy-session>.row-between{flex-wrap:wrap;gap:7px}
+.muay-academy-records{display:grid;gap:7px;margin-top:12px}
+.muay-academy-record{border:1px solid #3b5665;background:#192c39;border-radius:12px;padding:11px 10px;display:flex;justify-content:space-between;align-items:flex-start;gap:7px}
+.muay-academy-record>div{min-width:0;display:grid;gap:5px}
+.muay-academy-record strong{font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.muay-academy-record small{font-size:11px;color:#bcd0dd}
+.muay-record-index{font-size:10px;color:#b7e3a1;font-weight:800}
+.muay-academy-record button{min-height:42px;flex:0 0 auto}
+.muay-academy-session .muay-advanced summary{min-height:46px}
+.muay-academy-session .muay-advanced p{line-height:1.6}
+.muscle-map-muay-summary{display:flex;gap:9px;align-items:flex-start;margin:12px 0;padding:12px;background:#2b2942;border:1px solid #67588c;border-radius:11px}
+.muscle-map-muay-summary p{font-size:12px;color:#e5ddf9;line-height:1.5;margin:0}
+.muscle-map-muay-key{display:inline-block;width:16px;height:16px;border:2px dashed #cfb6ff;border-radius:4px;flex:0 0 16px;margin-top:2px}
+.muscle-map-muay-note{margin-top:12px;border-top:1px dashed #8b74a3;padding-top:10px}
+.muscle-map-muay-note strong{color:#d7c3ff}
+.muscle-map-muay-note p{line-height:1.5}
+.muscle-body-region.is-muay-exposure>path{stroke:#cfb6ff;stroke-width:2;stroke-dasharray:4 2;stroke-opacity:1}
+.muscle-body-region.is-muay-exposure.is-selected>path{stroke:#fff;stroke-width:2.4;stroke-dasharray:0}
+@media(max-width:359px){
+ .muay-academy-mode{font-size:11px;padding:10px 4px}
+ .muay-academy-number-row{grid-template-columns:1fr}
+ .muay-academy-chip{min-width:0;flex-basis:42%;padding:9px 8px}
+ .muay-academy-record{flex-wrap:wrap}
+ .muay-academy-record button{margin-left:auto}
+}
