@@ -1157,7 +1157,15 @@
       '<input id="free-search" data-free-search type="search" autocomplete="off" placeholder="Ex.: abdominal, crunch, prancha" value="'+esc(ui.freeSearch)+'"></div>'+
       '<div id="free-exercise-results" class="free-exercise-results" aria-label="Exercícios disponíveis">'+renderFreeOptions()+'</div>'+
       '<button type="button" class="button-inline free-catalog-expand" data-action="free-expand">'+
-      (ui.freeAll?'Ver apenas sugestões rápidas':'Ver catálogo completo')+'</button></section>'+
+      (ui.freeAll?'Ver apenas sugestões rápidas':'Ver catálogo completo')+'</button>'+
+      '<details class="free-custom"><summary>Não encontrou? Criar exercício avulso</summary>'+
+      '<div class="field mt-12"><label for="free-custom-name">Nome do exercício</label>'+
+      '<input id="free-custom-name" maxlength="100" placeholder="Ex.: abdominal com bola"></div>'+
+      '<div class="field mt-12"><label for="free-custom-mode">Tipo de carga</label>'+
+      '<select id="free-custom-mode"><option value="bodyweight">Peso do corpo (0 kg extra)</option>'+
+      '<option value="weight">Com carga (kg)</option></select></div>'+
+      '<button type="button" class="secondary full mt-12" data-action="free-custom-add">+ Adicionar exercício avulso</button>'+
+      '<p class="tiny muted">Exercícios personalizados não recebem classificação muscular automática. A opção fica salva no catálogo pessoal, sem ativar fichas.</p></details></section>'+
       '<section aria-label="Exercícios deste treino"><div class="row-between free-exercises-title"><h2 class="section-title">O que você fez</h2>'+
       '<span id="free-count" class="pill">'+stats.performed+' exercícios · '+stats.sets+' séries</span></div>'+
       (entries.length?setsBody:'<div class="card free-empty">Nenhum exercício adicionado. Escolha um abdominal ou pesquise qualquer exercício.</div>')+
@@ -1167,6 +1175,12 @@
       'Séries em branco não serão salvas como realizadas.</p>'+
       '<div class="field mt-12"><label for="free-session-notes">Observações (opcional)</label>'+
       '<textarea id="free-session-notes" maxlength="1000" data-draft-meta="notes" placeholder="Ex.: abdominal depois da aula de Muay">'+esc(d.notes)+'</textarea></div>'+
+      '<details class="free-optional-effort mt-12"><summary>Esforço percebido (opcional)</summary>'+
+      '<div class="field mt-12"><label for="free-energy">Como foi a sessão?</label>'+
+      '<select id="free-energy" data-draft-meta="energy">'+
+      [['','Não informar'],['leve','Leve'],['normal','Moderada'],['intenso','Intensa']].map(([v,label])=>
+        '<option value="'+v+'"'+(d.energy===v?' selected':'')+'>'+label+'</option>').join('')+
+      '</select></div></details>'+
       '<div class="free-completion-actions"><button type="button" class="primary full" data-action="finish">Salvar treino livre</button>'+
       '<button type="button" class="button-inline" data-action="cancel">Descartar rascunho</button></div></section></div>';
   }
