@@ -94,21 +94,23 @@
   const paths=parts=>parts.map(part=>path(part)).join('');
   const amount=value=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:1});
   let sequence=0;
-  function figure({view='front',rows=[],selected=null,cardioRegions=[]}={}){
+  function figure({view='front',rows=[],selected=null,cardioRegions=[],muayRegions=[]}={}){
     view=view==='back'?'back':'front';
     const uid='forja-muscle-body-'+(++sequence),viewLabel=view==='back'?'Costas':'Frente';
     const byId=new Map((Array.isArray(rows)?rows:[]).filter(row=>row&&regionNames[row.id]).map(row=>[row.id,row]));
     const cardioIds=new Set((Array.isArray(cardioRegions)?cardioRegions:[]).filter(id=>regionNames[id]));
+    const muayIds=new Set((Array.isArray(muayRegions)?muayRegions:[]).filter(id=>regionNames[id]));
     const renderRegions=area=>Object.entries(area).map(([id,parts])=>{
       const row=byId.get(id),rawTotal=Number(row?.total);
       const total=Number.isFinite(rawTotal)&&rawTotal>0?rawTotal:0;
       const rawLevel=Number(row?.level),level=total>0&&Number.isInteger(rawLevel)?Math.max(1,Math.min(3,rawLevel)):0;
-      const label=regionNames[id],chosen=selected===id,stairCardio=cardioIds.has(id);
+      const label=regionNames[id],chosen=selected===id,stairCardio=cardioIds.has(id),muay=muayIds.has(id);
       const description=label+': '+LABELS[level]+'. '+amount(total)+' séries equivalentes estimadas no período.'+
-        (stairCardio?' Escada registrada: participação provável, sem equivalência com séries.':'')+' Toque para ver detalhes.';
-      return '<g class="muscle-body-region'+(chosen?' is-selected':'')+(stairCardio?' is-stair-cardio':'')+'" role="button" tabindex="0" focusable="true" '+
+        (stairCardio?' Escada registrada: participação provável, sem equivalência com séries.':'')+
+        (muay?' Muay Thai registrado: participação muscular provável e qualitativa, sem séries adicionais.':'')+' Toque para ver detalhes.';
+      return '<g class="muscle-body-region'+(chosen?' is-selected':'')+(stairCardio?' is-stair-cardio':'')+(muay?' is-muay-exposure':'')+'" role="button" tabindex="0" focusable="true" '+
         'data-action="muscle-region" data-muscle="'+id+'" data-muscle-region="'+id+'" data-level="'+level+'" data-total="'+total+'" '+
-        (stairCardio?'data-stair-cardio="true" ':'')+
+        (stairCardio?'data-stair-cardio="true" ':'')+(muay?'data-muay-exposure="true" ':'')+
         'aria-controls="muscle-map-detail" aria-pressed="'+chosen+'" aria-label="'+safe(description)+'" '+
         'fill="'+PALETTE[level]+'" stroke="'+(chosen?'#FFFFFF':level===0?'#67869B':'#D5EAF1')+'" stroke-width="'+(chosen?'2.2':'.8')+'" stroke-linejoin="round">'+
         '<title>'+safe(description)+'</title>'+paths(parts)+'</g>';
@@ -124,6 +126,7 @@
       '<title id="'+uid+'-title">Mapa do corpo completo · '+viewLabel+'</title>'+
       '<desc id="'+uid+'-desc">Regiões musculares com volume relativo dos treinos registrados. Selecione uma região para consultar os detalhes. '+
       'Regiões hachuradas não são estimadas pelo catálogo. Os lados recebem a mesma cor porque os registros não distinguem direita e esquerda. '+
+      'Contornos de Muay Thai (quando presentes) indicam apenas regiões provavelmente envolvidas na atividade, sem alterar as cores das séries. ' +
       'Localização esquemática; não mede ativação, hipertrofia ou necessidade individual de treino.</desc>'+
       '<defs><linearGradient id="'+uid+'-skin" x1="0" x2="1" y1="0" y2=".4">'+
       '<stop offset="0" stop-color="#273D50"/><stop offset=".47" stop-color="#41596C"/><stop offset="1" stop-color="#263D50"/>'+
