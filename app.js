@@ -2704,7 +2704,7 @@
       }else if(action==='muay-quick-choice'){
         const field=btn.dataset.quickField,value=btn.dataset.value;
         const catalogs={movement:M.QUICK_MOVEMENTS,limb:M.QUICK_LIMBS,
-          preset:{20:1,50:1,ladder:1,custom:1},exchange:M.SPARRING_EXCHANGE,
+          preset:{20:1,50:1,ladder:1,ladderCumulative:1,custom:1},exchange:M.SPARRING_EXCHANGE,
           rules:M.SPARRING_RULES,contact:M.SPARRING_CONTACT};
         if(!Object.hasOwn(catalogs[field]||{},value))return;
         quick[field]=value;
