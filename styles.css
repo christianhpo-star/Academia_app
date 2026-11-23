@@ -1563,3 +1563,23 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .catalog-detail-plan{padding:10px 12px;border:1px solid #385d59;border-radius:10px}
 .workout-day-guidance{padding:8px 10px;border-left:2px solid #b4e77a;background:#1f332b;color:#def0d8;border-radius:4px;line-height:1.6;margin-top:5px}
 .catalog-group-tabs{scroll-padding-inline:10px}
+
+/* Goal-aware shoulder catalog: horizontally scrollable, readable on narrow phones. */
+.catalog-overview{padding:14px 15px;margin:13px 0;background:#172a34;border:1px solid #3b5869;border-radius:15px}
+.catalog-overview strong{color:#e8f5ff}
+.catalog-overview>div>strong{font-size:16px}
+.catalog-overview p{font-size:12px;line-height:1.55;margin:6px 0}
+.catalog-overview p:last-child{margin-bottom:0}
+.catalog-overview .button-inline{font-size:12px;min-height:28px;white-space:normal}
+.catalog-style-tabs{display:flex;gap:7px;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-width:thin;scroll-padding-inline:8px;padding:2px 1px 10px;margin-bottom:8px}
+.catalog-style-chip{background:#192c3b;border:1px solid #3e5568;color:#d5e5f2;border-radius:10px;min-height:44px;white-space:nowrap;padding:9px 13px;font-size:12px;font-weight:750;flex:0 0 auto}
+.catalog-style-chip.selected{border-color:var(--lime);color:#102016;background:var(--lime)}
+.catalog-easy-tag{font-size:10px;font-weight:750;color:#cde6ff;border:1px solid #42647f;border-radius:8px;padding:5px 7px;background:#213748}
+.catalog-variant-tip,.catalog-variant-caption{font-size:12px;color:#a4cfe0;line-height:1.45;margin:5px 0}
+.catalog-volume-context{border:1px solid #42617a;background:#172c3d;border-radius:13px;padding:12px 14px;margin-top:11px;overflow-wrap:anywhere}
+.catalog-volume-context>strong{color:#dff1ff;font-size:13px}
+.catalog-volume-context p{font-size:12px;line-height:1.55;margin:7px 0}
+.catalog-volume-suggestion strong{color:#d9f2b8}
+.catalog-volume-context details{border-top:1px solid #3c5668;padding-top:7px;margin-top:8px;font-size:12px}
+.catalog-volume-context summary{cursor:pointer;color:var(--lime);min-height:36px;display:flex;align-items:center}
+@media(max-width:359px){.catalog-overview{padding:12px}.catalog-volume-context{padding:10px}.catalog-style-chip{padding:8px 10px}}
