@@ -84,7 +84,7 @@
     ['encolhimento-smith','Encolhimento de ombros no Smith','A','Barra guiada','Trapézio superior',2,10,15,5,'kg',false,['shrug smith','encolhimento guiado']],
     ['face-pull-alto','Face pull com cotovelos altos','A','Polia / corda','Deltoide posterior / trapézio médio',2,12,20,2.5,'kg',false,['face pull alto','ombro posterior cabo']],
     ['elevacao-y-inclinada','Elevação em Y no banco inclinado','A','Banco inclinado / halteres','Trapézio médio / estabilidade escapular',2,12,20,1,'kg/halter',false,['y raise','elevação y','trapezio inferior']],
-    ['crucifixo-inverso-banco','Crucifixo inverso no banco inclinado','A','Banco / halteres','Deltoide posterior / trapézio médio',2,12,20,2.5,'kg/halter',false,['voador inverso banco','rear delt fly banco']],
+    ['crucifixo-inverso-banco','Crucifixo inverso no banco inclinado','A','Banco / halteres','Deltoide posterior / trapézio médio',2,12,20,2.5,'kg/halter',false,['crucifixo posterior banco','rear delt fly banco']],
     ['elevacao-lateral-maquina','Elevação lateral na máquina','B','Máquina','Deltoide lateral',2,10,20,2.5,'kg',false,['elevação lateral máquina','ombro lateral máquina']],
     ['elevacao-frontal-polia','Elevação frontal na polia','B','Polia','Deltoide anterior',2,10,15,2.5,'kg',false,['front raise','ombro frontal polia']],
     ['desenvolvimento-barra','Desenvolvimento de ombros com barra','B','Barra / banco','Deltoide anterior / lateral / tríceps',2,8,12,2.5,'kg',false,['shoulder press barra','overhead press']],

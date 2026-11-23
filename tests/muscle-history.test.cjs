@@ -13,12 +13,12 @@ const analyze = (sessions, options = {}) => HISTORY.analyze({today: TODAY, stren
 
 test('all 98 catalog exercises contribute only to the 19 reviewed anatomical regions', () => {
   const exercises = [...new Map([...FLEX.catalog, ...DATA.exercises].map(ex=>[ex.id,ex])).values()];
-  assert.equal(exercises.length, 88);
+  assert.equal(exercises.length, 98);
   assert.equal(HISTORY.REGIONS.length, 19);
   const output = analyze([session(TODAY, exercises.map(exercise => entry(exercise.id)))]);
-  assert.equal(output.knownEntries, 88);
+  assert.equal(output.knownEntries, 98);
   assert.equal(output.unknownEntries, 0);
-  assert.equal(output.knownSets, 88);
+  assert.equal(output.knownSets, 98);
   assert.equal(output.coverage, 1);
   assert.equal(output.zero.length, 0);
   for (const exercise of exercises) {
@@ -247,7 +247,7 @@ test('no history, invalid today and missing dependencies return finite neutral d
 
 test('history, exercise profiles and settings are never mutated or used as a prescription', () => {
   const input = {strengthSessions: [session(TODAY, [entry('supino-halteres', 2)])], today: TODAY,
-    settings: {kneePain: 7, fatigue: 'alta'}, weights: [{date: TODAY, weight: 88}]};
+    settings: {kneePain: 7, fatigue: 'alta'}, weights: [{date: TODAY, weight: 98}]};
   const before = structuredClone(input);
   const profileBefore = structuredClone(ANATOMY.describe('supino-halteres'));
   const freezeDeep = value => {

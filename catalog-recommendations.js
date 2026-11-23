@@ -17,6 +17,23 @@
     const balance=BAL?.evaluate?.({strengthSessions,muaySessions,exercises,draft,settings,today})||
       {ready:false,alerts:[],recommendations:[],message:'Registros insuficientes.'};
     const byRegion=new Map((balance.alerts||[]).map((x,i)=>[x.id,{...x,rank:i}]));
+    // The home/session alert list is intentionally capped at six; the catalog
+    // must still inspect the other reviewed anatomical regions (e.g. trapezius).
+    if(balance.ready){
+      const long=H?.analyze?.({strengthSessions,today,days:30});
+      const anatomyRegions=new Set((exercises||[]).flatMap(ex=>A?.describe?.(ex.id)?.main||[]));
+      for(const id of anatomyRegions){
+        if(byRegion.has(id))continue;
+        const row=long?.byId?.[id];
+        if(!row||row.directSets>0)continue;
+        const last=BAL?.lastDirect?.(id,strengthSessions,today)||null;
+        const age=last?since(today,last):null;
+        const reason=age!=null&&age>=21?age+' dias sem série direta registrada':
+          'Sem série direta registrada nos últimos 30 dias';
+        byRegion.set(id,{id,label:row.label,reason,direct30:row.directSets,
+          indirect30:row.indirectSets,rank:6+byRegion.size});
+      }
+    }
     const recent=H?.analyze?.({strengthSessions,today,days:7});
     return {ready:!!balance.ready,reason:balance.message||'',caution:balance.caution||'',
       alerts:balance.alerts||[],recent,byRegion};
