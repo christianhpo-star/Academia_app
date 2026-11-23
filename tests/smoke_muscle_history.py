@@ -379,7 +379,7 @@ def main():
         seed = snapshot(page)
         before = readonly_baseline(page)
         card = open_map(page)
-        assert 'Mapa sem registros neste período' in card.inner_text()
+        assert 'Sem séries de musculação neste período' in card.inner_text()
         assert_svg(card, 'front')
         assert card.locator('svg [data-muscle-region]').evaluate_all(
             "nodes => nodes.every(node => node.dataset.total === '0' && node.dataset.level === '0')")
