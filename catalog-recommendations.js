@@ -35,13 +35,26 @@
       }
     }
     const recent=H?.analyze?.({strengthSessions,today,days:7});
+    const totalReport=H?.analyze?.({strengthSessions,today,days:30});
+    // The muscle-body map already treats auxiliary sets fractionally.
+    // A region with high indirect work should not receive a misleading
+    // "insufficient stimulus" badge solely because direct sets are zero.
+    const positives=(totalReport?.rows||[]).map(row=>row.total)
+      .filter(value=>Number.isFinite(value)&&value>0).sort((a,b)=>a-b);
+    const median=positives.length?positives[Math.floor(positives.length/2)]:0;
     return {ready:!!balance.ready,reason:balance.message||'',caution:balance.caution||'',
-      alerts:balance.alerts||[],recent,byRegion};
+      alerts:balance.alerts||[],recent,byRegion,totals:totalReport?.byId||{},medianRecorded:median};
   }
   function forExercise(ex,context) {
     if(!ex||!context?.ready)return null;
     const main=A?.describe?.(ex.id)?.main||[];
     const candidates=main.map(id=>context.byRegion.get(id)).filter(Boolean)
+      .filter(alert=>{
+        const total=context.totals?.[alert.id]?.total||0;
+        // The median is a within-person reference, not a minimum
+        // effective dose or a hypertrophy prescription.
+        return total===0||total<context.medianRecorded;
+      })
       .sort((a,b)=>a.rank-b.rank);
     if(!candidates.length)return null;
     const alert=candidates[0];
