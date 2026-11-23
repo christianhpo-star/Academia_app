@@ -21,7 +21,7 @@
     // must still inspect the other reviewed anatomical regions (e.g. trapezius).
     if(balance.ready){
       const long=H?.analyze?.({strengthSessions,today,days:30});
-      const anatomyRegions=new Set((exercises||[]).flatMap(ex=>A?.describe?.(ex.id)?.main||[]));
+      const anatomyRegions=new Set((F?.options?.(exercises,null)||exercises||[]).flatMap(ex=>A?.describe?.(ex.id)?.main||[]));
       for(const id of anatomyRegions){
         if(byRegion.has(id))continue;
         const row=long?.byId?.[id];
