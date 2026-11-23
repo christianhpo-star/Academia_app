@@ -3,9 +3,28 @@
   const places = { casa: 'Em casa', academia: 'Na academia', outro: 'Outro local' };
   const kinds = { individual: 'Treino individual', aula: 'Aula de Muay Thai' };
   const units = { reps: 'repetições', min: 'minutos', rounds: 'rounds' };
-  const categories = { exhaustion:'Exaustão / volume de golpes', combination:'Combinação por tempo', conditioning:'Condicionamento', technique:'Técnica / outros' };
+  const categories = { exhaustion:'Exaustão / volume de golpes', combination:'Combinação por tempo', conditioning:'Condicionamento', technique:'Técnica / outros',sparring:'Sparring técnico' };
   const sides = { total:'Total', each:'Por lado (cada perna / braço)' };
   const fatigueLabels = { '': 'Não informado', normal: 'Normal', moderada: 'Moderada', alta: 'Alta' };
+  const QUICK_MODES = Object.freeze({exhaustion:'Exaustão',combination:'Sequência',sparring:'Sparring'});
+  const QUICK_MOVEMENTS = Object.freeze({soco:'Socos',chute:'Chutes',agachamento:'Agachamentos',joelho:'Joelhadas'});
+  const QUICK_LIMBS = Object.freeze({both:'Ambos os lados',left:'Esquerdo',right:'Direito',bilateral:'Bilateral'});
+  const COMBO_STRIKES = Object.freeze({jab:'Jab',direto:'Direto',cruzado:'Cruzado',
+    chute_d:'Chute direito',chute_e:'Chute esquerdo',joelho_d:'Joelho direito',joelho_e:'Joelho esquerdo'});
+  const SPARRING_EXCHANGE = Object.freeze({one:'1 por 1',three:'3 golpes',free:'Livre'});
+  const SPARRING_RULES = Object.freeze({boxing:'Somente boxe',kicks:'Boxe e chutes'});
+  const SPARRING_CONTACT = Object.freeze({technical:'Técnico / sem contato',light:'Contato leve',controlled:'Controlado'});
+  const quickDefaults = () => ({mode:'exhaustion',movement:'chute',limb:'both',preset:'50',quantity:'50',
+    ladderTo:'10',combo:[],sequenceMinutes:'5',exchange:'one',rules:'boxing',rounds:'3',
+    roundMinutes:'3',contact:'light'});
+  const validQuick = q => !!q && typeof q==='object' && !Array.isArray(q) &&
+    Object.hasOwn(QUICK_MODES,q.mode) && Object.hasOwn(QUICK_MOVEMENTS,q.movement) &&
+    Object.hasOwn(QUICK_LIMBS,q.limb) && ['20','50','ladder','custom'].includes(q.preset) &&
+    optional(q.quantity,1,3000,true) && integer(q.ladderTo,2,20) &&
+    Array.isArray(q.combo) && q.combo.length<=12 && q.combo.every(v=>Object.hasOwn(COMBO_STRIKES,v)) &&
+    integer(q.sequenceMinutes,1,90) && Object.hasOwn(SPARRING_EXCHANGE,q.exchange) &&
+    Object.hasOwn(SPARRING_RULES,q.rules) && integer(q.rounds,1,30) &&
+    integer(q.roundMinutes,1,30) && Object.hasOwn(SPARRING_CONTACT,q.contact);
   const PRESETS = [
     { name: 'Polichinelos', unit: 'reps' },
     { name: 'Agachamento com salto', unit: 'reps' },
@@ -45,6 +64,7 @@
     day, place, kind: place === 'academia' ? 'aula' : 'individual',
     duration: '', intensity: '', fatigue: '', kneePain: '', notes: '',
     activities: [], editingId: null,
+    ...(place==='academia'?{quick:quickDefaults()}:{}),
   });
   const validActivity = (value, complete = false) => !!value && typeof value === 'object' &&
     textOk(value.id, 100) && textOk(value.name, 100) &&
@@ -53,18 +73,29 @@
     optional(value.sets, 1, 30, true) &&
     (value.category===undefined || Object.hasOwn(categories,value.category)) &&
     (value.side===undefined || Object.hasOwn(sides,value.side)) &&
-    (value.side!=='each' || value.unit==='reps');
+    (value.side!=='each' || value.unit==='reps') &&
+    (value.movement===undefined || Object.hasOwn(QUICK_MOVEMENTS,value.movement)) &&
+    (value.limb===undefined || Object.hasOwn(QUICK_LIMBS,value.limb)) &&
+    (value.pattern===undefined || ['fixed','ladder'].includes(value.pattern)) &&
+    (value.ladderTo===undefined || integer(value.ladderTo,2,20)) &&
+    (value.combo===undefined || (Array.isArray(value.combo) && value.combo.length<=12 &&
+      value.combo.every(v=>Object.hasOwn(COMBO_STRIKES,v)) && value.category==='combination')) &&
+    (value.exchange===undefined || (Object.hasOwn(SPARRING_EXCHANGE,value.exchange) && value.category==='sparring')) &&
+    (value.rules===undefined || (Object.hasOwn(SPARRING_RULES,value.rules) && value.category==='sparring')) &&
+    (value.contact===undefined || (Object.hasOwn(SPARRING_CONTACT,value.contact) && value.category==='sparring'));
   const validDraft = value => !!value && typeof value === 'object' &&
     dateOk(value.day) && Object.hasOwn(places, value.place) && Object.hasOwn(kinds, value.kind) &&
     optional(value.duration, 1, 360, true) && optional(value.intensity, 1, 10, true) &&
     optional(value.kneePain, 0, 10, true) && Object.hasOwn(fatigueLabels, value.fatigue) &&
     textOk(value.notes, 2000) && Array.isArray(value.activities) && value.activities.length <= 30 &&
     value.activities.every(a => validActivity(a)) &&
+    (value.quick===undefined || (value.place==='academia' && validQuick(value.quick))) &&
     (value.editingId === null || textOk(value.editingId, 100));
   const validSession = value => validDraft({ ...value, editingId: null }) &&
     textOk(value.id, 100) && value.id.length > 0 &&
     typeof value.timestamp === 'string' && Number.isFinite(Date.parse(value.timestamp)) &&
-    value.activities.length > 0 && value.activities.every(a => validActivity(a, true));
+    value.activities.length > 0 && value.activities.every(a => validActivity(a, true)) &&
+    (value.fastVersion===undefined || value.fastVersion===2);
   const validArchive = value => !!value && typeof value === 'object' &&
     Array.isArray(value.sessions) && value.sessions.length <= 10000 &&
     value.sessions.every(validSession) &&
@@ -84,6 +115,8 @@
       id: item.id, name: item.name.trim(), unit: item.unit,
       quantity: numeric(item.quantity), sets: numeric(item.sets),
       category: item.category||'technique',side:item.side||'total',
+      ...Object.fromEntries(['movement','limb','pattern','ladderTo','combo','exchange','rules','contact']
+        .filter(key=>item[key]!==undefined).map(key=>[key,Array.isArray(item[key])?[...item[key]]:item[key]])),
     }));
     const session = {
       id: raw.editingId || uid('muay'),
@@ -92,6 +125,7 @@
       duration: numeric(raw.duration), intensity: numeric(raw.intensity),
       fatigue: raw.fatigue, kneePain: numeric(raw.kneePain),
       notes: raw.notes.trim().slice(0, 1000), activities: values,
+      ...(raw.quick?{fastVersion:2}:{}),
     };
     if (!validSession(session)) return { error: 'Revise os volumes, a duração e a intensidade informados.' };
     return { session };
@@ -101,6 +135,7 @@
       ...session, editingId: session.id,
       duration: session.duration ?? '', intensity: session.intensity ?? '',
       kneePain: session.kneePain ?? '',
+      ...(session.fastVersion===2&&session.place==='academia'?{quick:quickDefaults()}:{}),
       activities: session.activities.map(a => ({
         ...a, quantity: a.quantity ?? '', sets: a.sets ?? '',
       })),
@@ -113,6 +148,7 @@
   function volumeText(a) {
     const part = a.quantity == null || a.quantity === '' ? '' : String(a.quantity) + ' ' + units[a.unit] +
       (a.unit==='reps' && a.side==='each' ? ' por lado' : '');
+    if(a.category==='sparring')return (a.sets||1)+' round(s) × '+(a.quantity||'—')+' min';
     const series = a.sets == null || a.sets === '' ? '' : String(a.sets) + ' séries';
     return [series, part].filter(Boolean).join(' × ') || 'Volume não informado';
   }
@@ -160,6 +196,79 @@
     return '<div class="section-row"><h2 class="section-title">Muay Thai</h2><small>'+sessions.length+' registro(s)</small></div>'+
       (recent.length?recent.map(s=>sessionCard(s,true)).join(''):'<div class="empty">Nenhum treino de Muay Thai registrado.</div>');
   }
+
+  // Structured academy blocks retain the older activity contract; they never
+  // modify the strength diary or infer hypertrophy sets from strikes.
+  function quickActivity(q){
+    if(!validQuick(q))return {error:'Revise os campos deste bloco.'};
+    if(q.mode==='exhaustion'){
+      const squat=q.movement==='agachamento';
+      const limb=squat?'bilateral':q.limb;
+      const side=limb==='both'?'each':'total';
+      const ladder=q.preset==='ladder',to=Number(q.ladderTo);
+      const quantity=ladder?to*(to+1)/2:Number(q.preset==='custom'?q.quantity:q.preset);
+      if(!integer(quantity,1,3000))return {error:'Informe uma quantidade válida de repetições.'};
+      const label=QUICK_MOVEMENTS[q.movement]+' · '+QUICK_LIMBS[limb];
+      return {activity:{...activity(label,'reps',{category:'exhaustion',side,quantity}),
+        movement:q.movement,limb,pattern:ladder?'ladder':'fixed',...(ladder?{ladderTo:to}:{})}};
+    }
+    if(q.mode==='combination'){
+      if(!q.combo.length)return {error:'Adicione pelo menos um golpe à sequência.'};
+      const name=q.combo.map(key=>COMBO_STRIKES[key]).join(' → ').slice(0,100);
+      return {activity:{...activity(name,'min',{category:'combination',quantity:Number(q.sequenceMinutes)}),
+        combo:[...q.combo]}};
+    }
+    const name='Sparring · '+SPARRING_EXCHANGE[q.exchange]+' · '+SPARRING_RULES[q.rules];
+    return {activity:{...activity(name,'min',{category:'sparring',quantity:Number(q.roundMinutes)}),
+      sets:Number(q.rounds),exchange:q.exchange,rules:q.rules,contact:q.contact}};
+  }
+  const EXPOSURE = Object.freeze({
+    soco:['frontDelts','sideDelts','triceps','forearms','obliques'],
+    chute:['quadriceps','glutes','hamstrings','calves','obliques'],
+    agachamento:['quadriceps','glutes','calves'],
+    joelho:['quadriceps','glutes','abs','obliques']
+  });
+  function movementTypes(a){
+    if(!a||typeof a!=='object')return [];
+    if(a.category==='exhaustion' && Object.hasOwn(EXPOSURE,a.movement))return [a.movement];
+    if(a.category==='combination' && Array.isArray(a.combo))return [...new Set(a.combo.map(id=>
+      id.startsWith('chute_')?'chute':id.startsWith('joelho_')?'joelho':
+        ['jab','direto','cruzado'].includes(id)?'soco':null).filter(Boolean))];
+    if(a.category==='sparring' && Object.hasOwn(SPARRING_RULES,a.rules))
+      return a.rules==='kicks'?['soco','chute']:['soco'];
+    return [];
+  }
+  // A qualitative overlay. Never returns equivalent sets, unilateral
+  // activation, exposure intensity or recovery prescriptions.
+  function exposure(sessions=[],today='',days=30){
+    days=[7,30,90].includes(Number(days))?Number(days):30;
+    const rows={},seen=new Set(),sessionDates=new Set();
+    let mappedActivities=0,unclassifiedActivities=0;
+    for(const [index,s] of (Array.isArray(sessions)?sessions:[]).entries()){
+      if(!dateOk(today)||!dateOk(s?.day))continue;
+      const age=Math.round((Date.parse(today+'T12:00:00Z')-Date.parse(s.day+'T12:00:00Z'))/86400000);
+      if(age<0||age>=days)continue;
+      const id=typeof s.id==='string'&&s.id?s.id:'row:'+index;
+      if(seen.has(id))continue;
+      seen.add(id);
+      for(const a of (Array.isArray(s.activities)?s.activities:[])){
+        const types=movementTypes(a);
+        if(!types.length){unclassifiedActivities++;continue;}
+        mappedActivities++;sessionDates.add(s.day);
+        const regions=[...new Set(types.flatMap(type=>EXPOSURE[type]))];
+        for(const region of regions){
+          if(!rows[region])rows[region]={id:region,sessionIds:new Set(),days:new Set(),lastDay:null};
+          const row=rows[region];row.sessionIds.add(id);row.days.add(s.day);
+          if(!row.lastDay||s.day>row.lastDay)row.lastDay=s.day;
+        }
+      }
+    }
+    const regions=Object.values(rows).map(row=>({id:row.id,sessions:row.sessionIds.size,
+      days:row.days.size,lastDay:row.lastDay})).sort((a,b)=>b.sessions-a.sessions||a.id.localeCompare(b.id));
+    return {days,sessions:sessionDates.size,regions,byId:Object.fromEntries(regions.map(row=>[row.id,row])),
+      mappedActivities,unclassifiedActivities,method:'qualitative-only'};
+  }
+
   function presetButton(p,i){
     return '<button type="button" class="secondary muay-preset" data-action="muay-preset" data-preset="'+i+'">+ '+esc(p.name)+'</button>';
   }
@@ -241,8 +350,9 @@
     const significant=latest.fatigue==='moderada'||Number(latest.intensity)>=7;
     const volume=(latest.activities||[]).filter(a=>a.category==='exhaustion'&&a.unit==='reps'&&Number(a.quantity)>0);
     const combos=(latest.activities||[]).filter(a=>a.category==='combination'&&a.unit==='min'&&Number(a.quantity)>0);
-    const kickingExhaustion=volume.some(a=>/chute|perna|joelho/i.test(a.name||''));
-    const nextFocus=kickingExhaustion?
+    const kickingExhaustion=volume.some(a=>a.movement==='chute'||a.movement==='joelho'||/chute|perna|joelho/i.test(a.name||''));
+    const sparring=(latest.activities||[]).some(a=>a.category==='sparring');
+    const nextFocus=sparring?'Houve sparring: considere a intensidade, contato e recuperação antes de repetir rounds.':kickingExhaustion?
       'Como houve exaustão de chutes, prefira mobilidade confortável ou técnica leve de braços, sem repetir alto volume de chutes.':
       combos.length?'Como houve combinações cronometradas, prefira técnica controlada e mobilidade, sem repetir rounds intensos.':
       volume.length?'Como houve exaustão por repetições, prefira técnica leve ou mobilidade em vez de repetir o mesmo volume.':
@@ -288,7 +398,7 @@
       '</select></div></div></section></details>';
     return '<p class="eyebrow">Diário de atividades</p><h1 class="page-title">Muay Thai</h1>'+
       '<p class="lead">Registre rapidamente o que fez, sem preencher um formulário longo.</p>'+
-      (muay.draft?renderEditor(muay.draft):
+      (muay.draft?(muay.draft.place==='academia'&&muay.draft.quick?renderAcademyEditor(muay.draft):renderEditor(muay.draft)):
         '<section class="card muay-start-card"><h2 class="section-title">Registrar treino realizado</h2>'+
         '<p class="small muted">Escolha onde treinou e adicione apenas as atividades que fez.</p>'+
         '<div class="muay-choices mt-12"><button type="button" class="primary" data-action="muay-start" data-place="academia">Aula na academia</button>'+
@@ -300,7 +410,10 @@
       '<button type="button" class="secondary full" data-action="navigate" data-to="history">Ver histórico completo</button>':'');
   }
   root.AcademiaMuay = {
-    PRESETS, archive, activity, draft, ensureArchive, validDraft, validSession, legacyReview,
+    PRESETS, QUICK_MODES, QUICK_MOVEMENTS, QUICK_LIMBS, COMBO_STRIKES,
+    SPARRING_EXCHANGE,SPARRING_RULES,SPARRING_CONTACT,
+    quickDefaults,validQuick,quickActivity,movementTypes,exposure,
+    archive, activity, draft, ensureArchive, validDraft, validSession, legacyReview,
     readiness,readinessCard,
     validArchive, finishDraft, draftFromSession, volumeText, sortedSessions,
     renderPage, historySection, sessionCard,
