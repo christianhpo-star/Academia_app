@@ -331,6 +331,117 @@
       '<div class="muay-save-actions"><button type="button" class="primary full" data-action="muay-finish">Salvar treino</button>'+
       '<button type="button" class="button-inline" data-action="muay-cancel">Descartar rascunho</button></div></section>';
   }
+
+  function academyChips(options,field,current,label){
+    return '<div class="muay-academy-chips" role="group" aria-label="'+esc(label)+'">'+
+      Object.entries(options).map(([value,name])=>
+        '<button type="button" class="muay-academy-chip'+(String(current)===String(value)?' selected':'')+
+        '" data-action="muay-quick-choice" data-quick-field="'+esc(field)+'" data-value="'+esc(value)+
+        '" aria-pressed="'+(String(current)===String(value))+'">'+esc(name)+'</button>').join('')+'</div>';
+  }
+  function renderAcademyEditor(d){
+    const q=d.quick;
+    const modeTabs='<div class="muay-academy-modes" role="group" aria-label="Escolher modalidade do bloco">'+
+      Object.entries(QUICK_MODES).map(([mode,label])=>
+        '<button type="button" data-action="muay-quick-mode" data-value="'+mode+
+        '" class="muay-academy-mode'+(mode===q.mode?' selected':'')+'" aria-pressed="'+(mode===q.mode)+'">'+
+        esc(label)+'</button>').join('')+'</div>';
+    const movement=academyChips({soco:'Soco',chute:'Chute',agachamento:'Agachamento',joelho:'Joelho'},
+      'movement',q.movement,'Movimento para exaustão');
+    const limbs=q.movement==='agachamento'?
+      '<p class="small muted">Agachamento: repetições bilaterais, sem divisão por lado.</p>':
+      academyChips({both:'Ambos (por lado)',left:'Esquerdo',right:'Direito'},
+        'limb',q.limb,'Lado que executou o movimento');
+    const reps=academyChips({'20':'20','50':'50',ladder:'Escada 1→10',custom:'Outro'},
+      'preset',q.preset,'Quantidade ou escada de repetições');
+    const ladderSum=Number(q.ladderTo)*(Number(q.ladderTo)+1)/2;
+    const exhaustion='<div class="muay-academy-form" aria-label="Bloco de exaustão">'+
+      '<h3>Movimento</h3>'+movement+
+      '<h3>Contagem</h3>'+limbs+reps+
+      (q.preset==='custom'?'<div class="field muay-academy-number"><label for="muay-quick-quantity">Repetições '+(q.movement==='agachamento'?'totais':'no lado escolhido')+'</label>'+
+        '<input id="muay-quick-quantity" type="number" min="1" max="3000" step="1" inputmode="numeric" value="'+esc(q.quantity)+'" data-muay-quick-field="quantity"></div>':'')+
+      (q.preset==='ladder'?'<p class="muay-academy-help" role="note">Escada: 1, depois 2, depois 3 ... até '+
+        q.ladderTo+'. São <strong>'+ladderSum+' repetições '+(q.movement==='agachamento'?'no total':'por lado selecionado')+
+        '</strong>, e não 123 repetições numa única etapa.</p>':'')+
+      '</div>';
+    const strikes=Object.entries(COMBO_STRIKES).map(([key,label])=>
+      '<button type="button" class="muay-strike-add" data-action="muay-combo-add" data-value="'+key+
+      '"'+(q.combo.length>=12?' disabled':'')+' aria-label="Acrescentar '+esc(label)+' à sequência">+ '+esc(label)+'</button>').join('');
+    const comboSteps=q.combo.length?
+      '<ol class="muay-combo-steps">'+q.combo.map((id,i)=>
+        '<li><span>'+(i+1)+'. '+esc(COMBO_STRIKES[id])+'</span>'+
+        '<button type="button" class="button-inline" data-action="muay-combo-remove" data-index="'+i+
+        '" aria-label="Retirar '+esc(COMBO_STRIKES[id])+' da sequência">Retirar</button></li>').join('')+'</ol>':
+      '<p class="muay-combo-empty">Toque nos golpes abaixo na ordem em que foram executados.</p>';
+    const combination='<div class="muay-academy-form" aria-label="Bloco de sequência por tempo">'+
+      '<h3>Ordem da combinação</h3>'+comboSteps+
+      '<div class="muay-strike-grid" role="group" aria-label="Adicionar golpe à sequência">'+strikes+'</div>'+
+      '<p class="small muted">A sequência inteira é repetida durante o período escolhido. A quantidade de repetições não é presumida.</p>'+
+      '<div class="field muay-academy-number"><label for="muay-sequence-minutes">Por quantos minutos?</label>'+
+      '<input id="muay-sequence-minutes" type="number" min="1" max="90" step="1" inputmode="numeric" data-muay-quick-field="sequenceMinutes" value="'+esc(q.sequenceMinutes)+'"></div>'+
+      '</div>';
+    const rounds=Number(q.rounds)*Number(q.roundMinutes);
+    const sparring='<div class="muay-academy-form" aria-label="Bloco de sparring">'+
+      '<h3>Troca de golpes</h3>'+
+      academyChips(SPARRING_EXCHANGE,'exchange',q.exchange,'Regra de troca no sparring')+
+      '<h3>Técnicas permitidas</h3>'+
+      academyChips(SPARRING_RULES,'rules',q.rules,'Técnicas permitidas no sparring')+
+      '<div class="muay-academy-number-row">'+
+      '<div class="field"><label for="muay-spar-rounds">Rounds</label>'+
+      '<input id="muay-spar-rounds" type="number" min="1" max="30" step="1" inputmode="numeric" data-muay-quick-field="rounds" value="'+esc(q.rounds)+'"></div>'+
+      '<div class="field"><label for="muay-spar-minutes">Minutos por round</label>'+
+      '<input id="muay-spar-minutes" type="number" min="1" max="30" step="1" inputmode="numeric" data-muay-quick-field="roundMinutes" value="'+esc(q.roundMinutes)+'"></div></div>'+
+      '<p class="muay-academy-help">Tempo de rounds: <strong>'+rounds+' min</strong> (intervalos não incluídos).</p>'+
+      '<details class="muay-advanced"><summary>Contato do sparring (opcional)</summary>'+
+      academyChips(SPARRING_CONTACT,'contact',q.contact,'Intensidade de contato relatada')+
+      '</details></div>';
+    const builder=q.mode==='exhaustion'?exhaustion:q.mode==='combination'?combination:sparring;
+    const blocks=d.activities.length?
+      '<div class="muay-academy-records">'+d.activities.map((a,i)=>
+        '<div class="muay-academy-record"><div><span class="muay-record-index">'+(i+1)+' · '+
+        esc(categories[a.category]||'Atividade')+'</span><strong>'+esc(a.name)+'</strong>'+
+        '<small>'+esc(volumeText(a))+(a.pattern==='ladder'?' · escada 1→'+a.ladderTo:'')+
+        (a.contact?' · '+esc(SPARRING_CONTACT[a.contact]||''):'')+'</small></div>'+
+        '<button type="button" class="button-inline" data-action="muay-remove" data-id="'+esc(a.id)+
+        '" aria-label="Remover bloco '+(i+1)+'">Remover</button></div>').join('')+'</div>':
+      '<p class="small muted">Nenhum bloco registrado nesta sessão ainda.</p>';
+    return '<section class="card muay-academy-editor" aria-labelledby="muay-academy-heading">'+
+      '<div class="row-between"><h2 id="muay-academy-heading" class="section-title">'+
+      (d.editingId?'Editar treino na academia':'Registrar treino na academia')+
+      '</h2><span class="pill green">Salvo neste aparelho</span></div>'+
+      '<p class="small muted">Registre um bloco de cada vez. Só aparece o que é necessário para o tipo escolhido.</p>'+
+      modeTabs+builder+
+      '<button type="button" class="primary full muay-academy-add" data-action="muay-quick-add">'+
+      '+ Adicionar bloco</button></section>'+
+      '<section class="card muay-academy-session" aria-labelledby="muay-academy-records">'+
+      '<div class="row-between"><h2 id="muay-academy-records" class="section-title">Blocos do treino</h2>'+
+      '<span class="pill">'+d.activities.length+' adicionado(s)</span></div>'+
+      blocks+
+      '<div class="muay-quick-question"><strong>Esforço da sessão (opcional)</strong>'+
+      quickChoice([['5','5/10'],['7','7/10'],['9','9/10']],'muay-effort',d.intensity)+'</div>'+
+      '<details class="muay-advanced"><summary>Duração, recuperação e observações</summary>'+
+      '<div class="muay-academy-number-row mt-12"><div class="field"><label for="muay-duration">Duração total da aula (min)</label>'+
+      '<input id="muay-duration" type="number" min="1" max="360" step="1" inputmode="numeric" data-muay-field="duration" value="'+esc(d.duration)+'" placeholder="Ex.: 50"></div>'+
+      '<div class="field"><label for="muay-knee">Joelho após a aula</label>'+
+      '<select id="muay-knee" data-muay-field="kneePain">'+
+      select({'':'Não informado','0':'0 · Sem dor','1':'1','2':'2','3':'3','4':'4','5':'5','6':'6','7':'7','8':'8','9':'9','10':'10'},d.kneePain)+'</select></div></div>'+
+      '<div class="muay-quick-question"><strong>Fadiga após a aula</strong>'+
+      quickChoice([['normal','Normal'],['moderada','Moderada'],['alta','Alta']],'muay-fatigue',d.fatigue)+'</div>'+
+      '<div class="field mt-12"><label for="muay-day">Data</label>'+
+      '<input id="muay-day" type="date" data-muay-field="day" value="'+esc(d.day)+'"></div>'+
+      '<div class="field mt-12"><label for="muay-notes">Observações</label>'+
+      '<textarea id="muay-notes" maxlength="1000" data-muay-field="notes">'+esc(d.notes)+'</textarea></div>'+
+      '</details>'+
+      '<details class="muay-advanced"><summary>Como isso entra no mapa corporal?</summary>'+
+      '<p class="small muted">O mapa pode indicar regiões provavelmente envolvidas em golpes e deslocamentos. '+
+      'Não mede ativação, assimetria, fadiga muscular nem converte repetições de Muay Thai em séries de musculação.</p>'+
+      '</details>'+
+      '<div class="muay-save-actions"><button type="button" class="primary full" data-action="muay-finish"'+
+      (d.activities.length?'':' disabled')+'>Salvar treino</button>'+
+      '<button type="button" class="button-inline" data-action="muay-cancel">Descartar rascunho</button></div>'+
+      '</section>';
+  }
+
   // Avaliação conservadora baseada em esforço relatado, nunca em gasto calórico inferido.
   // Quantidade de golpes e duração não equivalem automaticamente a fadiga fisiológica.
   function readiness(sessions,today,settings={}) {
