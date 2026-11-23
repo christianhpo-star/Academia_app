@@ -83,3 +83,20 @@ test('completed original cannot be replaced; fatigue and recent Muay reduce pres
  assert.equal(blocked.ok,false);
  assert.ok(SETS.workSets(draft.entries['supino-halteres']).length===1);
 });
+
+test('two previous sessions with the same exercise inform a narrower rep target; without history keep its own range',()=>{
+ const ex=F.options(DATA.exercises).find(x=>x.id==='elevacao-lateral-maquina');
+ const fresh=C.prescription({...args,exercise:ex,context:C.status(args)});
+ assert.equal(fresh.low,10);assert.equal(fresh.high,20);
+ const withHistory=[
+   ...sessions,
+   {id:'sh1',day:'2026-11-17',entries:[{id:ex.id,sets:[{load:30,reps:14,rir:3,warmup:false}]}]},
+   {id:'sh2',day:'2026-11-20',entries:[{id:ex.id,sets:[{load:30,reps:15,rir:3,warmup:false}]}]},
+ ];
+ const personalized=C.prescription({...args,exercise:ex,strengthSessions:withHistory,context:C.status({...args,strengthSessions:withHistory})});
+ assert.ok(personalized.low>=10);
+ assert.ok(personalized.high<=20);
+ assert.ok(personalized.high-personalized.low<=4);
+ assert.match(personalized.reason,/duas sessões anteriores/);
+ assert.ok(personalized.sets>=2&&personalized.sets<=3);
+});
