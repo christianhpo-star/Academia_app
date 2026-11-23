@@ -5,6 +5,7 @@
   const SETS = window.ForjaTrainingSets;
   const CARDIO = window.ForjaCardio;
   const M = window.AcademiaMuay;
+  const FREE = window.ForjaFreeWorkout;
   const CAL = window.ForjaCalendar;
   const F = window.ForjaFlex;
   const ADVICE = window.ForjaCatalogAdvice;
@@ -161,7 +162,7 @@
       const record = JSON.parse(raw);
       const draft = record?.draft;
     F.ensureDraft(draft);
-      if (record.version !== 1 || !draft || !DATA.rotation.includes(draft.planId) ||
+      if (record.version !== 1 || !draft || !(DATA.rotation.includes(draft.planId) || FREE.isFree(draft)) ||
           !draft.entries || typeof draft.entries !== 'object' || Array.isArray(draft.entries) ||
           !Object.entries(draft.entries).every(([key, en]) => en && en.id === key &&
             exercises.some(ex => ex.id === key) && Array.isArray(en.sets) && en.sets.length > 0 &&
@@ -180,7 +181,7 @@
   let muayMode = !recoveredDraft && Boolean(state.muay.draft);
   const ui = {
     tab: (recoveredDraft || state.muay.draft) ? 'plans' : 'home',
-    plan: recoveredDraft?.draft.planId || 'A', editor:null,
+    plan: DATA.rotation.includes(recoveredDraft?.draft.planId)?recoveredDraft.draft.planId:'A', editor:null,
     draft: recoveredDraft?.draft || null,
     recovered: Boolean(recoveredDraft),
     draftSavedAt: recoveredDraft?.savedAt || null,
@@ -189,6 +190,7 @@
     catalogContext:'browse',catalogSourceId:null,
     catalogGroup:'all',catalogStyle:'all',catalogSearch:'',catalogLimit:12,
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
+    freeSearch:'',freeAll:false,
     anatomyOpen:{},anatomyViews:{},
     focusedMode: false, focusedExercise: null,
     balancePending:null, balanceDismissed:false,
@@ -277,7 +279,9 @@
     el.textContent = message; el.hidden = false;
     clearTimeout(toastTimeout); toastTimeout = setTimeout(()=>{el.hidden=true;},4800);
   }
-  const planFor = id => DATA.plans.find(p => p.id === id) || DATA.plans[0];
+  const planFor = id => id===FREE.PLAN_ID?
+    {id:FREE.PLAN_ID,title:'Treino livre',subtitle:'Exercícios avulsos, sem alterar a sequência A/B/C/D.',type:'free'}:
+    DATA.plans.find(p => p.id === id) || DATA.plans[0];
   const exerciseFor = id => state.exercises.find(x => x.id === id);
   const currentExercises = id => state.exercises.filter(x=>x.group===id && x.active);
   const repsLabel = ex => ex?.repPerSide ? 'repetições por lado' : 'repetições';
@@ -508,7 +512,7 @@
       return;
     }
     const trainingArea=ui.tab==='plans'||ui.tab==='catalog';
-    const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
+    const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? (FREE.isFree(ui.draft)?renderFreeWorkout():renderTraining()) :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
       ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : ui.tab === 'share' ? renderShare() : renderSettings();
     main.innerHTML=(trainingArea?renderTrainingDestinations():'')+content;
@@ -706,7 +710,7 @@
     return `${headline('Hoje','Seu próximo passo.')}
       <section class="home-primary card" aria-labelledby="home-primary-title">
         <div class="row-between"><span class="home-step-label">${ui.draft?'EM ANDAMENTO':next.rest?'RECUPERAÇÃO SUGERIDA':'TREINO SUGERIDO'}</span>
-          ${tag(ui.draft?`Bloco ${ui.draft.planId}`:next.rest?'Descanso':`Bloco ${next.id}`,ui.draft||!next.rest?'green':'amber')}</div>
+          ${tag(ui.draft?(FREE.isFree(ui.draft)?'Treino livre':`Bloco ${ui.draft.planId}`):next.rest?'Descanso':`Bloco ${next.id}`,ui.draft||!next.rest?'green':'amber')}</div>
         <h2 id="home-primary-title">${ui.draft?esc(block.title):plan?esc(plan.title):'Recuperar antes de treinar'}</h2>
         <p class="home-primary-summary">${ui.draft?'Você já começou esta sessão. Continue de onde parou.':plan?esc(plan.subtitle):'Seus blocos continuam pendentes. Reavalie como você está antes de iniciar.'}</p>
         ${next.rest&&!ui.draft?`<p class="home-rest-reason">${esc(next.reason)}</p>`:''}
@@ -729,6 +733,7 @@
       </details>
       <div class="home-minimal-links" role="group" aria-label="Registros rápidos">
         <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
+        <button class="home-muay-link" data-action="free-start"><span>Registrar treino livre</span><span aria-hidden="true">›</span></button>
         <button class="home-muay-link" data-action="nutrition-open"><span>Registrar alimentação</span><span aria-hidden="true">›</span></button>
       </div>
       ${homeStepsCard()}
@@ -1038,7 +1043,11 @@
       .map(([v,label])=>`<option value="${v}" ${String(current??'')===v?'selected':''}>${label}</option>`).join('');
   }
   function renderMuay() {
-    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today(),recoverySettings());
+    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' +
+      M.renderPage(state.muay,today(),recoverySettings())+
+      (!state.muay.draft?'<section class="card free-after-muay"><h2 class="section-title">Fez exercícios depois do Muay?</h2>'+
+        '<p class="small muted">Registre abdominais ou qualquer exercício avulso em um treino livre, sem completar uma ficha da sua divisão.</p>'+
+        '<button type="button" class="secondary full" data-action="free-start" data-origin="muay">+ Registrar treino livre após Muay</button></section>':'');
   }
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
@@ -1047,6 +1056,9 @@
     const isNext=next.pending[0]===ui.plan;
     return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>
       ${resumeBanner()}
+      <section class="card free-entrypoint"><div><strong>Treino livre</strong>
+        <p class="small muted">Fez só abdominal, flexão ou alguns exercícios após o Muay? Registre o que realmente executou, sem iniciar A/B/C/D.</p></div>
+        <button type="button" class="secondary full" data-action="free-start">+ Registrar treino livre</button></section>
       <section class="workout-plan-top" aria-label="Planejamento da musculação">
         <div class="workout-plan-status"><span>RODADA ${next.completedRounds+1}</span><strong>${next.completed.length}/${DATA.rotation.length} feitos</strong></div>
         <details class="workout-queue-compact"><summary>Ver sequência de treinos <span aria-hidden="true">⌄</span></summary>
