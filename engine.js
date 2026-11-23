@@ -38,16 +38,18 @@
   function recommend(ex, sessions) {
     const h = historyOf(sessions, ex.id);
     if (SETS.allowsZero(ex)) {
+      const elastic=ex.id.endsWith('-elastico');
       if (!h.length) return {
         level: 'start', title: 'Primeiro registro', last: null, next: null,
-        explanation: 'Registre as repetições e o RIR. Comece sem carga adicional e priorize uma execução controlada.',
+        explanation: elastic?'Registre repetições e RIR com o elástico. Sem medida de tensão, use 0 kg e acompanhe a técnica.':
+          'Registre as repetições e o RIR. Comece sem carga adicional e priorize uma execução controlada.',
       };
       const last = h[0], top = topSet(last.entry), load = Number(top.load);
       return {
         level: 'hold', title: 'Acompanhe repetições e técnica', next: null,
-        last: `${top.reps} rep. · ${load === 0 ? 'peso do corpo' : formatWeight(load) + ' kg adicionais'}`,
+        last: `${top.reps} rep. · ${load === 0 ? (elastic?'elástico sem tensão quantificada':'peso do corpo') : formatWeight(load) + ' kg adicionais'}`,
         lastSets: workSets(last.entry), lastDate: last.session.day,
-        explanation: `Consolide a faixa de ${ex.low}–${ex.high} repetições com execução controlada. A carga informada é apenas o peso adicional; o app não calcula força máxima nem sugere aumentá-la automaticamente neste movimento.`,
+        explanation: `Consolide a faixa de ${ex.low}–${ex.high} repetições com execução controlada. ${elastic?'A tensão da faixa elástica não é estimada em quilogramas pelo app.':'A carga informada é apenas o peso adicional.'} O app não calcula força máxima nem sugere aumentá-la automaticamente neste movimento.`,
       };
     }
     if (!h.length) return {

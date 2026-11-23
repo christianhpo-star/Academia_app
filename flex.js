@@ -76,6 +76,29 @@
       'kg', false, ['puxada entre as pernas','cable pull through']],
     ['flexora-em-pe', 'Flexora em pé na máquina', 'D', 'Máquina', 'Posteriores', 3, 10, 15, 2.5,
       'kg', false, ['flexora vertical','standing leg curl']],
+
+    // Ombros e trapézio: alternativas opcionais em blocos existentes, mas
+    // exploráveis por categoria muscular independente da divisão A/B.
+    ['encolhimento-halteres','Encolhimento de ombros com halteres','A','Halteres','Trapézio superior',2,10,15,2.5,'kg/halter',false,['shrug','trapézio halteres','encolhimento halter']],
+    ['encolhimento-barra','Encolhimento de ombros com barra','A','Barra','Trapézio superior',2,10,15,2.5,'kg',false,['shrug barra','trapezio barra']],
+    ['encolhimento-smith','Encolhimento de ombros no Smith','A','Barra guiada','Trapézio superior',2,10,15,5,'kg',false,['shrug smith','encolhimento guiado']],
+    ['face-pull-alto','Face pull com cotovelos altos','A','Polia / corda','Deltoide posterior / trapézio médio',2,12,20,2.5,'kg',false,['face pull alto','ombro posterior cabo']],
+    ['elevacao-y-inclinada','Elevação em Y no banco inclinado','A','Banco inclinado / halteres','Trapézio médio / estabilidade escapular',2,12,20,1,'kg/halter',false,['y raise','elevação y','trapezio inferior']],
+    ['crucifixo-inverso-banco','Crucifixo inverso no banco inclinado','A','Banco / halteres','Deltoide posterior / trapézio médio',2,12,20,2.5,'kg/halter',false,['crucifixo posterior banco','rear delt fly banco']],
+    ['elevacao-lateral-maquina','Elevação lateral na máquina','B','Máquina','Deltoide lateral',2,10,20,2.5,'kg',false,['elevação lateral máquina','ombro lateral máquina']],
+    ['elevacao-frontal-polia','Elevação frontal na polia','B','Polia','Deltoide anterior',2,10,15,2.5,'kg',false,['front raise','ombro frontal polia']],
+    ['desenvolvimento-barra','Desenvolvimento de ombros com barra','B','Barra / banco','Deltoide anterior / lateral / tríceps',2,8,12,2.5,'kg',false,['shoulder press barra','overhead press']],
+    ['remada-alta-polia','Remada alta na polia com corda','B','Polia','Deltoide lateral / trapézio superior',2,10,15,2.5,'kg',false,['upright row cable','remada alta cabo']],
+    // Novas opções por conforto, estabilidade e disponibilidade de equipamento.
+    ['desenvolvimento-maquina-neutro','Desenvolvimento de ombros na máquina · pegada neutra','B','Máquina','Deltoide anterior / lateral',2,8,12,5,'kg',false,['shoulder press neutro','desenvolvimento guiado']],
+    ['desenvolvimento-halter-sentado','Desenvolvimento sentado com halteres','B','Banco com encosto / halteres','Deltoide anterior / lateral',2,8,12,2.5,'kg/halter',false,['shoulder press sentado','press ombro halter']],
+    ['elevacao-lateral-sentado','Elevação lateral sentada com halteres','B','Banco / halteres','Deltoide lateral',2,12,20,1,'kg/halter',false,['elevação lateral sentado','ombro lateral iniciante']],
+    ['elevacao-lateral-unilateral-polia','Elevação lateral unilateral na polia','B','Polia baixa','Deltoide lateral',2,12,20,2.5,'kg',false,['lateral raise cabo','lateral unilateral']],
+    ['elevacao-frontal-halteres','Elevação frontal com halteres','B','Halteres','Deltoide anterior',2,10,15,1,'kg/halter',false,['front raise halter','elevação frontal alternada']],
+    ['encolhimento-polia','Encolhimento de ombros na polia','A','Polia baixa','Trapézio superior',2,10,15,2.5,'kg',false,['shrug cable','encolhimento cabo']],
+    ['crucifixo-inverso-elastico','Crucifixo inverso com elástico','A','Elástico / casa','Deltoide posterior',2,12,20,1,'kg',false,['reverse fly band','posterior em casa']],
+    ['face-pull-elastico','Face pull com elástico','A','Elástico / casa','Deltoide posterior / trapézio médio',2,12,20,1,'kg',false,['band face pull','face pull casa']],
+    ['elevacao-y-elastico','Elevação em Y com elástico','A','Elástico / casa','Trapézio médio / estabilidade escapular',2,12,20,1,'kg',false,['y raise band','elevação y casa']],
     ['abdominal-polia', 'Abdominal na polia', 'A', 'Polia alta / corda', 'Abdômen', 2, 10, 15, 2.5,
       'kg', false, ['crunch na polia','abdominal com corda','cable crunch','core']],
     ['pallof-press', 'Pallof press na polia', 'B', 'Polia', 'Abdômen / oblíquos', 2, 10, 12, 2.5,
@@ -94,7 +117,7 @@
   ].map(([id,name,group,equipment,muscle,sets,low,high,step,unit='kg',knee=false,aliases=[]]) =>
     ({id,name,group,equipment,muscle,sets,low,high,step,unit,knee,aliases,mode:'double',active:false,
       ...(['pallof-press','abdominal-bicicleta','flexao-lateral-polia','dead-bug','woodchop-polia','passada-lateral-halter'].includes(id)?{repPerSide:true}:{}),
-      ...(['abdominal-bicicleta','elevacao-joelhos-suspenso','dead-bug','extensao-lombar-45'].includes(id)?{mode:'bodyweight',bodyweight:true}:{}),
+      ...(['abdominal-bicicleta','elevacao-joelhos-suspenso','dead-bug','extensao-lombar-45','crucifixo-inverso-elastico','face-pull-elastico','elevacao-y-elastico'].includes(id)?{mode:'bodyweight',bodyweight:true}:{}),
       ...(['abdominal-polia','pallof-press','abdominal-bicicleta','elevacao-joelhos-suspenso','flexao-lateral-polia','dead-bug','woodchop-polia'].includes(id)?{complement:'abdomen'}:{})}));
   const REASONS = {
     '': 'Prefiro não informar',

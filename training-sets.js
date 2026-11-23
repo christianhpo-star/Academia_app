@@ -3,7 +3,7 @@
  * execution when repetitions are missing, or when a different ID is supplied. */
 (function installTrainingSets(root) {
   'use strict';
-  const bodyweightIds = new Set(['abdominal-solo', 'abdominal-inverso', 'abdominal-bicicleta', 'elevacao-joelhos-suspenso', 'dead-bug', 'extensao-lombar-45']);
+  const bodyweightIds = new Set(['abdominal-solo', 'abdominal-inverso', 'abdominal-bicicleta', 'elevacao-joelhos-suspenso', 'dead-bug', 'extensao-lombar-45', 'crucifixo-inverso-elastico', 'face-pull-elastico', 'elevacao-y-elastico']);
   const idFor = value => typeof value === 'string' ? value : value?.id;
   const numeric = value => (typeof value === 'number' ||
     (typeof value === 'string' && value.trim() !== '')) && Number.isFinite(Number(value));

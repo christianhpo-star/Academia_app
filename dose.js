@@ -24,7 +24,11 @@
   map('pulley-aberto pulley-fechado puxada-neutra', ['costas'], ['biceps']);
   map('remada-baixa remada-cavalinho remada-unilateral-halter remada-articulada', ['costas'], ['biceps']);
   map('pullover-polia', ['costas']);
-  map('face-pull', ['ombros'], ['costas']);
+  map('face-pull face-pull-alto face-pull-elastico', ['ombros'], ['costas']);
+  map('encolhimento-halteres encolhimento-barra encolhimento-smith encolhimento-polia elevacao-y-inclinada elevacao-y-elastico', ['ombros'], ['costas']);
+  map('crucifixo-inverso-banco crucifixo-inverso-elastico', ['ombros'], ['costas']);
+  map('elevacao-frontal-polia elevacao-lateral-maquina elevacao-lateral-sentado elevacao-lateral-unilateral-polia elevacao-frontal-halteres remada-alta-polia', ['ombros']);
+  map('desenvolvimento-barra desenvolvimento-maquina-neutro desenvolvimento-halter-sentado', ['ombros'], ['triceps']);
   map('voador-inverso crucifixo-inverso-halter crucifixo-inverso-polia', ['ombros'], ['costas']);
   map('remada-peito-apoiado puxada-unilateral-polia', ['costas'], ['biceps']);
   map('rosca-w rosca-martelo rosca-inversa rosca-scott', ['biceps']);
@@ -273,7 +277,9 @@
       level:'unknown',title:'Alguns exercícios não têm mapeamento muscular',
       reason:`Há ${summary.unknown} registro(s) de exercício sem classificação disponível. Eles não entram no volume muscular estimado; isso limita a análise.`,
     });
-    return {summary,suggestions,candidates:options,objective:'recomposition',
+    const objectives=['recomposition','fat_loss','muscle_gain','maintenance'];
+    const objective=objectives.includes(settings?.goalMode)?settings.goalMode:'recomposition';
+    return {summary,suggestions,candidates:options,objective,
       disclaimer:'Estimativas de treinamento, não medição de hipertrofia, diagnóstico ou promessa de resultado. Indicadores de disponibilidade e limites para +1 série são heurísticas do FORJA.',
     };
   }
@@ -281,8 +287,10 @@
   const val=value=>Number(value).toLocaleString('pt-BR',{maximumFractionDigits:1});
   function renderPanel(data,{duringWorkout=false}={}) {
     const rows=data.summary.rows.filter(m=>m.estimated28>0 || m.estimated7>0);
+    const objectiveLabel={recomposition:'Recomposição',fat_loss:'Preservar músculo',
+      muscle_gain:'Ganho de massa',maintenance:'Manutenção'}[data.objective]||'Recomposição';
     return `<section class="card dose-card" aria-labelledby="dose-title">
-      <div class="row-between"><h2 class="section-title" id="dose-title">Volume por grupo muscular</h2><span class="pill green">Recomposição</span></div>
+      <div class="row-between"><h2 class="section-title" id="dose-title">Volume por grupo muscular</h2><span class="pill green">${escape(objectiveLabel)}</span></div>
       <p class="small muted">Séries efetivas realizadas, não planejadas. Exercícios principais contam como uma série por músculo; participações auxiliares como 0,5 (estimativa de pesquisa, não medida individual).</p>
       ${rows.length?`<div class="dose-table" role="table" aria-label="Volume de treino estimado nos últimos sete e vinte e oito dias">
         <div role="row" class="dose-header"><span role="columnheader">Grupo</span><span role="columnheader">7 dias</span><span role="columnheader">Média 28 dias/sem.</span></div>
