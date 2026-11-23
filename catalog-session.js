@@ -33,7 +33,7 @@
     }
     return {ok:true};
   }
-  function prepare({draft,mode,sourceId,targetId,exercise,extraSourceId,eligibleExtraIds=[]}={}){
+  function prepare({draft,mode,sourceId,targetId,exercise,extraSourceId,eligibleExtraIds=[],dayPrescription=null}={}){
     const gate=canChoose({draft,mode,sourceId,targetId,eligibleExtraIds});
     if(!gate.ok)return gate;
     if(!exercise||exercise.id!==targetId||!Number.isInteger(exercise.sets)||exercise.sets<1||exercise.sets>12)
@@ -48,10 +48,12 @@
       const old=next.skipped.find(row=>row.id===sourceId);
       if(old&&!old.reason)old.reason='preferencia';
     }
-    const sets=Array.from({length:mode==='extra'?1:exercise.sets},()=>({
+    const targetSets=mode==='extra'?1:(dayPrescription && Number.isInteger(dayPrescription.sets) && dayPrescription.sets>=1 && dayPrescription.sets<=3?dayPrescription.sets:exercise.sets);
+    const sets=Array.from({length:targetSets},()=>({
       load:SETS.allowsZero(exercise)?0:'',reps:'',rir:'',warmup:false
     }));
-    if(!F.addToDraft(next,targetId,exercise,{id:targetId,sets,pain:''}))
+    if(!F.addToDraft(next,targetId,exercise,{id:targetId,sets,pain:'',
+      ...(dayPrescription&&mode!=='extra'?{dayPrescription:{sets:targetSets,low:dayPrescription.low,high:dayPrescription.high,rirTarget:dayPrescription.rirTarget,reason:dayPrescription.reason,scope:'session-only'}}:{})}))
       return {ok:false,error:'Não foi possível incluir o exercício nesta sessão.'};
     if(mode==='extra')next.extraChoice={kind:'exercise',id:targetId,sourceId:extraSourceId||''};
     return {ok:true,draft:next,removedId:mode==='replace'?sourceId:null,addedId:targetId};

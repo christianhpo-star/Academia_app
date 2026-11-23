@@ -22,6 +22,7 @@
   const ANATOMY = window.ForjaExerciseAnatomy;
   const MUSCLE_MAP = window.ForjaMuscleMap;
   const BALANCE = window.ForjaTrainingBalance;
+  const CRECO = window.ForjaCatalogRecommendations;
   const MUSCLE_BODY = window.ForjaMuscleBody;
   const SHARE = window.ForjaShareSummary;
   const STICKER = window.ForjaShareSticker;
@@ -826,6 +827,18 @@
   }
   // A catalog detail is informational: it reads catalog metadata and the
   // local SVG guide only. All persisted changes require a separate confirmation.
+  function catalogAdviceContext(){
+    return CRECO?.status?.({strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      exercises:state.exercises,draft:catalogContext()==='browse'?null:ui.draft,
+      settings:state.settings,today:today()})||{ready:false,alerts:[],reason:'Sem dados.'};
+  }
+  function catalogIsShoulder(ex){
+    const regions=ANATOMY?.describe?.(ex.id)?.main||[];
+    return ['frontDelts','sideDelts','rearDelts','upperTraps','midTraps'].some(id=>regions.includes(id));
+  }
+  function catalogBadge(ex,context,preferred=null){
+    return preferred||CRECO?.forExercise?.(ex,context)||null;
+  }
   function renderCatalogDetail(ex){
     const current=state.exercises.find(item=>item.id===ex.id);
     const guide=ANATOMY?.describe(ex.id);
@@ -841,6 +854,10 @@
       ? '<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot main" aria-hidden="true"></span><span><small>Principal</small><strong>'+esc(guide.primary)+'</strong>'+locationNote('main')+'</span></div>'+
         (guide.secondary?'<div class="catalog-detail-muscle-line"><span class="catalog-muscle-dot assist" aria-hidden="true"></span><span><small>Auxiliares</small><strong>'+esc(guide.secondary)+'</strong>'+locationNote('assist')+'</span></div>':'')
       : '<p class="small muted">Grupo indicado na ficha: '+esc(ex.muscle||'Não informado')+'. Sem divisão anatômica revisada.</p>';
+    const adviceContext=catalogAdviceContext(),recommended=catalogBadge(ex,adviceContext);
+    const dayGuide=CRECO?.prescription?.({exercise:ex,context:adviceContext,
+      strengthSessions:state.sessions,muaySessions:state.muay.sessions,settings:state.settings,
+      today:today(),draft:catalogContext()==='browse'?null:ui.draft});
     const confirmation=ui.catalogConfirmId===ex.id;
     const status=current?.active?'Na minha ficha':current?'Inativo na ficha':'Disponível';
     const mode=catalogContext(),inSession=mode!=='browse';
@@ -874,7 +891,12 @@
       '<button type="button" class="catalog-detail-back" data-action="catalog-back">← Voltar ao catálogo</button>'+
       '<div class="catalog-detail-intro"><p class="eyebrow">BLOCO '+esc(ex.group)+' · '+esc(status)+'</p>'+
       '<h1 class="page-title" id="catalog-detail-heading" tabindex="-1">'+esc(ex.name)+'</h1>'+
-      '<p class="lead">'+(inSession?'Confira os músculos e a execução antes de escolher.':'Conheça os músculos trabalhados e a execução.')+'</p></div>'+
+      '<p class="lead">'+(inSession?'Confira os músculos e a execução antes de escolher.':'Conheça os músculos trabalhados e a execução.')+'</p>'+
+      (recommended?'<div class="catalog-detail-advice"><strong>Recomendado para revisar '+esc(recommended.region.toLowerCase())+'</strong><p>'+
+        esc(recommended.message)+'</p></div>':'')+
+      (recommended&&dayGuide?'<p class="small catalog-detail-plan"><strong>Opção para hoje:</strong> '+
+        dayGuide.sets+' séries · '+dayGuide.low+'–'+dayGuide.high+' repetições · RIR '+esc(dayGuide.rirTarget)+
+        '. Ajuste conforme esforço, recuperação e técnica.</p>':'')+'</div>'+
       '<section class="card catalog-detail-card" aria-label="Informações do exercício">'+
       illustration+
       '<div class="catalog-detail-muscles">'+muscleInfo+'</div>'+
@@ -899,7 +921,13 @@
     if(selected)return renderCatalogContext(true)+renderCatalogDetail(selected);
     const all=F.options(state.exercises,inSession?ui.draft:null);
     const known=new Map(state.exercises.map(ex=>[ex.id,ex]));
-    const shown=all.filter(ex=>ui.catalogGroup==='all'||ex.group===ui.catalogGroup);
+    const shown=all.filter(ex=>ui.catalogGroup==='all'||(ui.catalogGroup==='S'?catalogIsShoulder(ex):ex.group===ui.catalogGroup));
+    const adviceContext=catalogAdviceContext();
+    const recommendations=CRECO?.ranked?.(shown,adviceContext)||new Map();
+    shown.sort((a,b)=>{
+      const aa=recommendations.get(a.id),bb=recommendations.get(b.id);
+      return (aa?0:1)-(bb?0:1)||((aa?.rank??999)-(bb?.rank??999))||a.name.localeCompare(b.name,'pt-BR');
+    });
     const term=ui.catalogSearch.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLocaleLowerCase('pt-BR').trim();
     const count=shown.filter(ex=>catalogSearchText(ex).includes(term)).length;
     let shownSoFar=0;
@@ -908,11 +936,14 @@
         <label for="catalog-search">Buscar exercício ou equipamento</label>
         <input id="catalog-search" type="search" value="${esc(ui.catalogSearch)}" placeholder="Ex.: supino, polia, halter..." autocomplete="off" aria-controls="catalog-browser-results" />
       </search>
-      <div class="catalog-group-tabs" role="group" aria-label="Filtrar por bloco">
-        ${[['all','Todos'],['A','Costas'],['B','Peito'],['C','Quadríceps'],['D','Posteriores']].map(([group,label])=>
+      <div class="catalog-group-tabs" role="group" aria-label="Filtrar por bloco ou região muscular">
+        ${[['all','Todos'],['S','Ombro e trapézio'],['A','Costas'],['B','Peito'],['C','Quadríceps'],['D','Posteriores']].map(([group,label])=>
           `<button type="button" class="catalog-group-chip ${ui.catalogGroup===group?'selected':''}"
              data-action="catalog-filter" data-group="${group}" aria-pressed="${ui.catalogGroup===group}">${label}</button>`).join('')}
       </div>
+      ${adviceContext.ready&&recommendations.size?
+        '<p class="small catalog-advice-intro">Recomendado: exercícios que envolvem regiões com pouco trabalho direto registrado nos últimos 30 dias. Não é uma meta de séries nem indicação de que você deva fazer todos.</p>':
+        '<p class="small muted">O selo Recomendado só aparece com histórico suficiente de séries executadas e cobertura muscular reconhecida.</p>'}
       <div class="catalog-browser-head">
         <h2 class="section-title">Todos os exercícios</h2>
         <output id="catalog-count" aria-live="polite">Exibindo ${Math.min(count,ui.catalogLimit)} de ${count} encontrados</output>
@@ -921,6 +952,7 @@
         ${shown.map(ex=>{
           const existing=known.get(ex.id);
           const status=existing?(existing.active?'Na ficha':'Inativo'):'Disponível';
+          const recommended=recommendations.get(ex.id);
           const description=[ex.muscle,ex.equipment].filter(Boolean).join(' · ');
           const searchable=catalogSearchText(ex);
           const matches=searchable.includes(term);
@@ -929,13 +961,17 @@
                    data-search="${esc(searchable)}" ${matches&&shownSoFar<=ui.catalogLimit?'':'hidden'}>
             <div class="catalog-browser-header">
               <span class="catalog-group-code">BLOCO ${esc(ex.group)}</span>
-              <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
+              <div class="catalog-badges">
+                ${recommended?'<span class="catalog-recommended-tag" aria-label="Recomendado para revisar '+esc(recommended.region)+'">Recomendado</span>':''}
+                <span class="catalog-state ${existing?.active?'is-active':''}">${status}</span>
+              </div>
             </div>
             <h3>${esc(ex.name)}</h3>
             <p class="catalog-browser-description">${esc(description)}</p>
+            ${recommended?'<p class="catalog-reason">'+esc(recommended.region)+' · '+esc(recommended.reason)+'.</p>':''}
             ${ANATOMY?.describe(ex.id)?'<small class="catalog-anatomy-note">Mapa muscular disponível nos detalhes</small>':''}
             <div class="catalog-browser-bottom">
-              <span>${ex.sets} séries · ${ex.low}–${ex.high} reps</span>
+              <span>${recommended?'Sugestão de ajuste nos detalhes':'Referência: '+ex.sets+' séries · '+ex.low+'–'+ex.high+' reps'}</span>
               <button type="button" class="button-inline catalog-view-button" data-action="catalog-view" data-ex="${esc(ex.id)}" aria-label="Ver detalhes de ${esc(ex.name)}">Ver detalhes</button>
             </div>
           </article>`;
@@ -1145,8 +1181,11 @@
       return notify('A sugestão mudou. Revise a sessão antes de confirmar.');
     const target=F.prepareCatalog(suggestion.targetId,state.exercises);
     if(!target)return notify('Exercício não encontrado no catálogo.');
+    const dayGuide=CRECO?.prescription?.({exercise:target.exercise,context:catalogAdviceContext(),
+      draft:ui.draft,strengthSessions:state.sessions,muaySessions:state.muay.sessions,
+      settings:state.settings,today:today()});
     const result=CSESSION.prepare({draft:ui.draft,mode:'replace',sourceId:suggestion.sourceId,
-      targetId:suggestion.targetId,exercise:target.exercise});
+      targetId:suggestion.targetId,exercise:target.exercise,dayPrescription:dayGuide});
     if(!result.ok)return notify(result.error);
     const previous=ui.draft;
     let added=false;
@@ -1288,7 +1327,10 @@
     return `<section class="exercise-card workout-exercise-card" data-exercise="${esc(ex.id)}" aria-label="Exercício ${index+1} de ${total}: ${esc(ex.name)}">
       <div class="workout-exercise-heading"><span class="workout-exercise-number">${String(index+1).padStart(2,'0')} <small>/ ${String(total).padStart(2,'0')}</small></span>
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
-        <p class="workout-exercise-target">${ex.sets} séries planejadas · ${ex.low}–${ex.high} ${repsLabel(ex)}</p></div>
+        <p class="workout-exercise-target">${en.sets.length} séries nesta sessão · ${en.dayPrescription?.low||ex.low}–${en.dayPrescription?.high||ex.high} ${repsLabel(ex)}</p>
+        ${en.dayPrescription?'<p class="small workout-day-guidance"><strong>Ajuste para hoje:</strong> '+esc(en.dayPrescription.reason)+
+          ' Faixa '+en.dayPrescription.low+'–'+en.dayPrescription.high+' repetições, RIR '+esc(en.dayPrescription.rirTarget)+
+          '. A ficha original não mudou.</p>':''}</div>
         <span class="workout-exercise-kind">${SETS.allowsZero(ex)?'Peso do corpo':ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
       ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]),ui.anatomyViews[ex.id])||''}
       <p class="workout-exercise-step">${SETS.allowsZero(ex)?'Carga extra: 0 kg = peso do corpo. Registre apenas o peso adicionado.':'Ajuste de carga: +'+fmt(ex.step)+' '+esc(ex.unit)}</p>
@@ -2173,9 +2215,12 @@
     if(found.isNew&&state.exercises.length>=200)return notify('Limite de exercícios atingido.');
     const approved=mode==='extra'?sessionAdvice('extra').recommendations.find(item=>
       item.kind==='extra-exercise'&&item.id===id&&item.sourceId):null;
+    const dayGuide=mode!=='extra'?CRECO?.prescription?.({exercise:found.exercise,
+      context:catalogAdviceContext(),draft:ui.draft,strengthSessions:state.sessions,
+      muaySessions:state.muay.sessions,settings:state.settings,today:today()}):null;
     const result=CSESSION.prepare({draft:ui.draft,mode,sourceId:ui.catalogSourceId,
-      targetId:id,exercise:found.exercise,eligibleExtraIds:mode==='extra'?eligibleExtraIds():[],
-      extraSourceId:approved?.sourceId});
+      targetId:id,exercise:found.exercise,dayPrescription:dayGuide,
+      eligibleExtraIds:mode==='extra'?eligibleExtraIds():[],extraSourceId:approved?.sourceId});
     if(!result.ok)return notify(result.error);
     const before=ui.draft;
     let added=false;
@@ -2550,7 +2595,7 @@
       filterCatalogDOM();return;
     }
     if(action==='catalog-filter'){
-      if(!['all','A','B','C','D'].includes(btn.dataset.group))return;
+      if(!['all','S','A','B','C','D'].includes(btn.dataset.group))return;
       ui.catalogGroup=btn.dataset.group;ui.catalogLimit=12;render();return;
     }
     if(action==='flex-withdraw'){
@@ -2920,7 +2965,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261122-photo-foods19',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261123-shoulders20',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

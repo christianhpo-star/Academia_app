@@ -24,7 +24,11 @@
   map('pulley-aberto pulley-fechado puxada-neutra', ['costas'], ['biceps']);
   map('remada-baixa remada-cavalinho remada-unilateral-halter remada-articulada', ['costas'], ['biceps']);
   map('pullover-polia', ['costas']);
-  map('face-pull', ['ombros'], ['costas']);
+  map('face-pull face-pull-alto', ['ombros'], ['costas']);
+  map('encolhimento-halteres encolhimento-barra encolhimento-smith elevacao-y-inclinada', ['ombros'], ['costas']);
+  map('crucifixo-inverso-banco', ['ombros'], ['costas']);
+  map('elevacao-frontal-polia elevacao-lateral-maquina remada-alta-polia', ['ombros']);
+  map('desenvolvimento-barra', ['ombros'], ['triceps']);
   map('voador-inverso crucifixo-inverso-halter crucifixo-inverso-polia', ['ombros'], ['costas']);
   map('remada-peito-apoiado puxada-unilateral-polia', ['costas'], ['biceps']);
   map('rosca-w rosca-martelo rosca-inversa rosca-scott', ['biceps']);

@@ -11,7 +11,7 @@ const session = (day, entries, id = day) => ({id, day, timestamp: day + 'T17:00:
 const ago = (days, today = TODAY) => new Date(Date.parse(today + 'T12:00:00Z') - days * 86400000).toISOString().slice(0, 10);
 const analyze = (sessions, options = {}) => HISTORY.analyze({today: TODAY, strengthSessions: sessions, ...options});
 
-test('all 88 catalog exercises contribute only to the 19 reviewed anatomical regions', () => {
+test('all 98 catalog exercises contribute only to the 19 reviewed anatomical regions', () => {
   const exercises = [...new Map([...FLEX.catalog, ...DATA.exercises].map(ex=>[ex.id,ex])).values()];
   assert.equal(exercises.length, 88);
   assert.equal(HISTORY.REGIONS.length, 19);

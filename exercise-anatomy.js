@@ -4,6 +4,16 @@
 (function installExerciseAnatomy(root){
   'use strict';
   const fam = {
+
+    shrug:{view:'back',main:['upperTraps'],assist:[],
+      primary:'Trapézio superior',secondary:'',
+      cue:'Eleve as escápulas com os braços estáveis, sem girar os ombros; desça de modo controlado.'},
+    yRaise:{view:'back',main:['midTraps'],assist:['rearDelts'],
+      primary:'Musculatura escapular (trapézio)',secondary:'Deltoide posterior',
+      cue:'Eleve os braços em Y com cargas leves e sem arquear a lombar. O mapa não distingue trapézio inferior e médio com precisão.'},
+    frontRaise:{view:'front',main:['frontDelts'],assist:[],
+      primary:'Deltoide anterior',secondary:'',
+      cue:'Eleve os braços à frente em amplitude confortável, sem embalar a carga.'},
     reverseFly:{view:'back',main:['rearDelts'],assist:['midTraps','rhomboids'],
       primary:'Deltoide posterior',secondary:'Trapézio médio e romboides',
       cue:'Afaste os braços com controle e evite elevar os ombros.'},
@@ -114,8 +124,11 @@
   };
   const maps={};
   const assign=(type,ids)=>ids.split(' ').forEach(id=>{maps[id]=type;});
-  assign('reverseFly','voador-inverso crucifixo-inverso-halter crucifixo-inverso-polia');
-  assign('facePull','face-pull');
+  assign('reverseFly','voador-inverso crucifixo-inverso-halter crucifixo-inverso-polia crucifixo-inverso-banco');
+  assign('shrug','encolhimento-halteres encolhimento-barra encolhimento-smith');
+  assign('yRaise','elevacao-y-inclinada');
+  assign('frontRaise','elevacao-frontal-polia');
+  assign('facePull','face-pull face-pull-alto');
   assign('latPull','pulley-aberto pulley-fechado puxada-neutra puxada-unilateral-polia');
   assign('row','remada-baixa remada-cavalinho remada-unilateral-halter remada-articulada remada-peito-apoiado');
   assign('pullover','pullover-polia');
@@ -124,10 +137,10 @@
   assign('reverseCurl','rosca-inversa');
   assign('chestPress','supino-halteres supino-barra supino-inclinado supino-maquina supino-canadense supino-inclinado-maquina');
   assign('chestFly','voador crucifixo-cabo crossover-polia crucifixo-inclinado-halter');
-  assign('lateralRaise','elevacao-lateral elevacao-lateral-polia');
-  assign('shoulderPress','desenvolvimento-halter desenvolvimento-maquina');
+  assign('lateralRaise','elevacao-lateral elevacao-lateral-polia elevacao-lateral-maquina');
+  assign('shoulderPress','desenvolvimento-halter desenvolvimento-maquina desenvolvimento-barra');
   assign('triceps','triceps-testa triceps-corda triceps-maquina triceps-frances triceps-unilateral-polia triceps-coice-halter');
-  assign('uprightRow','remada-alta');
+  assign('uprightRow','remada-alta remada-alta-polia');
   assign('crunch','abdominal-solo');
   assign('reverseCrunch','abdominal-inverso');
   assign('cableCrunch','abdominal-polia');
