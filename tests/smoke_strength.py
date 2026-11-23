@@ -61,7 +61,7 @@ with sync_playwright() as p:
     empty.get_by_role('button',name='Evolução',exact=True).click()
     empty.locator('[data-action="evo-view"][data-view="training"]').click()
     assert empty.locator('.muscle-map-card').count()==1
-    assert 'Mapa sem registros neste período' in empty.locator('.muscle-map-card').inner_text()
+    assert 'Sem séries de musculação neste período' in empty.locator('.muscle-map-card').inner_text()
     assert empty.locator('.progress-advanced-radar').count()==0
     assert empty.locator('.strength-radar-plot').count()==0
     assert empty.locator('.evo-hero').count()==0
