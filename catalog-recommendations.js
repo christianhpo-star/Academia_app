@@ -68,8 +68,36 @@
     const advice=context?forExercise(exercise,context):null;
     // Lower default volume when replacing an existing movement; no "catch-up"
     // prescription or doubling after days without a logged direct set.
-    const low=Number.isInteger(exercise.low)?exercise.low:8;
-    const high=Number.isInteger(exercise.high)?exercise.high:12;
+    const defaultLow=Number.isInteger(exercise.low)?exercise.low:8;
+    const defaultHigh=Number.isInteger(exercise.high)?exercise.high:12;
+    let low=defaultLow,high=defaultHigh;
+    // Only personalize the repetition window when the SAME exercise has at
+    // least two previous recorded sessions; estimated effort is not a 1RM.
+    const previous=(strengthSessions||[]).filter(s=>{
+      const delta=since(today,s?.day);
+      return delta>=0&&delta<90;
+    }).sort((a,b)=>b.day.localeCompare(a.day)).flatMap(s=>{
+      const entry=(s.entries||[]).find(e=>e.id===exercise.id);
+      return entry?[{day:s.day,sets:SETS?.workSets?.(entry)||[]}]:[];
+    }).filter(x=>x.sets.length>0).slice(0,2);
+    let historyHint='';
+    if(previous.length===2 && defaultHigh-defaultLow>=3){
+      const recorded=previous.flatMap(x=>x.sets.map(set=>Number(set.reps)))
+        .filter(reps=>Number.isInteger(reps)&&reps>=defaultLow&&reps<=defaultHigh);
+      const effort=previous.flatMap(x=>x.sets.map(set=>Number(set.rir)))
+        .filter(x=>Number.isFinite(x)&&x>=0&&x<=10);
+      if(recorded.length>=2){
+        const ordered=recorded.sort((a,b)=>a-b);
+        const midpoint=ordered[Math.floor(ordered.length/2)];
+        low=Math.max(defaultLow,Math.min(defaultHigh-2,midpoint-1));
+        high=Math.min(defaultHigh,Math.max(low+2,midpoint+2));
+        historyHint=' No mesmo exercício, duas sessões anteriores registraram a faixa de '+
+          ordered[0]+'–'+ordered.at(-1)+' repetições; a faixa proposta de '+
+          low+'–'+high+' é uma referência prática, não uma regra fisiológica.';
+        if(effort.length&&effort.every(x=>x<=1))historyHint+=
+          ' Como o esforço informado foi elevado, priorize execução e recuperação; não aumente carga automaticamente.';
+      }
+    }
     const todayMuscles=A?.describe?.(exercise.id)?.main||[];
     const already=Object.values(draft?.entries||{}).reduce((sum,e)=>{
       const names=A?.describe?.(e.id)?.main||[];
@@ -89,10 +117,10 @@
     const more=advice&&advice.direct30===0&&
       (recent?.directSets||0)===0&&already===0&&!fatigue&&!recentMuay&&!pain;
     const sets=more?3:2;
-    const reason=advice?
+    const reason=(advice?
       'Sugestão pontual: '+advice.reason+'. Comece com '+sets+
       ' séries, respeite técnica, esforço e recuperação; não é compensação obrigatória por períodos sem registro.':
-      'Faixa inicial do catálogo; ajuste à técnica e ao esforço percebido.';
+      'Faixa inicial do catálogo; ajuste à técnica e ao esforço percebido.')+historyHint;
     return {sets,low,high,rirTarget:'2–3 (orientativo)',
       reason,region:advice?.region||null,scope:'session-only',basis:'recorded-only',
       caution:fatigue||recentMuay||pain?'Atenção à recuperação ou desconforto registrado; não aumentar volume automaticamente.':''};
