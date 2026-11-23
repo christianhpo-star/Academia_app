@@ -124,11 +124,11 @@
   };
   const maps={};
   const assign=(type,ids)=>ids.split(' ').forEach(id=>{maps[id]=type;});
-  assign('reverseFly','voador-inverso crucifixo-inverso-halter crucifixo-inverso-polia crucifixo-inverso-banco');
-  assign('shrug','encolhimento-halteres encolhimento-barra encolhimento-smith');
-  assign('yRaise','elevacao-y-inclinada');
-  assign('frontRaise','elevacao-frontal-polia');
-  assign('facePull','face-pull face-pull-alto');
+  assign('reverseFly','voador-inverso crucifixo-inverso-halter crucifixo-inverso-polia crucifixo-inverso-banco crucifixo-inverso-elastico');
+  assign('shrug','encolhimento-halteres encolhimento-barra encolhimento-smith encolhimento-polia');
+  assign('yRaise','elevacao-y-inclinada elevacao-y-elastico');
+  assign('frontRaise','elevacao-frontal-polia elevacao-frontal-halteres');
+  assign('facePull','face-pull face-pull-alto face-pull-elastico');
   assign('latPull','pulley-aberto pulley-fechado puxada-neutra puxada-unilateral-polia');
   assign('row','remada-baixa remada-cavalinho remada-unilateral-halter remada-articulada remada-peito-apoiado');
   assign('pullover','pullover-polia');
@@ -137,8 +137,8 @@
   assign('reverseCurl','rosca-inversa');
   assign('chestPress','supino-halteres supino-barra supino-inclinado supino-maquina supino-canadense supino-inclinado-maquina');
   assign('chestFly','voador crucifixo-cabo crossover-polia crucifixo-inclinado-halter');
-  assign('lateralRaise','elevacao-lateral elevacao-lateral-polia elevacao-lateral-maquina');
-  assign('shoulderPress','desenvolvimento-halter desenvolvimento-maquina desenvolvimento-barra');
+  assign('lateralRaise','elevacao-lateral elevacao-lateral-polia elevacao-lateral-maquina elevacao-lateral-sentado elevacao-lateral-unilateral-polia');
+  assign('shoulderPress','desenvolvimento-halter desenvolvimento-maquina desenvolvimento-barra desenvolvimento-maquina-neutro desenvolvimento-halter-sentado');
   assign('triceps','triceps-testa triceps-corda triceps-maquina triceps-frances triceps-unilateral-polia triceps-coice-halter');
   assign('uprightRow','remada-alta remada-alta-polia');
   assign('crunch','abdominal-solo');
