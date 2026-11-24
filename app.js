@@ -915,7 +915,7 @@
         '<p class="catalog-volume-suggestion"><strong>'+
         (dayGuide.level==='hold'?'Não recomendamos acrescentar esta região hoje.':dayGuide.level==='reduce'?
           'Prefira não ampliar o volume; se precisar trocar, use até '+dayGuide.sets+' série.':
-          'Se escolher este exercício: '+dayGuide.sets+' séries · '+dayGuide.low+'–'+dayGuide.high+' repetições · RIR '+esc(dayGuide.rirTarget))+
+          'Se escolher este exercício: '+dayGuide.sets+' séries · '+dayGuide.low+'–'+dayGuide.high+' '+repsLabel(ex)+' · RIR '+esc(dayGuide.rirTarget))+
         '</strong></p>'+
         '<details><summary>Como a sugestão foi calculada?</summary><p>'+esc(dayGuide.reason)+'</p>'+
         (dayGuide.caution?'<p>'+esc(dayGuide.caution)+'</p>':'')+'</details></section>':'')+'</div>'+
@@ -925,8 +925,8 @@
       '<div class="catalog-detail-facts"><div><small>Equipamento</small><strong>'+esc(ex.equipment||'Não informado')+'</strong></div>'+
       '<div><small>Grupo da ficha</small><strong>'+esc(ex.muscle||'Não informado')+'</strong></div>'+
       '<div><small>Sugestão inicial</small><strong>'+esc(String(ex.sets))+' séries · '+esc(String(ex.low))+'–'+esc(String(ex.high))+' '+repsLabel(ex)+'</strong></div></div>'+
-      (SETS.allowsZero(ex)?'<p class="small muted">'+(ex.id.endsWith('-elastico')?'Resistência elástica: 0 kg registra uma série executada com a banda sem quantificar a tensão.':'Peso do corpo: registre 0 kg quando não usar carga adicional.')+'</p>':'')+
-      (ex.repPerSide?'<p class="small muted">Faça os dois lados e registre as repetições por lado. A dupla conta como uma série.</p>':'')+
+      (SETS.allowsZero(ex)?'<p class="small muted">'+(SETS.isTimed(ex)?'Prancha: registre a sustentação em segundos, não repetições. 0 kg indica nenhuma carga adicional.':ex.id.endsWith('-elastico')?'Resistência elástica: 0 kg registra uma série executada com a banda sem quantificar a tensão.':'Peso do corpo: registre 0 kg quando não usar carga adicional.')+'</p>':'')+
+      (ex.repPerSide?'<p class="small muted">Faça os dois lados e registre '+(SETS.isTimed(ex)?'os segundos':'as repetições')+' por lado. A dupla conta como uma série.</p>':'')+
       '<div class="catalog-detail-technique"><h2>Execução</h2>'+
       (guide?'<p>'+esc(guide.cue)+'</p><p class="small muted">Mapa ilustrativo: a participação muscular varia com a técnica e o equipamento.</p>':
         '<p>Orientação técnica específica ainda não revisada. Consulte as instruções do equipamento e um profissional habilitado.</p>')+
@@ -2068,8 +2068,8 @@
               return `<li><div class="history-exercise"><strong>${esc(ex?.name||en.id)}</strong><br>
                 <span>${E.workSets(en).length} séries efetivas${en.pain!=null?' · joelho '+en.pain+'/5+':''}</span>
                 <details class="history-details"><summary>Ver todas as séries</summary><ol>${en.sets.map(set=>
-                  `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${esc(loadLabel(set.load,ex||en))} × ${set.reps} ${ex?.repPerSide?'rep./lado':'rep.'}${set.rir==null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
-              </div><div class="text-right"><strong>${top?esc(loadLabel(top.load,ex||en)):'—'}</strong><br><span>${top?`${top.reps} ${ex?.repPerSide?'rep./lado':'rep.'}`:''}</span></div></li>`;
+                  `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${esc(loadLabel(set.load,ex||en))} × ${set.reps} ${resultUnit(ex)}${set.rir==null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
+              </div><div class="text-right"><strong>${top?esc(loadLabel(top.load,ex||en)):'—'}</strong><br><span>${top?`${top.reps} ${resultUnit(ex)}`:''}</span></div></li>`;
             }).join('')}</ul>
             ${cardio.entries.length?`<section class="cardio-history" aria-label="Cardio deste treino"><h3>Cardio · ${fmt(cardio.totalMinutes)} min</h3><ul>${cardio.entries.map(item=>`<li><span>${esc(CARDIO.label(item.type))}</span><strong>${fmt(item.minutes)} min${CARDIO.paceLabel(item)?'<small class="cardio-pace-history">'+esc(CARDIO.paceLabel(item))+'</small>':''}</strong></li>`).join('')}</ul></section>`:''}
             ${session.skipped?.length?`<details class="history-skipped"><summary>Pulados nesta sessão · ${session.skipped.length}</summary><ul>${session.skipped.map(item=>
@@ -2274,7 +2274,7 @@
         if (reps===null) continue; // cargas sugeridas sem execucao nao viram historico
         if (!SETS.performed(row,ex)||
           (rir!==null && (!Number.isInteger(rir)||rir<0||rir>10)))
-          return notify(`Confira carga, repetições e RIR de ${ex.name}.`);
+          return notify(`Confira carga, ${SETS.isTimed(ex)?'segundos':'repetições'} e RIR opcional de ${ex.name}.`);
         sets.push({load,reps,rir,warmup:!!row.warmup});
       }
       if (!sets.some(s=>!s.warmup)) continue;
@@ -2282,7 +2282,7 @@
         return notify(`Informe a dor no joelho (mesmo que zero) em ${ex.name}.`);
       result.push({id:ex.id,sets,pain:ex.knee?Number(raw.pain):null});
     }
-    if(!result.length) return notify('Registre pelo menos uma série efetiva com carga e repetições. No abdominal com peso do corpo, use 0 kg adicionais.');
+    if(!result.length) return notify('Registre pelo menos uma série efetiva. Na prancha, informe segundos sustentados; nos outros exercícios, repetições e carga. Com peso do corpo, use 0 kg adicionais.');
     const now=new Date();
     const linked=free?state.muay.sessions.find(row=>row.id===ui.draft.afterMuayId&&row.day===sessionDay):null;
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
@@ -2352,9 +2352,9 @@
     return `"${safe.replace(/"/g,'""')}"`;
   };
   function exportCSV() {
-    const rows=[['Data','Treino','Exercício','Série','Aquecimento','Carga (unidade indicada)','Unidade','Repetições','RIR','Dor no joelho durante','Dor no dia seguinte']];
+    const rows=[['Data','Treino','Exercício','Série','Aquecimento','Carga (unidade indicada)','Unidade','Quantidade','Medida','RIR','Dor no joelho durante','Dor no dia seguinte']];
     latestSessions().forEach(s=>s.entries.forEach(en=>en.sets.forEach((set,i)=>rows.push([
-      s.day,s.planId,exerciseFor(en.id)?.name||en.id,i+1,set.warmup?'sim':'não',set.load,exerciseFor(en.id)?.unit||'kg',set.reps,set.rir??'',en.pain??'',s.kneeNextDay??'']))));
+      s.day,s.planId,exerciseFor(en.id)?.name||en.id,i+1,set.warmup?'sim':'não',set.load,exerciseFor(en.id)?.unit||'kg',set.reps,SETS.isTimed(en)?'segundos':'repetições',set.rir??'',en.pain??'',s.kneeNextDay??'']))));
     download(`forja-series-${today()}.csv`,'\ufeff'+rows.map(row=>row.map(csvSafe).join(';')).join('\r\n'),'text/csv;charset=utf-8');
     notify('Planilha CSV exportada.');
   }
