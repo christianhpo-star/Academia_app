@@ -1488,14 +1488,19 @@
       previous.reps !== '' && previous.reps != null && Number(previous.reps)>0;
     if(!recorded) return '<span class="set-history-empty">Sem registro anterior desta série.</span>';
     const hasCurrent=SETS.performed(current,ex);
-    const delta=hasCurrent ? E.compareSet(previous,current) : null;
+    const delta=hasCurrent ? (SETS.isTimed(ex)?{
+      kind:Number(current.reps)>Number(previous.reps)?'good':'neutral',
+      label:Number(current.reps)>Number(previous.reps)?
+        '+'+(Number(current.reps)-Number(previous.reps))+' s sustentados com a mesma carga.':
+        Number(current.reps)===Number(previous.reps)?'Sustentação mantida.':
+          'Menos segundos hoje: observe postura e recuperação.'}:E.compareSet(previous,current)) : null;
     const rir=previous.rir === '' || previous.rir == null ? '—' : String(previous.rir);
     return `<div class="previous-workout-reference">
       <div class="reference-heading"><span>REFERÊNCIA ANTERIOR</span>
         <span>${previousDate?dateBR(previousDate):'Última sessão'} · ${previous.warmup?'Aquecimento':'Efetiva'}</span></div>
       <dl class="previous-workout-metrics">
         <div class="history-metric"><dt>${SETS.allowsZero(ex)?'Carga extra':'Carga'}</dt><dd>${esc(fmt(previous.load))}<small>${esc(ex.unit)}</small></dd></div>
-        <div class="history-metric"><dt>Repetições</dt><dd>${esc(previous.reps)}<small>reps</small></dd></div>
+        <div class="history-metric"><dt>${SETS.isTimed(ex)?'Sustentação':'Repetições'}</dt><dd>${esc(previous.reps)}<small>${SETS.isTimed(ex)?'s':'reps'}</small></dd></div>
         <div class="history-metric"><dt>RIR</dt><dd>${esc(rir)}</dd></div>
       </dl>
       ${delta && delta.label?`<span class="set-delta ${esc(delta.kind)}">${esc(delta.label)}</span>`:''}
@@ -1520,21 +1525,21 @@
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
         <p class="workout-exercise-target">${en.sets.length} séries nesta sessão · ${en.dayPrescription?.low||ex.low}–${en.dayPrescription?.high||ex.high} ${repsLabel(ex)}</p>
         ${en.dayPrescription?'<p class="small workout-day-guidance"><strong>Ajuste para hoje:</strong> '+esc(en.dayPrescription.reason)+
-          ' Faixa '+en.dayPrescription.low+'–'+en.dayPrescription.high+' repetições, RIR '+esc(en.dayPrescription.rirTarget)+
+          ' Faixa '+en.dayPrescription.low+'–'+en.dayPrescription.high+' '+repsLabel(ex)+', RIR '+esc(en.dayPrescription.rirTarget)+
           '. A ficha original não mudou.</p>':''}</div>
         <span class="workout-exercise-kind">${elastic?'Elástico':SETS.allowsZero(ex)?'Peso do corpo':ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
       ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]),ui.anatomyViews[ex.id])||''}
-      <p class="workout-exercise-step">${elastic?'Elástico: registre 0 kg quando a tensão não for mensurada; informe repetições executadas e RIR.':SETS.allowsZero(ex)?'Carga extra: 0 kg = peso do corpo. Registre apenas o peso adicionado.':'Ajuste de carga: +'+fmt(ex.step)+' '+esc(ex.unit)}</p>
-      ${ex.repPerSide?'<p class="small muted">Faça os dois lados. Registre as repetições por lado; a dupla conta como uma série.</p>':''}
-      <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
+      <p class="workout-exercise-step">${SETS.isTimed(ex)?'Prancha: registre segundos realmente sustentados com alinhamento; 0 kg significa sem carga adicional.':elastic?'Elástico: registre 0 kg quando a tensão não for mensurada; informe repetições executadas e RIR.':SETS.allowsZero(ex)?'Carga extra: 0 kg = peso do corpo. Registre apenas o peso adicionado.':'Ajuste de carga: +'+fmt(ex.step)+' '+esc(ex.unit)}</p>
+      ${ex.repPerSide?'<p class="small muted">Faça os dois lados. Registre '+(SETS.isTimed(ex)?'os segundos sustentados':'as repetições')+' por lado; a dupla conta como uma série.</p>':''}
+      <p class="small muted">${SETS.isTimed(ex)?'Interrompa quando perder o alinhamento. Registre apenas segundos sustentados; o RIR é opcional.':'Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.'}</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
       <div class="recommend ${cls}"><strong>${esc(reco.title)}</strong><p>${esc(reco.explanation)}</p>
       ${reco.level==='increase'?`<button class="button-inline mt-8" data-action="apply-reco" data-ex="${esc(ex.id)}">Usar ${fmt(reco.next)} ${esc(ex.unit)} na série mais pesada</button>`:''}</div>
       ${!hasData&&ex.example?'<p class="small muted">Modelo do seu supino: 20 → 22,5 → 25 → 25 kg por halter. Não é histórico registrado.</p>':''}
-      <div class="set-grid"><div class="caption">Nº</div><div class="caption">Tipo</div><div class="caption">${SETS.allowsZero(ex)?'Extra':'Carga'}<br>(${esc(ex.unit)})</div><div class="caption">${ex.repPerSide?'Reps/lado':'Reps'}</div><div class="caption">RIR</div>
+      <div class="set-grid"><div class="caption">Nº</div><div class="caption">Tipo</div><div class="caption">${SETS.allowsZero(ex)?'Extra':'Carga'}<br>(${esc(ex.unit)})</div><div class="caption">${SETS.isTimed(ex)?(ex.repPerSide?'Seg/lado':'Seg (s)'):(ex.repPerSide?'Reps/lado':'Reps')}</div><div class="caption">RIR</div>
       ${en.sets.map((set,i)=>`<div class="cell-label">${i+1}</div><button class="button-inline set-type ${set.warmup?'warmup':'work'}" data-action="toggle-warmup" data-ex="${esc(ex.id)}" data-index="${i}" title="Alternar entre aquecimento e série efetiva">${set.warmup?'Aquec.':'Efetiva'}</button>
       <input aria-label="Série ${i+1}, carga ${SETS.allowsZero(ex)?'adicional ':''}${esc(ex.unit)} em ${esc(ex.name)}" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="load" value="${esc(set.load)}" />
-      <input aria-label="Série ${i+1}, ${repsLabel(ex)} em ${esc(ex.name)}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
+      <input aria-label="Série ${i+1}, ${repsLabel(ex)} em ${esc(ex.name)}" type="number" min="${SETS.isTimed(ex)?'5':'0'}" max="${SETS.isTimed(ex)?'300':'100'}" step="1" inputmode="numeric" placeholder="${SETS.isTimed(ex)?'Seg':'—'}" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
       <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />
       <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex,previousSession?.session.day)}</div>
       <div class="quick-set-row">
@@ -1543,7 +1548,7 @@
         </div>
         <button type="button" class="secondary quick-set-confirm ${FOCUS.performed(set,ex.id)?'is-done':''}" data-action="quick-set-confirm" data-ex="${esc(ex.id)}" data-index="${i}">${FOCUS.performed(set,ex.id)?'Série registrada ✓':'Conferir série'}</button>
       </div>`).join('')}</div>
-      <div class="quick-log-tools"><span class="small muted">Preparo rápido · confirme as repetições depois de executar</span>
+      <div class="quick-log-tools"><span class="small muted">Preparo rápido · confirme ${SETS.isTimed(ex)?'o tempo sustentado':'as repetições'} depois de executar</span>
       <div class="quick-log-buttons"><button type="button" class="secondary small-button" data-action="quick-previous" data-ex="${esc(ex.id)}">Repetir cargas da última sessão</button>
       <button type="button" class="secondary small-button" data-action="quick-current" data-ex="${esc(ex.id)}">Repetir carga da série anterior</button></div></div>
       <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button><button class="button-inline" data-action="catalog-session-open" data-mode="replace" data-source="${esc(ex.id)}" ${F.hasRecordedReps(en)?'disabled title="Este exercício já tem repetições registradas"':''}>Substituir</button><button class="button-inline" data-action="flex-withdraw" data-ex="${esc(ex.id)}">Retirar só hoje</button></div>
