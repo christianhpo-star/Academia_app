@@ -92,7 +92,7 @@ with sync_playwright() as p:
     assert not errors,errors
 
     # A phone with older records and no plank gets an inactive additive entry.
-    old=json.loads(stored['forja.academia.v1'])
+    old=json.loads(json.dumps(state))
     old['sessions']=[];old['exercises']=[x for x in old['exercises'] if x['id']!='prancha-frontal']
     old.pop('plankDefaultsVersion',None)
     old['referenceDefaultsVersion']=1
