@@ -43,7 +43,7 @@
     return {draft:next,entry};
   }
   function custom(name,bodyweight=false){
-    const cleaned=String(name||'').trim().replace(/\\s+/g,' ');
+    const cleaned=String(name||'').trim().replace(/\s+/g,' ');
     if(!cleaned||cleaned.length>100)return {error:'Informe um nome com até 100 caracteres.'};
     const id=(bodyweight?'free-bodyweight-':'free-custom-')+
       Date.now()+'-'+Math.random().toString(36).slice(2,8);
