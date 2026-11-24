@@ -60,6 +60,7 @@
   map('abducao-polia', ['abdutores']);
   map('cadeira-adutora', ['adutores']);
   map('aducao-polia', ['adutores']);
+  map('prancha-frontal prancha-joelhos prancha-lateral', ['abdomen']);
   map('abdominal-solo abdominal-inverso abdominal-polia pallof-press', ['abdomen']);
   map('abdominal-bicicleta dead-bug elevacao-joelhos-suspenso', ['abdomen']);
   map('woodchop-polia flexao-lateral-polia', ['abdomen']);
