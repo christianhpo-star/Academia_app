@@ -10,11 +10,11 @@ const lowerIds=all.filter(ex=>['C','D'].includes(ex.group)).map(ex=>ex.id);
 const description=svg=>(svg.match(/<desc\b[^>]*>([\s\S]*?)<\/desc>/)||[])[1]||'';
 const title=svg=>(svg.match(/<title\b[^>]*>([\s\S]*?)<\/title>/)||[])[1]||'';
 
-test('anatomical guidance covers the 69 upper/core and 38 lower movements with stable IDs',()=>{
+test('anatomical guidance covers the 72 upper/core and 38 lower movements with stable IDs',()=>{
   assert.equal(A.VERSION,4);
-  assert.equal(upperIds.length,69);
+  assert.equal(upperIds.length,72);
   assert.equal(lowerIds.length,38);
-  assert.equal(A.coveredIds.length,107);
+  assert.equal(A.coveredIds.length,110);
   assert.equal(new Set(A.coveredIds).size,A.coveredIds.length);
   assert.ok(ids.every(id=>!!A.describe(id)),ids.filter(id=>!A.describe(id)).join(', '));
   assert.ok(A.coveredIds.every(id=>ids.includes(id)));
