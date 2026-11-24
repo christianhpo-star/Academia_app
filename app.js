@@ -2095,19 +2095,20 @@
       id:'',name:'',group:edit.group,sets:3,low:8,high:12,step:2.5,unit:'kg',mode:'double',active:true,knee:false,
     };
     const bodyweight=SETS.allowsZero(ex);
+    const timed=SETS.isTimed(ex);
     const elastic=ex.id.endsWith('-elastico');
     return `${headline('Personalização',edit.id?'Editar exercício':'Novo exercício','Adapte seu plano à sua academia, sem apagar os registros anteriores.')}
       <form class="card" id="exercise-form"><div class="field"><label for="ex-name">Nome do exercício</label><input id="ex-name" name="name" type="text" maxlength="100" required value="${esc(ex.name)}" /></div>
       <div class="field-row three mt-12"><div class="field"><label for="ex-sets">Séries</label><input id="ex-sets" name="sets" type="number" min="1" max="12" step="1" required value="${ex.sets}" /></div>
-      <div class="field"><label for="ex-low">Reps mín.</label><input id="ex-low" name="low" type="number" min="1" max="50" step="1" required value="${ex.low}" /></div>
-      <div class="field"><label for="ex-high">Reps máx.</label><input id="ex-high" name="high" type="number" min="1" max="50" step="1" required value="${ex.high}" /></div></div>
-      ${bodyweight?`<p class="small muted mt-12">${elastic?'Resistência elástica: 0 kg = tensão não quantificada do elástico. Registre repetições reais.':'Peso do corpo · ajuste as séries e repetições. Durante o treino, 0 kg significa sem carga adicional.'}</p>
-      <input type="hidden" name="step" value="${ex.step}" /><input type="hidden" name="unit" value="kg" /><input type="hidden" name="mode" value="bodyweight" />`:`<div class="field-row mt-12"><div class="field"><label for="ex-step">Incremento de carga</label><input id="ex-step" name="step" type="number" min="0.5" max="50" step="0.5" required value="${ex.step}" /></div>
+      <div class="field"><label for="ex-low">${timed?'Segundos mín.':'Reps mín.'}</label><input id="ex-low" name="low" type="number" min="${timed?5:1}" max="${timed?300:50}" step="1" required value="${ex.low}" /></div>
+      <div class="field"><label for="ex-high">${timed?'Segundos máx.':'Reps máx.'}</label><input id="ex-high" name="high" type="number" min="${timed?5:1}" max="${timed?300:50}" step="1" required value="${ex.high}" /></div></div>
+      ${bodyweight?`<p class="small muted mt-12">${timed?'Prancha isométrica: ajuste as séries e os segundos. Durante o treino, 0 kg significa sem carga adicional.':elastic?'Resistência elástica: 0 kg = tensão não quantificada do elástico. Registre repetições reais.':'Peso do corpo · ajuste as séries e repetições. Durante o treino, 0 kg significa sem carga adicional.'}</p>
+      <input type="hidden" name="step" value="${ex.step}" /><input type="hidden" name="unit" value="kg" /><input type="hidden" name="mode" value="${timed?'isometric':'bodyweight'}" />`:`<div class="field-row mt-12"><div class="field"><label for="ex-step">Incremento de carga</label><input id="ex-step" name="step" type="number" min="0.5" max="50" step="0.5" required value="${ex.step}" /></div>
       <div class="field"><label for="ex-unit">Unidade da carga</label><select id="ex-unit" name="unit"><option value="kg" ${ex.unit==='kg'?'selected':''}>kg (total/máquina)</option><option value="kg/halter" ${ex.unit==='kg/halter'?'selected':''}>kg por halter</option></select></div></div>
       <div class="field mt-12"><label for="ex-mode">Método de progressão</label><select id="ex-mode" name="mode"><option value="double" ${ex.mode==='double'?'selected':''}>Séries com carga estável</option><option value="pyramid" ${ex.mode==='pyramid'?'selected':''}>Pirâmide crescente</option></select></div>`}
       <label class="setting-item mt-12"><span>Exercício que exige acompanhamento do joelho</span><input class="switch" type="checkbox" name="knee" ${ex.knee?'checked':''}/></label>
       <label class="setting-item mt-12"><span>Ativo no treino</span><input class="switch" type="checkbox" name="active" ${ex.active?'checked':''}/></label>
-      <p class="small muted">${bodyweight?'Acompanhe a progressão pelas repetições e pela técnica.':'Sugestões de carga só aparecem após duas sessões consistentes.'} Séries de aquecimento são excluídas da análise.</p>
+      <p class="small muted">${timed?'Acompanhe a sustentação em segundos e a postura.':bodyweight?'Acompanhe a progressão pelas repetições e pela técnica.':'Sugestões de carga só aparecem após duas sessões consistentes.'} Séries de aquecimento são excluídas da análise.</p>
       <div class="btnrow mt-16"><button class="primary" type="submit" style="flex:2">Salvar exercício</button><button class="ghost" type="button" data-action="exit-editor" style="flex:1">Voltar</button></div></form>`;
   }
   function renderHealthSummary(){
@@ -2245,12 +2246,15 @@
     const fd=new FormData(form), existing=ui.editor.id?exerciseFor(ui.editor.id):null;
     const sets=Number(fd.get('sets')),low=Number(fd.get('low')),high=Number(fd.get('high')),step=Number(fd.get('step'));
     const name=String(fd.get('name')||'').trim();
+    const timed=SETS.isTimed(existing);
     if(!name || name.length>100|| !Number.isInteger(sets)||sets<1||sets>12||
-      !Number.isInteger(low)||!Number.isInteger(high)||low<1||high>50||high<low||step<=0||step>50)
+      !Number.isInteger(low)||!Number.isInteger(high)||low<(timed?5:1)||
+      high>(timed?300:50)||high<low||step<=0||step>50)
       return notify('Confira o nome, as séries, repetições e o incremento.');
     const bodyweight=SETS.allowsZero(existing);
     const patch={name,sets,low,high,step,unit:!bodyweight&&fd.get('unit')==='kg/halter'?'kg/halter':'kg',
-      mode:bodyweight?'bodyweight':fd.get('mode')==='pyramid'?'pyramid':'double',knee:fd.has('knee'),active:fd.has('active')};
+      mode:timed?'isometric':bodyweight?'bodyweight':fd.get('mode')==='pyramid'?'pyramid':'double',
+      ...(timed?{timeBased:true}:{}),knee:fd.has('knee'),active:fd.has('active')};
     if(existing) Object.assign(existing,patch);
     else state.exercises.push({id:`custom-${Date.now()}`,group:ui.editor.group,...patch});
     ui.editor=null;save();render();notify('Exercício salvo.');
