@@ -109,6 +109,16 @@
     ['flexao-lateral-polia', 'Flexão lateral do tronco na polia', 'A', 'Polia', 'Oblíquos / abdômen', 2, 10, 15, 2.5, 'kg', false, ['oblíquo polia','side bend cabo']],
     ['dead-bug', 'Dead bug alternado', 'B', 'Solo / colchonete', 'Abdômen / estabilidade', 2, 10, 15, 1, 'kg', false, ['dead bug','contralateral','core']],
     ['woodchop-polia', 'Woodchop na polia (diagonal)', 'B', 'Polia', 'Oblíquos / abdômen', 2, 10, 15, 2.5, 'kg', false, ['lenhador polia','diagonal cabo','cable wood chop']],
+    // Isometric core alternatives are measured by seconds of hold, never repetitions.
+    ['prancha-frontal', 'Prancha abdominal (antebraços)', 'B','Solo / colchonete',
+      'Abdômen / estabilização', 2,20,40,5,'kg',false,
+      ['prancha','plank','prancha abdominal','prancha frontal','core','isometria']],
+    ['prancha-joelhos', 'Prancha abdominal com joelhos apoiados', 'B','Solo / colchonete',
+      'Abdômen / iniciante', 2,15,35,5,'kg',false,
+      ['prancha joelhos','prancha facil','prancha para iniciantes','modified plank']],
+    ['prancha-lateral', 'Prancha lateral', 'A','Solo / colchonete',
+      'Oblíquos / core', 2,15,35,5,'kg',false,
+      ['side plank','prancha lateral','obliquos','core lateral']],
     ['panturrilha-smith', 'Panturrilha em pé no Smith', 'C', 'Barra guiada', 'Panturrilhas', 3, 10, 20, 2.5, 'kg', false, ['elevação calcanhares smith','calf raise smith']],
     ['panturrilha-sentada-maquina', 'Panturrilha sentada na máquina', 'D', 'Máquina', 'Panturrilhas', 3, 12, 20, 5, 'kg', false, ['sóleo','seated calf raise']],
     ['agachamento-sumo-halter', 'Agachamento sumô com halter', 'D', 'Halter', 'Glúteos / adutores / quadríceps', 2, 8, 12, 2.5, 'kg', true, ['agachamento sumô goblet','sumo dumbbell']],
@@ -117,8 +127,11 @@
   ].map(([id,name,group,equipment,muscle,sets,low,high,step,unit='kg',knee=false,aliases=[]]) =>
     ({id,name,group,equipment,muscle,sets,low,high,step,unit,knee,aliases,mode:'double',active:false,
       ...(['pallof-press','abdominal-bicicleta','flexao-lateral-polia','dead-bug','woodchop-polia','passada-lateral-halter'].includes(id)?{repPerSide:true}:{}),
+      ...(['prancha-frontal','prancha-joelhos','prancha-lateral'].includes(id)?
+        {mode:'isometric',bodyweight:true,timeBased:true}:{}),
+      ...(['prancha-lateral'].includes(id)?{repPerSide:true}:{}),
       ...(['abdominal-bicicleta','elevacao-joelhos-suspenso','dead-bug','extensao-lombar-45','crucifixo-inverso-elastico','face-pull-elastico','elevacao-y-elastico'].includes(id)?{mode:'bodyweight',bodyweight:true}:{}),
-      ...(['abdominal-polia','pallof-press','abdominal-bicicleta','elevacao-joelhos-suspenso','flexao-lateral-polia','dead-bug','woodchop-polia'].includes(id)?{complement:'abdomen'}:{})}));
+      ...(['prancha-frontal','prancha-joelhos','prancha-lateral','abdominal-polia','pallof-press','abdominal-bicicleta','elevacao-joelhos-suspenso','flexao-lateral-polia','dead-bug','woodchop-polia'].includes(id)?{complement:'abdomen'}:{})}));
   const REASONS = {
     '': 'Prefiro não informar',
     tempo: 'Tempo disponível',
