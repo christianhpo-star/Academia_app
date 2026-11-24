@@ -29,6 +29,9 @@
     maintenance:{day:3,week:8},
   });
   const VARIANTS=Object.freeze({
+    'prancha-frontal':['easy','home','Isometria por tempo nos antebraços'],
+    'prancha-joelhos':['easy','home','Alternativa mais simples com joelhos apoiados'],
+    'prancha-lateral':['regular','home','Isometria lateral por tempo e por lado'],
     'encolhimento-halteres':['easy','free','Halteres e trajeto simples'],
     'encolhimento-smith':['easy','machine','Trajeto guiado'],
     'encolhimento-barra':['regular','free','Barra com controle'],
