@@ -70,6 +70,7 @@
       version: 1,
       referenceDefaultsVersion: 1,
       abdomenDefaultsVersion: 1,
+      plankDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
       sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(),recoveryHistory:[], nutrition,
@@ -93,7 +94,8 @@
       }
       const upgradedReferences = migrateReferences(parsed);
       const upgradedAbdomen = DATA.ensureAbdomen(parsed);
-      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedAbdomen || upgradedProfessionalTarget || upgradedRecovery) {
+      const upgradedPlank = DATA.ensurePlank(parsed);
+      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedAbdomen || upgradedPlank || upgradedProfessionalTarget || upgradedRecovery) {
         preserveValidatedSnapshot(raw);
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
@@ -284,7 +286,10 @@
     DATA.plans.find(p => p.id === id) || DATA.plans[0];
   const exerciseFor = id => state.exercises.find(x => x.id === id);
   const currentExercises = id => state.exercises.filter(x=>x.group===id && x.active);
-  const repsLabel = ex => ex?.repPerSide ? 'repetições por lado' : 'repetições';
+  const repsLabel = ex => SETS.isTimed(ex)
+    ? (ex?.repPerSide?'segundos por lado':'segundos de sustentação')
+    : (ex?.repPerSide?'repetições por lado':'repetições');
+  const resultUnit = ex => SETS.isTimed(ex)?(ex?.repPerSide?'s/lado':'s'):(ex?.repPerSide?'rep./lado':'rep.');
   const loadLabel = (load, ex) => SETS.allowsZero(ex)
     ? Number(load)===0 ? 'Peso do corpo' : '+'+fmt(load)+' kg adicionais'
     : fmt(load)+' '+(ex?.unit||'kg');
@@ -2356,6 +2361,7 @@
       settings:current.settings,
       referenceDefaultsVersion:Math.max(current.referenceDefaultsVersion||0,incoming.referenceDefaultsVersion||0),
       abdomenDefaultsVersion:Math.max(current.abdomenDefaultsVersion||0,incoming.abdomenDefaultsVersion||0),
+      plankDefaultsVersion:Math.max(current.plankDefaultsVersion||0,incoming.plankDefaultsVersion||0),
       weights:[...current.weights,...newWeights],
       exercises:unionById(current.exercises,incoming.exercises),
       sessions:unionById(current.sessions,incoming.sessions),
@@ -2401,6 +2407,7 @@
       const oldState=state;
       state=hasCurrent?mergeImportedHistory(state,parsed):parsed;
       DATA.ensureAbdomen(state);
+      DATA.ensurePlank(state);
       if(!validState(state)||!M.validArchive(state.muay)){state=oldState;throw new Error('Falha ao validar estado mesclado.');}
       if(!save()){state=oldState;return notify('Importação não concluída. Seu histórico anterior foi mantido.');}
       if(!hasCurrent)clearDraft();
