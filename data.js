@@ -50,6 +50,13 @@
       equipment: 'Solo / colchonete', muscle: 'Abdômen',
       aliases: ['abdominal', 'reverse crunch', 'elevação do quadril', 'core', 'peso do corpo'],
     }),
+    // A prancha e isometrica: 'low/high' medem segundos, nao repeticoes.
+    // Opcional: nao altera automaticamente a quantidade de series da ficha.
+    ex('prancha-frontal', 'Prancha abdominal (antebraços)', 'B', 2, 20, 40, 5, {
+      mode: 'isometric', bodyweight:true, timeBased:true, complement:'abdomen', active:false,
+      equipment:'Solo / colchonete', muscle:'Abdômen / estabilização',
+      aliases:['prancha','prancha abdominal','prancha frontal','plank','abdominal isometrico','core'],
+    }),
     // C — quadriceps
     ex('agachamento-hack', 'Agachamento hack / máquina', 'C', 3, 8, 12, 5, { knee: true }),
     ex('agachamento-livre', 'Agachamento livre', 'C', 3, 8, 12, 2.5, { knee: true, active: false }),
@@ -84,6 +91,18 @@
     value.abdomenDefaultsVersion = 1;
     return true;
   }
-  root.AcademiaData = { plans, exercises, rotation: ['A', 'C', 'B', 'D'], ensureAbdomen };
+  // Separate additive migration: also runs for installations with abdomenDefaultsVersion=1.
+  // Existing exercise settings, completed sessions and open drafts are unchanged.
+  function ensurePlank(value) {
+    if (!value || !Array.isArray(value.exercises) || value.plankDefaultsVersion >= 1) return false;
+    const template = exercises.find(item=>item.id==='prancha-frontal');
+    if(!value.exercises.some(item=>item.id===template.id)){
+      if(value.exercises.length >= 200)return false;
+      value.exercises.push(JSON.parse(JSON.stringify(template)));
+    }
+    value.plankDefaultsVersion=1;
+    return true;
+  }
+  root.AcademiaData = { plans, exercises, rotation: ['A', 'C', 'B', 'D'], ensureAbdomen, ensurePlank };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.AcademiaData;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
