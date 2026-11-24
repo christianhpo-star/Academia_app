@@ -54,7 +54,7 @@ jobs:
       - name: Validate manifest and deployed assets
         run: python3 tests/check_assets.py
       - name: Test progression rules
-        run: node --test tests/training-sets.test.cjs tests/abdomen-plan.test.cjs tests/cardio.test.cjs tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/nutrition-balance.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/muay-quick.test.cjs tests/free-workout.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/catalog-session.test.cjs tests/catalog-expansion.test.cjs tests/exercise-anatomy.test.cjs tests/muscle-history.test.cjs tests/muscle-map.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/joelho-frango.test.cjs tests/nutrition-presets.test.cjs tests/performance-trends.test.cjs tests/nutrition-ui.test.cjs tests/evolution-dashboard.test.cjs tests/share-summary.test.cjs tests/training-balance.test.cjs tests/catalog-recommendations.test.cjs
+        run: node --test tests/training-sets.test.cjs tests/abdomen-plan.test.cjs tests/plank-timed.test.cjs tests/cardio.test.cjs tests/daily-routine.test.cjs tests/reminders.test.cjs tests/goal-planner.test.cjs tests/health-import.test.cjs tests/activity.test.cjs tests/nutrition-goals.test.cjs tests/nutrition-balance.test.cjs tests/engine.test.cjs tests/muay.test.cjs tests/muay-quick.test.cjs tests/free-workout.test.cjs tests/calendar.test.cjs tests/flex.test.cjs tests/catalog-session.test.cjs tests/catalog-expansion.test.cjs tests/exercise-anatomy.test.cjs tests/muscle-history.test.cjs tests/muscle-map.test.cjs tests/dose.test.cjs tests/focus.test.cjs tests/catalog-advice.test.cjs tests/body-measures.test.cjs tests/nutrition.test.cjs tests/nutrition-catalog.test.cjs tests/joelho-frango.test.cjs tests/nutrition-presets.test.cjs tests/performance-trends.test.cjs tests/nutrition-ui.test.cjs tests/evolution-dashboard.test.cjs tests/share-summary.test.cjs tests/training-balance.test.cjs tests/catalog-recommendations.test.cjs
       - name: Install browser smoke dependencies
         run: |
           python3 -m pip install --user playwright
@@ -84,6 +84,7 @@ jobs:
           python3 tests/smoke_leg_anatomy.py
           python3 tests/smoke_muscle_history.py
           python3 tests/smoke_abdomen.py
+          python3 tests/smoke_plank.py
           python3 tests/smoke_cardio.py
           python3 tests/smoke_body.py
           python3 tests/smoke_activity.py
