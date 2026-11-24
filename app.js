@@ -1103,7 +1103,7 @@
         [ex.name,ex.muscle,...(ex.aliases||[])].join(' '));
       return '<button type="button" class="free-exercise-choice" data-action="free-add" data-ex="'+esc(ex.id)+'">'+
         '<span><strong>'+esc(ex.name)+'</strong><small>'+esc(ex.muscle||ex.group||'Exercício')+
-        (SETS.allowsZero(ex)?' · sem carga adicional':' · '+esc(ex.unit||'kg'))+'</small></span>'+
+        (SETS.isTimed(ex)?' · por tempo (s)':SETS.allowsZero(ex)?' · sem carga adicional':' · '+esc(ex.unit||'kg'))+'</small></span>'+
         '<span class="free-exercise-choice-add" aria-hidden="true">+</span></button>';
     }).join(''):'<p class="small muted">'+(typed?'Nenhum exercício encontrado. Experimente outro termo.':
       'Não há mais sugestões de abdômen disponíveis; abra o catálogo completo.')+'</p>';
@@ -1121,19 +1121,23 @@
         '<div class="row-between free-exercise-head"><div><span class="section-eyebrow">EXERCÍCIO '+(i+1)+'</span>'+
         '<h3>'+esc(ex.name)+'</h3><small>'+completed+' série(s) efetiva(s) registrada(s)</small></div>'+
         '<button type="button" class="button-inline" data-action="free-remove" data-ex="'+esc(ex.id)+'" aria-label="Retirar '+esc(ex.name)+'">Retirar</button></div>'+
-        '<p class="small muted">'+(SETS.allowsZero(ex)?
-          'Peso do corpo: use 0 kg se não adicionou carga.':'Informe a carga utilizada; sem carga e repetições, a série não será considerada executada.')+
-          (ex.repPerSide?' Repetições por lado.':'')+'</p>'+
+        '<p class="small muted">'+(SETS.isTimed(ex)?
+          'Prancha isométrica: informe quantos segundos sustentou com boa postura. 0 kg indica nenhuma carga extra.':
+          SETS.allowsZero(ex)?'Peso do corpo: use 0 kg se não adicionou carga.':
+          'Informe a carga utilizada; sem carga e repetições, a série não será considerada executada.')+
+          (ex.repPerSide?(SETS.isTimed(ex)?' Registre os segundos de cada lado; ambos compõem uma série.':' Repetições por lado.'):'')+'</p>'+
         '<div class="free-set-table" role="group" aria-label="Séries de '+esc(ex.name)+'">'+
         '<div class="free-set-labels"><span>Série</span><span>Carga '+(SETS.allowsZero(ex)?'extra':'')+' ('+esc(ex.unit||'kg')+')</span>'+
-        '<span>'+(ex.repPerSide?'Reps/lado':'Reps')+'</span><span>RIR</span></div>'+
+        '<span>'+(SETS.isTimed(ex)?(ex.repPerSide?'Seg/lado':'Seg (s)'):(ex.repPerSide?'Reps/lado':'Reps'))+
+        '</span><span>RIR</span></div>'+
         en.sets.map((set,index)=>
           '<div class="free-set-row"><span class="free-set-number">'+(index+1)+'</span>'+
           '<input aria-label="Série '+(index+1)+', carga de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
           '" data-field="load" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="'+(SETS.allowsZero(ex)?'0':'kg')+
           '" value="'+esc(set.load)+'">'+
-          '<input aria-label="Série '+(index+1)+', repetições de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
-          '" data-field="reps" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Reps" value="'+esc(set.reps)+'">'+
+          '<input aria-label="Série '+(index+1)+', '+repsLabel(ex)+' de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="reps" type="number" min="'+(SETS.isTimed(ex)?'5':'1')+'" max="'+(SETS.isTimed(ex)?'300':'100')+
+          '" step="1" inputmode="numeric" placeholder="'+(SETS.isTimed(ex)?'Seg':'Reps')+'" value="'+esc(set.reps)+'">'+
           '<input aria-label="Série '+(index+1)+', RIR de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
           '" data-field="rir" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" value="'+esc(set.rir)+'"></div>').join('')+'</div>'+
         (ex.knee?'<div class="field mt-12"><label for="free-knee-'+esc(ex.id)+'">Dor no joelho durante este exercício (0–5+)</label>'+
