@@ -97,6 +97,8 @@ test('two new direct shoulder sets add only when executed; never multiply by ind
   assert.equal(SETS.workSets(mock.entries[0]).length,1);
   const withShrug=HISTORY.analyze({strengthSessions:[done,mock],today:'2026-11-22',days:7});
   assert.equal(withShrug.byId.upperTraps.directSets,1);
-  assert.equal(E.pendingWorkouts([done,mock]).completed.length,0,
-    'free/partial sessions never mark full four-block rotation completed');
+  const progress=E.pendingWorkouts([done,mock]);
+  assert.deepEqual(progress.completed,['A']);
+  assert.equal(progress.completedRounds,0,
+    'two different exercises in A cannot complete A/C/B/D or advance extra rounds');
 });
