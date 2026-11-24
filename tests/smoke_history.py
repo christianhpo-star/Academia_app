@@ -86,17 +86,17 @@ with sync_playwright() as p:
     assert page.locator('.history-calendar-fold[open]').count()==1
     page.set_viewport_size({'width':320,'height':700})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-    # Going to Muay page uses original populated recording controls.
+    # The academy editor now provides three quick block modes, not old presets.
     page.get_by_role('button',name='Início',exact=True).click()
     page.locator('[data-action="open-muay"]').click()
     page.get_by_role('button',name='Aula na academia').click()
     page.locator('[data-action="muay-effort"][data-value="7"]').click()
+    page.locator('.muay-academy-session details.muay-advanced').first.locator('summary').click()
     page.locator('[data-action="muay-fatigue"][data-value="moderada"]').click()
-    page.get_by_role('button',name='+ 50 chutes por perna').click()
-    assert page.locator('.muay-compact-activity').count()==1
-    assert page.locator('[data-muay-prop="quantity"]').first.input_value()=='50'
-    assert page.locator('.muay-activity-more:not([open])').count()==1
-    assert page.locator('.muay-advanced:not([open])').count()==1
+    page.locator('[data-action="muay-quick-add"]').click()
+    assert page.locator('.muay-academy-record').count()==1
+    assert '50 repetições por lado' in page.locator('.muay-academy-record').first.inner_text()
+    assert page.locator('.muay-academy-modes button').count()==3
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     draft=json.loads(page.evaluate('window.__storage["forja.academia.v1"]'))['muay']['draft']
     assert draft['intensity']=='7' and draft['fatigue']=='moderada'
