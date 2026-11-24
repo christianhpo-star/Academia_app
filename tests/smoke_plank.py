@@ -112,7 +112,7 @@ with sync_playwright() as p:
             exercise['sets']=3
     extended=open_app(ctx,{'forja.academia.v1':json.dumps(after)})
     extended.on('pageerror',lambda error:errors.append(str(error)))
-    assert extended.locator('h1[aria-label="Proteção de histórico"]').count()==0
+    assert extended.locator('[aria-label="Proteção de histórico"]').count()==0
     assert extended.locator('#screen h1').count()>=1
     kept=extended.evaluate('JSON.parse(window.__stored["forja.academia.v1"])')
     edited=next(ex for ex in kept['exercises'] if ex['id']=='prancha-frontal')
