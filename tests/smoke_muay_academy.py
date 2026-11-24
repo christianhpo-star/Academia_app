@@ -25,7 +25,7 @@ def open_app(context, storage=None):
     page.add_style_tag(path=str(ROOT / 'styles.css'))
     scripts = [
         'data.js', 'cardio.js', 'training-sets.js', 'engine.js', 'muay.js',
-        'calendar.js', 'flex.js', 'catalog-session.js', 'dose.js', 'focus.js',
+        'calendar.js', 'flex.js','free-workout.js', 'catalog-session.js', 'dose.js', 'focus.js',
         'catalog-advice.js', 'body-measures.js', 'activity.js', 'health-import.js',
         'nutrition-goals.js', 'goal-planner.js', 'reminders.js', 'daily-routine.js',
         'nutrition.js', 'nutrition-catalog.js', 'nutrition-balance.js',
