@@ -50,14 +50,14 @@
       activities.map(({kind,session})=>{
         const strength = kind==='strength';
         const title = strength
-          ? 'Bloco '+String(session.planId||'?')+' · '+String(planLabels[session.planId]||'Musculação')
+          ? session.planId==='FREE'?'Treino livre': 'Bloco '+String(session.planId||'?')+' · '+String(planLabels[session.planId]||'Musculação')
           : session.kind==='aula'?'Aula de Muay Thai':'Muay Thai individual';
-        const label = strength ? 'Musculação' : 'Muay Thai';
+        const label = strength ? session.planId==='FREE'?'Treino livre':'Musculação' : 'Muay Thai';
         const names = strength
           ? (Array.isArray(session.entries)?session.entries:[]).map(en=>String(exerciseLabels[en.id]||en.id))
           : (Array.isArray(session.activities)?session.activities:[]).map(a=>String(a.name));
         const location = !strength ? (session.place==='casa'?'Em casa':session.place==='academia'?'Na academia':'Outro local') : '';
-        const parts = strength ? [session.energy||'Esforço não informado'] : [
+        const parts = strength ? [session.afterMuayId?'Após Muay Thai':'',session.energy||'Esforço não informado'] : [
           location,session.duration == null ? '' : session.duration+' min',
           session.intensity == null ? '' : 'Esforço '+session.intensity+'/10',
         ];
