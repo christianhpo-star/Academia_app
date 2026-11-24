@@ -71,6 +71,7 @@
       referenceDefaultsVersion: 1,
       abdomenDefaultsVersion: 1,
       plankDefaultsVersion: 1,
+      upperBalanceDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
       sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(),recoveryHistory:[], nutrition,
@@ -95,7 +96,8 @@
       const upgradedReferences = migrateReferences(parsed);
       const upgradedAbdomen = DATA.ensureAbdomen(parsed);
       const upgradedPlank = DATA.ensurePlank(parsed);
-      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedAbdomen || upgradedPlank || upgradedProfessionalTarget || upgradedRecovery) {
+      const upgradedUpperBalance = DATA.ensureUpperBalance(parsed);
+      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedAbdomen || upgradedPlank || upgradedUpperBalance || upgradedProfessionalTarget || upgradedRecovery) {
         preserveValidatedSnapshot(raw);
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
@@ -2376,6 +2378,7 @@
       referenceDefaultsVersion:Math.max(current.referenceDefaultsVersion||0,incoming.referenceDefaultsVersion||0),
       abdomenDefaultsVersion:Math.max(current.abdomenDefaultsVersion||0,incoming.abdomenDefaultsVersion||0),
       plankDefaultsVersion:Math.max(current.plankDefaultsVersion||0,incoming.plankDefaultsVersion||0),
+      upperBalanceDefaultsVersion:Math.max(current.upperBalanceDefaultsVersion||0,incoming.upperBalanceDefaultsVersion||0),
       weights:[...current.weights,...newWeights],
       exercises:unionById(current.exercises,incoming.exercises),
       sessions:unionById(current.sessions,incoming.sessions),
@@ -2422,6 +2425,7 @@
       state=hasCurrent?mergeImportedHistory(state,parsed):parsed;
       DATA.ensureAbdomen(state);
       DATA.ensurePlank(state);
+      DATA.ensureUpperBalance(state);
       if(!validState(state)||!M.validArchive(state.muay)){state=oldState;throw new Error('Falha ao validar estado mesclado.');}
       if(!save()){state=oldState;return notify('Importação não concluída. Seu histórico anterior foi mantido.');}
       if(!hasCurrent)clearDraft();
@@ -3286,7 +3290,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261123-plank1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261124-upperbalance1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

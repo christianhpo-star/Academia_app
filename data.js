@@ -11,9 +11,22 @@
     ex('pulley-fechado', 'Pulley frente · pegada fechada', 'A', 3, 10, 12, 5, { active: false }),
     ex('remada-baixa', 'Remada baixa', 'A', 3, 10, 12, 5),
     ex('remada-cavalinho', 'Remada cavalinho', 'A', 3, 8, 12, 5),
+    // Adicao focal e conservadora: no historico analisado, deltoide posterior
+    // nao recebia series diretas. Nao substitui puxadas nem cria um bloco novo.
+    ex('voador-inverso', 'Voador inverso (peck deck)', 'A', 2, 12, 20, 5, {
+      equipment:'Máquina', muscle:'Deltoide posterior', coverageFocus:'posterior-deltoid',
+      aliases:['voador invertido','peck deck inverso','crucifixo inverso na máquina','reverse peck deck'],
+    }),
     ex('rosca-w', 'Rosca direta · barra W', 'A', 3, 10, 12, 2.5),
     ex('rosca-martelo', 'Rosca martelo', 'A', 3, 10, 12, 2.5, { unit: 'kg/halter' }),
     ex('rosca-inversa', 'Rosca inversa', 'A', 2, 10, 12, 2.5, { active: false }),
+    // Trapézio superior ja auxilia em outros movimentos. Este isolamento e
+    // opcional e fica DESATIVADO para nao impor mais volume a quem faz Muay.
+    ex('encolhimento-halteres', 'Encolhimento de ombros com halteres', 'A', 2, 10, 15, 2.5, {
+      active:false, unit:'kg/halter', equipment:'Halteres', muscle:'Trapézio superior',
+      coverageFocus:'upper-trapezius',
+      aliases:['shrug','encolhimento de ombros','trapezio halteres','encolhimento halteres'],
+    }),
     ex('abdominal-solo', 'Abdominal no solo (crunch)', 'A', 2, 10, 15, 1, {
       mode: 'bodyweight', bodyweight: true, complement: 'abdomen',
       equipment: 'Solo / colchonete', muscle: 'Abdômen',
@@ -75,7 +88,7 @@
     ex('extensora-d', 'Cadeira extensora (alternativa)', 'D', 3, 10, 12, 5, { knee: true, active: false }),
   ];
   const plans = [
-    { id: 'A', title: 'Costas + bíceps', subtitle: 'Puxadas, remadas e complemento de abdômen', type: 'upper' },
+    { id: 'A', title: 'Costas + bíceps', subtitle: 'Puxadas, remadas, ombro posterior e abdômen', type: 'upper' },
     { id: 'C', title: 'Quadríceps', subtitle: 'Pernas com atenção ao joelho', type: 'lower' },
     { id: 'B', title: 'Peito + tríceps', subtitle: 'Supinos, ombros e complemento de abdômen', type: 'upper' },
     { id: 'D', title: 'Posteriores + glúteos', subtitle: 'Cadeia posterior e estabilidade', type: 'lower' },
@@ -103,6 +116,29 @@
     value.plankDefaultsVersion=1;
     return true;
   }
-  root.AcademiaData = { plans, exercises, rotation: ['A', 'C', 'B', 'D'], ensureAbdomen, ensurePlank };
+  // Migração independente da versão de abdômen/prancha. Não reescreve preferências
+  // pessoais, histórico nem rascunhos. O novo posterior não é ativado se uma
+  // alternativa equivalente já estiver ativa na ficha.
+  function ensureUpperBalance(value) {
+    if (!value || !Array.isArray(value.exercises) || value.upperBalanceDefaultsVersion >= 1) return false;
+    const targets=['voador-inverso','encolhimento-halteres'];
+    const known=new Set(value.exercises.map(item=>item.id));
+    const missing=targets.filter(id=>!known.has(id));
+    if(value.exercises.length+missing.length>200)return false;
+    const activePosterior=new Set(['voador-inverso','face-pull','face-pull-alto',
+      'crucifixo-inverso-halter','crucifixo-inverso-polia','crucifixo-inverso-banco',
+      'crucifixo-inverso-elastico']);
+    const alreadyActive=value.exercises.some(item=>item.active && activePosterior.has(item.id));
+    for(const id of missing){
+      const template=exercises.find(item=>item.id===id);
+      const exercise=JSON.parse(JSON.stringify(template));
+      if(id==='voador-inverso'&&alreadyActive)exercise.active=false;
+      value.exercises.push(exercise);
+    }
+    value.upperBalanceDefaultsVersion=1;
+    return true;
+  }
+  root.AcademiaData = { plans, exercises, rotation: ['A', 'C', 'B', 'D'],
+    ensureAbdomen, ensurePlank, ensureUpperBalance };
   if (typeof module !== 'undefined' && module.exports) module.exports = root.AcademiaData;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

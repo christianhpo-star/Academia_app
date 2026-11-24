@@ -76,19 +76,20 @@ test('new movements count work sets only after actual execution in corresponding
   assert.equal(v.unknown,0);
   assert.equal(v.known,1);
 });
-test('viewing or preparing a new option cannot change defaults, session history or current plan',()=>{
+test('viewing or preparing the scheduled posterior option cannot change exercise settings or prior sessions',()=>{
   const stateBefore=structuredClone(DATA.exercises);
   const available=F.options(DATA.exercises,null,'voador inverso');
-  assert.equal(available[0].active,false);
+  assert.equal(available.length,1);
+  assert.equal(available[0].active,true,'reviewed posterior work is now on the A plan');
   const result=F.prepareCatalog('voador-inverso',DATA.exercises);
-  assert.ok(result&&result.isNew);
-  assert.equal(result.exercise.active,false);
+  assert.ok(result && !result.isNew,'reuse existing ID instead of duplicating catalog');
+  assert.equal(result.exercise.active,true);
   assert.equal(result.exercise.id,'voador-inverso');
-  assert.equal(DATA.exercises.some(x=>x.id==='voador-inverso'),false);
+  assert.equal(result.exercise.sets,2);
   assert.deepEqual(DATA.exercises,stateBefore);
   const draft={planId:'A',entries:{'remada-baixa':{id:'remada-baixa',sets:[]}},plannedIds:['remada-baixa'],addedIds:[],skipped:[]};
   const ok=F.addToDraft(draft,'voador-inverso',result.exercise,{id:result.exercise.id,sets:[]});
   assert.equal(ok,true);
   assert.equal(draft.addedIds.includes('voador-inverso'),true);
-  assert.equal(DATA.exercises.some(x=>x.id==='voador-inverso'),false);
+  assert.deepEqual(DATA.exercises,stateBefore);
 });

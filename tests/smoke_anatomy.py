@@ -109,14 +109,17 @@ with sync_playwright() as p:
     guide.locator('summary').click()
     assert guide.get_attribute('open') is None
 
-    # Add through the real catalog, then keep the selected view across re-renders.
+    # The new planned peck-deck reverse fly is already in A and cannot be
+    # added twice. Exercise the same add/catalog/anatomy path with its optional
+    # dumbbell alternative instead, without mutating the scheduled exercise.
+    assert page.locator('[data-exercise="voador-inverso"]').count()==1
     page.locator('[data-action="catalog-session-open"][data-mode="add"]').click()
-    page.locator('#catalog-search').fill('voador inverso')
-    page.locator('[data-action="catalog-view"][data-ex="voador-inverso"]').click()
+    page.locator('#catalog-search').fill('crucifixo inverso com halteres')
+    page.locator('[data-action="catalog-view"][data-ex="crucifixo-inverso-halter"]').click()
     assert 'Deltoide posterior' in page.locator('.catalog-detail').inner_text()
     page.locator('[data-action="catalog-intent"]').click()
     page.locator('[data-action="catalog-confirm"]').click()
-    reverse=page.locator('[data-exercise="voador-inverso"] .ex-anatomy')
+    reverse=page.locator('[data-exercise="crucifixo-inverso-halter"] .ex-anatomy')
     reverse.locator('summary').click()
     assert reverse.get_attribute('open') is not None
     assert 'Trapézio médio e romboides' in reverse.inner_text()
@@ -130,7 +133,7 @@ with sync_playwright() as p:
     assert page.evaluate('JSON.stringify(window.__testStorage)')==before
     page.get_by_role('button',name='Início',exact=True).click()
     page.get_by_role('button',name='Treinos',exact=True).click()
-    viewer=page.locator('[data-exercise="voador-inverso"] .ex-anatomy-viewer')
+    viewer=page.locator('[data-exercise="crucifixo-inverso-halter"] .ex-anatomy-viewer')
     assert viewer.get_attribute('data-anatomy-view')=='front'
     switch(viewer,'back')
     no_duplicate_svg_ids(page)
@@ -139,8 +142,8 @@ with sync_playwright() as p:
         page.set_viewport_size({'width':width,'height':height})
         mobile_bounds(page,viewer)
         viewer.screenshot(path=str(folder/f'anatomy-rear-fly-{width}.png'))
-    assert page.locator('[data-exercise="voador-inverso"] .set-grid input').count()>0
-    assert page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft.entries["voador-inverso"]!==undefined')
+    assert page.locator('[data-exercise="crucifixo-inverso-halter"] .set-grid input').count()>0
+    assert page.evaluate('JSON.parse(localStorage.getItem("forja.academia.draft.v1")).draft.entries["crucifixo-inverso-halter"]!==undefined')
 
     # Independent consultation: the exact bench-press case from the user screenshot.
     consult=start(ctx,{},errors)
