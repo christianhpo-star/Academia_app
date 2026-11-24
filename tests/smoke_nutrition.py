@@ -81,7 +81,7 @@ with sync_playwright() as p:
     assert page.locator('.progress-steps-day.known').count()==1
     assert page.locator('.progress-advanced-radar').count()==0
     assert page.locator('.muscle-map-card').count()==1
-    assert 'Mapa sem registros neste período' in page.locator('.muscle-map-card').inner_text()
+    assert 'Sem séries de musculação neste período' in page.locator('.muscle-map-card').inner_text()
     page.locator('[data-action="progress-steps-days"][data-days="28"]').click()
     assert page.locator('.progress-steps-day').count()==28
     page.locator('#nav [data-tab="nutrition"]').click()

@@ -5,7 +5,7 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 html=re.sub(r'<script defer src="./[^"]+"></script>','',(ROOT/'index.html').read_text())
 html=re.sub(r'<link rel="stylesheet" href="./styles.css\\?v=[^"]+" />','',html)
-scripts=['data.js','training-sets.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','cardio.js','app.js']
+scripts=['data.js','training-sets.js','engine.js','muay.js','calendar.js','flex.js','free-workout.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','cardio.js','app.js']
 with sync_playwright() as p:
     path=os.environ.get('CHROMIUM_PATH') or shutil.which('chromium') or shutil.which('google-chrome')
     opts={'headless':True,'args':['--no-sandbox']}
@@ -86,17 +86,17 @@ with sync_playwright() as p:
     assert page.locator('.history-calendar-fold[open]').count()==1
     page.set_viewport_size({'width':320,'height':700})
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
-    # Going to Muay page uses original populated recording controls.
+    # The academy editor now provides three quick block modes, not old presets.
     page.get_by_role('button',name='Início',exact=True).click()
     page.locator('[data-action="open-muay"]').click()
     page.get_by_role('button',name='Aula na academia').click()
     page.locator('[data-action="muay-effort"][data-value="7"]').click()
+    page.locator('.muay-academy-session details.muay-advanced').first.locator('summary').click()
     page.locator('[data-action="muay-fatigue"][data-value="moderada"]').click()
-    page.get_by_role('button',name='+ 50 chutes por perna').click()
-    assert page.locator('.muay-compact-activity').count()==1
-    assert page.locator('[data-muay-prop="quantity"]').first.input_value()=='50'
-    assert page.locator('.muay-activity-more:not([open])').count()==1
-    assert page.locator('.muay-advanced:not([open])').count()==1
+    page.locator('[data-action="muay-quick-add"]').click()
+    assert page.locator('.muay-academy-record').count()==1
+    assert '50 repetições por lado' in page.locator('.muay-academy-record').first.inner_text()
+    assert page.locator('.muay-academy-modes button').count()==3
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
     draft=json.loads(page.evaluate('window.__storage["forja.academia.v1"]'))['muay']['draft']
     assert draft['intensity']=='7' and draft['fatigue']=='moderada'

@@ -5,6 +5,7 @@
   const SETS = window.ForjaTrainingSets;
   const CARDIO = window.ForjaCardio;
   const M = window.AcademiaMuay;
+  const FREE = window.ForjaFreeWorkout;
   const CAL = window.ForjaCalendar;
   const F = window.ForjaFlex;
   const ADVICE = window.ForjaCatalogAdvice;
@@ -126,7 +127,7 @@
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
       value.exercises.every(x => typeof x.id === 'string' && typeof x.name === 'string' && x.name.length < 120 &&
-        ['A','B','C','D'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
+        ['A','B','C','D','FREE'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
         Number(x.high)>=Number(x.low) && Number(x.high)<=50 && Number(x.step)>0);
   }
   // Atualiza somente exercícios que ainda conservam a configuração original.
@@ -161,7 +162,7 @@
       const record = JSON.parse(raw);
       const draft = record?.draft;
     F.ensureDraft(draft);
-      if (record.version !== 1 || !draft || !DATA.rotation.includes(draft.planId) ||
+      if (record.version !== 1 || !draft || !(DATA.rotation.includes(draft.planId) || FREE.isFree(draft)) ||
           !draft.entries || typeof draft.entries !== 'object' || Array.isArray(draft.entries) ||
           !Object.entries(draft.entries).every(([key, en]) => en && en.id === key &&
             exercises.some(ex => ex.id === key) && Array.isArray(en.sets) && en.sets.length > 0 &&
@@ -180,7 +181,7 @@
   let muayMode = !recoveredDraft && Boolean(state.muay.draft);
   const ui = {
     tab: (recoveredDraft || state.muay.draft) ? 'plans' : 'home',
-    plan: recoveredDraft?.draft.planId || 'A', editor:null,
+    plan: DATA.rotation.includes(recoveredDraft?.draft.planId)?recoveredDraft.draft.planId:'A', editor:null,
     draft: recoveredDraft?.draft || null,
     recovered: Boolean(recoveredDraft),
     draftSavedAt: recoveredDraft?.savedAt || null,
@@ -189,6 +190,7 @@
     catalogContext:'browse',catalogSourceId:null,
     catalogGroup:'all',catalogStyle:'all',catalogSearch:'',catalogLimit:12,
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
+    freeSearch:'',freeAll:false,
     anatomyOpen:{},anatomyViews:{},
     focusedMode: false, focusedExercise: null,
     balancePending:null, balanceDismissed:false,
@@ -277,7 +279,9 @@
     el.textContent = message; el.hidden = false;
     clearTimeout(toastTimeout); toastTimeout = setTimeout(()=>{el.hidden=true;},4800);
   }
-  const planFor = id => DATA.plans.find(p => p.id === id) || DATA.plans[0];
+  const planFor = id => id===FREE.PLAN_ID?
+    {id:FREE.PLAN_ID,title:'Treino livre',subtitle:'Exercícios avulsos, sem alterar a sequência A/B/C/D.',type:'free'}:
+    DATA.plans.find(p => p.id === id) || DATA.plans[0];
   const exerciseFor = id => state.exercises.find(x => x.id === id);
   const currentExercises = id => state.exercises.filter(x=>x.group===id && x.active);
   const repsLabel = ex => ex?.repPerSide ? 'repetições por lado' : 'repetições';
@@ -508,7 +512,7 @@
       return;
     }
     const trainingArea=ui.tab==='plans'||ui.tab==='catalog';
-    const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? renderTraining() :
+    const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? (FREE.isFree(ui.draft)?renderFreeWorkout():renderTraining()) :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
       ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : ui.tab === 'share' ? renderShare() : renderSettings();
     main.innerHTML=(trainingArea?renderTrainingDestinations():'')+content;
@@ -706,7 +710,7 @@
     return `${headline('Hoje','Seu próximo passo.')}
       <section class="home-primary card" aria-labelledby="home-primary-title">
         <div class="row-between"><span class="home-step-label">${ui.draft?'EM ANDAMENTO':next.rest?'RECUPERAÇÃO SUGERIDA':'TREINO SUGERIDO'}</span>
-          ${tag(ui.draft?`Bloco ${ui.draft.planId}`:next.rest?'Descanso':`Bloco ${next.id}`,ui.draft||!next.rest?'green':'amber')}</div>
+          ${tag(ui.draft?(FREE.isFree(ui.draft)?'Treino livre':`Bloco ${ui.draft.planId}`):next.rest?'Descanso':`Bloco ${next.id}`,ui.draft||!next.rest?'green':'amber')}</div>
         <h2 id="home-primary-title">${ui.draft?esc(block.title):plan?esc(plan.title):'Recuperar antes de treinar'}</h2>
         <p class="home-primary-summary">${ui.draft?'Você já começou esta sessão. Continue de onde parou.':plan?esc(plan.subtitle):'Seus blocos continuam pendentes. Reavalie como você está antes de iniciar.'}</p>
         ${next.rest&&!ui.draft?`<p class="home-rest-reason">${esc(next.reason)}</p>`:''}
@@ -729,6 +733,7 @@
       </details>
       <div class="home-minimal-links" role="group" aria-label="Registros rápidos">
         <button class="home-muay-link" data-action="open-muay"><span>Registrar Muay Thai</span><span aria-hidden="true">›</span></button>
+        <button class="home-muay-link" data-action="free-start"><span>Registrar treino livre</span><span aria-hidden="true">›</span></button>
         <button class="home-muay-link" data-action="nutrition-open"><span>Registrar alimentação</span><span aria-hidden="true">›</span></button>
       </div>
       ${homeStepsCard()}
@@ -1038,7 +1043,11 @@
       .map(([v,label])=>`<option value="${v}" ${String(current??'')===v?'selected':''}>${label}</option>`).join('');
   }
   function renderMuay() {
-    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' + M.renderPage(state.muay, today(),recoverySettings());
+    return '<div class="tabs muay-mode-tabs"><button class="tab-chip" data-action="mode-strength">Musculação</button><button class="tab-chip selected" aria-current="page">Muay Thai</button></div>' +
+      M.renderPage(state.muay,today(),recoverySettings())+
+      (!state.muay.draft?'<section class="card free-after-muay"><h2 class="section-title">Fez exercícios depois do Muay?</h2>'+
+        '<p class="small muted">Registre abdominais ou qualquer exercício avulso em um treino livre, sem completar uma ficha da sua divisão.</p>'+
+        '<button type="button" class="secondary full" data-action="free-start" data-origin="muay">+ Registrar treino livre após Muay</button></section>':'');
   }
   function renderPlans() {
     const next=getNext(), p=planFor(ui.plan);
@@ -1047,6 +1056,9 @@
     const isNext=next.pending[0]===ui.plan;
     return `<div class="tabs muay-mode-tabs"><button class="tab-chip selected" aria-current="page">Musculação</button><button class="tab-chip" data-action="mode-muay">Muay Thai</button></div>
       ${resumeBanner()}
+      <section class="card free-entrypoint"><div><strong>Treino livre</strong>
+        <p class="small muted">Fez só abdominal, flexão ou alguns exercícios após o Muay? Registre o que realmente executou, sem iniciar A/B/C/D.</p></div>
+        <button type="button" class="secondary full" data-action="free-start">+ Registrar treino livre</button></section>
       <section class="workout-plan-top" aria-label="Planejamento da musculação">
         <div class="workout-plan-status"><span>RODADA ${next.completedRounds+1}</span><strong>${next.completed.length}/${DATA.rotation.length} feitos</strong></div>
         <details class="workout-queue-compact"><summary>Ver sequência de treinos <span aria-hidden="true">⌄</span></summary>
@@ -1077,6 +1089,102 @@
       </details>`;
   }
 
+
+  function renderFreeOptions(){
+    const available=FREE.options(state.exercises,ui.draft,ui.freeSearch,ui.freeAll);
+    const typed=ui.freeSearch.trim();
+    return available.length?available.map(ex=>{
+      const core=ex.complement==='abdomen'||/abdom|core|obl[ií]qu|dead.bug/i.test(
+        [ex.name,ex.muscle,...(ex.aliases||[])].join(' '));
+      return '<button type="button" class="free-exercise-choice" data-action="free-add" data-ex="'+esc(ex.id)+'">'+
+        '<span><strong>'+esc(ex.name)+'</strong><small>'+esc(ex.muscle||ex.group||'Exercício')+
+        (SETS.allowsZero(ex)?' · sem carga adicional':' · '+esc(ex.unit||'kg'))+'</small></span>'+
+        '<span class="free-exercise-choice-add" aria-hidden="true">+</span></button>';
+    }).join(''):'<p class="small muted">'+(typed?'Nenhum exercício encontrado. Experimente outro termo.':
+      'Não há mais sugestões de abdômen disponíveis; abra o catálogo completo.')+'</p>';
+  }
+  function renderFreeWorkout(){
+    const d=ui.draft,stats=FREE.count(d);
+    const muay=state.muay.sessions.find(s=>s.id===d.afterMuayId&&s.day===d.day);
+    const entries=Object.values(d.entries);
+    const last=entries.length?entries.at(-1).id:null;
+    const setsBody=entries.map((en,i)=>{
+      const ex=exerciseFor(en.id);
+      if(!ex)return '';
+      const completed=SETS.workSets(en).length;
+      return '<section class="card free-exercise-card" data-free-exercise="'+esc(ex.id)+'">'+
+        '<div class="row-between free-exercise-head"><div><span class="section-eyebrow">EXERCÍCIO '+(i+1)+'</span>'+
+        '<h3>'+esc(ex.name)+'</h3><small>'+completed+' série(s) efetiva(s) registrada(s)</small></div>'+
+        '<button type="button" class="button-inline" data-action="free-remove" data-ex="'+esc(ex.id)+'" aria-label="Retirar '+esc(ex.name)+'">Retirar</button></div>'+
+        '<p class="small muted">'+(SETS.allowsZero(ex)?
+          'Peso do corpo: use 0 kg se não adicionou carga.':'Informe a carga utilizada; sem carga e repetições, a série não será considerada executada.')+
+          (ex.repPerSide?' Repetições por lado.':'')+'</p>'+
+        '<div class="free-set-table" role="group" aria-label="Séries de '+esc(ex.name)+'">'+
+        '<div class="free-set-labels"><span>Série</span><span>Carga '+(SETS.allowsZero(ex)?'extra':'')+' ('+esc(ex.unit||'kg')+')</span>'+
+        '<span>'+(ex.repPerSide?'Reps/lado':'Reps')+'</span><span>RIR</span></div>'+
+        en.sets.map((set,index)=>
+          '<div class="free-set-row"><span class="free-set-number">'+(index+1)+'</span>'+
+          '<input aria-label="Série '+(index+1)+', carga de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="load" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="'+(SETS.allowsZero(ex)?'0':'kg')+
+          '" value="'+esc(set.load)+'">'+
+          '<input aria-label="Série '+(index+1)+', repetições de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="reps" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Reps" value="'+esc(set.reps)+'">'+
+          '<input aria-label="Série '+(index+1)+', RIR de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="rir" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" value="'+esc(set.rir)+'"></div>').join('')+'</div>'+
+        (ex.knee?'<div class="field mt-12"><label for="free-knee-'+esc(ex.id)+'">Dor no joelho durante este exercício (0–5+)</label>'+
+          '<select id="free-knee-'+esc(ex.id)+'" data-ex-pain="'+esc(ex.id)+'">'+
+          painOptions(en.pain)+'</select></div>':'')+
+        '<div class="free-set-actions"><button type="button" class="secondary small-button" data-action="add-set" data-ex="'+esc(ex.id)+'" '+
+          (en.sets.length>=12?'disabled':'')+'>+ Série</button>'+
+        '<button type="button" class="button-inline" data-action="remove-set" data-ex="'+esc(ex.id)+'" '+
+          (en.sets.length<=1?'disabled':'')+'>− Última série</button></div></section>';
+    }).join('');
+    return '<div class="free-workout" aria-label="Registro de treino livre">'+
+      headline('Registro rápido','Treino livre','Inclua somente os exercícios que fez. Nenhum bloco A/B/C/D será concluído.')+
+      '<div class="callout workout-status-callout '+(ui.draftSaveOk?'good':'warn')+'"><strong>'+
+      (ui.recovered?'Treino livre recuperado.':'Rascunho salvo neste aparelho.')+'</strong>'+
+      '<span class="draft-status" id="draft-status" role="status">'+esc(draftStatusText())+'</span></div>'+
+      '<section class="card free-workout-meta"><div class="row-between"><div><strong>Registro avulso</strong>'+
+      '<p class="small muted">Pode ser depois do Muay ou em outro momento do dia.</p></div>'+
+      '<span class="pill green">Só hoje</span></div>'+
+      '<div class="field mt-12"><label for="free-day">Data do treino</label>'+
+      '<input id="free-day" type="date" data-free-day value="'+esc(d.day)+'" max="'+today()+'"></div>'+
+      (muay?'<p class="free-workout-linked">Após Muay Thai em '+dateBR(muay.day)+'. Os treinos ficam separados no histórico.</p>':'')+
+      '</section>'+
+      '<section class="card free-catalog"><h2 class="section-title">Adicionar exercícios</h2>'+
+      '<p class="small muted">Selecione pelo nome. Abdominais aparecem primeiro para facilitar registros curtos.</p>'+
+      '<div class="field"><label for="free-search">Buscar no catálogo</label>'+
+      '<input id="free-search" data-free-search type="search" autocomplete="off" placeholder="Ex.: abdominal, crunch, prancha" value="'+esc(ui.freeSearch)+'"></div>'+
+      '<div id="free-exercise-results" class="free-exercise-results" aria-label="Exercícios disponíveis">'+renderFreeOptions()+'</div>'+
+      '<button type="button" class="button-inline free-catalog-expand" data-action="free-expand">'+
+      (ui.freeAll?'Ver apenas sugestões rápidas':'Ver catálogo completo')+'</button>'+
+      '<details class="free-custom"><summary>Não encontrou? Criar exercício avulso</summary>'+
+      '<div class="field mt-12"><label for="free-custom-name">Nome do exercício</label>'+
+      '<input id="free-custom-name" maxlength="100" placeholder="Ex.: abdominal com bola"></div>'+
+      '<div class="field mt-12"><label for="free-custom-mode">Tipo de carga</label>'+
+      '<select id="free-custom-mode"><option value="bodyweight">Peso do corpo (0 kg extra)</option>'+
+      '<option value="weight">Com carga (kg)</option></select></div>'+
+      '<button type="button" class="secondary full mt-12" data-action="free-custom-add">+ Adicionar exercício avulso</button>'+
+      '<p class="tiny muted">Exercícios personalizados não recebem classificação muscular automática. A opção fica salva no catálogo pessoal, sem ativar fichas.</p></details></section>'+
+      '<section aria-label="Exercícios deste treino"><div class="row-between free-exercises-title"><h2 class="section-title">O que você fez</h2>'+
+      '<span id="free-count" class="pill">'+stats.performed+' exercícios · '+stats.sets+' séries</span></div>'+
+      (entries.length?setsBody:'<div class="card free-empty">Nenhum exercício adicionado. Escolha um abdominal ou pesquise qualquer exercício.</div>')+
+      '</section>'+
+      '<section class="card free-completion"><h2 class="section-title">Concluir registro</h2>'+
+      '<p id="free-completion-status" class="small muted">'+stats.performed+' exercício(s) com séries executadas. '+
+      'Séries em branco não serão salvas como realizadas.</p>'+
+      '<div class="field mt-12"><label for="free-session-notes">Observações (opcional)</label>'+
+      '<textarea id="free-session-notes" maxlength="1000" data-draft-meta="notes" placeholder="Ex.: abdominal depois da aula de Muay">'+esc(d.notes)+'</textarea></div>'+
+      '<details class="free-optional-effort mt-12"><summary>Esforço percebido (opcional)</summary>'+
+      '<div class="field mt-12"><label for="free-energy">Como foi a sessão?</label>'+
+      '<select id="free-energy" data-draft-meta="energy">'+
+      [['','Não informar'],['leve','Leve'],['normal','Moderada'],['intenso','Intensa']].map(([v,label])=>
+        '<option value="'+v+'"'+(d.energy===v?' selected':'')+'>'+label+'</option>').join('')+
+      '</select></div></details>'+
+      '<div class="free-completion-actions"><button type="button" class="primary full" data-action="finish">Salvar treino livre</button>'+
+      '<button type="button" class="button-inline" data-action="cancel">Descartar rascunho</button></div></section></div>';
+  }
+
   function seedSets(ex) {
     const h=history(ex.id);
     if(h.length){
@@ -1085,6 +1193,41 @@
     }
     if(ex.example) return copy(ex.example);
     return Array.from({length:ex.sets},()=>({load:SETS.allowsZero(ex)?0:'',reps:'',rir:'',warmup:false}));
+  }
+  function startFreeWorkout(origin=''){
+    if(ui.draft){
+      if(FREE.isFree(ui.draft)){
+        muayMode=false;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;
+      }
+      if(!confirm('Existe uma ficha em andamento. Descartar esse rascunho e começar um treino livre?'))return;
+      clearDraft();
+    }
+    const linked=origin==='muay'?FREE.linkedMuay(state.muay.sessions,today()):null;
+    const draft=FREE.create({day:today(),afterMuayId:linked?.id||null});
+    if(draft.error)return notify(draft.error);
+    ui.draft=draft;muayMode=false;ui.tab='plans';ui.editor=null;
+    ui.freeSearch='';ui.freeAll=false;ui.focusedMode=false;ui.focusedExercise=null;
+    if(!persistDraft())notify('Rascunho não salvo: não feche o aplicativo sem guardar os dados.');
+    render();window.scrollTo(0,0);
+  }
+  function addFreeExercise(exercise,isNew=false){
+    if(!FREE.isFree(ui.draft))return;
+    const result=FREE.add(ui.draft,exercise);
+    if(result.error)return notify(result.error);
+    if(isNew&&state.exercises.length>=200)return notify('O catálogo pessoal atingiu o limite de exercícios.');
+    if(isNew){
+      state.exercises.push({...exercise,active:false});
+      if(!save()){state.exercises.pop();return notify('Não foi possível salvar o novo exercício.');}
+    }
+    const original=ui.draft;
+    ui.draft=result.draft;
+    if(!persistDraft()){
+      ui.draft=original;
+      if(isNew){state.exercises.pop();save();}
+      return notify('Não foi possível salvar o novo rascunho; o treino anterior foi preservado.');
+    }
+    ui.freeSearch='';ui.freeAll=false;
+    render();document.querySelector('[data-free-exercise="'+exercise.id+'"]')?.scrollIntoView({block:'nearest'});
   }
   function startWorkout(id) {
     if (!DATA.rotation.includes(id)) return;
@@ -1872,11 +2015,16 @@
 
   function renderHistory() {
     const sessions=latestSessions(), muaySessions=M.sortedSessions(state.muay.sessions);
+    const recentMuay=FREE.linkedMuay(state.muay.sessions,today());
+    const freeForMuay=recentMuay&&state.sessions.some(session=>session.afterMuayId===recentMuay.id);
     const shown=sessions.slice(0,ui.historyStrengthLimit);
     const showStrength=ui.historyFilter!=='muay',showMuay=ui.historyFilter!=='strength';
     const filters=[['all','Todos',sessions.length+muaySessions.length],['strength','Musculação',sessions.length],['muay','Muay Thai',muaySessions.length]];
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
     return `${headline('Sessões e calendário','Seu histórico.')}
+      ${recentMuay&&!freeForMuay?'<section class="card free-after-muay"><strong>Fez abdominais ou outros exercícios depois do Muay?</strong>'+
+        '<p class="small muted">Registre um treino livre sem marcar sua ficha principal como concluída.</p>'+
+        '<button type="button" class="secondary full" data-action="free-start" data-origin="muay">+ Registrar treino livre após Muay</button></section>':''}
       ${sessions.length?'<section class="history-share-quick"><div><strong>Sua última conquista</strong><p class="small muted">Transforme o treino salvo em uma figurinha para sua foto no Instagram.</p></div><button type="button" class="secondary" data-action="share-open" data-id="'+esc(sessions[0].id)+'">Compartilhar conquista</button></section>':''}
       <div class="history-filters" role="group" aria-label="Filtrar sessões por modalidade">
         ${filters.map(([kind,label,count])=>`<button type="button" class="history-filter ${ui.historyFilter===kind?'selected':''}" data-action="history-filter" data-kind="${kind}" aria-pressed="${ui.historyFilter===kind}">${label}<span>${count}</span></button>`).join('')}
@@ -1894,9 +2042,9 @@
         const count=session.entries.length;
         return `<details class="history-entry history-card" data-history-id="${esc(session.id)}" ${kneePrompt?'open':''}>
           <summary class="history-summary">
-            <span class="history-summary-main"><small>${dateBR(session.day)} · Bloco ${esc(session.planId)}</small>
+            <span class="history-summary-main"><small>${dateBR(session.day)} · ${FREE.isFree(session)?'Treino livre':'Bloco '+esc(session.planId)}</small>
               <strong>${esc(planFor(session.planId).title)}</strong>
-              <span>${count} exercício(s) · ${esc(session.energy||'Esforço não informado')}${cardio.totalMinutes?' · Cardio '+fmt(cardio.totalMinutes)+' min':''}${kneePrompt?' · Avaliar joelho':''}</span></span>
+              <span>${count} exercício(s) ${session.afterMuayId?' · Após Muay Thai':''} · ${esc(session.energy||'Esforço não informado')}${cardio.totalMinutes?' · Cardio '+fmt(cardio.totalMinutes)+' min':''}${kneePrompt?' · Avaliar joelho':''}</span></span>
             <span class="history-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="history-content">
@@ -2028,6 +2176,14 @@
         if(status)status.textContent=progress.completed+' de '+progress.total+' exercícios concluídos · '+progress.effectiveSets+(progress.effectiveSets===1?' série efetiva registrada':' séries efetivas registradas');
         const bar=document.querySelector('.focus-progress span');
         if(bar)bar.style.width=(progress.total?Math.round(progress.completed/progress.total*100):0)+'%';
+        if(FREE.isFree(ui.draft)){
+          const stats=FREE.count(ui.draft);
+          const counter=document.getElementById('free-count');
+          if(counter)counter.textContent=stats.performed+' exercícios · '+stats.sets+' séries';
+          const message=document.getElementById('free-completion-status');
+          if(message)message.textContent=stats.performed+
+            ' exercício(s) com séries executadas. Séries em branco não serão salvas como realizadas.';
+        }
         // Editing a number fires input and later change on blur.
         // Replacing a recommendation button during the blur change would
         // detach it between pointerdown and pointerup, cancelling the click.
@@ -2088,9 +2244,13 @@
   function finishWorkout() {
     const cardio=CARDIO.parse(ui.draft?.cardio);
     if(!cardio.ok)return notify(cardio.error);
+    const free=FREE.isFree(ui.draft),sessionDay=free?ui.draft.day:today();
+    if(free&&(!FREE.validDay(sessionDay)||sessionDay>today()))
+      return notify('Informe uma data válida que não esteja no futuro.');
     const result=[];
     for (const raw of Object.values(ui.draft.entries)) {
       const ex=exerciseFor(raw.id), sets=[];
+      if(!ex)return notify('Um exercício foi retirado do catálogo. Reabra o registro antes de salvar.');
       for (const row of raw.sets) {
         const load=E.cleanNumber(row.load),reps=E.cleanNumber(row.reps),rir=E.cleanNumber(row.rir);
         if (reps===null) continue; // cargas sugeridas sem execucao nao viram historico
@@ -2106,9 +2266,11 @@
     }
     if(!result.length) return notify('Registre pelo menos uma série efetiva com carga e repetições. No abdominal com peso do corpo, use 0 kg adicionais.');
     const now=new Date();
+    const linked=free?state.muay.sessions.find(row=>row.id===ui.draft.afterMuayId&&row.day===sessionDay):null;
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
-      timestamp:now.toISOString(),day:today(),entries:result,kneeNextDay:null,
-      plannedIds:[...ui.draft.plannedIds],skipped:F.skippedForSave(ui.draft,result),
+      timestamp:now.toISOString(),day:sessionDay,entries:result,kneeNextDay:null,
+      ...(free?{kind:'free',...(linked?{afterMuayId:linked.id}:{})}:{}),
+      plannedIds:free?[]:[...ui.draft.plannedIds],skipped:free?[]:F.skippedForSave(ui.draft,result),
       energy:ui.draft.energy,notes:ui.draft.notes.trim().slice(0,1000),
       ...(cardio.entries.length?{cardio:cardio.entries}:{})});
     if (!save()) {
@@ -2119,6 +2281,7 @@
     clearDraft();ui.tab='history';ui.historyFilter='all';render();window.scrollTo(0,0);
     const skippedCount=state.sessions[state.sessions.length-1].skipped.filter(item=>item.reason==='sem-registro').length;
     notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':
+      free?'Treino livre salvo. Séries registradas no histórico e no mapa muscular; fichas A/B/C/D inalteradas.':
       skippedCount?`Treino salvo. ${skippedCount} exercício(s) sem registro marcado(s) como pulado(s).`:
       'Treino salvo. Histórico e treinos pendentes atualizados.');
   }
@@ -2690,10 +2853,68 @@
       document.getElementById('calendar-selected-heading')?.scrollIntoView({block:'nearest'});
       return;
     }
+    if(action==='free-start'){startFreeWorkout(btn.dataset.origin||'');return;}
+    if(action==='free-expand'&&FREE.isFree(ui.draft)){ui.freeAll=!ui.freeAll;render();return;}
+    if(action==='free-add'&&FREE.isFree(ui.draft)){
+      const found=F.prepareCatalog(btn.dataset.ex,state.exercises);
+      if(!found)return notify('Exercício não encontrado no catálogo.');
+      addFreeExercise(found.exercise,found.isNew);return;
+    }
+    if(action==='free-custom-add'&&FREE.isFree(ui.draft)){
+      const name=document.getElementById('free-custom-name')?.value||'';
+      const bodyweight=document.getElementById('free-custom-mode')?.value==='bodyweight';
+      const result=FREE.custom(name,bodyweight);
+      if(result.error)return notify(result.error);
+      addFreeExercise(result.exercise,true);return;
+    }
+    if(action==='free-remove'&&FREE.isFree(ui.draft)){
+      const result=FREE.remove(ui.draft,btn.dataset.ex);
+      if(result.error)return notify(result.error);
+      const old=ui.draft;ui.draft=result.draft;
+      if(!persistDraft()){ui.draft=old;return notify('Não foi possível salvar a retirada do exercício.');}
+      render();return;
+    }
     if(action==='open-muay'){muayMode=true;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;}
     if(action==='mode-muay'){muayMode=true;ui.editor=null;render();return;}
     if(action==='mode-strength'){muayMode=false;render();return;}
     if(action==='muay-start'){state.muay.draft=M.draft(today(),btn.dataset.place);save();render();return;}
+    if(['muay-quick-mode','muay-quick-choice','muay-combo-add','muay-combo-remove','muay-quick-add'].includes(action)){
+      const draft=state.muay.draft,quick=draft?.place==='academia'?draft.quick:null;
+      if(!quick)return;
+      const before=copy(quick);
+      if(action==='muay-quick-mode'){
+        if(!Object.hasOwn(M.QUICK_MODES,btn.dataset.value))return;
+        quick.mode=btn.dataset.value;
+      }else if(action==='muay-quick-choice'){
+        const field=btn.dataset.quickField,value=btn.dataset.value;
+        const catalogs={movement:M.QUICK_MOVEMENTS,limb:M.QUICK_LIMBS,
+          preset:{20:1,50:1,ladder:1,ladderCumulative:1,custom:1},exchange:M.SPARRING_EXCHANGE,
+          rules:M.SPARRING_RULES,contact:M.SPARRING_CONTACT};
+        if(!Object.hasOwn(catalogs[field]||{},value))return;
+        quick[field]=value;
+        if(field==='movement'){
+          if(value==='agachamento')quick.limb='bilateral';
+          else if(quick.limb==='bilateral')quick.limb='both';
+        }
+        if(field==='preset'&&['20','50'].includes(value))quick.quantity=value;
+      }else if(action==='muay-combo-add'){
+        if(!Object.hasOwn(M.COMBO_STRIKES,btn.dataset.value)||quick.combo.length>=12)return;
+        quick.combo.push(btn.dataset.value);
+      }else if(action==='muay-combo-remove'){
+        const index=Number(btn.dataset.index);
+        if(!Number.isInteger(index)||index<0||index>=quick.combo.length)return;
+        quick.combo.splice(index,1);
+      }else{
+        if(draft.activities.length>=30)return notify('Limite de 30 blocos por sessão.');
+        const prepared=M.quickActivity(quick);
+        if(prepared.error)return notify(prepared.error);
+        draft.activities.push(prepared.activity);
+        if(!save()){draft.activities.pop();return notify('Não foi possível salvar este bloco.');}
+        render();return;
+      }
+      if(!save()){draft.quick=before;return notify('Não foi possível atualizar o registro.');}
+      render();return;
+    }
     if(action==='muay-preset' || action==='muay-custom'){
       const d=state.muay.draft;
       if(!d||d.activities.length>=30)return notify('Limite de 30 exercícios por sessão.');
@@ -2808,7 +3029,9 @@
       render();
       document.getElementById('strength-radar-title')?.scrollIntoView({behavior:'smooth',block:'start'});
     }
-    else if(action==='resume'){if(ui.draft){ui.tab='plans';ui.plan=ui.draft.planId;render();window.scrollTo(0,0);}}
+    else if(action==='resume'){if(ui.draft){ui.tab='plans';
+      if(DATA.rotation.includes(ui.draft.planId))ui.plan=ui.draft.planId;
+      muayMode=false;render();window.scrollTo(0,0);}}
     else if(action==='cancel'){if(confirm('Descartar o treino em andamento e apagar seu rascunho salvo neste aparelho?')){clearDraft();render();}}
     else if(action==='edit-ex'){ui.tab='plans';ui.editor={id:btn.dataset.ex};render();window.scrollTo(0,0);}
     else if(action==='add-ex'){ui.editor={id:null,group:btn.dataset.plan};render();window.scrollTo(0,0);}
@@ -2869,7 +3092,19 @@
   function updateMuayField(event) {
     const el=event.target,d=state.muay.draft;
     if(!d)return;
-    if(el.dataset.muayField){
+    if(el.dataset.muayQuickField && d.quick && d.place==='academia'){
+      const field=el.dataset.muayQuickField;
+      if(!['quantity','sequenceMinutes','rounds','roundMinutes'].includes(field))return;
+      d.quick[field]=el.value;
+      if(field==='quantity')d.quick.preset='custom';
+      if(!save())notify('Rascunho não salvo. Revise o campo informado.');
+      if(['rounds','roundMinutes'].includes(field)){
+        const total=Number(d.quick.rounds)*Number(d.quick.roundMinutes);
+        const label=document.getElementById('muay-spar-total');
+        if(label)label.textContent=Number.isFinite(total)&&total>0?total+' min':'—';
+      }
+      return;
+    }else if(el.dataset.muayField){
       const field=el.dataset.muayField;
       if(!['day','place','kind','duration','intensity','fatigue','kneePain','notes'].includes(field))return;
       d[field]=el.value;
@@ -2886,6 +3121,12 @@
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
   screen.addEventListener('input',event=>{
+    if(event.target.dataset.freeSearch!==undefined&&FREE.isFree(ui.draft)){
+      ui.freeSearch=event.target.value.slice(0,120);
+      const list=document.getElementById('free-exercise-results');
+      if(list)list.innerHTML=renderFreeOptions();
+      return;
+    }
     if(ui.tab==='share' && event.target.dataset.shareField==='phrase' && ui.share){
       ui.share.phrase=event.target.value.slice(0,66);
       mountSharePreview();return;
@@ -2915,6 +3156,18 @@
   });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
+    if(event.target.dataset.freeDay!==undefined&&FREE.isFree(ui.draft)){
+      const value=event.target.value;
+      if(!FREE.validDay(value)||value>today()){
+        notify('Informe uma data válida sem ultrapassar hoje.');
+        event.target.value=ui.draft.day;return;
+      }
+      const previous=ui.draft.day,oldLinked=ui.draft.afterMuayId;
+      ui.draft.day=value;
+      if(oldLinked)ui.draft.afterMuayId=FREE.linkedMuay(state.muay.sessions,value)?.id||null;
+      if(!persistDraft()){ui.draft.day=previous;ui.draft.afterMuayId=oldLinked;return;}
+      render();return;
+    }
     if(ui.tab==='share' && event.target.dataset.shareField && ui.share){
       const field=event.target.dataset.shareField;
       if(['showMuscles','showWeek','showCardio'].includes(field))ui.share[field]=event.target.checked;
@@ -3012,7 +3265,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261123-shoulders21',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261123-muayfree1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

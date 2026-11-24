@@ -7,7 +7,8 @@
   const idFor = value => typeof value === 'string' ? value : value?.id;
   const numeric = value => (typeof value === 'number' ||
     (typeof value === 'string' && value.trim() !== '')) && Number.isFinite(Number(value));
-  const allowsZero = idOrEntry => bodyweightIds.has(idFor(idOrEntry));
+  const allowsZero = idOrEntry => bodyweightIds.has(idFor(idOrEntry)) ||
+    /^free-bodyweight-[0-9]+-[a-z0-9]{1,12}$/.test(idFor(idOrEntry)||'');
   function validLoad(value, idOrEntry) {
     if (!numeric(value)) return false;
     const load = Number(value);

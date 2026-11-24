@@ -19,7 +19,7 @@ def open_app(ctx, storage=None):
       }})
     }""",storage or {})
     page.add_style_tag(path=str(ROOT/'styles.css'))
-    for js in ['data.js','training-sets.js','engine.js','muay.js','calendar.js','flex.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','cardio.js','app.js']:
+    for js in ['data.js','training-sets.js','engine.js','muay.js','calendar.js','flex.js','free-workout.js','dose.js','focus.js','catalog-advice.js','body-measures.js','activity.js','health-import.js','nutrition-goals.js','goal-planner.js','reminders.js','daily-routine.js','nutrition.js','nutrition-catalog.js','nutrition-balance.js','nutrition-ui.js','evolution-dashboard.js','cardio.js','app.js']:
         page.add_script_tag(path=str(ROOT/js))
     page.locator('#screen h1').wait_for()
     return page

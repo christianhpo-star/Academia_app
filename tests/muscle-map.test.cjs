@@ -192,7 +192,7 @@ test('unknown-only and empty histories stay neutral and explain incomplete cover
   assert.match(unknown,/1 registro de exercício sem classificação \(2 séries\) fora do mapa/);
   assert.doesNotMatch(unknown,/<img\b|onerror|<h3>Mais presentes/);
   for(const html of [unknown,MAP.render({},TODAY,{days:7})]){
-    assert.match(html,/Mapa sem registros neste período/);
+    assert.match(html,/Sem séries de musculação neste período/);
     assert.ok(regionGroups(svgFrom(html)).every(row=>row['data-level']==='0'&&row['data-total']==='0'));
     assert.doesNotMatch(html,/NaN|Infinity/);
   }
