@@ -25,7 +25,7 @@ A revisão do volume deve ocorrer após registros comparáveis de execução, es
 
 1. Currier et al. (2026), *ACSM Position Stand*, **Medicine & Science in Sports & Exercise**, DOI `10.1249/MSS.0000000000003897`: síntese de 137 revisões; volume semanal se associa à hipertrofia, mas o número ideal individual de séries não foi estabelecido. Não é obrigatório treinar até a falha.
 2. Pelland et al. (2026), *The Resistance Training Dose Response*, **Sports Medicine**, DOI `10.1007/s40279-025-02344-w`: análise de 67 estudos; contagem fracionada de séries indiretas apresenta bom ajuste estatístico, com retornos decrescentes. **0,5× indiretas é um modelo de estimativa, não medição individual.**
-3. Nunes et al. / revisão sistemática sobre variação de exercícios, DOI conforme PubMed `35438660`: uma variação sistemática pode ajudar a cobertura regional, mas alternância aleatória ou múltiplas variantes redundantes podem dificultar a progressão.
+3. Kassiano et al. (2022), *Does Varying Resistance Exercises Promote Superior Muscle Hypertrophy and Strength Gains? A Systematic Review*, DOI `10.1519/JSC.0000000000004258`: uma variação sistemática pode ajudar a cobertura regional, mas alternância aleatória ou múltiplas variantes redundantes podem dificultar a progressão.
 4. *Activation of the Three Deltoid Muscle Portions During Common Strengthening Exercises*, revisão sistemática, PMID `39593452`: diferentes movimentos apresentam perfis distintos de ativação eletromiográfica. **EMG não mede diretamente hipertrofia**, portanto não ordenamos opções como garantia de crescimento.
 5. Robinson et al. (2024), *Proximity to failure, strength and hypertrophy*, DOI `10.1007/s40279-024-02069-2`: a relação é exploratória e não define um RIR obrigatório universal.
 
