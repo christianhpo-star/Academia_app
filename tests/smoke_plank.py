@@ -82,6 +82,7 @@ with sync_playwright() as p:
     assert not saved['plannedIds'] and not saved['skipped']
     page.locator('.history-card > summary').first.click()
     history=page.locator('.history-card').first
+    history.locator('.history-details > summary').first.click()
     assert '35 s' in history.inner_text() and '30 s' in history.inner_text()
     page.locator('#nav [data-tab="progress"]').click()
     page.locator('[data-action="evo-view"][data-view="training"]').click()
