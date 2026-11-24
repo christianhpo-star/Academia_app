@@ -67,6 +67,12 @@
       cue:'Segure a corda próxima à cabeça e aproxime as costelas da pelve, com movimento controlado do tronco. Evite puxar só com os braços ou deslocar o quadril.'},
     // Primary/auxiliary roles summarize the movement; they are not measured
     // activation percentages. Deeper stabilizers are not assigned extra sets.
+    plank:{view:'front',main:['abs'],assist:['obliques'],
+      primary:'Reto do abdômen (estabilização)',secondary:'Oblíquos (auxílio)',
+      cue:'Apoie os antebraços e mantenha cabeça, tronco e pelve alinhados. Respire normalmente e pare quando perder o alinhamento. Registre os segundos sustentados, não repetições.'},
+    sidePlank:{view:'front',main:['obliques'],assist:['abs'],
+      primary:'Oblíquos (estabilização)',secondary:'Reto do abdômen (auxílio)',
+      cue:'Apoie um antebraço, alinhe o tronco e sustente sem deixar o quadril cair. Repita dos dois lados: registre os segundos por lado.'},
     bicycleCrunch:{view:'front',main:['abs','obliques'],assist:[],
       primary:'Reto do abdômen e oblíquos',secondary:'',
       cue:'Alterne o tronco e o joelho contrários sem puxar a cabeça, em movimento controlado.'},
@@ -147,6 +153,8 @@
   assign('pallofPress','pallof-press');
   assign('bicycleCrunch','abdominal-bicicleta');
   assign('deadBug','dead-bug');
+  assign('plank','prancha-frontal prancha-joelhos');
+  assign('sidePlank','prancha-lateral');
   assign('hangingKnee','elevacao-joelhos-suspenso');
   assign('cableRotation','woodchop-polia');
   assign('sideBend','flexao-lateral-polia');
