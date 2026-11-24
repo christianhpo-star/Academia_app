@@ -29,6 +29,9 @@
     maintenance:{day:3,week:8},
   });
   const VARIANTS=Object.freeze({
+    'prancha-frontal':['easy','home','Isometria por tempo nos antebraços'],
+    'prancha-joelhos':['easy','home','Alternativa mais simples com joelhos apoiados'],
+    'prancha-lateral':['regular','home','Isometria lateral por tempo e por lado'],
     'encolhimento-halteres':['easy','free','Halteres e trajeto simples'],
     'encolhimento-smith':['easy','machine','Trajeto guiado'],
     'encolhimento-barra':['regular','free','Barra com controle'],
@@ -193,10 +196,11 @@
     const defaultLow=Number.isInteger(exercise.low)?exercise.low:8;
     const defaultHigh=Number.isInteger(exercise.high)?exercise.high:12;
     let low=defaultLow,high=defaultHigh;
+    const timed=SETS?.isTimed?.(exercise)||false;
     const selectedGoal=context?.goal||resolveGoal(settings);
     // Broad repetition ranges work across goals; a modest, narrower starting
     // range for muscle gain is a UI convenience, not a superior rep formula.
-    if(selectedGoal==='muscle_gain'&&defaultHigh-defaultLow>=6){
+    if(!timed&&selectedGoal==='muscle_gain'&&defaultHigh-defaultLow>=6){
       low=Math.min(defaultHigh-3,Math.max(defaultLow,Math.round(defaultLow+(defaultHigh-defaultLow)*.2)));
       high=defaultHigh;
     }
@@ -210,7 +214,7 @@
       return entry?[{day:s.day,sets:SETS?.workSets?.(entry)||[]}]:[];
     }).filter(x=>x.sets.length>0).slice(0,2);
     let historyHint='';
-    if(previous.length===2 && defaultHigh-defaultLow>=3){
+    if(!timed&&previous.length===2 && defaultHigh-defaultLow>=3){
       const recorded=previous.flatMap(x=>x.sets.map(set=>Number(set.reps)))
         .filter(reps=>Number.isInteger(reps)&&reps>=defaultLow&&reps<=defaultHigh);
       const effort=previous.flatMap(x=>x.sets.filter(set=>set.rir!==''&&set.rir!=null)
@@ -255,14 +259,14 @@
       level==='reduce'?'Este grupo já recebeu estímulo hoje ou ontem; se precisar trocar, use uma dose menor.':
       'Opção conservadora para esta sessão, sem mudar a ficha permanente.';
     const objective=GOAL_LABELS[goal]||GOAL_LABELS.recomposition;
-    const reason=headline+' Objetivo: '+objective+'. A faixa de repetições foi definida pelo exercício e pelos seus registros anteriores quando disponíveis; não aumentamos repetições para compensar déficit calórico. Hoje: '+observed.today.exercises+
+    const reason=headline+' Objetivo: '+objective+'. '+(timed?'Na prancha, a faixa se refere a segundos de sustentação com postura adequada, não a repetições nem carga elevada.':'A faixa de repetições foi definida pelo exercício e pelos seus registros anteriores quando disponíveis; não aumentamos repetições para compensar déficit calórico.')+' Hoje: '+observed.today.exercises+
       ' exercícios e '+observed.today.sets+' séries efetivas no total; últimos 7 dias: '+
       observed.week.exercises+' exercícios e '+observed.week.sets+
       ' séries. Nesta região: '+fmt(dayEquivalent)+' séries equivalentes hoje e '+
       fmt(weekEquivalent)+' nos últimos 7 dias (diretas + 0,5 × auxiliares). '+
       'O limite de cautela é uma regra do FORJA, não uma meta científica.'+
       (advice?' '+advice.reason+'.':'')+historyHint;
-    return {sets,low,high,rirTarget:'2–3 (orientativo)',level,goal,
+    return {sets,low,high,rirTarget:timed?'opcional':'2–3 (orientativo)',level,goal,
       reason,region:advice?.region||null,scope:'session-only',basis:'recorded-only',
       todayEquivalent:dayEquivalent,weekEquivalent,
       todayExercises:observed.today.exercises,todaySets:observed.today.sets,

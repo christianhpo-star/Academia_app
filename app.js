@@ -70,6 +70,7 @@
       version: 1,
       referenceDefaultsVersion: 1,
       abdomenDefaultsVersion: 1,
+      plankDefaultsVersion: 1,
       settings: { startWeight: 88.3, targetWeight: 82, goalDate: '2027-01-14', fatigue: 'normal', kneePain: '' },
       weights: [{ id:'initial-2026-10-30', date:'2026-10-30', weight:88.3, initial:true }],
       sessions: [], exercises: copy(DATA.exercises), muay: M.archive(), bodyMeasurements:[],bioimpedance:[],activitySteps:[],healthMonthly:[],healthWeightReports:[],reminderPrefs:{enabled:true,items:{}},dailyRoutine:ROUTINE.defaults(),recoveryHistory:[], nutrition,
@@ -93,7 +94,8 @@
       }
       const upgradedReferences = migrateReferences(parsed);
       const upgradedAbdomen = DATA.ensureAbdomen(parsed);
-      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedAbdomen || upgradedProfessionalTarget || upgradedRecovery) {
+      const upgradedPlank = DATA.ensurePlank(parsed);
+      if (upgradedMuay || upgradedNutrition || upgradedReferences || upgradedAbdomen || upgradedPlank || upgradedProfessionalTarget || upgradedRecovery) {
         preserveValidatedSnapshot(raw);
         try { localStorage.setItem(KEY, JSON.stringify(parsed)); }
         catch (err) { console.warn('Não foi possível persistir as referências iniciais.', err); }
@@ -127,8 +129,9 @@
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
       value.exercises.every(x => typeof x.id === 'string' && typeof x.name === 'string' && x.name.length < 120 &&
-        ['A','B','C','D','FREE'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
-        Number(x.high)>=Number(x.low) && Number(x.high)<=50 && Number(x.step)>0);
+        ['A','B','C','D','FREE'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 &&
+        Number(x.low)>=(SETS.isTimed(x)?5:1) && Number(x.high)>=Number(x.low) &&
+        Number(x.high)<=(SETS.isTimed(x)?300:50) && Number(x.step)>0);
   }
   // Atualiza somente exercícios que ainda conservam a configuração original.
   // Histórico real, exercícios personalizados e rascunhos em andamento são preservados.
@@ -284,7 +287,10 @@
     DATA.plans.find(p => p.id === id) || DATA.plans[0];
   const exerciseFor = id => state.exercises.find(x => x.id === id);
   const currentExercises = id => state.exercises.filter(x=>x.group===id && x.active);
-  const repsLabel = ex => ex?.repPerSide ? 'repetições por lado' : 'repetições';
+  const repsLabel = ex => SETS.isTimed(ex)
+    ? (ex?.repPerSide?'segundos por lado':'segundos de sustentação')
+    : (ex?.repPerSide?'repetições por lado':'repetições');
+  const resultUnit = ex => SETS.isTimed(ex)?(ex?.repPerSide?'s/lado':'s'):(ex?.repPerSide?'rep./lado':'rep.');
   const loadLabel = (load, ex) => SETS.allowsZero(ex)
     ? Number(load)===0 ? 'Peso do corpo' : '+'+fmt(load)+' kg adicionais'
     : fmt(load)+' '+(ex?.unit||'kg');
@@ -910,7 +916,7 @@
         '<p class="catalog-volume-suggestion"><strong>'+
         (dayGuide.level==='hold'?'Não recomendamos acrescentar esta região hoje.':dayGuide.level==='reduce'?
           'Prefira não ampliar o volume; se precisar trocar, use até '+dayGuide.sets+' série.':
-          'Se escolher este exercício: '+dayGuide.sets+' séries · '+dayGuide.low+'–'+dayGuide.high+' repetições · RIR '+esc(dayGuide.rirTarget))+
+          'Se escolher este exercício: '+dayGuide.sets+' séries · '+dayGuide.low+'–'+dayGuide.high+' '+repsLabel(ex)+' · RIR '+esc(dayGuide.rirTarget))+
         '</strong></p>'+
         '<details><summary>Como a sugestão foi calculada?</summary><p>'+esc(dayGuide.reason)+'</p>'+
         (dayGuide.caution?'<p>'+esc(dayGuide.caution)+'</p>':'')+'</details></section>':'')+'</div>'+
@@ -920,8 +926,8 @@
       '<div class="catalog-detail-facts"><div><small>Equipamento</small><strong>'+esc(ex.equipment||'Não informado')+'</strong></div>'+
       '<div><small>Grupo da ficha</small><strong>'+esc(ex.muscle||'Não informado')+'</strong></div>'+
       '<div><small>Sugestão inicial</small><strong>'+esc(String(ex.sets))+' séries · '+esc(String(ex.low))+'–'+esc(String(ex.high))+' '+repsLabel(ex)+'</strong></div></div>'+
-      (SETS.allowsZero(ex)?'<p class="small muted">'+(ex.id.endsWith('-elastico')?'Resistência elástica: 0 kg registra uma série executada com a banda sem quantificar a tensão.':'Peso do corpo: registre 0 kg quando não usar carga adicional.')+'</p>':'')+
-      (ex.repPerSide?'<p class="small muted">Faça os dois lados e registre as repetições por lado. A dupla conta como uma série.</p>':'')+
+      (SETS.allowsZero(ex)?'<p class="small muted">'+(SETS.isTimed(ex)?'Prancha: registre a sustentação em segundos, não repetições. 0 kg indica nenhuma carga adicional.':ex.id.endsWith('-elastico')?'Resistência elástica: 0 kg registra uma série executada com a banda sem quantificar a tensão.':'Peso do corpo: registre 0 kg quando não usar carga adicional.')+'</p>':'')+
+      (ex.repPerSide?'<p class="small muted">Faça os dois lados e registre '+(SETS.isTimed(ex)?'os segundos':'as repetições')+' por lado. A dupla conta como uma série.</p>':'')+
       '<div class="catalog-detail-technique"><h2>Execução</h2>'+
       (guide?'<p>'+esc(guide.cue)+'</p><p class="small muted">Mapa ilustrativo: a participação muscular varia com a técnica e o equipamento.</p>':
         '<p>Orientação técnica específica ainda não revisada. Consulte as instruções do equipamento e um profissional habilitado.</p>')+
@@ -1098,7 +1104,7 @@
         [ex.name,ex.muscle,...(ex.aliases||[])].join(' '));
       return '<button type="button" class="free-exercise-choice" data-action="free-add" data-ex="'+esc(ex.id)+'">'+
         '<span><strong>'+esc(ex.name)+'</strong><small>'+esc(ex.muscle||ex.group||'Exercício')+
-        (SETS.allowsZero(ex)?' · sem carga adicional':' · '+esc(ex.unit||'kg'))+'</small></span>'+
+        (SETS.isTimed(ex)?' · por tempo (s)':SETS.allowsZero(ex)?' · sem carga adicional':' · '+esc(ex.unit||'kg'))+'</small></span>'+
         '<span class="free-exercise-choice-add" aria-hidden="true">+</span></button>';
     }).join(''):'<p class="small muted">'+(typed?'Nenhum exercício encontrado. Experimente outro termo.':
       'Não há mais sugestões de abdômen disponíveis; abra o catálogo completo.')+'</p>';
@@ -1116,19 +1122,23 @@
         '<div class="row-between free-exercise-head"><div><span class="section-eyebrow">EXERCÍCIO '+(i+1)+'</span>'+
         '<h3>'+esc(ex.name)+'</h3><small>'+completed+' série(s) efetiva(s) registrada(s)</small></div>'+
         '<button type="button" class="button-inline" data-action="free-remove" data-ex="'+esc(ex.id)+'" aria-label="Retirar '+esc(ex.name)+'">Retirar</button></div>'+
-        '<p class="small muted">'+(SETS.allowsZero(ex)?
-          'Peso do corpo: use 0 kg se não adicionou carga.':'Informe a carga utilizada; sem carga e repetições, a série não será considerada executada.')+
-          (ex.repPerSide?' Repetições por lado.':'')+'</p>'+
+        '<p class="small muted">'+(SETS.isTimed(ex)?
+          'Prancha isométrica: informe quantos segundos sustentou com boa postura. 0 kg indica nenhuma carga extra.':
+          SETS.allowsZero(ex)?'Peso do corpo: use 0 kg se não adicionou carga.':
+          'Informe a carga utilizada; sem carga e repetições, a série não será considerada executada.')+
+          (ex.repPerSide?(SETS.isTimed(ex)?' Registre os segundos de cada lado; ambos compõem uma série.':' Repetições por lado.'):'')+'</p>'+
         '<div class="free-set-table" role="group" aria-label="Séries de '+esc(ex.name)+'">'+
         '<div class="free-set-labels"><span>Série</span><span>Carga '+(SETS.allowsZero(ex)?'extra':'')+' ('+esc(ex.unit||'kg')+')</span>'+
-        '<span>'+(ex.repPerSide?'Reps/lado':'Reps')+'</span><span>RIR</span></div>'+
+        '<span>'+(SETS.isTimed(ex)?(ex.repPerSide?'Seg/lado':'Seg (s)'):(ex.repPerSide?'Reps/lado':'Reps'))+
+        '</span><span>RIR</span></div>'+
         en.sets.map((set,index)=>
           '<div class="free-set-row"><span class="free-set-number">'+(index+1)+'</span>'+
           '<input aria-label="Série '+(index+1)+', carga de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
           '" data-field="load" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="'+(SETS.allowsZero(ex)?'0':'kg')+
           '" value="'+esc(set.load)+'">'+
-          '<input aria-label="Série '+(index+1)+', repetições de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
-          '" data-field="reps" type="number" min="1" max="100" step="1" inputmode="numeric" placeholder="Reps" value="'+esc(set.reps)+'">'+
+          '<input aria-label="Série '+(index+1)+', '+repsLabel(ex)+' de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
+          '" data-field="reps" type="number" min="'+(SETS.isTimed(ex)?'5':'1')+'" max="'+(SETS.isTimed(ex)?'300':'100')+
+          '" step="1" inputmode="numeric" placeholder="'+(SETS.isTimed(ex)?'Seg':'Reps')+'" value="'+esc(set.reps)+'">'+
           '<input aria-label="Série '+(index+1)+', RIR de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
           '" data-field="rir" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" value="'+esc(set.rir)+'"></div>').join('')+'</div>'+
         (ex.knee?'<div class="field mt-12"><label for="free-knee-'+esc(ex.id)+'">Dor no joelho durante este exercício (0–5+)</label>'+
@@ -1479,14 +1489,19 @@
       previous.reps !== '' && previous.reps != null && Number(previous.reps)>0;
     if(!recorded) return '<span class="set-history-empty">Sem registro anterior desta série.</span>';
     const hasCurrent=SETS.performed(current,ex);
-    const delta=hasCurrent ? E.compareSet(previous,current) : null;
+    const delta=hasCurrent ? (SETS.isTimed(ex)?{
+      kind:Number(current.reps)>Number(previous.reps)?'good':'neutral',
+      label:Number(current.reps)>Number(previous.reps)?
+        '+'+(Number(current.reps)-Number(previous.reps))+' s sustentados com a mesma carga.':
+        Number(current.reps)===Number(previous.reps)?'Sustentação mantida.':
+          'Menos segundos hoje: observe postura e recuperação.'}:E.compareSet(previous,current)) : null;
     const rir=previous.rir === '' || previous.rir == null ? '—' : String(previous.rir);
     return `<div class="previous-workout-reference">
       <div class="reference-heading"><span>REFERÊNCIA ANTERIOR</span>
         <span>${previousDate?dateBR(previousDate):'Última sessão'} · ${previous.warmup?'Aquecimento':'Efetiva'}</span></div>
       <dl class="previous-workout-metrics">
         <div class="history-metric"><dt>${SETS.allowsZero(ex)?'Carga extra':'Carga'}</dt><dd>${esc(fmt(previous.load))}<small>${esc(ex.unit)}</small></dd></div>
-        <div class="history-metric"><dt>Repetições</dt><dd>${esc(previous.reps)}<small>reps</small></dd></div>
+        <div class="history-metric"><dt>${SETS.isTimed(ex)?'Sustentação':'Repetições'}</dt><dd>${esc(previous.reps)}<small>${SETS.isTimed(ex)?'s':'reps'}</small></dd></div>
         <div class="history-metric"><dt>RIR</dt><dd>${esc(rir)}</dd></div>
       </dl>
       ${delta && delta.label?`<span class="set-delta ${esc(delta.kind)}">${esc(delta.label)}</span>`:''}
@@ -1511,21 +1526,21 @@
         <div class="workout-exercise-title"><p class="section-eyebrow">EXERCÍCIO ${index+1} · ${completedSets} ${completedSets===1?'série registrada':'séries registradas'}</p><h3>${esc(ex.name)}</h3>
         <p class="workout-exercise-target">${en.sets.length} séries nesta sessão · ${en.dayPrescription?.low||ex.low}–${en.dayPrescription?.high||ex.high} ${repsLabel(ex)}</p>
         ${en.dayPrescription?'<p class="small workout-day-guidance"><strong>Ajuste para hoje:</strong> '+esc(en.dayPrescription.reason)+
-          ' Faixa '+en.dayPrescription.low+'–'+en.dayPrescription.high+' repetições, RIR '+esc(en.dayPrescription.rirTarget)+
+          ' Faixa '+en.dayPrescription.low+'–'+en.dayPrescription.high+' '+repsLabel(ex)+', RIR '+esc(en.dayPrescription.rirTarget)+
           '. A ficha original não mudou.</p>':''}</div>
         <span class="workout-exercise-kind">${elastic?'Elástico':SETS.allowsZero(ex)?'Peso do corpo':ex.mode==='pyramid'?'Pirâmide':'Séries'}</span></div>
       ${ANATOMY?.panel(ex.id,Boolean(ui.anatomyOpen[ex.id]),ui.anatomyViews[ex.id])||''}
-      <p class="workout-exercise-step">${elastic?'Elástico: registre 0 kg quando a tensão não for mensurada; informe repetições executadas e RIR.':SETS.allowsZero(ex)?'Carga extra: 0 kg = peso do corpo. Registre apenas o peso adicionado.':'Ajuste de carga: +'+fmt(ex.step)+' '+esc(ex.unit)}</p>
-      ${ex.repPerSide?'<p class="small muted">Faça os dois lados. Registre as repetições por lado; a dupla conta como uma série.</p>':''}
-      <p class="small muted">Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.</p>
+      <p class="workout-exercise-step">${SETS.isTimed(ex)?'Prancha: registre segundos realmente sustentados com alinhamento; 0 kg significa sem carga adicional.':elastic?'Elástico: registre 0 kg quando a tensão não for mensurada; informe repetições executadas e RIR.':SETS.allowsZero(ex)?'Carga extra: 0 kg = peso do corpo. Registre apenas o peso adicionado.':'Ajuste de carga: +'+fmt(ex.step)+' '+esc(ex.unit)}</p>
+      ${ex.repPerSide?'<p class="small muted">Faça os dois lados. Registre '+(SETS.isTimed(ex)?'os segundos sustentados':'as repetições')+' por lado; a dupla conta como uma série.</p>':''}
+      <p class="small muted">${SETS.isTimed(ex)?'Interrompa quando perder o alinhamento. Registre apenas segundos sustentados; o RIR é opcional.':'Toque no RIR para registrar o esforço. As repetições só contam quando você informar o que realmente fez.'}</p>
       ${hasData?`<div class="exercise-last-session"><span>ÚLTIMA SESSÃO · ${dateBR(reco.lastDate)}</span><strong>${esc(reco.last)}</strong></div>`:''}
       <div class="recommend ${cls}"><strong>${esc(reco.title)}</strong><p>${esc(reco.explanation)}</p>
       ${reco.level==='increase'?`<button class="button-inline mt-8" data-action="apply-reco" data-ex="${esc(ex.id)}">Usar ${fmt(reco.next)} ${esc(ex.unit)} na série mais pesada</button>`:''}</div>
       ${!hasData&&ex.example?'<p class="small muted">Modelo do seu supino: 20 → 22,5 → 25 → 25 kg por halter. Não é histórico registrado.</p>':''}
-      <div class="set-grid"><div class="caption">Nº</div><div class="caption">Tipo</div><div class="caption">${SETS.allowsZero(ex)?'Extra':'Carga'}<br>(${esc(ex.unit)})</div><div class="caption">${ex.repPerSide?'Reps/lado':'Reps'}</div><div class="caption">RIR</div>
+      <div class="set-grid"><div class="caption">Nº</div><div class="caption">Tipo</div><div class="caption">${SETS.allowsZero(ex)?'Extra':'Carga'}<br>(${esc(ex.unit)})</div><div class="caption">${SETS.isTimed(ex)?(ex.repPerSide?'Seg/lado':'Seg (s)'):(ex.repPerSide?'Reps/lado':'Reps')}</div><div class="caption">RIR</div>
       ${en.sets.map((set,i)=>`<div class="cell-label">${i+1}</div><button class="button-inline set-type ${set.warmup?'warmup':'work'}" data-action="toggle-warmup" data-ex="${esc(ex.id)}" data-index="${i}" title="Alternar entre aquecimento e série efetiva">${set.warmup?'Aquec.':'Efetiva'}</button>
       <input aria-label="Série ${i+1}, carga ${SETS.allowsZero(ex)?'adicional ':''}${esc(ex.unit)} em ${esc(ex.name)}" type="number" min="0" max="1500" step="any" inputmode="decimal" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="load" value="${esc(set.load)}" />
-      <input aria-label="Série ${i+1}, ${repsLabel(ex)} em ${esc(ex.name)}" type="number" min="0" max="100" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
+      <input aria-label="Série ${i+1}, ${repsLabel(ex)} em ${esc(ex.name)}" type="number" min="${SETS.isTimed(ex)?'5':'0'}" max="${SETS.isTimed(ex)?'300':'100'}" step="1" inputmode="numeric" placeholder="${SETS.isTimed(ex)?'Seg':'—'}" data-ex="${esc(ex.id)}" data-index="${i}" data-field="reps" value="${esc(set.reps)}" />
       <input aria-label="Série ${i+1}, repetições em reserva em ${esc(ex.name)}" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" data-ex="${esc(ex.id)}" data-index="${i}" data-field="rir" value="${esc(set.rir)}" />
       <div class="set-history" data-ex="${esc(ex.id)}" data-index="${i}">${setComparisonText(previousEntry?.sets[i],set,ex,previousSession?.session.day)}</div>
       <div class="quick-set-row">
@@ -1534,7 +1549,7 @@
         </div>
         <button type="button" class="secondary quick-set-confirm ${FOCUS.performed(set,ex.id)?'is-done':''}" data-action="quick-set-confirm" data-ex="${esc(ex.id)}" data-index="${i}">${FOCUS.performed(set,ex.id)?'Série registrada ✓':'Conferir série'}</button>
       </div>`).join('')}</div>
-      <div class="quick-log-tools"><span class="small muted">Preparo rápido · confirme as repetições depois de executar</span>
+      <div class="quick-log-tools"><span class="small muted">Preparo rápido · confirme ${SETS.isTimed(ex)?'o tempo sustentado':'as repetições'} depois de executar</span>
       <div class="quick-log-buttons"><button type="button" class="secondary small-button" data-action="quick-previous" data-ex="${esc(ex.id)}">Repetir cargas da última sessão</button>
       <button type="button" class="secondary small-button" data-action="quick-current" data-ex="${esc(ex.id)}">Repetir carga da série anterior</button></div></div>
       <div class="card-footer"><button class="button-inline" data-action="add-set" data-ex="${esc(ex.id)}">+ Série</button><button class="button-inline" data-action="remove-set" data-ex="${esc(ex.id)}" ${en.sets.length<=1?'disabled':''}>− Última série</button><button class="button-inline" data-action="catalog-session-open" data-mode="replace" data-source="${esc(ex.id)}" ${F.hasRecordedReps(en)?'disabled title="Este exercício já tem repetições registradas"':''}>Substituir</button><button class="button-inline" data-action="flex-withdraw" data-ex="${esc(ex.id)}">Retirar só hoje</button></div>
@@ -2054,8 +2069,8 @@
               return `<li><div class="history-exercise"><strong>${esc(ex?.name||en.id)}</strong><br>
                 <span>${E.workSets(en).length} séries efetivas${en.pain!=null?' · joelho '+en.pain+'/5+':''}</span>
                 <details class="history-details"><summary>Ver todas as séries</summary><ol>${en.sets.map(set=>
-                  `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${esc(loadLabel(set.load,ex||en))} × ${set.reps} ${ex?.repPerSide?'rep./lado':'rep.'}${set.rir==null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
-              </div><div class="text-right"><strong>${top?esc(loadLabel(top.load,ex||en)):'—'}</strong><br><span>${top?`${top.reps} ${ex?.repPerSide?'rep./lado':'rep.'}`:''}</span></div></li>`;
+                  `<li>${set.warmup?'Aquecimento':'Efetiva'}: ${esc(loadLabel(set.load,ex||en))} × ${set.reps} ${resultUnit(ex)}${set.rir==null?'':` · RIR ${set.rir}`}</li>`).join('')}</ol></details>
+              </div><div class="text-right"><strong>${top?esc(loadLabel(top.load,ex||en)):'—'}</strong><br><span>${top?`${top.reps} ${resultUnit(ex)}`:''}</span></div></li>`;
             }).join('')}</ul>
             ${cardio.entries.length?`<section class="cardio-history" aria-label="Cardio deste treino"><h3>Cardio · ${fmt(cardio.totalMinutes)} min</h3><ul>${cardio.entries.map(item=>`<li><span>${esc(CARDIO.label(item.type))}</span><strong>${fmt(item.minutes)} min${CARDIO.paceLabel(item)?'<small class="cardio-pace-history">'+esc(CARDIO.paceLabel(item))+'</small>':''}</strong></li>`).join('')}</ul></section>`:''}
             ${session.skipped?.length?`<details class="history-skipped"><summary>Pulados nesta sessão · ${session.skipped.length}</summary><ul>${session.skipped.map(item=>
@@ -2081,19 +2096,20 @@
       id:'',name:'',group:edit.group,sets:3,low:8,high:12,step:2.5,unit:'kg',mode:'double',active:true,knee:false,
     };
     const bodyweight=SETS.allowsZero(ex);
+    const timed=SETS.isTimed(ex);
     const elastic=ex.id.endsWith('-elastico');
     return `${headline('Personalização',edit.id?'Editar exercício':'Novo exercício','Adapte seu plano à sua academia, sem apagar os registros anteriores.')}
       <form class="card" id="exercise-form"><div class="field"><label for="ex-name">Nome do exercício</label><input id="ex-name" name="name" type="text" maxlength="100" required value="${esc(ex.name)}" /></div>
       <div class="field-row three mt-12"><div class="field"><label for="ex-sets">Séries</label><input id="ex-sets" name="sets" type="number" min="1" max="12" step="1" required value="${ex.sets}" /></div>
-      <div class="field"><label for="ex-low">Reps mín.</label><input id="ex-low" name="low" type="number" min="1" max="50" step="1" required value="${ex.low}" /></div>
-      <div class="field"><label for="ex-high">Reps máx.</label><input id="ex-high" name="high" type="number" min="1" max="50" step="1" required value="${ex.high}" /></div></div>
-      ${bodyweight?`<p class="small muted mt-12">${elastic?'Resistência elástica: 0 kg = tensão não quantificada do elástico. Registre repetições reais.':'Peso do corpo · ajuste as séries e repetições. Durante o treino, 0 kg significa sem carga adicional.'}</p>
-      <input type="hidden" name="step" value="${ex.step}" /><input type="hidden" name="unit" value="kg" /><input type="hidden" name="mode" value="bodyweight" />`:`<div class="field-row mt-12"><div class="field"><label for="ex-step">Incremento de carga</label><input id="ex-step" name="step" type="number" min="0.5" max="50" step="0.5" required value="${ex.step}" /></div>
+      <div class="field"><label for="ex-low">${timed?'Segundos mín.':'Reps mín.'}</label><input id="ex-low" name="low" type="number" min="${timed?5:1}" max="${timed?300:50}" step="1" required value="${ex.low}" /></div>
+      <div class="field"><label for="ex-high">${timed?'Segundos máx.':'Reps máx.'}</label><input id="ex-high" name="high" type="number" min="${timed?5:1}" max="${timed?300:50}" step="1" required value="${ex.high}" /></div></div>
+      ${bodyweight?`<p class="small muted mt-12">${timed?'Prancha isométrica: ajuste as séries e os segundos. Durante o treino, 0 kg significa sem carga adicional.':elastic?'Resistência elástica: 0 kg = tensão não quantificada do elástico. Registre repetições reais.':'Peso do corpo · ajuste as séries e repetições. Durante o treino, 0 kg significa sem carga adicional.'}</p>
+      <input type="hidden" name="step" value="${ex.step}" /><input type="hidden" name="unit" value="kg" /><input type="hidden" name="mode" value="${timed?'isometric':'bodyweight'}" />`:`<div class="field-row mt-12"><div class="field"><label for="ex-step">Incremento de carga</label><input id="ex-step" name="step" type="number" min="0.5" max="50" step="0.5" required value="${ex.step}" /></div>
       <div class="field"><label for="ex-unit">Unidade da carga</label><select id="ex-unit" name="unit"><option value="kg" ${ex.unit==='kg'?'selected':''}>kg (total/máquina)</option><option value="kg/halter" ${ex.unit==='kg/halter'?'selected':''}>kg por halter</option></select></div></div>
       <div class="field mt-12"><label for="ex-mode">Método de progressão</label><select id="ex-mode" name="mode"><option value="double" ${ex.mode==='double'?'selected':''}>Séries com carga estável</option><option value="pyramid" ${ex.mode==='pyramid'?'selected':''}>Pirâmide crescente</option></select></div>`}
       <label class="setting-item mt-12"><span>Exercício que exige acompanhamento do joelho</span><input class="switch" type="checkbox" name="knee" ${ex.knee?'checked':''}/></label>
       <label class="setting-item mt-12"><span>Ativo no treino</span><input class="switch" type="checkbox" name="active" ${ex.active?'checked':''}/></label>
-      <p class="small muted">${bodyweight?'Acompanhe a progressão pelas repetições e pela técnica.':'Sugestões de carga só aparecem após duas sessões consistentes.'} Séries de aquecimento são excluídas da análise.</p>
+      <p class="small muted">${timed?'Acompanhe a sustentação em segundos e a postura.':bodyweight?'Acompanhe a progressão pelas repetições e pela técnica.':'Sugestões de carga só aparecem após duas sessões consistentes.'} Séries de aquecimento são excluídas da análise.</p>
       <div class="btnrow mt-16"><button class="primary" type="submit" style="flex:2">Salvar exercício</button><button class="ghost" type="button" data-action="exit-editor" style="flex:1">Voltar</button></div></form>`;
   }
   function renderHealthSummary(){
@@ -2231,12 +2247,15 @@
     const fd=new FormData(form), existing=ui.editor.id?exerciseFor(ui.editor.id):null;
     const sets=Number(fd.get('sets')),low=Number(fd.get('low')),high=Number(fd.get('high')),step=Number(fd.get('step'));
     const name=String(fd.get('name')||'').trim();
+    const timed=SETS.isTimed(existing);
     if(!name || name.length>100|| !Number.isInteger(sets)||sets<1||sets>12||
-      !Number.isInteger(low)||!Number.isInteger(high)||low<1||high>50||high<low||step<=0||step>50)
+      !Number.isInteger(low)||!Number.isInteger(high)||low<(timed?5:1)||
+      high>(timed?300:50)||high<low||step<=0||step>50)
       return notify('Confira o nome, as séries, repetições e o incremento.');
     const bodyweight=SETS.allowsZero(existing);
     const patch={name,sets,low,high,step,unit:!bodyweight&&fd.get('unit')==='kg/halter'?'kg/halter':'kg',
-      mode:bodyweight?'bodyweight':fd.get('mode')==='pyramid'?'pyramid':'double',knee:fd.has('knee'),active:fd.has('active')};
+      mode:timed?'isometric':bodyweight?'bodyweight':fd.get('mode')==='pyramid'?'pyramid':'double',
+      ...(timed?{timeBased:true}:{}),knee:fd.has('knee'),active:fd.has('active')};
     if(existing) Object.assign(existing,patch);
     else state.exercises.push({id:`custom-${Date.now()}`,group:ui.editor.group,...patch});
     ui.editor=null;save();render();notify('Exercício salvo.');
@@ -2256,7 +2275,7 @@
         if (reps===null) continue; // cargas sugeridas sem execucao nao viram historico
         if (!SETS.performed(row,ex)||
           (rir!==null && (!Number.isInteger(rir)||rir<0||rir>10)))
-          return notify(`Confira carga, repetições e RIR de ${ex.name}.`);
+          return notify(`Confira carga, ${SETS.isTimed(ex)?'segundos':'repetições'} e RIR opcional de ${ex.name}.`);
         sets.push({load,reps,rir,warmup:!!row.warmup});
       }
       if (!sets.some(s=>!s.warmup)) continue;
@@ -2264,7 +2283,7 @@
         return notify(`Informe a dor no joelho (mesmo que zero) em ${ex.name}.`);
       result.push({id:ex.id,sets,pain:ex.knee?Number(raw.pain):null});
     }
-    if(!result.length) return notify('Registre pelo menos uma série efetiva com carga e repetições. No abdominal com peso do corpo, use 0 kg adicionais.');
+    if(!result.length) return notify('Registre pelo menos uma série efetiva. Na prancha, informe segundos sustentados; nos outros exercícios, repetições e carga. Com peso do corpo, use 0 kg adicionais.');
     const now=new Date();
     const linked=free?state.muay.sessions.find(row=>row.id===ui.draft.afterMuayId&&row.day===sessionDay):null;
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
@@ -2334,9 +2353,9 @@
     return `"${safe.replace(/"/g,'""')}"`;
   };
   function exportCSV() {
-    const rows=[['Data','Treino','Exercício','Série','Aquecimento','Carga (unidade indicada)','Unidade','Repetições','RIR','Dor no joelho durante','Dor no dia seguinte']];
+    const rows=[['Data','Treino','Exercício','Série','Aquecimento','Carga (unidade indicada)','Unidade','Quantidade','Medida','RIR','Dor no joelho durante','Dor no dia seguinte']];
     latestSessions().forEach(s=>s.entries.forEach(en=>en.sets.forEach((set,i)=>rows.push([
-      s.day,s.planId,exerciseFor(en.id)?.name||en.id,i+1,set.warmup?'sim':'não',set.load,exerciseFor(en.id)?.unit||'kg',set.reps,set.rir??'',en.pain??'',s.kneeNextDay??'']))));
+      s.day,s.planId,exerciseFor(en.id)?.name||en.id,i+1,set.warmup?'sim':'não',set.load,exerciseFor(en.id)?.unit||'kg',set.reps,SETS.isTimed(en)?'segundos':'repetições',set.rir??'',en.pain??'',s.kneeNextDay??'']))));
     download(`forja-series-${today()}.csv`,'\ufeff'+rows.map(row=>row.map(csvSafe).join(';')).join('\r\n'),'text/csv;charset=utf-8');
     notify('Planilha CSV exportada.');
   }
@@ -2356,6 +2375,7 @@
       settings:current.settings,
       referenceDefaultsVersion:Math.max(current.referenceDefaultsVersion||0,incoming.referenceDefaultsVersion||0),
       abdomenDefaultsVersion:Math.max(current.abdomenDefaultsVersion||0,incoming.abdomenDefaultsVersion||0),
+      plankDefaultsVersion:Math.max(current.plankDefaultsVersion||0,incoming.plankDefaultsVersion||0),
       weights:[...current.weights,...newWeights],
       exercises:unionById(current.exercises,incoming.exercises),
       sessions:unionById(current.sessions,incoming.sessions),
@@ -2401,6 +2421,7 @@
       const oldState=state;
       state=hasCurrent?mergeImportedHistory(state,parsed):parsed;
       DATA.ensureAbdomen(state);
+      DATA.ensurePlank(state);
       if(!validState(state)||!M.validArchive(state.muay)){state=oldState;throw new Error('Falha ao validar estado mesclado.');}
       if(!save()){state=oldState;return notify('Importação não concluída. Seu histórico anterior foi mantido.');}
       if(!hasCurrent)clearDraft();
@@ -3265,7 +3286,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261123-muayfree1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261123-plank1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

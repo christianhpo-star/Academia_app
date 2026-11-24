@@ -38,18 +38,20 @@
   function recommend(ex, sessions) {
     const h = historyOf(sessions, ex.id);
     if (SETS.allowsZero(ex)) {
-      const elastic=ex.id.endsWith('-elastico');
+      const elastic=ex.id.endsWith('-elastico'),timed=SETS.isTimed(ex);
       if (!h.length) return {
         level: 'start', title: 'Primeiro registro', last: null, next: null,
-        explanation: elastic?'Registre repetições e RIR com o elástico. Sem medida de tensão, use 0 kg e acompanhe a técnica.':
+        explanation: timed?'Registre segundos efetivamente sustentados com boa postura. Comece com uma duração confortável e interrompa antes de perder o alinhamento; use 0 kg quando não houver carga extra.':
+          elastic?'Registre repetições e RIR com o elástico. Sem medida de tensão, use 0 kg e acompanhe a técnica.':
           'Registre as repetições e o RIR. Comece sem carga adicional e priorize uma execução controlada.',
       };
       const last = h[0], top = topSet(last.entry), load = Number(top.load);
       return {
-        level: 'hold', title: 'Acompanhe repetições e técnica', next: null,
-        last: `${top.reps} rep. · ${load === 0 ? (elastic?'elástico sem tensão quantificada':'peso do corpo') : formatWeight(load) + ' kg adicionais'}`,
+        level: 'hold', title: timed?'Acompanhe duração e postura':'Acompanhe repetições e técnica', next: null,
+        last: `${top.reps} ${timed?(ex.repPerSide?'s por lado':'s de sustentação'):'rep.'} · ${load === 0 ? (elastic?'elástico sem tensão quantificada':'peso do corpo') : formatWeight(load) + ' kg adicionais'}`,
         lastSets: workSets(last.entry), lastDate: last.session.day,
-        explanation: `Consolide a faixa de ${ex.low}–${ex.high} repetições com execução controlada. ${elastic?'A tensão da faixa elástica não é estimada em quilogramas pelo app.':'A carga informada é apenas o peso adicional.'} O app não calcula força máxima nem sugere aumentá-la automaticamente neste movimento.`,
+        explanation: timed?`Mantenha a prancha por ${ex.low}–${ex.high} segundos conforme tolerância, sem perder a postura. Aumente alguns segundos apenas quando estiver confortável. Tempo sustentado não é repetição nem permite calcular 1RM.`:
+          `Consolide a faixa de ${ex.low}–${ex.high} repetições com execução controlada. ${elastic?'A tensão da faixa elástica não é estimada em quilogramas pelo app.':'A carga informada é apenas o peso adicional.'} O app não calcula força máxima nem sugere aumentá-la automaticamente neste movimento.`,
       };
     }
     if (!h.length) return {

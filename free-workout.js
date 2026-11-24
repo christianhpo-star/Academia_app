@@ -25,7 +25,11 @@
     const available=F.options(exercises,draft,search);
     const core=ex=>ex?.complement==='abdomen'||/abdom|core|obl[ií]qu|dead.bug|prancha/i.test(
       [ex?.name,ex?.muscle,...(ex?.aliases||[])].join(' '));
-    const sorted=available.slice().sort((a,b)=>Number(core(b))-Number(core(a))||a.name.localeCompare(b.name,'pt-BR'));
+    const front=['prancha-frontal','prancha-joelhos','prancha-lateral',
+      'abdominal-solo','abdominal-inverso'];
+    const order=ex=>front.indexOf(ex.id)>=0?front.indexOf(ex.id):front.length;
+    const sorted=available.slice().sort((a,b)=>Number(core(b))-Number(core(a))||
+      order(a)-order(b)||a.name.localeCompare(b.name,'pt-BR'));
     if(fold(search))return sorted.slice(0,25);
     if(all)return sorted.slice(0,80);
     return sorted.filter(core).slice(0,10);
