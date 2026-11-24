@@ -127,7 +127,7 @@
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
       value.exercises.every(x => typeof x.id === 'string' && typeof x.name === 'string' && x.name.length < 120 &&
-        ['A','B','C','D'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
+        ['A','B','C','D','FREE'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
         Number(x.high)>=Number(x.low) && Number(x.high)<=50 && Number(x.step)>0);
   }
   // Atualiza somente exercícios que ainda conservam a configuração original.
@@ -2015,11 +2015,16 @@
 
   function renderHistory() {
     const sessions=latestSessions(), muaySessions=M.sortedSessions(state.muay.sessions);
+    const recentMuay=FREE.linkedMuay(state.muay.sessions,today());
+    const freeForMuay=recentMuay&&state.sessions.some(session=>session.afterMuayId===recentMuay.id);
     const shown=sessions.slice(0,ui.historyStrengthLimit);
     const showStrength=ui.historyFilter!=='muay',showMuay=ui.historyFilter!=='strength';
     const filters=[['all','Todos',sessions.length+muaySessions.length],['strength','Musculação',sessions.length],['muay','Muay Thai',muaySessions.length]];
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
     return `${headline('Sessões e calendário','Seu histórico.')}
+      ${recentMuay&&!freeForMuay?'<section class="card free-after-muay"><strong>Fez abdominais ou outros exercícios depois do Muay?</strong>'+
+        '<p class="small muted">Registre um treino livre sem marcar sua ficha principal como concluída.</p>'+
+        '<button type="button" class="secondary full" data-action="free-start" data-origin="muay">+ Registrar treino livre após Muay</button></section>':''}
       ${sessions.length?'<section class="history-share-quick"><div><strong>Sua última conquista</strong><p class="small muted">Transforme o treino salvo em uma figurinha para sua foto no Instagram.</p></div><button type="button" class="secondary" data-action="share-open" data-id="'+esc(sessions[0].id)+'">Compartilhar conquista</button></section>':''}
       <div class="history-filters" role="group" aria-label="Filtrar sessões por modalidade">
         ${filters.map(([kind,label,count])=>`<button type="button" class="history-filter ${ui.historyFilter===kind?'selected':''}" data-action="history-filter" data-kind="${kind}" aria-pressed="${ui.historyFilter===kind}">${label}<span>${count}</span></button>`).join('')}
@@ -2037,9 +2042,9 @@
         const count=session.entries.length;
         return `<details class="history-entry history-card" data-history-id="${esc(session.id)}" ${kneePrompt?'open':''}>
           <summary class="history-summary">
-            <span class="history-summary-main"><small>${dateBR(session.day)} · Bloco ${esc(session.planId)}</small>
+            <span class="history-summary-main"><small>${dateBR(session.day)} · ${FREE.isFree(session)?'Treino livre':'Bloco '+esc(session.planId)}</small>
               <strong>${esc(planFor(session.planId).title)}</strong>
-              <span>${count} exercício(s) · ${esc(session.energy||'Esforço não informado')}${cardio.totalMinutes?' · Cardio '+fmt(cardio.totalMinutes)+' min':''}${kneePrompt?' · Avaliar joelho':''}</span></span>
+              <span>${count} exercício(s) ${session.afterMuayId?' · Após Muay Thai':''} · ${esc(session.energy||'Esforço não informado')}${cardio.totalMinutes?' · Cardio '+fmt(cardio.totalMinutes)+' min':''}${kneePrompt?' · Avaliar joelho':''}</span></span>
             <span class="history-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="history-content">
@@ -2231,9 +2236,13 @@
   function finishWorkout() {
     const cardio=CARDIO.parse(ui.draft?.cardio);
     if(!cardio.ok)return notify(cardio.error);
+    const free=FREE.isFree(ui.draft),sessionDay=free?ui.draft.day:today();
+    if(free&&(!FREE.validDay(sessionDay)||sessionDay>today()))
+      return notify('Informe uma data válida que não esteja no futuro.');
     const result=[];
     for (const raw of Object.values(ui.draft.entries)) {
       const ex=exerciseFor(raw.id), sets=[];
+      if(!ex)return notify('Um exercício foi retirado do catálogo. Reabra o registro antes de salvar.');
       for (const row of raw.sets) {
         const load=E.cleanNumber(row.load),reps=E.cleanNumber(row.reps),rir=E.cleanNumber(row.rir);
         if (reps===null) continue; // cargas sugeridas sem execucao nao viram historico
@@ -2249,9 +2258,11 @@
     }
     if(!result.length) return notify('Registre pelo menos uma série efetiva com carga e repetições. No abdominal com peso do corpo, use 0 kg adicionais.');
     const now=new Date();
+    const linked=free?state.muay.sessions.find(row=>row.id===ui.draft.afterMuayId&&row.day===sessionDay):null;
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
-      timestamp:now.toISOString(),day:today(),entries:result,kneeNextDay:null,
-      plannedIds:[...ui.draft.plannedIds],skipped:F.skippedForSave(ui.draft,result),
+      timestamp:now.toISOString(),day:sessionDay,entries:result,kneeNextDay:null,
+      ...(free?{kind:'free',...(linked?{afterMuayId:linked.id}:{})}:{}),
+      plannedIds:free?[]:[...ui.draft.plannedIds],skipped:free?[]:F.skippedForSave(ui.draft,result),
       energy:ui.draft.energy,notes:ui.draft.notes.trim().slice(0,1000),
       ...(cardio.entries.length?{cardio:cardio.entries}:{})});
     if (!save()) {
@@ -2262,6 +2273,7 @@
     clearDraft();ui.tab='history';ui.historyFilter='all';render();window.scrollTo(0,0);
     const skippedCount=state.sessions[state.sessions.length-1].skipped.filter(item=>item.reason==='sem-registro').length;
     notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':
+      free?'Treino livre salvo. Séries registradas no histórico e no mapa muscular; fichas A/B/C/D inalteradas.':
       skippedCount?`Treino salvo. ${skippedCount} exercício(s) sem registro marcado(s) como pulado(s).`:
       'Treino salvo. Histórico e treinos pendentes atualizados.');
   }
