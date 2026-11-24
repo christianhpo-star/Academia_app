@@ -129,8 +129,9 @@
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
       value.exercises.every(x => typeof x.id === 'string' && typeof x.name === 'string' && x.name.length < 120 &&
-        ['A','B','C','D','FREE'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 && Number(x.low)>0 &&
-        Number(x.high)>=Number(x.low) && Number(x.high)<=50 && Number(x.step)>0);
+        ['A','B','C','D','FREE'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 &&
+        Number(x.low)>=(SETS.isTimed(x)?5:1) && Number(x.high)>=Number(x.low) &&
+        Number(x.high)<=(SETS.isTimed(x)?300:50) && Number(x.step)>0);
   }
   // Atualiza somente exercícios que ainda conservam a configuração original.
   // Histórico real, exercícios personalizados e rascunhos em andamento são preservados.
