@@ -102,6 +102,20 @@ with sync_playwright() as p:
     found=[ex for ex in after['exercises'] if ex['id']=='prancha-frontal']
     assert len(found)==1 and found[0]['active'] is False
     assert after['plankDefaultsVersion']==1
+    # A personalized timed duration above the ordinary 50-rep maximum must
+    # survive a fresh launch without triggering the protected-recovery screen.
+    for exercise in after['exercises']:
+        if exercise['id']=='prancha-frontal':
+            exercise['low']=40
+            exercise['high']=120
+            exercise['sets']=3
+    extended=open_app(ctx,{'forja.academia.v1':json.dumps(after)})
+    extended.on('pageerror',lambda error:errors.append(str(error)))
+    assert extended.locator('h1[aria-label="Proteção de histórico"]').count()==0
+    assert extended.locator('#screen h1').count()>=1
+    kept=extended.evaluate('JSON.parse(window.__stored["forja.academia.v1"])')
+    edited=next(ex for ex in kept['exercises'] if ex['id']=='prancha-frontal')
+    assert edited['high']==120 and edited['low']==40 and edited['sets']==3
     assert not errors,errors
     browser.close()
     print('PASS plank: search, timed real series, save/reload, history s, anatomy, migration, 390/320px')
