@@ -2176,6 +2176,14 @@
         if(status)status.textContent=progress.completed+' de '+progress.total+' exercícios concluídos · '+progress.effectiveSets+(progress.effectiveSets===1?' série efetiva registrada':' séries efetivas registradas');
         const bar=document.querySelector('.focus-progress span');
         if(bar)bar.style.width=(progress.total?Math.round(progress.completed/progress.total*100):0)+'%';
+        if(FREE.isFree(ui.draft)){
+          const stats=FREE.count(ui.draft);
+          const counter=document.getElementById('free-count');
+          if(counter)counter.textContent=stats.performed+' exercícios · '+stats.sets+' séries';
+          const message=document.getElementById('free-completion-status');
+          if(message)message.textContent=stats.performed+
+            ' exercício(s) com séries executadas. Séries em branco não serão salvas como realizadas.';
+        }
         // Editing a number fires input and later change on blur.
         // Replacing a recommendation button during the blur change would
         // detach it between pointerdown and pointerup, cancelling the click.
@@ -3113,6 +3121,12 @@
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
   screen.addEventListener('input',event=>{
+    if(event.target.dataset.freeSearch!==undefined&&FREE.isFree(ui.draft)){
+      ui.freeSearch=event.target.value.slice(0,120);
+      const list=document.getElementById('free-exercise-results');
+      if(list)list.innerHTML=renderFreeOptions();
+      return;
+    }
     if(ui.tab==='share' && event.target.dataset.shareField==='phrase' && ui.share){
       ui.share.phrase=event.target.value.slice(0,66);
       mountSharePreview();return;
@@ -3142,6 +3156,18 @@
   });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
+    if(event.target.dataset.freeDay!==undefined&&FREE.isFree(ui.draft)){
+      const value=event.target.value;
+      if(!FREE.validDay(value)||value>today()){
+        notify('Informe uma data válida sem ultrapassar hoje.');
+        event.target.value=ui.draft.day;return;
+      }
+      const previous=ui.draft.day,oldLinked=ui.draft.afterMuayId;
+      ui.draft.day=value;
+      if(oldLinked)ui.draft.afterMuayId=FREE.linkedMuay(state.muay.sessions,value)?.id||null;
+      if(!persistDraft()){ui.draft.day=previous;ui.draft.afterMuayId=oldLinked;return;}
+      render();return;
+    }
     if(ui.tab==='share' && event.target.dataset.shareField && ui.share){
       const field=event.target.dataset.shareField;
       if(['showMuscles','showWeek','showCardio'].includes(field))ui.share[field]=event.target.checked;
