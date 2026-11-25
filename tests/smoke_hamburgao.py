@@ -20,11 +20,11 @@ with sync_playwright() as p:
     page=open_app(ctx,{},errors)
     page.locator('#nav [data-tab="nutrition"]').click()
     before=snapshot(page)
-    assert json.loads(before[KEY])['nutrition']['entries']==[]
+    assert KEY not in before or json.loads(before[KEY])['nutrition']['entries']==[], 'opening nutrition must not create meal entries'
     page.locator('.nd-meal-top [data-nd="add"][data-meal="snack"]').click()
     assert page.locator('[data-nd="pick"][data-id="'+FOOD+'"]').count()==1
     assert page.locator('[data-nd="pick"][data-id="'+FOOD+'"] [data-food-icon="burger"]').count()==1
-    assert len(json.loads(snapshot(page)[KEY])['nutrition']['entries'])==0
+    assert KEY not in snapshot(page) or len(json.loads(snapshot(page)[KEY])['nutrition']['entries'])==0
     page.locator('[data-nd="pick"][data-id="'+FOOD+'"]').click()
     assert page.locator('#nd-catalog select[name="portion"]').input_value()=='one'
     assert page.locator('#nd-catalog input[name="count"]').input_value()=='1'
