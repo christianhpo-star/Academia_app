@@ -34,6 +34,7 @@
     oats:'<path d="M4 12h16l-2 8H6l-2-8Z"/><path d="M5 10c2-4 12-4 14 0M10 8l-1-4M14 8l1-4M8 13l1 2M15 13l-1 2"/>',
     milk:'<path d="M7 3h9l2 5v13H6V8l1-5Z"/><path d="M6 8h12M9 3v5M9 12h6v5H9z"/>',
     dessert:'<path d="M5 12c0-5 14-5 14 0l-2 8H7l-2-8Z"/><path d="M7 12c-4-4 1-8 5-6 4-4 9 2 5 6"/><circle cx="12" cy="9" r="1"/>',
+    burger:'<path d="M4 10c0-5 3-7 8-7s8 2 8 7H4Z"/><path d="M4 12h16M4 15h16M5 18h14c0 2-2 3-7 3s-7-1-7-3Z"/><path d="m8 7 .1.1M12 6l.1.1M16 7l.1.1"/>',
     topping:'<path d="M11 14 6 21M13 12c5 2 9-8 3-9-5 0-7 7-3 9Z"/>',
     fruit:'<path d="M12 8c-2-4-7-4-8 1-2 5 2 12 6 12l2-1 2 1c5 0 8-7 6-12-1-5-6-5-8-1Z"/><path d="M12 8c0-3 1-5 4-6M12 7c-3-2-5-1-6-4"/>',
     food:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="M3 2v8M6 2v8M3 6h3M20 2v19"/>'
@@ -48,7 +49,8 @@
     'ref:generic-173424':'egg',
     'ref:generic-173944':'banana',
     'ref:generic-169705':'oats',
-    'ref:generic-171265':'milk'
+    'ref:generic-171265':'milk',
+    'recipe:hamburgao-assado-carne-presunto-2026':'burger'
   };
   const normalizedLabel=value=>String(value??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   function foodKind(item){
@@ -64,6 +66,7 @@
     if(/monster|energetico|energético|cafe|café/.test(label))return 'drink';
     if(/arroz/.test(label))return 'rice';
     if(/feijao/.test(label))return 'beans';
+    if(/hamburgao|hamburg[aã]o|hamburguer|hamb[uú]rguer/.test(label))return 'burger';
     if(/frango/.test(label))return 'chicken';
     if(/ovo/.test(label))return 'egg';
     if(/banana/.test(label))return 'banana';
@@ -406,8 +409,10 @@
     function portion(){
       const food=CAT.find(picked),el=dialog.querySelector('#nd-portion-panel');
       const photoJoelho=food?.id==='recipe:joelho-frango-assado-2026';
+      const photoHamburgao=food?.id==='recipe:hamburgao-assado-carne-presunto-2026';
+      const photoSnack=photoJoelho||photoHamburgao;
       if(sharedPicked){el.innerHTML=sharedPortionHTML();updateSharedPreview();results();return;}
-      el.innerHTML=food?`<form id="nd-catalog" class="nd-inline-food"><div class="nd-item-head">${foodVisual(food)}<strong>${esc(food.name)}</strong>${button('cancel-pick','Alterar','','ghost nd-cancel-pick')}</div><p class="small">${esc(food.note)}</p>${food.estimate?`<p class="small">Faixa aproximada ${food.estimateGramsBase===100?'por 100 g':''}: ${fmt(food.estimate.low.energyKcal)}–${fmt(food.estimate.high.energyKcal)} kcal; confiança baixa.</p>`:''}${select('portion','Porção',Object.fromEntries([...(food.nutrientsPerMl?[['customMl','Volume exato em ml (recomendado)']]:[]),...((!food.nutrientsPerServing||food.servingPortionId)&&!food.nutrientsPerMl&&(!food.estimate||food.estimateGramsBase)?[['custom','Peso exato em gramas (recomendado)']]:[]),...food.portions.map(p=>[p.id,p.label])]),photoJoelho?'one':food.nutrientsPerMl?'customMl':food.servingPortionId||(!food.nutrientsPerServing&&(!food.estimate||food.estimateGramsBase)?'custom':food.portions[0].id))}${field('count','Peso em gramas ou quantidade de porções',photoJoelho?1:food.nutrientsPerMl?200:food.servingPortionId?1:!food.nutrientsPerServing&&(!food.estimate||food.estimateGramsBase)?100:1,'type="number" inputmode="decimal" min="0.001" max="10000" step="any" required')}${food.id.startsWith('growth:')?`<div class="nd-milk-picker">${select('milk','Misturar com',{none:'Água / sem leite',skim:'Leite desnatado Itambé',whole:'Leite integral Itambé'},'none')}<div id="nd-milk-fields" hidden>${field('milkMl','Quantidade de leite em ml',200,'type="number" inputmode="decimal" min="0.001" max="10000" step="any" required')}</div></div>`:''}<p id="nd-food-preview" class="small" role="status" aria-live="polite"></p><p class="small muted">${photoJoelho?'A unidade de 180 g é estimativa visual, não pesagem. Para maior precisão, selecione Peso exato em gramas e informe o peso.':'Digite o peso realmente consumido (ex.: 121 ou 121,5 g). As porções são opcionais.'}</p><button class="primary full mt-12" type="submit">Adicionar à refeição</button></form>`:'';
+      el.innerHTML=food?`<form id="nd-catalog" class="nd-inline-food"><div class="nd-item-head">${foodVisual(food)}<strong>${esc(food.name)}</strong>${button('cancel-pick','Alterar','','ghost nd-cancel-pick')}</div><p class="small">${esc(food.note)}</p>${food.estimate?`<p class="small">Faixa aproximada ${food.estimateGramsBase===100?'por 100 g':''}: ${fmt(food.estimate.low.energyKcal)}–${fmt(food.estimate.high.energyKcal)} kcal; confiança baixa.</p>`:''}${select('portion','Porção',Object.fromEntries([...(food.nutrientsPerMl?[['customMl','Volume exato em ml (recomendado)']]:[]),...((!food.nutrientsPerServing||food.servingPortionId)&&!food.nutrientsPerMl&&(!food.estimate||food.estimateGramsBase)?[['custom','Peso exato em gramas (recomendado)']]:[]),...food.portions.map(p=>[p.id,p.label])]),photoSnack?'one':food.nutrientsPerMl?'customMl':food.servingPortionId||(!food.nutrientsPerServing&&(!food.estimate||food.estimateGramsBase)?'custom':food.portions[0].id))}${field('count','Peso em gramas ou quantidade de porções',photoSnack?1:food.nutrientsPerMl?200:food.servingPortionId?1:!food.nutrientsPerServing&&(!food.estimate||food.estimateGramsBase)?100:1,'type="number" inputmode="decimal" min="0.001" max="10000" step="any" required')}${food.id.startsWith('growth:')?`<div class="nd-milk-picker">${select('milk','Misturar com',{none:'Água / sem leite',skim:'Leite desnatado Itambé',whole:'Leite integral Itambé'},'none')}<div id="nd-milk-fields" hidden>${field('milkMl','Quantidade de leite em ml',200,'type="number" inputmode="decimal" min="0.001" max="10000" step="any" required')}</div></div>`:''}<p id="nd-food-preview" class="small" role="status" aria-live="polite"></p><p class="small muted">${photoSnack?'O peso da unidade é uma hipótese pela foto, não uma medição. Para maior precisão, escolha Peso exato em gramas e informe o peso realmente consumido.':'Digite o peso realmente consumido (ex.: 121 ou 121,5 g). As porções são opcionais.'}</p><button class="primary full mt-12" type="submit">Adicionar à refeição</button></form>`:'';
       updatePortionPreview();results();
     }
 
