@@ -231,6 +231,42 @@
   // https://www.receiteria.com.br/receita/joelho-salgado-de-frango/
   // https://admin.minikalzone.com.br/uploads/product/6/62cf24ca519858.34135385.pdf
   const photographedSnackFoods=[{
+    // Foto de um hamburgão assado enviada em 24/11/2026.
+    // Pão com gergelim e recheio visíveis, mas peso, queijo, molhos e
+    // ingredientes não são confirmados. TBCA BRC0863A (cheeseburger)
+    // dá referência de 267 kcal/100 g; esta entrada é uma faixa independente
+    // e NÃO copia o resultado da TBCA como se fosse receita identificada.
+    id:'recipe:hamburgao-assado-carne-presunto-2026',
+    name:'Hamburgão assado (carne, presunto e queijo — estimativa)',
+    category:'Salgados e lanches',
+    aliases:['hamburgao','hamburgão','hamburgão assado','hamburgao assado',
+      'hamburgão de carne','hamburgao de carne','pão de hambúrguer recheado',
+      'salgado assado de hamburguer','salgado de hambúrguer','pao recheado carne presunto queijo',
+      'hamburgão com gergelim','hamburgão recheado','lanche assado carne presunto'],
+    preparation:'cooked',
+    note:'Estimativa pela foto: pão dourado com gergelim e recheio que parece incluir hambúrguer de carne, presunto e possivelmente queijo. Receita e ingredientes NÃO confirmados; não há peso nem rótulo. Uma unidade de 220 g é hipótese ilustrativa, não pesagem. Use Peso exato em gramas quando possível; molhos, maionese e queijo extra podem mudar o resultado.',
+    nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null,fiberG:null},
+    estimateGramsBase:100,
+    estimate:{
+      confidence:'low',servingLabel:'100 g de hamburgão assado com recheio provável',
+      assumptions:'Referência de cheeseburger bovino com muçarela da TBCA BRC0863A (267 kcal/100 g, 13,5 g proteína, 29,2 g carboidratos, 10,9 g gorduras). Massa assada, presunto e possível queijo, proporções, óleo e peso são desconhecidos. Faixas são hipóteses de receita, não medição.',
+      low:{energyKcal:230,proteinG:10,carbsG:25,fatG:10},
+      central:{energyKcal:270,proteinG:14,carbsG:29,fatG:11},
+      high:{energyKcal:340,proteinG:18,carbsG:32,fatG:16}
+    },
+    source:{
+      name:'Estimativa visual e referência TBCA — USP/FoRC',
+      reference:'Foto enviada em 24/11/2026; comparação TBCA BRC0863A (cheeseburger bovino com muçarela), sem receita confirmada.',
+      license:'Estimativa independente; não equivale a rótulo nem pesagem'
+    },
+    portions:[
+      p('one','1 unidade estimada (≈220 g)',220,2.2),
+      p('half','½ unidade estimada (≈110 g)',110,1.1),
+      p('small','1 unidade menor estimada (≈180 g)',180,1.8),
+      p('large','1 unidade maior estimada (≈280 g)',280,2.8),
+      p('100g','100 g (pesar de preferência)',100,1)
+    ]
+  },{
     id:'recipe:joelho-frango-assado-2026',
     name:'Joelho de frango assado (estimativa)',
     category:'Salgados e lanches',
@@ -426,10 +462,10 @@
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265',...DRINK_SUGGESTIONS],
     lunch:['ref:generic-169757','taco:2011:561','photo:hamburguer-frango-56g','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','ref:generic-171477','taco:2011:429','taco:2011:539'],
-    snack:['recipe:joelho-frango-assado-2026','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+    snack:['recipe:hamburgao-assado-carne-presunto-2026','recipe:joelho-frango-assado-2026','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml',...DRINK_SUGGESTIONS],
-    dinner:['ref:generic-169757','taco:2011:561','photo:hamburguer-frango-56g','photo:pao-forma-tradicional-50g','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','taco:2011:538','taco:2011:429'],
+    dinner:['recipe:hamburgao-assado-carne-presunto-2026','ref:generic-169757','taco:2011:561','photo:hamburguer-frango-56g','photo:pao-forma-tradicional-50g','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','taco:2011:538','taco:2011:429'],
     supper:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'ref:generic-171265',...GROWTH_TOP_IDS,'growth:whey-unknown',...DRINK_SUGGESTIONS]
   };
