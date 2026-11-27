@@ -80,7 +80,11 @@
     }
     return {entries, totalMinutes: total(entries)};
   }
-  const api = Object.freeze({TYPES, STAIR_SPEED_UNITS, parse, summarize, label, paceLabel});
+  // Free sessions may be entirely cardio. Keep them distinct from strength
+  // without introducing a new storage schema or changing existing records.
+  const isStandalone = session => session?.planId==='FREE' && Array.isArray(session.entries) &&
+    session.entries.length===0 && summarize(session.cardio).totalMinutes>0;
+  const api = Object.freeze({TYPES, STAIR_SPEED_UNITS, parse, summarize, label, paceLabel, isStandalone});
   root.ForjaCardio = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

@@ -1,5 +1,6 @@
 (function installCalendar(root) {
   'use strict';
+  const CARDIO=root.ForjaCardio||(typeof require==='function'?require('./cardio.js'):null);
   const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
   const WEEKDAYS = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
   const LONG_WEEKDAYS = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
@@ -24,20 +25,21 @@
   const fullDate = day => `${Number(day.slice(8,10))} de ${MONTHS[Number(day.slice(5,7))-1]} de ${day.slice(0,4)}`;
   function collect(strengthSessions, muaySessions, month) {
     const byDay = Object.create(null);
-    let strengthCount=0, muayCount=0;
+    let strengthCount=0, muayCount=0, cardioCount=0;
     function add(sessions, kind) {
       if (!Array.isArray(sessions)) return;
       for (const session of sessions) {
         if (!session || !validDay(session.day) || session.day.slice(0,7) !== month) continue;
-        (byDay[session.day] ||= []).push({ kind, session });
-        if (kind === 'strength') strengthCount++; else muayCount++;
+        const modality=kind==='strength'&&CARDIO?.isStandalone?.(session)?'cardio':kind;
+        (byDay[session.day] ||= []).push({ kind:modality, session });
+        if (modality === 'strength') strengthCount++; else if(modality==='cardio')cardioCount++; else muayCount++;
       }
     }
     add(strengthSessions,'strength');
     add(muaySessions,'muay');
     const days = Object.keys(byDay).sort();
     for (const day of days) byDay[day].sort((a,b) => String(a.session.timestamp||'').localeCompare(String(b.session.timestamp||'')));
-    return {byDay,days,daysActive:days.length,strengthCount,muayCount,total:strengthCount+muayCount};
+    return {byDay,days,daysActive:days.length,strengthCount,muayCount,cardioCount,total:strengthCount+muayCount+cardioCount};
   }
   function detailsForDay(day, activities, plans, exercises) {
     const heading = `<h3 class="calendar-detail-heading" id="calendar-selected-heading">${esc(fullDate(day))}</h3>`;
@@ -48,16 +50,17 @@
     const exerciseLabels = Object.fromEntries((Array.isArray(exercises)?exercises:[]).map(e=>[e.id,e.name]));
     return `<div class="calendar-selected" aria-live="polite">${heading}<p class="small muted">${activities.length} ${activities.length===1?'sessão salva':'sessões salvas'} neste dia</p>` +
       activities.map(({kind,session})=>{
-        const strength = kind==='strength';
+        const cardioOnly=kind==='cardio', strength = kind==='strength'||cardioOnly;
+        const cardio=CARDIO?.summarize?.(session.cardio);
         const title = strength
-          ? session.planId==='FREE'?'Treino livre': 'Bloco '+String(session.planId||'?')+' · '+String(planLabels[session.planId]||'Musculação')
+          ? cardioOnly?'Treino livre · Cardio':session.planId==='FREE'?'Treino livre': 'Bloco '+String(session.planId||'?')+' · '+String(planLabels[session.planId]||'Musculação')
           : session.kind==='aula'?'Aula de Muay Thai':'Muay Thai individual';
-        const label = strength ? session.planId==='FREE'?'Treino livre':'Musculação' : 'Muay Thai';
+        const label = cardioOnly?'Cardio':strength ? session.planId==='FREE'?'Treino livre':'Musculação' : 'Muay Thai';
         const names = strength
           ? (Array.isArray(session.entries)?session.entries:[]).map(en=>String(exerciseLabels[en.id]||en.id))
           : (Array.isArray(session.activities)?session.activities:[]).map(a=>String(a.name));
         const location = !strength ? (session.place==='casa'?'Em casa':session.place==='academia'?'Na academia':'Outro local') : '';
-        const parts = strength ? [session.afterMuayId?'Após Muay Thai':'',session.energy||'Esforço não informado'] : [
+        const parts = strength ? [session.afterMuayId?'Após Muay Thai':'',session.energy||'Esforço não informado',cardio?.totalMinutes?'Cardio: '+cardio.entries.map(row=>CARDIO.label(row.type)+' '+row.minutes+' min').join(' + '):''] : [
           location,session.duration == null ? '' : session.duration+' min',
           session.intensity == null ? '' : 'Esforço '+session.intensity+'/10',
         ];
@@ -82,14 +85,15 @@
       const date = chosen+'-'+String(n).padStart(2,'0');
       const sessions=overview.byDay[date]||[];
       const gym=sessions.filter(s=>s.kind==='strength').length;
-      const muay=sessions.length-gym;
+      const muay=sessions.filter(s=>s.kind==='muay').length;
+      const cardio=sessions.filter(s=>s.kind==='cardio').length;
       const weekday=LONG_WEEKDAYS[new Date(Date.UTC(year,monthN-1,n)).getUTCDay()];
-      const amount = sessions.length ? `${sessions.length} ${sessions.length===1?'treino salvo':'treinos salvos'}: ${gym} de musculação, ${muay} de Muay Thai` : 'sem treinos salvos';
+      const amount = sessions.length ? `${sessions.length} ${sessions.length===1?'treino salvo':'treinos salvos'}: ${gym} de musculação, ${muay} de Muay Thai${cardio?', '+cardio+' de cardio':''}` : 'sem treinos salvos';
       const classes = ['calendar-day',sessions.length?'has-activity':'',date===today?'is-today':'',day===date?'is-selected':''].filter(Boolean).join(' ');
       cells.push(`<button type="button" class="${classes}" data-action="calendar-select" data-day="${date}" aria-label="${weekday}, ${esc(fullDate(date))}: ${amount}" aria-pressed="${date===day}">
         <span class="calendar-day-number">${n}</span><span class="calendar-day-marks" aria-hidden="true">
         ${gym?'<i class="calendar-dot calendar-dot--strength"></i>':''}${muay?'<i class="calendar-dot calendar-dot--muay"></i>':''}
-        ${sessions.length>1?`<small>${sessions.length}</small>`:''}</span></button>`);
+        ${cardio?'<i class="calendar-dot calendar-dot--cardio"></i>':''}${sessions.length>1?`<small>${sessions.length}</small>`:''}</span></button>`);
     }
     const thisMonth=chosen===currentMonth;
     return `<section class="card training-calendar" id="training-calendar" aria-labelledby="calendar-title">
@@ -101,15 +105,16 @@
         <button type="button" class="calendar-nav" data-action="calendar-shift" data-delta="1" aria-label="Próximo mês">›</button>
         ${!thisMonth?'<button type="button" class="calendar-today" data-action="calendar-today">Mês atual</button>':''}
       </div>
-      <div class="calendar-stats" aria-label="Resumo do mês">
+      <div class="calendar-stats${overview.cardioCount?' calendar-stats-with-cardio':''}" aria-label="Resumo do mês">
         <div><strong>${overview.daysActive}</strong><span>dias ativos</span></div>
         <div><strong>${overview.strengthCount}</strong><span>musculação</span></div>
         <div><strong>${overview.muayCount}</strong><span>Muay Thai</span></div>
+        ${overview.cardioCount?`<div><strong>${overview.cardioCount}</strong><span>Cardio</span></div>`:''}
       </div>
       <div class="calendar-weekdays" aria-hidden="true">${WEEKDAYS.map(w=>`<span>${w}</span>`).join('')}</div>
       <div class="calendar-days">${cells.join('')}</div>
       <div class="calendar-legend"><span><i class="calendar-dot calendar-dot--strength"></i>Musculação</span>
-        <span><i class="calendar-dot calendar-dot--muay"></i>Muay Thai</span></div>
+        <span><i class="calendar-dot calendar-dot--muay"></i>Muay Thai</span>${overview.cardioCount?'<span><i class="calendar-dot calendar-dot--cardio"></i>Cardio</span>':''}</div>
       ${overview.total===0?'<p class="calendar-empty-note">Nenhum treino salvo neste mês.</p>':''}
       ${day ? detailsForDay(day,overview.byDay[day]||[],plans,exercises) :
         '<p class="small muted calendar-empty-note">Selecione uma data para consultar seus treinos.</p>'}

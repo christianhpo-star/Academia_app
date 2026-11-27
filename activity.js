@@ -1,6 +1,7 @@
 /* FORJA activity history: recorded steps and finished sessions, never calories burned. */
 (function(root){
   'use strict';
+  const CARDIO=root.ForjaCardio||(typeof require==='function'?require('./cardio.js'):null);
   const dayOK=d=>{
     if(typeof d!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(d))return false;
     const t=new Date(d+'T12:00:00Z');return !Number.isNaN(t.getTime())&&t.toISOString().slice(0,10)===d;
@@ -49,15 +50,18 @@
   function assess(state,day){
     if(!dayOK(day))return {error:'Data de referência inválida.'};
     const steps=(state?.activitySteps||[]).filter(row=>validStep(row)&&row.date<=day&&row.date>=earliest(day,28));
-    const strength=(state?.sessions||[]).map(sessionDate).filter(d=>dayOK(d)&&d<=day&&d>=earliest(day,28));
+    const validDate=d=>dayOK(d)&&d<=day&&d>=earliest(day,28);
+    const strength=(state?.sessions||[]).filter(s=>!CARDIO?.isStandalone?.(s)).map(sessionDate).filter(validDate);
+    const cardio=(state?.sessions||[]).filter(s=>CARDIO?.isStandalone?.(s)).map(sessionDate).filter(validDate);
     const muay=(state?.muay?.sessions||[]).map(sessionDate).filter(d=>dayOK(d)&&d<=day&&d>=earliest(day,28));
-    const activeDays=new Set([...strength,...muay]);
+    const activeDays=new Set([...strength,...muay,...cardio]);
     const period=n=>{
       const from=earliest(day,n);
       const daySteps=steps.filter(row=>row.date>=from);
       return {periodDays:n,stepDays:daySteps.length,
         avgSteps:daySteps.length?Math.round(daySteps.reduce((sum,row)=>sum+row.steps,0)/daySteps.length):null,
         strength:strength.filter(d=>d>=from).length,
+        cardio:cardio.filter(d=>d>=from).length,
         muay:muay.filter(d=>d>=from).length,
         workoutDays:[...activeDays].filter(d=>d>=from).length};
     };

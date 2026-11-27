@@ -1,6 +1,7 @@
 /* Evidence-informed starting estimates, not measured expenditure. See docs/nutrition-goals.md. */
 (function(root){
   'use strict';
+  const CARDIO=root.ForjaCardio||(typeof require==='function'?require('./cardio.js'):null);
   const KEYS=['energyKcal','proteinG','carbsG','fatG','fiberG'];
   const range=(v,a,b)=>typeof v==='number'&&Number.isFinite(v)&&v>=a&&v<=b;
   const date=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&!Number.isNaN(Date.parse(v+'T12:00:00Z'))&&new Date(v+'T12:00:00Z').toISOString().slice(0,10)===v;
@@ -95,7 +96,11 @@
   function active(settings,day){return (settings.targets||[]).filter(t=>t.from<=day).sort((a,b)=>b.from.localeCompare(a.from))[0]||null;}
   function difference(v){return KEYS.slice(0,4).some(k=>v[k]==null)?null:Math.round(v.energyKcal-4*v.proteinG-4*v.carbsG-9*v.fatG);}
   function context(state,day){
-    const strength=(state.sessions||[]).filter(s=>(s.day||s.date||s.timestamp?.slice(0,10))===day).length;
+    const strengthRows=(state.sessions||[]).filter(s=>!CARDIO?.isStandalone?.(s));
+    const cardioRows=(state.sessions||[]).filter(s=>CARDIO?.isStandalone?.(s));
+    const dateOf=s=>s.day||s.date||s.timestamp?.slice(0,10);
+    const strength=strengthRows.filter(s=>dateOf(s)===day).length;
+    const cardio=cardioRows.filter(s=>dateOf(s)===day).length;
     const muay=(state.muay?.sessions||[]).filter(s=>(s.day||s.date)===day).length;
     const weights=(state.weights||[]).filter(w=>!w.initial&&w.date<=day).sort((a,b)=>a.date.localeCompare(b.date));
     const cutoff=new Date(day+'T12:00:00Z');cutoff.setUTCDate(cutoff.getUTCDate()-28);
@@ -106,9 +111,10 @@
     const abdomenChange=abdomen.length>=2&&Date.parse(abdomen.at(-1).date)-Date.parse(abdomen[0].date)>=14*86400000?Math.round((abdomen.at(-1).values.abdomen-abdomen[0].values.abdomen)*10)/10:null;
     const week=new Date(day+'T12:00:00Z');week.setUTCDate(week.getUTCDate()-6);const weekStart=week.toISOString().slice(0,10);
     const inWeek=d=>d>=weekStart&&d<=day;
-    const weeklyStrength=(state.sessions||[]).filter(s=>inWeek(s.day||s.date||s.timestamp?.slice(0,10))).length;
+    const weeklyStrength=strengthRows.filter(s=>inWeek(dateOf(s))).length;
+    const weeklyCardio=cardioRows.filter(s=>inWeek(dateOf(s))).length;
     const weeklyMuay=(state.muay?.sessions||[]).filter(s=>inWeek(s.day||s.date)).length;
-    return {strength,muay,measures,abdomenChange,weeklyStrength,weeklyMuay,recentWeights:recent.length,
+    return {strength,muay,cardio,measures,abdomenChange,weeklyStrength,weeklyMuay,weeklyCardio,recentWeights:recent.length,
       weightChange:recent.length>=2&&Date.parse(recent.at(-1).date)-Date.parse(recent[0].date)>=14*86400000?Math.round((recent.at(-1).weight-recent[0].weight)*10)/10:null};
   }
   const api={KEYS,validProfile,validTarget,validSettings,estimate,active,difference,context,PROFESSIONAL_VALUES,professionalTarget,professionalDefault,restingFromState,USER_ENERGY_KCAL,userTarget,useUserTarget};root.ForjaNutritionGoals=api;
