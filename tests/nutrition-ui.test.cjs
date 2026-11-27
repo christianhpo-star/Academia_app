@@ -147,3 +147,20 @@ test('UX41: recorded energy displays a subtotal, not invented full-day consumpti
  assert.match(html,/Itambé morango/);
  assert.doesNotMatch(html,/N[Aa]o registrad[ao].*0 kcal/);
 });
+
+test('diário identifica a data selecionada; voltar para hoje é uma ação separada',()=>{
+  const archive=N.archive(),balanceDate='2026-11-26';
+  const yesterday=UI.render({archive,date:'2026-11-25',balanceDate});
+  assert.match(yesterday,/<strong>25\/11\/2026<\/strong><span>Ontem · quarta-feira<\/span>/);
+  assert.match(yesterday,/class="nd-date-context"><span>Histórico alimentar<\/span>/);
+  assert.match(yesterday,/data-nd="today"[^>]*>Voltar para hoje<\/button>/);
+  assert.ok(yesterday.indexOf('class="nd-date-context"')<yesterday.indexOf('class="nd-date">'));
+  const older=UI.render({archive,date:'2026-11-23',balanceDate});
+  assert.match(older,/<strong>23\/11\/2026<\/strong><span>segunda-feira<\/span>/);
+  const current=UI.render({archive,date:balanceDate,balanceDate});
+  assert.match(current,/<strong>26\/11\/2026<\/strong><span>Hoje · quinta-feira<\/span>/);
+  assert.match(current,/aria-current="date"/);
+  assert.doesNotMatch(current,/data-nd="today"/);
+  assert.match(current,/data-nd="next"[^>]*disabled/);
+  assert.equal(archive.entries.length,0);
+});

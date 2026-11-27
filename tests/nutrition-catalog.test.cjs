@@ -491,3 +491,32 @@ test('favoritos e histórico preservam o rótulo fotografado sem alterar pesagen
  const merged=N.merge({...N.archive(),entries:[original]},N.archive());
  assert.deepEqual(merged.entries[0],original);
 });
+
+test('doce caseiro e mini coxinha: busca, atalhos de lanche e gramas fracionadas',()=>{
+  const sweet=C.find('recipe:doce-amendoim-caseiro');
+  const mini=C.find('tbca:BRC0100F');
+  assert.ok(sweet&&mini);
+  assert.equal(N.validFood(sweet),true);
+  assert.equal(N.validFood(mini),true);
+  assert.ok(C.search('doce de amendoim caseiro').some(f=>f.id===sweet.id));
+  assert.ok(C.search('mini coxinha').some(f=>f.id===mini.id));
+  assert.ok(C.search('minicoxinha').some(f=>f.id===mini.id));
+  for(const f of [sweet,mini])assert.ok(C.orderedForMeal('snack').slice(0,6).some(x=>x.id===f.id));
+  const s=C.makeItem(sweet.id,'one',1,id);
+  const m=C.makeItem(mini.id,'one',1,id);
+  assert.equal(s.grams,25);
+  assert.equal(s.estimate.central.energyKcal,125);
+  assert.equal(N.observedTotals([entry(s)],'2026-11-14').totals.energyKcal,null);
+  assert.equal(N.recordedBreakdown([entry(s)],'2026-11-14').totals.energyKcal,125);
+  assert.equal(m.grams,20);
+  assert.ok(Math.abs(N.observedTotals([entry(m)],'2026-11-14').totals.energyKcal-54.6)<0.01);
+  const custom=C.makeItem(mini.id,'custom',37.5,id);
+  assert.equal(custom.grams,37.5);
+  assert.ok(Math.abs(N.observedTotals([entry(custom)],'2026-11-14').totals.energyKcal-102.375)<0.01);
+  const five=C.makeItem(mini.id,'five',1,id);
+  assert.equal(five.grams,100);
+  assert.equal(N.observedTotals([entry(five)],'2026-11-14').totals.energyKcal,273);
+  const sweetCustom=C.makeItem(sweet.id,'custom',12.5,id);
+  assert.equal(sweetCustom.grams,12.5);
+  assert.equal(N.recordedBreakdown([entry(sweetCustom)],'2026-11-14').totals.energyKcal,62.5);
+});
