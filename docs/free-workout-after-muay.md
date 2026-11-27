@@ -10,7 +10,7 @@ Permitir registrar **qualquer sessão curta de exercícios já realizada** sem i
 2. Escolher a data (inicialmente hoje). Quando o atalho veio do Muay e há sessão concluída no mesmo dia, o app guarda um identificador de referência `afterMuayId`; os dois treinos continuam salvos separadamente.
 3. Buscar no catálogo completo, com **atalhos para abdômen** (crunch, inverso e outras opções existentes). Também é possível criar exercício avulso com nome e modo de carga: com peso externo ou peso do corpo.
 4. Em cada exercício selecionado, registrar **carga utilizada**, **repetições realizadas** e RIR opcional. `+ Série` permite acrescentar linhas. O exercício pode ser retirado enquanto não houver repetições preenchidas; não apaga silenciosamente execução.
-5. Informar observações e esforço opcional, salvar. O app exige **pelo menos uma série efetiva válida**; campos vazios não são interpretados como treino feito.
+5. Informar observações e esforço opcional, salvar. O app exige **pelo menos uma série efetiva válida ou cardio com duração positiva**; campos vazios não são interpretados como treino feito.
 
 ## Isolamento e preservação de dados
 - Uma sessão livre é salva em `state.sessions` com `planId:'FREE'` e `kind:'free'`. Reutiliza exatamente o contrato de séries executadas da musculação: carga válida, repetições inteiras e aquecimentos não contam como séries efetivas.
@@ -28,3 +28,6 @@ Permitir registrar **qualquer sessão curta de exercícios já realizada** sem i
 - Os testes da versão antiga continuam verificando preservação de histórico e registros domésticos de Muay.
 
 **Exemplo prático:** na mesma data, "Muay Thai — Aula na academia" e "Treino livre — Abdominal no solo (2 séries), abdominal inverso (1 série)" são sessões distintas. O mapa muscular recebe 3 séries abdominais classificadas; não se atribuem séries a socos ou chutes e nenhum bloco A/B/C/D é consumido.
+
+## Atualização — cardio no treino livre (27/11/2026)
+O painel compartilhado de cardio permite registrar esteira, escada (com ritmo opcional), bicicleta, elíptico e outro cardio. É possível combinar séries e cardio ou salvar somente cardio, mantendo `planId:'FREE'`, `entries:[]` e `cardio:[...]`. O calendário e o contexto de atividade distinguem sessões exclusivamente aeróbicas da musculação. A estrutura de armazenamento e a rotação não mudam; não são criadas séries nem calorias a partir dos minutos.

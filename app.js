@@ -1111,6 +1111,12 @@
     }).join(''):'<p class="small muted">'+(typed?'Nenhum exercício encontrado. Experimente outro termo.':
       'Não há mais sugestões de abdômen disponíveis; abra o catálogo completo.')+'</p>';
   }
+  function freeCompletionText(draft){
+    const stats=FREE.count(draft),cardio=CARDIO.parse(draft?.cardio);
+    return stats.performed+' exercício(s) com séries executadas. '+
+      (cardio.ok?(cardio.totalMinutes?'Cardio: '+fmt(cardio.totalMinutes)+' min. ':''):'Revise o cardio. ')+
+      'Você pode salvar somente cardio ou combinar com musculação. Séries em branco não contam.';
+  }
   function renderFreeWorkout(){
     const d=ui.draft,stats=FREE.count(d);
     const muay=state.muay.sessions.find(s=>s.id===d.afterMuayId&&s.day===d.day);
@@ -1152,7 +1158,7 @@
           (en.sets.length<=1?'disabled':'')+'>− Última série</button></div></section>';
     }).join('');
     return '<div class="free-workout" aria-label="Registro de treino livre">'+
-      headline('Registro rápido','Treino livre','Inclua somente os exercícios que fez. Nenhum bloco A/B/C/D será concluído.')+
+      headline('Registro rápido','Treino livre','Inclua os exercícios e o cardio que fez. Nenhum bloco A/B/C/D será concluído.')+
       '<div class="callout workout-status-callout '+(ui.draftSaveOk?'good':'warn')+'"><strong>'+
       (ui.recovered?'Treino livre recuperado.':'Rascunho salvo neste aparelho.')+'</strong>'+
       '<span class="draft-status" id="draft-status" role="status">'+esc(draftStatusText())+'</span></div>'+
@@ -1163,6 +1169,7 @@
       '<input id="free-day" type="date" data-free-day value="'+esc(d.day)+'" max="'+today()+'"></div>'+
       (muay?'<p class="free-workout-linked">Após Muay Thai em '+dateBR(muay.day)+'. Os treinos ficam separados no histórico.</p>':'')+
       '</section>'+
+      renderCardio()+
       '<section class="card free-catalog"><h2 class="section-title">Adicionar exercícios</h2>'+
       '<p class="small muted">Selecione pelo nome. Abdominais aparecem primeiro para facilitar registros curtos.</p>'+
       '<div class="field"><label for="free-search">Buscar no catálogo</label>'+
@@ -1183,8 +1190,7 @@
       (entries.length?setsBody:'<div class="card free-empty">Nenhum exercício adicionado. Escolha um abdominal ou pesquise qualquer exercício.</div>')+
       '</section>'+
       '<section class="card free-completion"><h2 class="section-title">Concluir registro</h2>'+
-      '<p id="free-completion-status" class="small muted">'+stats.performed+' exercício(s) com séries executadas. '+
-      'Séries em branco não serão salvas como realizadas.</p>'+
+      '<p id="free-completion-status" class="small muted">'+esc(freeCompletionText(d))+'</p>'+
       '<div class="field mt-12"><label for="free-session-notes">Observações (opcional)</label>'+
       '<textarea id="free-session-notes" maxlength="1000" data-draft-meta="notes" placeholder="Ex.: abdominal depois da aula de Muay">'+esc(d.notes)+'</textarea></div>'+
       '<details class="free-optional-effort mt-12"><summary>Esforço percebido (opcional)</summary>'+
@@ -1218,7 +1224,7 @@
     const draft=FREE.create({day:today(),afterMuayId:linked?.id||null});
     if(draft.error)return notify(draft.error);
     ui.draft=draft;muayMode=false;ui.tab='plans';ui.editor=null;
-    ui.freeSearch='';ui.freeAll=false;ui.focusedMode=false;ui.focusedExercise=null;
+    ui.freeSearch='';ui.freeAll=false;ui.focusedMode=false;ui.focusedExercise=null;ui.cardioOpen=true;
     if(!persistDraft())notify('Rascunho não salvo: não feche o aplicativo sem guardar os dados.');
     render();window.scrollTo(0,0);
   }
@@ -1430,6 +1436,8 @@
     const total=document.querySelector('.session-cardio .cardio-total');
     const parsed=CARDIO.parse(ui.draft?.cardio);
     if(total)total.textContent=parsed.ok&&parsed.totalMinutes?fmt(parsed.totalMinutes)+' min':'';
+    const freeStatus=document.getElementById('free-completion-status');
+    if(freeStatus&&FREE.isFree(ui.draft))freeStatus.textContent=freeCompletionText(ui.draft);
     const shortcut=document.querySelector('[data-action="focus-cardio"]');
     if(shortcut)shortcut.textContent=parsed.ok&&parsed.totalMinutes?
       'Ver cardio · '+fmt(parsed.totalMinutes)+' min':'+ Adicionar cardio (opcional)';
@@ -2036,7 +2044,8 @@
     const freeForMuay=recentMuay&&state.sessions.some(session=>session.afterMuayId===recentMuay.id);
     const shown=sessions.slice(0,ui.historyStrengthLimit);
     const showStrength=ui.historyFilter!=='muay',showMuay=ui.historyFilter!=='strength';
-    const filters=[['all','Todos',sessions.length+muaySessions.length],['strength','Musculação',sessions.length],['muay','Muay Thai',muaySessions.length]];
+    const combinedLabel=sessions.some(CARDIO.isStandalone)?'Musculação e cardio':'Musculação';
+    const filters=[['all','Todos',sessions.length+muaySessions.length],['strength',combinedLabel,sessions.length],['muay','Muay Thai',muaySessions.length]];
     const calendar=CAL.render({strengthSessions:state.sessions,muaySessions:state.muay.sessions,month:ui.calendarMonth,selectedDay:ui.calendarDay,today:today(),plans:DATA.plans,exercises:state.exercises});
     return `${headline('Sessões e calendário','Seu histórico.')}
       ${recentMuay&&!freeForMuay?'<section class="card free-after-muay"><strong>Fez abdominais ou outros exercícios depois do Muay?</strong>'+
@@ -2050,18 +2059,19 @@
         <summary>Calendário de treinos <span aria-hidden="true">⌄</span></summary>
         <div class="history-calendar-content">${calendar}</div>
       </details>
-      ${showStrength?`<section aria-label="Sessões de musculação"><div class="section-row"><h2 class="section-title">Musculação</h2><small>Mostrando ${shown.length} de ${sessions.length}</small></div>
+      ${showStrength?`<section aria-label="Sessões de ${esc(combinedLabel.toLowerCase())}"><div class="section-row"><h2 class="section-title">${esc(combinedLabel)}</h2><small>Mostrando ${shown.length} de ${sessions.length}</small></div>
       ${shown.length?shown.map(session=>{
         const cardio=CARDIO.summarize(session.cardio);
         const needsDay=session.entries.some(en=>exerciseFor(en.id)?.knee&&E.workSets(en).length)&&session.kneeNextDay==null;
         const canAssess=Date.now()-new Date(session.timestamp).getTime()>=86400000;
         const kneePrompt=needsDay&&canAssess;
         const count=session.entries.length;
+        const cardioOnly=CARDIO.isStandalone(session);
         return `<details class="history-entry history-card" data-history-id="${esc(session.id)}" ${kneePrompt?'open':''}>
           <summary class="history-summary">
             <span class="history-summary-main"><small>${dateBR(session.day)} · ${FREE.isFree(session)?'Treino livre':'Bloco '+esc(session.planId)}</small>
               <strong>${esc(planFor(session.planId).title)}</strong>
-              <span>${count} exercício(s) ${session.afterMuayId?' · Após Muay Thai':''} · ${esc(session.energy||'Esforço não informado')}${cardio.totalMinutes?' · Cardio '+fmt(cardio.totalMinutes)+' min':''}${kneePrompt?' · Avaliar joelho':''}</span></span>
+              <span>${cardioOnly?'Somente cardio':count+' exercício(s)'}${session.afterMuayId?' · Após Muay Thai':''} · ${esc(session.energy||'Esforço não informado')}${cardio.totalMinutes?' · Cardio '+fmt(cardio.totalMinutes)+' min':''}${kneePrompt?' · Avaliar joelho':''}</span></span>
             <span class="history-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="history-content">
@@ -2086,7 +2096,7 @@
               session.kneeNextDay!=null?`<p class="small muted mt-12">Joelho no dia seguinte: ${session.kneeNextDay}/5+</p>`:''}
           </div></details>`;
       }).join(''):`<div class="empty">Nenhum treino de musculação registrado ainda.</div>`}
-      ${sessions.length>ui.historyStrengthLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="strength">Ver mais ${Math.min(5,sessions.length-ui.historyStrengthLimit)} treinos de musculação</button>`:''}</section>`:''}
+      ${sessions.length>ui.historyStrengthLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="strength">Ver mais ${Math.min(5,sessions.length-ui.historyStrengthLimit)} treinos de ${esc(combinedLabel.toLowerCase())}</button>`:''}</section>`:''}
       ${showMuay?`<section aria-label="Sessões de Muay Thai">${M.historySection(state.muay.sessions,ui.historyMuayLimit)}
       ${muaySessions.length>ui.historyMuayLimit?`<button class="secondary full history-more" data-action="history-more" data-kind="muay">Ver mais ${Math.min(5,muaySessions.length-ui.historyMuayLimit)} treinos de Muay Thai</button>`:''}
       </section>`:''}
@@ -2199,8 +2209,7 @@
           const counter=document.getElementById('free-count');
           if(counter)counter.textContent=stats.performed+' exercícios · '+stats.sets+' séries';
           const message=document.getElementById('free-completion-status');
-          if(message)message.textContent=stats.performed+
-            ' exercício(s) com séries executadas. Séries em branco não serão salvas como realizadas.';
+          if(message)message.textContent=freeCompletionText(ui.draft);
         }
         // Editing a number fires input and later change on blur.
         // Replacing a recommendation button during the blur change would
@@ -2285,7 +2294,9 @@
         return notify(`Informe a dor no joelho (mesmo que zero) em ${ex.name}.`);
       result.push({id:ex.id,sets,pain:ex.knee?Number(raw.pain):null});
     }
-    if(!result.length) return notify('Registre pelo menos uma série efetiva. Na prancha, informe segundos sustentados; nos outros exercícios, repetições e carga. Com peso do corpo, use 0 kg adicionais.');
+    if(!result.length && !(free&&cardio.totalMinutes>0)) return notify(free?
+      'Registre pelo menos uma série efetiva ou um cardio com duração maior que zero.':
+      'Registre pelo menos uma série efetiva. Na prancha, informe segundos sustentados; nos outros exercícios, repetições e carga. Com peso do corpo, use 0 kg adicionais.');
     const now=new Date();
     const linked=free?state.muay.sessions.find(row=>row.id===ui.draft.afterMuayId&&row.day===sessionDay):null;
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
@@ -2302,7 +2313,8 @@
     clearDraft();ui.tab='history';ui.historyFilter='all';render();window.scrollTo(0,0);
     const skippedCount=state.sessions[state.sessions.length-1].skipped.filter(item=>item.reason==='sem-registro').length;
     notify(discomfort?'Treino salvo. Como houve desconforto no joelho, não aumente a carga.':
-      free?'Treino livre salvo. Séries registradas no histórico e no mapa muscular; fichas A/B/C/D inalteradas.':
+      free?(result.length?'Treino livre salvo. Fichas A/B/C/D inalteradas.':
+        'Cardio salvo no histórico. Nenhuma série de musculação adicionada; fichas A/B/C/D inalteradas.'):
       skippedCount?`Treino salvo. ${skippedCount} exercício(s) sem registro marcado(s) como pulado(s).`:
       'Treino salvo. Histórico e treinos pendentes atualizados.');
   }
@@ -2342,7 +2354,7 @@
         'session.cardio registra modalidade, minutos e, opcionalmente para escada, ritmo médio em degraus/min ou nível do aparelho. O nível é específico do equipamento. A escada aparece como atividade complementar em quadríceps, glúteos e panturrilhas, mas minutos e velocidade não viram séries musculares, calorias, força ou hipertrofia estimada.',
         'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
       ],
-      counts:{strengthSessions:state.sessions.length,muaySessions:state.muay.sessions.length,
+      counts:{strengthSessions:state.sessions.filter(s=>!CARDIO.isStandalone(s)).length,cardioSessions:state.sessions.filter(CARDIO.isStandalone).length,muaySessions:state.muay.sessions.length,
         weightRecords:state.weights.length,bodyMeasurements:(state.bodyMeasurements||[]).length,
         watchBioimpedance:(state.bioimpedance||[]).length,stepDays:(state.activitySteps||[]).length,healthMonths:(state.healthMonthly||[]).length,reportedWeightDays:(state.healthWeightReports||[]).length,meals:(state.nutrition?.entries||[]).length},
       state:copy(state),strengthDraft,
@@ -3290,7 +3302,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261126-nutrition-dates1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261127-free-cardio1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

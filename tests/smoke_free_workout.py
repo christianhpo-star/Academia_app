@@ -78,6 +78,17 @@ with sync_playwright() as p:
     assert custom.locator('[data-field="load"]').first.input_value()=='0'
     custom.locator('[data-field="reps"]').first.fill('14')
 
+    # Mixed session: reuse the shared cardio controls.
+    if not page.locator('#session-cardio-panel').evaluate('(e)=>e.open'):
+        page.locator('#session-cardio-panel > summary').click()
+    page.locator('[data-action="cardio-add"]').click()
+    page.locator('#cardio-minutes-0').fill('10')
+    page.locator('[data-action="cardio-add"]').click()
+    page.locator('#cardio-type-1').select_option('escada')
+    page.locator('#cardio-minutes-1').fill('8')
+    page.locator('#cardio-speed-1').fill('55')
+    assert page.locator('.cardio-total').inner_text()=='18 min'
+    assert '18 min' in page.locator('#free-completion-status').inner_text()
     shots=ROOT/'screenshots'
     shots.mkdir(exist_ok=True)
     page.screenshot(path=str(shots/'free-workout-390.png'),full_page=True)
@@ -92,12 +103,15 @@ with sync_playwright() as p:
     assert draft['planId']=='FREE'
     assert draft['afterMuayId']
     assert len(draft['entries'])==3
+    assert draft['cardio'][0]['minutes']=='10'
     page.close()
 
     page=open_app(context,storage)
     page.on('pageerror',lambda err:errors.append(str(err)))
     assert page.locator('.free-exercise-card').count()==3, 'saved free draft must survive reload'
     assert page.locator('#free-count').inner_text()=='3 exercícios · 4 séries'
+    assert page.locator('#cardio-minutes-0').input_value()=='10'
+    assert page.locator('#cardio-speed-1').input_value()=='55'
     page.get_by_role('button',name='Salvar treino livre').click()
     state=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
     assert len(state['muay']['sessions'])==1
@@ -108,6 +122,7 @@ with sync_playwright() as p:
     assert len(saved['entries'])==3
     assert [len(item['sets']) for item in saved['entries']]==[2,1,1]
     assert saved['plannedIds']==[] and saved['skipped']==[]
+    assert saved['cardio']==[{'type':'esteira','minutes':10},{'type':'escada','minutes':8,'avgSpeed':55,'speedUnit':'steps_min'}]
     assert len([ex for ex in state['exercises'] if ex['group']=='FREE'])==1
     assert not any(ex['active'] for ex in state['exercises'] if ex['group']=='FREE')
     pending=page.evaluate("""s=>window.AcademiaEngine.pendingWorkouts(s.sessions).completed""",state)
@@ -115,6 +130,7 @@ with sync_playwright() as p:
     page.locator('.history-card > summary').first.click()
     assert 'Treino livre' in page.locator('.history-card').first.inner_text()
     assert 'Após Muay Thai' in page.locator('.history-card').first.inner_text()
+    assert '18 min' in page.locator('.history-card').first.locator('.cardio-history').inner_text()
     page.locator('#nav [data-tab="progress"]').click()
     page.locator('[data-action="evo-view"][data-view="training"]').click()
     assert page.locator('.muscle-map-card').count()==1
@@ -123,6 +139,31 @@ with sync_playwright() as p:
     assert float(abssets)>=3,abssets
     assert page.locator('.muscle-map-muay-summary').count()==1
 
+    # Cardio alone is valid; an empty free session still cannot be saved.
+    page.locator('#nav [data-tab="home"]').click()
+    page.locator('[data-action="free-start"]').first.click()
+    assert page.locator('.free-exercise-card').count()==0
+    page.get_by_role('button',name='Salvar treino livre').click()
+    assert page.get_by_role('heading',name='Treino livre').count()==1
+    page.locator('[data-action="cardio-add"]').click()
+    page.locator('#cardio-type-0').select_option('bicicleta')
+    page.locator('#cardio-minutes-0').fill('15')
+    page.get_by_role('button',name='Salvar treino livre').click()
+    updated=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
+    assert len(updated['sessions'])==2
+    standalone=updated['sessions'][-1]
+    assert standalone['planId']=='FREE' and standalone['entries']==[]
+    assert standalone['cardio']==[{'type':'bicicleta','minutes':15}]
+    assert standalone['plannedIds']==[] and standalone['skipped']==[]
+    assert updated['sessions'][0]==saved
+    assert 'Somente cardio' in page.locator('.history-card').first.locator('summary').first.inner_text()
+    page.locator('.history-card > summary').first.click()
+    assert 'Bicicleta' in page.locator('.history-card').first.locator('.cardio-history').inner_text()
+    storage=page.evaluate('structuredClone(window.__testStorage)')
+    page.close()
+    page=open_app(context,storage)
+    page.on('pageerror',lambda err:errors.append(str(err)))
+    assert page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"]).sessions')==updated['sessions']
     assert not errors, errors
     print('PASS free workout after Muay: catalog and custom abs, real sets, reload, rotation, map, 320px')
     browser.close()

@@ -117,3 +117,35 @@ test('Muay session linkage is read only and not inferred across different days',
  assert.equal(FREE.count(free).sets,0);
  assert.deepEqual(free,before);
 });
+test('cardio-only free workout stays outside strength counts and rotation',()=>{
+ const CARDIO=require('../cardio.js');
+ const CAL=require('../calendar.js');
+ const ACT=require('../activity.js');
+ const GOALS=require('../nutrition-goals.js');
+ const row={id:'cardio-free',planId:'FREE',kind:'free',day:TODAY,timestamp:TODAY+'T21:00:00Z',
+   entries:[],plannedIds:[],skipped:[],cardio:[{type:'escada',minutes:12,avgSpeed:55,speedUnit:'steps_min'}]};
+ assert.equal(CARDIO.isStandalone(row),true);
+ assert.equal(CARDIO.isStandalone({...row,planId:'A'}),false);
+ assert.equal(CARDIO.isStandalone({...row,cardio:[{type:'esteira',minutes:0}]}),false);
+ assert.equal(CARDIO.isStandalone({...row,entries:[{id:'abdominal-solo',sets:[{load:0,reps:20}]}]}),false);
+ assert.equal(E.pendingWorkouts([row]).completed.length,0);
+ assert.equal(E.nextWorkout([row],'normal',0).id,'A');
+ const state={sessions:[row],muay:{sessions:[]}};
+ const map=MAP.model(state,TODAY,7);
+ assert.equal(map.completedSessions,0);
+ assert.equal(map.byId.abs.total,0);
+ assert.equal(map.byId.quadriceps.total,0);
+ const month=CAL.collect([row],[],'2026-11');
+ assert.equal(month.cardioCount,1);
+ assert.equal(month.strengthCount,0);
+ assert.equal(month.daysActive,1);
+ assert.match(CAL.render({strengthSessions:[row],today:TODAY}),/Escada 12 min/);
+ const activity=ACT.assess(state,TODAY).windows.last7;
+ assert.equal(activity.strength,0);
+ assert.equal(activity.cardio,1);
+ assert.equal(activity.workoutDays,1);
+ const context=GOALS.context(state,TODAY);
+ assert.equal(context.strength,0);
+ assert.equal(context.cardio,1);
+ assert.equal(context.weeklyCardio,1);
+});

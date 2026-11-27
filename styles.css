@@ -1692,3 +1692,8 @@ html:has(.training-controls){scroll-padding-bottom:220px}
  .free-set-labels{font-size:9px}
  .free-exercise-head button{padding:8px}
 }
+
+/* Standalone cardio retains a distinct calendar marker and count. */
+.calendar-stats-with-cardio{grid-template-columns:repeat(4,minmax(0,1fr))}
+.calendar-dot--cardio{background:#f6b96c}
+.calendar-modality--cardio{background:#483523;color:#f6c58b}

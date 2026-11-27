@@ -6,6 +6,7 @@
  'use strict';
  const E=root.AcademiaEngine||(typeof require==='function'?require('./engine.js'):null);
  const SETS=root.ForjaTrainingSets||(typeof require==='function'?require('./training-sets.js'):null);
+ const CARDIO=root.ForjaCardio||(typeof require==='function'?require('./cardio.js'):null);
  const dayOf=(row)=>row?.day||row?.date||row?.timestamp?.slice(0,10)||'';
  const shift=(day,offset)=>{const date=new Date(day+'T12:00:00Z');date.setUTCDate(date.getUTCDate()+offset);return date.toISOString().slice(0,10);};
  const median=arr=>{const n=arr.slice().sort((a,b)=>a-b);return n.length?(n.length%2?n[(n.length-1)/2]:(n[n.length/2-1]+n[n.length/2])/2):null;};
@@ -27,7 +28,7 @@
    const weightReady=previousWeights.length>=3&&recentWeights.length>=3;
    const meanPrev=average(previousWeights),meanRecent=average(recentWeights);
    const weightChangePctWeek=weightReady?round((meanRecent-meanPrev)/meanPrev*100/2):null;
-   const sessions=(state?.sessions||[]).filter(row=>dayOf(row)>=previousStart&&dayOf(row)<=endDay);
+   const sessions=(state?.sessions||[]).filter(row=>!CARDIO?.isStandalone?.(row)&&dayOf(row)>=previousStart&&dayOf(row)<=endDay);
    const within=(rows,start,stop)=>rows.filter(row=>dayOf(row)>=start&&dayOf(row)<=stop);
    const recentSessions=within(sessions,recentStart,endDay),priorSessions=within(sessions,previousStart,previousEnd);
    function exerciseScores(rows){
