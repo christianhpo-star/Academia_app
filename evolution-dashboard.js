@@ -133,6 +133,47 @@
       '<p class="evo-footnote">Agrupamento pela ficha A/B/C/D. Cada barra conta séries com carga e repetições efetivamente registradas; aquecimentos são excluídos. Não representa volume individual de cada músculo nem inclui Muay Thai.</p>'+
       '</section>';
   }
+  const CARDIO=root.ForjaCardio||(typeof require==='function'?require('./cardio.js'):null);
+  function treadmillPlot(model,metric,title,unit){
+    const rows=model.rows.filter(row=>Number.isFinite(row[metric]));
+    if(!rows.length)return '';
+    const maximum=Math.max(1,...rows.map(row=>row[metric]))*1.1;
+    const start=toUTC(model.from),end=toUTC(model.endDay),span=Math.max(86400000,end-start);
+    const x=day=>40+(toUTC(day)-start)/span*310;
+    const y=value=>146-value/maximum*120;
+    const grid=[0,0.5,1].map(f=>'<line x1="40" x2="350" y1="'+y(maximum*f)+'" y2="'+y(maximum*f)+'" stroke="#344658"/>'+
+      '<text x="34" y="'+(y(maximum*f)+4)+'" text-anchor="end" font-size="10" fill="#b0c0d0">'+fmt(maximum*f,1)+'</text>').join('');
+    const dots=rows.map(row=>{
+      const description=stamp(row.day)+' · '+fmt(row[metric],2)+' '+unit;
+      if(metric==='distanceKm'){
+        const width=Math.max(3,Math.min(18,300/model.days));
+        return '<rect x="'+(x(row.day)-width/2)+'" y="'+y(row[metric])+'" width="'+width+'" height="'+(146-y(row[metric]))+'" rx="2" fill="#87bff4"><title>'+esc(description)+'</title></rect>';
+      }
+      return '<circle cx="'+x(row.day)+'" cy="'+y(row[metric])+'" r="4" fill="#c5f56b" stroke="#142334"><title>'+esc(description)+'</title></circle>';
+    }).join('');
+    const line=metric==='speedKmh'&&rows.length>1?'<polyline points="'+rows.map(row=>x(row.day)+','+y(row[metric])).join(' ')+'" fill="none" stroke="#c5f56b" stroke-width="2" stroke-linejoin="round"/>':'';
+    return '<div class="evo-treadmill-chart" data-treadmill-metric="'+metric+'"><h3>'+title+' ('+unit+')</h3>'+
+      '<svg class="evo-plot" viewBox="0 0 372 175" role="img" aria-label="'+title+' em '+rows.length+' dia(s) com distância informada">'+grid+line+dots+
+      '<text x="40" y="166" font-size="10" fill="#b0c0d0">'+stamp(model.from)+'</text>'+
+      '<text x="350" y="166" text-anchor="end" font-size="10" fill="#b0c0d0">'+stamp(model.endDay)+'</text></svg></div>';
+  }
+  function renderTreadmill(state,day,days=30){
+    const api=CARDIO||root.ForjaCardio;
+    if(!api?.treadmillHistory)return '';
+    const model=api.treadmillHistory(state?.sessions,day,days);
+    const kpi=(value,unit,label,digits=2)=>'<div><strong>'+fmt(value,digits)+(value!=null?' <small>'+unit+'</small>':'')+'</strong><span>'+label+'</span></div>';
+    return '<section id="evo-treadmill" class="evo-section evo-treadmill-card" aria-labelledby="evo-treadmill-title">'+
+      '<div class="evo-card-heading"><div><h2 id="evo-treadmill-title">Evolução na esteira</h2><p>Distância e velocidade média registradas</p></div></div>'+
+      periodButtons('cardio',model.days)+
+      '<div class="evo-weight-kpis">'+kpi(model.sessionCount?model.totalMinutes:null,'min','Tempo registrado',1)+
+      kpi(model.distanceKm,'km','Distância informada',3)+kpi(model.speedKmh,'km/h','Velocidade média')+'</div>'+
+      '<p class="evo-footnote">'+model.knownSessions+' de '+model.sessionCount+' sessões com distância informada. A velocidade do período considera somente o tempo dessas sessões.</p>'+
+      (model.knownSessions?'<div class="evo-treadmill-charts">'+treadmillPlot(model,'distanceKm','Distância por dia','km')+treadmillPlot(model,'speedKmh','Velocidade média por dia','km/h')+'</div>':
+      '<p class="evo-empty">'+(model.sessionCount?'As sessões deste período não têm distância informada.':'Nenhuma sessão de esteira registrada neste período.')+' Informe a distância no próximo cardio para acompanhar a evolução.</p>')+
+      (model.rows.length?'<details class="evo-treadmill-history"><summary>Registros por dia ('+model.rows.length+')</summary><ul>'+model.rows.slice().reverse().map(row=>
+        '<li><strong>'+stamp(row.day)+' · '+fmt(row.minutes)+' min</strong><span>'+(row.distanceKm!=null?fmt(row.distanceKm,3)+' km · '+fmt(row.speedKmh)+' km/h'+(row.knownSessions<row.sessionCount?' (parcial)':''):'Distância não informada')+'</span></li>').join('')+'</ul></details>':'')+
+      '<p class="evo-footnote">Compare treinos com duração, inclinação e esforço semelhantes. Aumentar a velocidade não é uma meta obrigatória.</p></section>';
+  }
   function renderHeader(state,endDay,view){
     const views=[['weight','Corpo'],['training','Treinos'],['nutrition','Nutrição']];
     return '<header class="evo-header">'+
@@ -329,7 +370,7 @@
       '<button type="button" class="evo-link" data-action="nutrition-open">Registrar ou revisar refeições <span aria-hidden="true">›</span></button>'+
       '</section>';
   }
-  const api={moveDate,periodDays,weightModel,measuresModel,groupVolume,renderGroupVolume,nutritionWindow,macroSummary,renderHeader,renderWeight,renderNutrition};
+  const api={moveDate,periodDays,weightModel,measuresModel,groupVolume,renderGroupVolume,nutritionWindow,macroSummary,renderHeader,renderWeight,renderNutrition,renderTreadmill};
   root.ForjaEvolutionDashboard=api;
   if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);

@@ -206,7 +206,7 @@
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
     historyStrengthLimit:3,historyMuayLimit:3,historyCalendarOpen:false,historyFilter:'all',
     progressStepDays:14,progressRadarOpen:false,
-    evolutionView:'weight',evolutionPeriods:{energy:7,macros:7,average:7},evolutionWeightLimit:8,evolutionExtrasOpen:false,
+    evolutionView:'weight',evolutionPeriods:{energy:7,macros:7,average:7,cardio:30},evolutionWeightLimit:8,evolutionExtrasOpen:false,
     evolutionChartMode:'weight',evolutionMeasureKey:'abdomen',evolutionVolumeDays:30,evolutionTrainingOpen:false,
     evolutionMuscleView:'front',evolutionMuscleSelected:null,evolutionMuscleListOpen:false,evolutionMuscleMethodOpen:false,
   };
@@ -1407,16 +1407,27 @@
     ui.focusedExercise=suggestion.targetId;
     render();notify('Troca registrada somente nesta sessão. A ficha não foi alterada.');
   }
+  function treadmillSpeedText(row){
+    const m=CARDIO.treadmillMetrics(row);
+    return m.ok&&m.speedKmh!=null?fmt(m.speedKmh)+' km/h':!m.ok?'Revise os dados':'—';
+  }
   function renderCardio() {
     const rows=Array.isArray(ui.draft?.cardio)?ui.draft.cardio:[];
     const parsed=CARDIO.parse(rows);
     return `<details id="session-cardio-panel" class="card session-cardio" ${ui.cardioOpen?'open':''}>
       <summary><span>Cardio <small>(opcional)</small></span><span class="cardio-total">${parsed.ok&&parsed.totalMinutes?fmt(parsed.totalMinutes)+' min':''}</span></summary>
-      <p class="small muted">Registre o tempo de esteira, escada ou outro cardio feito nesta sessão.</p>
+      <p class="small muted">Registre o tempo e, na esteira, a distância mostrada pelo aparelho.</p>
       <div class="cardio-rows">${rows.slice(0,5).map((row,i)=>`<div class="cardio-row">
         <div class="field"><label for="cardio-type-${i}">Modalidade</label><select id="cardio-type-${i}" aria-label="Modalidade do cardio ${i+1}" data-cardio-field="type" data-cardio-index="${i}">
           ${CARDIO.TYPES.map(type=>`<option value="${type.id}" ${row?.type===type.id?'selected':''} ${rows.some((other,n)=>n!==i&&other?.type===type.id)?'disabled':''}>${esc(type.label)}</option>`).join('')}</select></div>
         <div class="field"><label for="cardio-minutes-${i}">Tempo (min)</label><input id="cardio-minutes-${i}" aria-label="Minutos de cardio ${i+1}" type="number" min="0" max="300" step="0.5" inputmode="decimal" placeholder="Ex.: 10" value="${esc(row?.minutes??'')}" data-cardio-field="minutes" data-cardio-index="${i}" /></div>
+        <div class="cardio-treadmill-metrics" data-treadmill-index="${i}" ${row?.type==='esteira'?'':'hidden'}>
+          <div class="field"><label for="cardio-distance-${i}">Distância (km, opcional)</label>
+            <input id="cardio-distance-${i}" type="number" min="0.001" max="300" step="any" inputmode="decimal" placeholder="Ex.: 1,2"
+              value="${esc(row?.distanceKm??'')}" data-cardio-field="distanceKm" data-cardio-index="${i}" /></div>
+          <div class="cardio-treadmill-preview"><span>Velocidade média</span><strong data-treadmill-speed="${i}">${esc(treadmillSpeedText(row))}</strong></div>
+          <p class="tiny muted">Use a distância acumulada em km. A média considera todo o tempo registrado.</p>
+        </div>
         <div class="cardio-stair-pace" data-cardio-pace-index="${i}" ${row?.type==='escada'?'':'hidden'}>
           <div class="field"><label for="cardio-speed-${i}">Ritmo médio (opcional)</label>
             <input id="cardio-speed-${i}" aria-label="Ritmo médio da escada ${i+1}" type="number" min="1" max="240" step="any" inputmode="decimal"
@@ -1436,6 +1447,10 @@
     const total=document.querySelector('.session-cardio .cardio-total');
     const parsed=CARDIO.parse(ui.draft?.cardio);
     if(total)total.textContent=parsed.ok&&parsed.totalMinutes?fmt(parsed.totalMinutes)+' min':'';
+    document.querySelectorAll('[data-treadmill-speed]').forEach(el=>{
+      const row=ui.draft?.cardio?.[Number(el.dataset.treadmillSpeed)];
+      el.textContent=treadmillSpeedText(row);
+    });
     const freeStatus=document.getElementById('free-completion-status');
     if(freeStatus&&FREE.isFree(ui.draft))freeStatus.textContent=freeCompletionText(ui.draft);
     const shortcut=document.querySelector('[data-action="focus-cardio"]');
@@ -1449,6 +1464,8 @@
       [...select.options].forEach(option=>{
         option.disabled=rows.some((row,i)=>i!==index&&row?.type===option.value);
       });
+      const treadmill=document.querySelector('[data-treadmill-index="'+index+'"]');
+      if(treadmill)treadmill.hidden=rows[index]?.type!=='esteira';
       const pace=document.querySelector('[data-cardio-pace-index="'+index+'"]');
       if(pace) {
         pace.hidden=rows[index]?.type!=='escada';
@@ -1712,7 +1729,7 @@
       content=EVO.renderNutrition(state.nutrition,day,ui.evolutionPeriods);
     }else if(ui.evolutionView==='training'){
       content='<section id="evo-panel-training" class="evo-pane" role="tabpanel" aria-labelledby="evo-tab-training">'+
-        renderMuscleMap()+renderBalanceProgress()+progressStrengthSummary()+progressStepsPanel()+
+        renderMuscleMap()+renderBalanceProgress()+EVO.renderTreadmill(state,day,ui.evolutionPeriods.cardio)+progressStrengthSummary()+progressStepsPanel()+
         renderPerformanceTrends()+
         '<details class="evo-training-tools" '+(ui.evolutionTrainingOpen?'open':'')+'>'+
         '<summary>Constância e volume <span aria-hidden="true">⌄</span></summary>'+
@@ -2183,7 +2200,7 @@
     if(el.dataset.cardioField) {
       const index=Number(el.dataset.cardioIndex), field=el.dataset.cardioField;
       const row=ui.draft.cardio?.[index];
-      if(!row||!Number.isInteger(index)||!['type','minutes','avgSpeed','speedUnit'].includes(field))return;
+      if(!row||!Number.isInteger(index)||!['type','minutes','avgSpeed','speedUnit','distanceKm'].includes(field))return;
       row[field]=el.value;
       persistDraft();if(field==='type'||field==='speedUnit')updateCardioChoices();
       updateCardioSummary();refreshReview();return;
@@ -2351,7 +2368,7 @@
         'Meses parciais (complete:false) não podem ser comparados diretamente a meses completos sem ressalvas.',
         'state.dailyRoutine contém somente confirmações manuais opcionais de medicamento/suplemento; ausência não indica dose esquecida, não demonstra efeito no desempenho e não fundamenta conclusões clínicas.',
         'Sugestões de fator de atividade são heurísticas categóricas, não PAL medido e não somam calorias de exercícios.',
-        'session.cardio registra modalidade, minutos e, opcionalmente para escada, ritmo médio em degraus/min ou nível do aparelho. O nível é específico do equipamento. A escada aparece como atividade complementar em quadríceps, glúteos e panturrilhas, mas minutos e velocidade não viram séries musculares, calorias, força ou hipertrofia estimada.',
+        'session.cardio registra modalidade, minutos e distância observada em km para esteira (quando informada); velocidade média = km × 60 / minutos. Para escada, ritmo médio em degraus/min ou nível do aparelho. O nível é específico do equipamento. A escada aparece como atividade complementar em quadríceps, glúteos e panturrilhas, mas minutos e velocidade não viram séries musculares, calorias, força ou hipertrofia estimada.',
         'Rascunhos não representam sessões ou refeições concluídas. O formato deste arquivo é para análise, não para reimportação no FORJA.'
       ],
       counts:{strengthSessions:state.sessions.filter(s=>!CARDIO.isStandalone(s)).length,cardioSessions:state.sessions.filter(CARDIO.isStandalone).length,muaySessions:state.muay.sessions.length,
@@ -3029,7 +3046,7 @@
     }
     else if(action==='evo-period'){
       const kind=btn.dataset.kind,days=Number(btn.dataset.days);
-      if(!['energy','macros','average'].includes(kind)||![7,30,90].includes(days))return;
+      if(!['energy','macros','average','cardio'].includes(kind)||![7,30,90].includes(days))return;
       ui.evolutionPeriods[kind]=days;render();return;
     }
     else if(action==='evo-weight-more'){
@@ -3302,7 +3319,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261127-free-cardio1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261127-treadmill1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

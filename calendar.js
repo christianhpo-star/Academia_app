@@ -60,7 +60,7 @@
           ? (Array.isArray(session.entries)?session.entries:[]).map(en=>String(exerciseLabels[en.id]||en.id))
           : (Array.isArray(session.activities)?session.activities:[]).map(a=>String(a.name));
         const location = !strength ? (session.place==='casa'?'Em casa':session.place==='academia'?'Na academia':'Outro local') : '';
-        const parts = strength ? [session.afterMuayId?'Após Muay Thai':'',session.energy||'Esforço não informado',cardio?.totalMinutes?'Cardio: '+cardio.entries.map(row=>CARDIO.label(row.type)+' '+row.minutes+' min').join(' + '):''] : [
+        const parts = strength ? [session.afterMuayId?'Após Muay Thai':'',session.energy||'Esforço não informado',cardio?.totalMinutes?'Cardio: '+cardio.entries.map(row=>CARDIO.label(row.type)+' '+row.minutes+' min'+(row.type==='esteira'&&CARDIO.paceLabel(row)?' · '+CARDIO.paceLabel(row):'')).join(' + '):''] : [
           location,session.duration == null ? '' : session.duration+' min',
           session.intensity == null ? '' : 'Esforço '+session.intensity+'/10',
         ];
