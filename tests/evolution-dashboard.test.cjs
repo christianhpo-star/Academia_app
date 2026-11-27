@@ -125,3 +125,14 @@ test('group volume counts only effective strength sets by exercise group and bou
  assert.doesNotMatch(html,/radar/i);
  assert.equal(JSON.stringify(state.sessions),before);
 });
+
+test('treadmill evolution preserves missing distances and uses separate units',()=>{
+ const state={sessions:[{id:'a',day:date,cardio:[{type:'esteira',minutes:10,distanceKm:1.2}]},{id:'b',day:'2026-11-15',cardio:[{type:'esteira',minutes:10}]}]};
+ const html=E.renderTreadmill(state,date,7);
+ assert.match(html,/1 de 2 sessões com distância informada/);
+ assert.match(html,/Distância por dia/);
+ assert.match(html,/Velocidade média por dia/);
+ assert.match(html,/Distância não informada/);
+ assert.match(html,/7,2/);
+ assert.match(E.renderTreadmill({},date,30),/Nenhuma sessão de esteira/);
+});

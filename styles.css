@@ -1697,3 +1697,18 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .calendar-stats-with-cardio{grid-template-columns:repeat(4,minmax(0,1fr))}
 .calendar-dot--cardio{background:#f6b96c}
 .calendar-modality--cardio{background:#483523;color:#f6c58b}
+
+/* Treadmill distance and derived average speed, shared by both training flows. */
+.cardio-treadmill-metrics{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;padding:12px;background:#172536;border:1px solid #35516a;border-radius:12px;align-items:center}
+.cardio-treadmill-metrics[hidden]{display:none}
+.cardio-treadmill-metrics p{grid-column:1/-1;margin:0;line-height:1.45}
+.cardio-treadmill-preview{min-width:0;display:flex;flex-direction:column;gap:5px;padding-left:4px}
+.cardio-treadmill-preview span{font-size:11px;color:var(--muted)}
+.cardio-treadmill-preview strong{font-size:18px;font-variant-numeric:tabular-nums;color:var(--lime);overflow-wrap:anywhere}
+.evo-treadmill-charts{display:grid;gap:12px;margin-top:12px}
+.evo-treadmill-chart h3{margin:0 0 4px;font-size:13px;color:var(--text)}
+.evo-treadmill-history summary{font-weight:700;cursor:pointer;color:var(--muted);padding:8px 0}
+.evo-treadmill-history ul{list-style:none;padding:0;margin:0;display:grid;gap:6px}
+.evo-treadmill-history li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:6px 0;font-size:12px;flex-wrap:wrap}
+.evo-treadmill-history li span{color:var(--muted)}
+@media(max-width:359px){.cardio-treadmill-metrics{grid-template-columns:minmax(0,1fr)}.cardio-treadmill-metrics p{grid-column:1}}

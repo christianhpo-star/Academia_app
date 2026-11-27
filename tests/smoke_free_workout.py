@@ -83,6 +83,8 @@ with sync_playwright() as p:
         page.locator('#session-cardio-panel > summary').click()
     page.locator('[data-action="cardio-add"]').click()
     page.locator('#cardio-minutes-0').fill('10')
+    page.locator('#cardio-distance-0').fill('1.25')
+    assert page.locator('[data-treadmill-speed="0"]').inner_text()=='7,5 km/h'
     page.locator('[data-action="cardio-add"]').click()
     page.locator('#cardio-type-1').select_option('escada')
     page.locator('#cardio-minutes-1').fill('8')
@@ -104,6 +106,7 @@ with sync_playwright() as p:
     assert draft['afterMuayId']
     assert len(draft['entries'])==3
     assert draft['cardio'][0]['minutes']=='10'
+    assert draft['cardio'][0]['distanceKm']=='1.25'
     page.close()
 
     page=open_app(context,storage)
@@ -111,6 +114,7 @@ with sync_playwright() as p:
     assert page.locator('.free-exercise-card').count()==3, 'saved free draft must survive reload'
     assert page.locator('#free-count').inner_text()=='3 exercícios · 4 séries'
     assert page.locator('#cardio-minutes-0').input_value()=='10'
+    assert page.locator('#cardio-distance-0').input_value()=='1.25'
     assert page.locator('#cardio-speed-1').input_value()=='55'
     page.get_by_role('button',name='Salvar treino livre').click()
     state=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
@@ -122,7 +126,7 @@ with sync_playwright() as p:
     assert len(saved['entries'])==3
     assert [len(item['sets']) for item in saved['entries']]==[2,1,1]
     assert saved['plannedIds']==[] and saved['skipped']==[]
-    assert saved['cardio']==[{'type':'esteira','minutes':10},{'type':'escada','minutes':8,'avgSpeed':55,'speedUnit':'steps_min'}]
+    assert saved['cardio']==[{'type':'esteira','minutes':10,'distanceKm':1.25},{'type':'escada','minutes':8,'avgSpeed':55,'speedUnit':'steps_min'}]
     assert len([ex for ex in state['exercises'] if ex['group']=='FREE'])==1
     assert not any(ex['active'] for ex in state['exercises'] if ex['group']=='FREE')
     pending=page.evaluate("""s=>window.AcademiaEngine.pendingWorkouts(s.sessions).completed""",state)

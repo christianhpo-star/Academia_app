@@ -77,6 +77,13 @@ def check_cardio(context, seed, errors, folder):
     original_entries = json.loads(snapshot(page)[DRAFT_KEY])['draft']['entries']
     page.locator('.session-cardio > summary').click()
     assert add_row(page, 'esteira', '10') == 0
+    distance=page.locator('#cardio-distance-0')
+    assert distance.is_visible()
+    distance.fill('1.2')
+    assert page.locator('[data-treadmill-speed="0"]').inner_text()=='7,2 km/h'
+    minutes(page,0).fill('12')
+    assert page.locator('[data-treadmill-speed="0"]').inner_text()=='6 km/h'
+    minutes(page,0).fill('10')
     assert add_row(page, 'escada', '8') == 1
     assert modality(page, 1).locator('option[value="esteira"]').is_disabled()
     speed=page.locator('[data-cardio-field="avgSpeed"][data-cardio-index="1"]')
@@ -94,10 +101,12 @@ def check_cardio(context, seed, errors, folder):
     first_choice = modality(page, 0)
     first_choice.focus()
     first_choice.select_option('eliptico')
+    assert not distance.is_visible()
     assert first_choice.evaluate('node => document.activeElement === node')
     assert modality(page, 1).locator('option[value="eliptico"]').is_disabled()
     assert modality(page, 1).locator('option[value="esteira"]').is_enabled()
     first_choice.select_option('esteira')
+    assert distance.is_visible() and distance.input_value()=='1.2'
     assert first_choice.evaluate('node => document.activeElement === node')
     assert modality(page, 1).locator('option[value="esteira"]').is_disabled()
     assert modality(page, 1).locator('option[value="eliptico"]').is_enabled()
@@ -106,7 +115,7 @@ def check_cardio(context, seed, errors, folder):
     assert add_row(page, 'eliptico') == 3
     assert page.locator('[data-cardio-field="minutes"][required]').count() == 0
     assert page.locator('.cardio-total').inner_text() == '18 min'
-    assert 'Esteira · 10 min + Escada · 8 min' in page.locator('#workout-review').inner_text()
+    assert 'Esteira · 10 min · 1,2 km · 7,2 km/h + Escada · 8 min' in page.locator('#workout-review').inner_text()
     assert '1 série efetiva registrada' in page.locator('.focus-progress-label').inner_text()
     assert json.loads(snapshot(page)[DRAFT_KEY])['draft']['entries'] == original_entries
     for invalid in ('-1', '301'):
@@ -121,6 +130,11 @@ def check_cardio(context, seed, errors, folder):
     assert state_of(page)['sessions'] == []
     assert 'velocidade média da escada' in page.locator('#toast').inner_text()
     speed.fill('57.5')
+    distance.fill('1200')
+    page.get_by_role('button',name='Salvar treino',exact=True).click()
+    assert state_of(page)['sessions']==[]
+    assert 'distância da esteira' in page.locator('#toast').inner_text()
+    distance.fill('1.2')
 
     saved_draft = snapshot(page)
     page.close()
@@ -132,6 +146,8 @@ def check_cardio(context, seed, errors, folder):
         assert modality(page, index).input_value() == kind
         assert minutes(page, index).input_value() == value
     assert page.locator('[data-exercise="pulley-aberto"] [data-field="reps"]').first.input_value() == '10'
+    assert page.locator('#cardio-distance-0').input_value()=='1.2'
+    assert page.locator('[data-treadmill-speed="0"]').inner_text()=='7,2 km/h'
     assert page.locator('[data-cardio-field="avgSpeed"][data-cardio-index="1"]').input_value() == '57.5'
     assert page.locator('[data-cardio-field="speedUnit"][data-cardio-index="1"]').input_value() == 'steps_min'
     for width in (320, 390, 412):
@@ -152,7 +168,7 @@ def check_cardio(context, seed, errors, folder):
     state = state_of(page)
     assert len(state['sessions']) == 1
     saved = state['sessions'][0]
-    assert saved['cardio'] == [{'type': 'esteira', 'minutes': 10}, {'type': 'escada', 'minutes': 8, 'avgSpeed': 57.5, 'speedUnit': 'steps_min'}]
+    assert saved['cardio'] == [{'type': 'esteira', 'minutes': 10, 'distanceKm': 1.2}, {'type': 'escada', 'minutes': 8, 'avgSpeed': 57.5, 'speedUnit': 'steps_min'}]
     assert len(saved['entries']) == 1 and len(saved['entries'][0]['sets']) == 1
     assert saved['entries'][0]['sets'][0]['load'] == 30
     assert DRAFT_KEY not in snapshot(page)
@@ -175,6 +191,7 @@ def check_cardio(context, seed, errors, folder):
     assert 'Esteira' in history.inner_text() and '10 min' in history.inner_text()
     assert 'Escada' in history.inner_text() and '8 min' in history.inner_text()
     assert '57,5 degraus/min' in history.inner_text()
+    assert '1,2 km · 7,2 km/h' in history.inner_text()
     for width in (320, 390, 412):
         page.set_viewport_size({'width': width, 'height': 900})
         assert_width(page, page.locator('.history-card').first)
@@ -182,6 +199,11 @@ def check_cardio(context, seed, errors, folder):
 
     page.locator('#nav [data-tab="progress"]').click()
     page.locator('[data-action="evo-view"][data-view="training"]').click()
+    treadmill=page.locator('#evo-treadmill')
+    assert '7,2' in treadmill.inner_text() and '1,2' in treadmill.inner_text()
+    assert treadmill.locator('[data-treadmill-metric]').count()==2
+    treadmill.locator('[data-kind="cardio"][data-days="7"]').click()
+    assert treadmill.locator('[data-kind="cardio"][data-days="7"]').get_attribute('aria-pressed')=='true'
     card=page.locator('.muscle-map-card')
     assert 'Escada:' in card.inner_text() and '8 min' in card.inner_text()
     assert '57,5 degraus/min' in card.inner_text()
