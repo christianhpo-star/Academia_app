@@ -87,8 +87,14 @@ with sync_playwright() as p:
     page.locator('#nav [data-tab="nutrition"]').click()
     assert page.locator('.nd-meal').count()==5
     assert page.locator('.nd-meal').last.locator('h2').inner_text()=='Ceia'
+    assert page.locator('.nd-date-center label span').inner_text().startswith('Hoje · ')
+    assert page.locator('[data-nd="today"]').count()==0
     page.locator('[data-nd="previous"]').click()
     day=page.locator('#nd-date').input_value()
+    assert page.locator('.nd-date-center label strong').inner_text()=='/'.join(reversed(day.split('-')))
+    assert page.locator('.nd-date-center label span').inner_text().startswith('Ontem · ')
+    assert page.locator('.nd-date-context [data-nd="today"]').inner_text()=='Voltar para hoje'
+    assert page.locator('.nd-date-context').bounding_box()['y'] < page.locator('.nd-date-center').bounding_box()['y']
     page.locator('.nd-meal-top [data-nd="add"][data-meal="lunch"]').click()
     assert page.locator('[data-nd="pick"]').count()>=6, 'Catalogue must open with suggestions, not empty Recentes'
     assert 'Arroz branco' in page.locator('#nd-results').inner_text()
@@ -255,6 +261,8 @@ with sync_playwright() as p:
     page.locator('[data-nd="accept"]').click()
     assert state()['nutrition']['settings']['profile']['heightCm']==175.5
     page.locator('[data-nd="today"]').click()
+    assert page.locator('.nd-date-center label span').inner_text().startswith('Hoje · ')
+    assert page.locator('[data-nd="today"]').count()==0
     page.evaluate('window.scrollTo(0,0)')
     page.locator('.nd-head-goals').click()
     page.locator('.nd-goals-manual > summary').click()

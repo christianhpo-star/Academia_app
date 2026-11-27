@@ -55,6 +55,20 @@
   // TBCA values are used only to guide rounded, independent estimates (not copied as official branded facts).
   const sweetFoods=[
     {
+      id:'recipe:doce-amendoim-caseiro',name:'Doce de amendoim caseiro (estimativa)',category:'Doces e bolos',
+      aliases:['doce de amendoim','doce de amendoim caseiro','doce amendoim','docinho de amendoim','paçoca caseira','pé de moleque caseiro','pe de moleque','pé de moça'],preparation:'cooked',
+      note:'Estimativa para doce sólido de amendoim e açúcar, sem receita ou peso aferidos. A presença de leite condensado, manteiga e a proporção de açúcar podem mudar a composição. Uma unidade de 25 g é apenas um atalho; prefira pesar.',
+      nutrientsPer100g:{energyKcal:null,proteinG:null,carbsG:null,fatG:null,fiberG:null},
+      estimateGramsBase:100,
+      estimate:{confidence:'low',servingLabel:'100 g de doce de amendoim caseiro',
+        assumptions:'Estimativa arredondada baseada nas referências TBCA de paçoca (494 kcal), pé-de-moleque (517 kcal) e pé de moça (514 kcal) por 100 g. Faixa ilustrativa, não aferida; receita real desconhecida.',
+        low:{energyKcal:430,proteinG:10,carbsG:40,fatG:20},
+        central:{energyKcal:500,proteinG:15,carbsG:52,fatG:28},
+        high:{energyKcal:570,proteinG:18,carbsG:60,fatG:35}},
+      source:{name:'Estimativa de receita com referências TBCA — USP/FoRC',reference:'TBCA BRC0081K (paçoca), BRC0082K (pé-de-moleque), BRC0219K (pé de moça); valores aproximados, receita não confirmada.',license:'Estimativa independente; não equivale a rótulo'},
+      portions:[p('one','1 unidade estimada (≈25 g)',25,0.25),p('two','2 unidades estimadas (≈50 g)',50,0.5),p('100g','100 g (pesar de preferência)',100,1)],
+    },
+    {
       id:'taco:2011:16',name:'Bolo de chocolate simples, pronto (sem cobertura)',category:'Doces e bolos',
       aliases:['bolo chocolate','fatia bolo chocolate','bolo simples de chocolate','fatia de bolo de chocolate','bolo sem cobertura'],preparation:'cooked',
       note:'Bolo pronto de chocolate sem recheio ou cobertura — TACO item 16. Recheio, calda e cobertura devem ser adicionados separadamente.',
@@ -153,6 +167,9 @@
   // TBCA references are per 100 g of a described preparation, not restaurant-labelled facts.
   // Household pieces and spoon weights are optional heuristics, not measured portions.
   const PARTY_FOOD_ROWS=[
+    ['BRC0100F','Mini coxinha de frango frita (salgado de festa)','Salgados e lanches',
+      ['mini coxinha','minicoxinha','mini-coxinha','coxinha pequena','coxinha de festa','salgadinho de festa','coxinha frango'],273,9.61,34.5,11.8,4.97,
+      [p('one','1 mini coxinha estimada (≈20 g)',20),p('five','5 mini coxinhas estimadas (≈100 g)',100),p('100g','100 g preparados',100)]],
     ['BRC0474F','Nuggets de frango fritos (óleo)','Empanados',
       ['nuggets','nugget','nuguets','frango empanado','nuggets fritos'],339,15.4,24.7,20.3,1.95,
       [p('one','1 unidade estimada (≈25 g)',25),p('four','4 unidades estimadas (≈100 g)',100),p('100g','100 g preparados',100)]],
@@ -462,7 +479,7 @@
     breakfast:['photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:53','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','taco:2011:140','ref:generic-173424','taco:2011:533','ref:generic-173944','ref:generic-169705','ref:generic-171265',...DRINK_SUGGESTIONS],
     lunch:['ref:generic-169757','taco:2011:561','photo:hamburguer-frango-56g','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','ref:generic-171477','taco:2011:429','taco:2011:539'],
-    snack:['recipe:hamburgao-assado-carne-presunto-2026','recipe:joelho-frango-assado-2026','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
+    snack:['recipe:hamburgao-assado-carne-presunto-2026','recipe:joelho-frango-assado-2026','recipe:doce-amendoim-caseiro','tbca:BRC0100F','photo:pao-forma-tradicional-50g','photo:hamburguer-frango-56g','recipe:brigadeiro-caseiro','recipe:brigadeiro-morango','taco:2011:16','photo:itambe-zero-morango-200g','photo:piracanjuba-proforce-banoffee-250ml',
       'growth:whey-unknown',...GROWTH_TOP_IDS,'taco:2011:140','taco:2011:386','ref:generic-173944','ref:generic-169705',
       'local:doce-cascao-acai-trufado-branco-500ml','local:doce-cascao-acai-trufado-preto-500ml',...DRINK_SUGGESTIONS],
     dinner:['recipe:hamburgao-assado-carne-presunto-2026','ref:generic-169757','taco:2011:561','photo:hamburguer-frango-56g','photo:pao-forma-tradicional-50g','taco:2011:346','taco:2011:401','taco:2011:93','tbca:BRC0474F','tbca:BRC0898F','tbca:BRC0137G','tbca:BRC0941F','taco:2011:538','taco:2011:429'],

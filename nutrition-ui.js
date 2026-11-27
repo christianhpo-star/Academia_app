@@ -311,7 +311,10 @@
     const goal=target?.values.energyKcal;
     const remainder=kcal!=null&&Number.isFinite(goal)?goal-kcal:null;
     const todayDate=balanceDate;
-    const dayName=date===todayDate?'Hoje':new Date(date+'T12:00:00Z').toLocaleDateString('pt-BR',{day:'numeric',month:'short',timeZone:'UTC'});
+    const isToday=date===todayDate;
+    const dayName=dateBR(date);
+    const weekday=new Date(date+'T12:00:00Z').toLocaleDateString('pt-BR',{weekday:'long',timeZone:'UTC'});
+    const dayContext=isToday?'Hoje · '+weekday:date===B.shift(todayDate,-1)?'Ontem · '+weekday:weekday;
     const compactBalance=remainder==null?'Saldo indisponível':remainder>=0?fmt(remainder)+' kcal restantes da meta':fmt(Math.abs(remainder))+' kcal acima da meta';
     return `<div class="nutrition-screen">
       <div class="nd-collapse" id="nd-collapse">
@@ -332,12 +335,14 @@
         <p class="nd-summary-note">Não representa o consumo total do dia. O saldo depende do que foi registrado.</p>
       </div>
       </div>
-      <div class="nd-date-stick" id="nd-date-stick"><div class="nd-date">
+      <div class="nd-date-stick" id="nd-date-stick">
+      ${!isToday?'<div class="nd-date-context"><span>Histórico alimentar</span>'+button('today','Voltar para hoje','aria-label="Voltar para hoje"','nd-go-today')+'</div>':''}
+      <div class="nd-date">
         ${button('previous','‹','aria-label="Dia anterior"')}
-        <div class="nd-date-center"><label for="nd-date"><strong>${esc(dayName)}</strong><span>${esc(dateBR(date))}</span></label>
+        <div class="nd-date-center${isToday?' nd-date-current':''}"><label for="nd-date"${isToday?' aria-current="date"':''}><strong>${esc(dayName)}</strong><span>${esc(dayContext)}</span></label>
         <input id="nd-date" type="date" value="${date}" max="${todayDate}" aria-label="Escolher dia do diário"></div>
         ${button('next','›','aria-label="Próximo dia" '+(date>=todayDate?'disabled':''))}
-      </div>${date!==todayDate?button('today','Hoje','aria-label="Voltar para hoje"','nd-go-today'):''}<span class="nd-date-mini" aria-live="polite">${esc(compactBalance)}</span></div>
+      </div><span class="nd-date-mini" aria-live="polite">${esc(compactBalance)}</span></div>
       ${archive.draft?`<div class="callout">Há um rascunho de refeição salvo. ${button('resume','Continuar rascunho','','button-inline')}</div>`:''}
       <div class="nd-food-quick-actions">${button('shared','Dividir uma porção','data-meal="dinner"','secondary')}${button('add','+ Refeição','data-meal="lunch"','secondary')}</div>
       <div class="nd-meals mt-16">${Object.entries(labels).filter(([type])=>type!=='other'||daily.some(e=>e.mealType==='other')).map(([type,label])=>{

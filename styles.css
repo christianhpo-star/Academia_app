@@ -1218,7 +1218,13 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 @media(prefers-reduced-motion:reduce){.nd-overview,.nd-date-stick,.nd-date-mini{transition:none}}
 
 /* Quick return to the current day is available only when reading another day. */
-.nd-date-stick .nd-go-today{min-height:36px;padding:5px 12px;display:block;margin:5px auto 0;border:1px solid #40566c;background:#1f3042;border-radius:9px;color:var(--lime);font-size:12px;font-weight:750}
+.nd-date-context{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:0 0 5px;color:var(--muted);font-size:12px;font-weight:700}
+.nd-date-stick .nd-go-today{min-height:44px;padding:5px 8px;flex:0 0 auto;margin:0;border:1px solid transparent;background:transparent;border-radius:9px;color:var(--muted);font-size:12px;font-weight:750;text-decoration:underline;text-underline-offset:3px}
+.nd-date-stick .nd-go-today:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+.nd-date-center label strong{font-size:14px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.nd-date-center label span{font-size:11px;text-align:center;line-height:1.25}
+.nd-date-center.nd-date-current{border-color:var(--lime)}
+.nd-date-center.nd-date-current label span{color:var(--lime);font-weight:700}
 
 /* UX42: resize (not just fade) the nutrition header as the user scrolls. */
 .nutrition-screen .nd-collapse{overflow:visible;min-width:0;transform-origin:top center;opacity:calc(1 - var(--nd-scroll-progress));pointer-events:auto;will-change:transform,opacity}
