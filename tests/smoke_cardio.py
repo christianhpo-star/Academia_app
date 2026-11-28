@@ -237,6 +237,32 @@ def check_cardio(context, seed, errors, folder):
     restored.locator('#nav [data-tab="history"]').click()
     restored.locator('.history-card > summary').first.click()
     assert '18 min' in restored.locator('.cardio-history').inner_text()
+    restored.locator('.history-card [data-action="history-edit"]').click()
+    assert restored.get_by_role('heading',name='Editar treino').count()==1
+    original=state_of(restored)
+    from datetime import timedelta
+    corrected=(TODAY-timedelta(days=1)).isoformat()
+    restored.locator('#free-day').fill(corrected)
+    restored.locator('#free-day').dispatch_event('change')
+    restored.locator('[data-free-exercise="pulley-aberto"] [data-field="load"]').first.fill('32')
+    restored.locator('[data-free-exercise="pulley-aberto"] [data-field="reps"]').first.fill('11')
+    restored.locator('#cardio-distance-0').fill('1.4')
+    assert state_of(restored)==original
+    restored.get_by_role('button',name='Salvar alterações').click()
+    corrected_state=state_of(restored)
+    assert len(corrected_state['sessions'])==1
+    row=corrected_state['sessions'][0]
+    assert row['id']==saved['id'] and row['planId']==saved['planId']
+    assert row['day']==corrected and row['timestamp']!=saved['timestamp']
+    assert row['entries'][0]['sets'][0]['load']==32
+    assert row['entries'][0]['sets'][0]['reps']==11
+    assert row['cardio'][0]['distanceKm']==1.4
+    assert row['plannedIds']==saved['plannedIds'] and row['skipped']==saved['skipped']
+    assert corrected_state['exercises']==original['exercises']
+    assert restored.evaluate("s=>AcademiaEngine.pendingWorkouts(s.sessions).completed",corrected_state)==['A']
+    restored.locator('#nav [data-tab="progress"]').click()
+    restored.locator('[data-action="evo-view"][data-view="training"]').click()
+    assert '8,4' in restored.locator('#evo-treadmill').inner_text()
     restored.close()
 
 

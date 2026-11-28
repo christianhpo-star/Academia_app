@@ -149,3 +149,43 @@ test('cardio-only free workout stays outside strength counts and rotation',()=>{
  assert.equal(context.cardio,1);
  assert.equal(context.weeklyCardio,1);
 });
+
+test('editing a saved planned workout preserves the session identity, original metadata and cancellation snapshot',()=>{
+ const original={id:'old-plan',planId:'A',day:'2026-11-21',timestamp:'2026-11-22T01:15:00.000Z',
+ entries:[{id:'pulley-aberto',sets:[{load:30,reps:12,rir:2,warmup:true},{load:40,reps:10,rir:1,warmup:false}],pain:null}],
+ plannedIds:['pulley-aberto','rosca-direta'],skipped:[{id:'rosca-direta',reason:'sem-registro'}],
+ energy:'normal',notes:'original',kneeNextDay:null,cardio:[{type:'esteira',minutes:10}],extra:'legacy'};
+ const snapshot=structuredClone(original);
+ const {draft}=FREE.fromSession(original);
+ assert.ok(FREE.isHistoryEdit(draft)&&FREE.isEditor(draft)&&!FREE.isFree(draft));
+ assert.equal(draft.entries['pulley-aberto'].sets[0].warmup,true);
+ draft.day='2026-11-22';draft.entries['pulley-aberto'].sets[1].load=45;
+ const result=FREE.updateSession(original,draft,Object.values(draft.entries),[{type:'esteira',minutes:10,distanceKm:1.4}],TODAY);
+ assert.deepEqual(original,snapshot);
+ const saved=result.session;
+ assert.equal(saved.id,original.id);assert.equal(saved.planId,'A');
+ assert.equal(saved.timestamp,'2026-11-23T01:15:00.000Z');
+ assert.equal(saved.entries[0].sets[1].load,45);
+ assert.equal(saved.extra,'legacy');assert.deepEqual(saved.plannedIds,original.plannedIds);
+ assert.deepEqual(saved.skipped,original.skipped);
+ assert.deepEqual(E.pendingWorkouts([saved]).completed,['A']);
+ assert.ok(FREE.updateSession({...original,notes:'changed'},draft,Object.values(draft.entries),[],TODAY).error);
+ assert.ok(FREE.updateSession(original,draft,[],[{type:'esteira',minutes:10}],TODAY).error);
+ assert.ok(FREE.remove(draft,'pulley-aberto').error);
+ const removed=FREE.remove(draft,'pulley-aberto',true).draft;
+ assert.deepEqual(removed.plannedIds,original.plannedIds);
+ assert.deepEqual(removed.entries,{});
+});
+test('edit standalone cardio preserves FREE identity and permits correction without inventing strength',()=>{
+ const old={id:'cardio-legacy',planId:'FREE',kind:'free',day:TODAY,timestamp:TODAY+'T18:00:00Z',
+ entries:[],cardio:[{type:'esteira',minutes:10}],plannedIds:[],skipped:[],afterMuayId:'m',notes:''};
+ const d=FREE.fromSession(old).draft;
+ const next=FREE.updateSession(old,d,[],[{type:'esteira',minutes:10,distanceKm:1.2}],TODAY,[{id:'m',day:TODAY}]).session;
+ assert.equal(next.id,old.id);assert.equal(next.afterMuayId,'m');assert.deepEqual(next.entries,[]);
+ assert.equal(next.cardio[0].distanceKm,1.2);
+ assert.deepEqual(E.pendingWorkouts([next]).completed,[]);
+ d.day='2026-11-22';
+ assert.equal(FREE.updateSession(old,d,[],next.cardio,TODAY,[{id:'m',day:TODAY}]).session.afterMuayId,undefined);
+ assert.ok(FREE.updateSession(old,d,[],[],TODAY).error);
+ d.day='2026-11-24';assert.ok(FREE.updateSession(old,d,[],next.cardio,TODAY).error);
+});

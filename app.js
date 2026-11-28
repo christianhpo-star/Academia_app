@@ -118,6 +118,12 @@
       return initial();
     }
   }
+  function validExercise(x){
+    return x&&typeof x.id==='string'&&typeof x.name==='string'&&x.name.length<120&&
+      ['A','B','C','D','FREE'].includes(x.group)&&Number(x.sets)>=1&&Number(x.sets)<=12&&
+      Number(x.low)>=(SETS.isTimed(x)?5:1)&&Number(x.high)>=Number(x.low)&&
+      Number(x.high)<=(SETS.isTimed(x)?300:50)&&Number(x.step)>0;
+  }
   function validState(value) {
     return value && value.version === 1 && value.settings &&
       Number.isFinite(Number(value.settings.startWeight)) &&
@@ -130,10 +136,7 @@
       Array.isArray(value.sessions) && value.sessions.length <= 30000 &&
       value.sessions.every(s => typeof s.timestamp === 'string' && typeof s.planId === 'string' && Array.isArray(s.entries)) &&
       Array.isArray(value.exercises) && value.exercises.length <= 200 &&
-      value.exercises.every(x => typeof x.id === 'string' && typeof x.name === 'string' && x.name.length < 120 &&
-        ['A','B','C','D','FREE'].includes(x.group) && Number(x.sets)>=1 && Number(x.sets)<=12 &&
-        Number(x.low)>=(SETS.isTimed(x)?5:1) && Number(x.high)>=Number(x.low) &&
-        Number(x.high)<=(SETS.isTimed(x)?300:50) && Number(x.step)>0);
+      value.exercises.every(validExercise);
   }
   // Atualiza somente exercícios que ainda conservam a configuração original.
   // Histórico real, exercícios personalizados e rascunhos em andamento são preservados.
@@ -166,11 +169,16 @@
       if (!raw) return null;
       const record = JSON.parse(raw);
       const draft = record?.draft;
-    F.ensureDraft(draft);
+      F.ensureDraft(draft);
+      const staged=FREE.isHistoryEdit(draft)?draft.editExercises:[];
+      if(!Array.isArray(staged)||staged.length>30||staged.some(ex=>!validExercise(ex)||ex.active!==false)||
+          new Set(staged.map(ex=>ex.id)).size!==staged.length||
+          (FREE.isHistoryEdit(draft)&&typeof draft.editOriginal!=='string'))
+        throw new Error('Edição inválida');
       if (record.version !== 1 || !draft || !(DATA.rotation.includes(draft.planId) || FREE.isFree(draft)) ||
           !draft.entries || typeof draft.entries !== 'object' || Array.isArray(draft.entries) ||
           !Object.entries(draft.entries).every(([key, en]) => en && en.id === key &&
-            exercises.some(ex => ex.id === key) && Array.isArray(en.sets) && en.sets.length > 0 &&
+            [...exercises,...staged].some(ex => ex.id === key) && Array.isArray(en.sets) && en.sets.length > 0 &&
             en.sets.length <= 12 && en.sets.every(set => set && typeof set === 'object')))
         throw new Error('Rascunho inválido');
       return {draft, savedAt:record.savedAt};
@@ -195,12 +203,12 @@
     catalogContext:'browse',catalogSourceId:null,
     catalogGroup:'all',catalogStyle:'all',catalogSearch:'',catalogLimit:12,
     catalogDetailId:null,catalogConfirmId:null,catalogScrollY:0,
-    freeSearch:'',freeAll:false,
+    freeSearch:'',freeAll:FREE.isHistoryEdit(recoveredDraft?.draft),
     anatomyOpen:{},anatomyViews:{},
     focusedMode: false, focusedExercise: null,
     balancePending:null, balanceDismissed:false,
     share:null,shareBlob:null,
-    cardioOpen: Boolean(recoveredDraft?.draft?.cardio?.length),
+    cardioOpen: Boolean(recoveredDraft?.draft?.cardio?.length)||FREE.isHistoryEdit(recoveredDraft?.draft),
     calendarMonth: today().slice(0,7), calendarDay: today(),
     bodyOpen:false,bodyView:'current',bodyEditDate:null,bioOpen:false,bioEditDate:null,homeRecoveryOpen:false,routineHidden:false,
     nutritionOpen:false,nutritionEditId:null,nutritionLimit:3,nutritionPicked:null,
@@ -288,6 +296,7 @@
     {id:FREE.PLAN_ID,title:'Treino livre',subtitle:'Exercícios avulsos, sem alterar a sequência A/B/C/D.',type:'free'}:
     DATA.plans.find(p => p.id === id) || DATA.plans[0];
   const exerciseFor = id => state.exercises.find(x => x.id === id);
+  const editExerciseFor=id=>exerciseFor(id)||(FREE.isHistoryEdit(ui.draft)?ui.draft.editExercises?.find(ex=>ex.id===id):null);
   const currentExercises = id => state.exercises.filter(x=>x.group===id && x.active);
   const repsLabel = ex => SETS.isTimed(ex)
     ? (ex?.repPerSide?'segundos por lado':'segundos de sustentação')
@@ -520,10 +529,10 @@
       return;
     }
     const trainingArea=ui.tab==='plans'||ui.tab==='catalog';
-    const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? (FREE.isFree(ui.draft)?renderFreeWorkout():renderTraining()) :
+    const content=ui.tab === 'plans' && muayMode ? renderMuay() : ui.editor ? renderEditor() : ui.draft && ui.tab === 'plans' ? (FREE.isEditor(ui.draft)?renderFreeWorkout():renderTraining()) :
       ui.tab === 'home' ? renderHome() : ui.tab === 'plans' ? renderPlans() : ui.tab === 'catalog' ? renderCatalog() :
       ui.tab === 'nutrition' ? diary.render() : ui.tab === 'progress' ? (ui.bodyOpen ? renderBodyMeasures() : renderProgress()) : ui.tab === 'history' ? renderHistory() : ui.tab === 'share' ? renderShare() : renderSettings();
-    main.innerHTML=(trainingArea?renderTrainingDestinations():'')+content;
+    main.innerHTML=(trainingArea&&!(ui.tab==='plans'&&!muayMode&&FREE.isHistoryEdit(ui.draft))?renderTrainingDestinations():'')+content;
     if(ui.tab==='nutrition')diary.mount();
     if(ui.tab==='share')mountSharePreview();else shareRenderVersion++;
     document.querySelectorAll('#nav [data-tab]').forEach(btn=>{
@@ -1099,7 +1108,7 @@
 
 
   function renderFreeOptions(){
-    const available=FREE.options(state.exercises,ui.draft,ui.freeSearch,ui.freeAll);
+    const available=FREE.options([...state.exercises,...(ui.draft?.editExercises||[])],ui.draft,ui.freeSearch,ui.freeAll);
     const typed=ui.freeSearch.trim();
     return available.length?available.map(ex=>{
       const core=ex.complement==='abdomen'||/abdom|core|obl[ií]qu|dead.bug/i.test(
@@ -1115,16 +1124,16 @@
     const stats=FREE.count(draft),cardio=CARDIO.parse(draft?.cardio);
     return stats.performed+' exercício(s) com séries executadas. '+
       (cardio.ok?(cardio.totalMinutes?'Cardio: '+fmt(cardio.totalMinutes)+' min. ':''):'Revise o cardio. ')+
-      'Você pode salvar somente cardio ou combinar com musculação. Séries em branco não contam.';
+      (FREE.isFree(draft)?'Você pode salvar somente cardio ou combinar com musculação. ':'Mantenha pelo menos uma série efetiva para um bloco da ficha. ')+'Séries em branco não contam.';
   }
   function renderFreeWorkout(){
-    const d=ui.draft,stats=FREE.count(d);
+    const d=ui.draft,stats=FREE.count(d),editing=FREE.isHistoryEdit(d);
     const muay=state.muay.sessions.find(s=>s.id===d.afterMuayId&&s.day===d.day);
     const entries=Object.values(d.entries);
     const last=entries.length?entries.at(-1).id:null;
     const setsBody=entries.map((en,i)=>{
-      const ex=exerciseFor(en.id);
-      if(!ex)return '';
+      const ex=editExerciseFor(en.id);
+      if(!ex)return '<p class="callout warn">Exercício ausente do catálogo. O registro original continua protegido.</p>';
       const completed=SETS.workSets(en).length;
       return '<section class="card free-exercise-card" data-free-exercise="'+esc(ex.id)+'">'+
         '<div class="row-between free-exercise-head"><div><span class="section-eyebrow">EXERCÍCIO '+(i+1)+'</span>'+
@@ -1148,7 +1157,8 @@
           '" data-field="reps" type="number" min="'+(SETS.isTimed(ex)?'5':'1')+'" max="'+(SETS.isTimed(ex)?'300':'100')+
           '" step="1" inputmode="numeric" placeholder="'+(SETS.isTimed(ex)?'Seg':'Reps')+'" value="'+esc(set.reps)+'">'+
           '<input aria-label="Série '+(index+1)+', RIR de '+esc(ex.name)+'" data-ex="'+esc(ex.id)+'" data-index="'+index+
-          '" data-field="rir" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" value="'+esc(set.rir)+'"></div>').join('')+'</div>'+
+          '" data-field="rir" type="number" min="0" max="10" step="1" inputmode="numeric" placeholder="—" value="'+esc(set.rir)+'">'+
+          (editing?'<button type="button" class="button-inline free-set-warmup" data-action="toggle-warmup" data-ex="'+esc(ex.id)+'" data-index="'+index+'" aria-pressed="'+!!set.warmup+'">'+(set.warmup?'Aquecimento':'Série efetiva')+' · alterar tipo</button>':'')+'</div>').join('')+'</div>'+
         (ex.knee?'<div class="field mt-12"><label for="free-knee-'+esc(ex.id)+'">Dor no joelho durante este exercício (0–5+)</label>'+
           '<select id="free-knee-'+esc(ex.id)+'" data-ex-pain="'+esc(ex.id)+'">'+
           painOptions(en.pain)+'</select></div>':'')+
@@ -1157,21 +1167,22 @@
         '<button type="button" class="button-inline" data-action="remove-set" data-ex="'+esc(ex.id)+'" '+
           (en.sets.length<=1?'disabled':'')+'>− Última série</button></div></section>';
     }).join('');
-    return '<div class="free-workout" aria-label="Registro de treino livre">'+
-      headline('Registro rápido','Treino livre','Inclua os exercícios e o cardio que fez. Nenhum bloco A/B/C/D será concluído.')+
+    return '<div class="free-workout'+(editing?' history-edit-workout':'')+'" aria-label="'+(editing?'Editar treino registrado':'Registro de treino livre')+'">'+
+      (editing?headline('Histórico','Editar treino','Corrija somente este registro. A ficha de exercícios não será alterada.'):
+        headline('Registro rápido','Treino livre','Inclua os exercícios e o cardio que fez. Nenhum bloco A/B/C/D será concluído.'))+
       '<div class="callout workout-status-callout '+(ui.draftSaveOk?'good':'warn')+'"><strong>'+
-      (ui.recovered?'Treino livre recuperado.':'Rascunho salvo neste aparelho.')+'</strong>'+
+      (editing?(ui.recovered?'Edição recuperada.':'Registro original protegido até salvar.'):(ui.recovered?'Treino livre recuperado.':'Rascunho salvo neste aparelho.'))+'</strong>'+
       '<span class="draft-status" id="draft-status" role="status">'+esc(draftStatusText())+'</span></div>'+
-      '<section class="card free-workout-meta"><div class="row-between"><div><strong>Registro avulso</strong>'+
-      '<p class="small muted">Pode ser depois do Muay ou em outro momento do dia.</p></div>'+
-      '<span class="pill green">Só hoje</span></div>'+
+      '<section class="card free-workout-meta"><div class="row-between"><div><strong>'+(editing?esc(planFor(d.planId).title):'Registro avulso')+'</strong>'+
+      '<p class="small muted">'+(editing?'O mesmo treino será atualizado, sem duplicação.':'Pode ser depois do Muay ou em outro momento do dia.')+'</p></div>'+
+      '<span class="pill green">'+(editing?'Edição':'Só hoje')+'</span></div>'+
       '<div class="field mt-12"><label for="free-day">Data do treino</label>'+
       '<input id="free-day" type="date" data-free-day value="'+esc(d.day)+'" max="'+today()+'"></div>'+
       (muay?'<p class="free-workout-linked">Após Muay Thai em '+dateBR(muay.day)+'. Os treinos ficam separados no histórico.</p>':'')+
       '</section>'+
       renderCardio()+
-      '<section class="card free-catalog"><h2 class="section-title">Adicionar exercícios</h2>'+
-      '<p class="small muted">Selecione pelo nome. Abdominais aparecem primeiro para facilitar registros curtos.</p>'+
+      (editing?'<details class="card free-catalog history-edit-catalog"><summary>Adicionar exercícios ao registro</summary>':'<section class="card free-catalog"><h2 class="section-title">Adicionar exercícios</h2>')+
+      '<p class="small muted">'+(editing?'Adicione exercícios que realmente foram feitos neste treino.':'Selecione pelo nome. Abdominais aparecem primeiro para facilitar registros curtos.')+'</p>'+
       '<div class="field"><label for="free-search">Buscar no catálogo</label>'+
       '<input id="free-search" data-free-search type="search" autocomplete="off" placeholder="Ex.: abdominal, crunch, prancha" value="'+esc(ui.freeSearch)+'"></div>'+
       '<div id="free-exercise-results" class="free-exercise-results" aria-label="Exercícios disponíveis">'+renderFreeOptions()+'</div>'+
@@ -1184,12 +1195,12 @@
       '<select id="free-custom-mode"><option value="bodyweight">Peso do corpo (0 kg extra)</option>'+
       '<option value="weight">Com carga (kg)</option></select></div>'+
       '<button type="button" class="secondary full mt-12" data-action="free-custom-add">+ Adicionar exercício avulso</button>'+
-      '<p class="tiny muted">Exercícios personalizados não recebem classificação muscular automática. A opção fica salva no catálogo pessoal, sem ativar fichas.</p></details></section>'+
+      '<p class="tiny muted">Exercícios personalizados não recebem classificação muscular automática. '+(editing?'O exercício novo só será salvo no catálogo pessoal ao confirmar a edição.':'A opção fica salva no catálogo pessoal, sem ativar fichas.')+'</p></details>'+(editing?'</details>':'</section>')+
       '<section aria-label="Exercícios deste treino"><div class="row-between free-exercises-title"><h2 class="section-title">O que você fez</h2>'+
       '<span id="free-count" class="pill">'+stats.performed+' exercícios · '+stats.sets+' séries</span></div>'+
       (entries.length?setsBody:'<div class="card free-empty">Nenhum exercício adicionado. Escolha um abdominal ou pesquise qualquer exercício.</div>')+
       '</section>'+
-      '<section class="card free-completion"><h2 class="section-title">Concluir registro</h2>'+
+      '<section class="card free-completion"><h2 class="section-title">'+(editing?'Salvar correção':'Concluir registro')+'</h2>'+
       '<p id="free-completion-status" class="small muted">'+esc(freeCompletionText(d))+'</p>'+
       '<div class="field mt-12"><label for="free-session-notes">Observações (opcional)</label>'+
       '<textarea id="free-session-notes" maxlength="1000" data-draft-meta="notes" placeholder="Ex.: abdominal depois da aula de Muay">'+esc(d.notes)+'</textarea></div>'+
@@ -1199,8 +1210,10 @@
       [['','Não informar'],['leve','Leve'],['normal','Moderada'],['intenso','Intensa']].map(([v,label])=>
         '<option value="'+v+'"'+(d.energy===v?' selected':'')+'>'+label+'</option>').join('')+
       '</select></div></details>'+
-      '<div class="free-completion-actions"><button type="button" class="primary full" data-action="finish">Salvar treino livre</button>'+
-      '<button type="button" class="button-inline" data-action="cancel">Descartar rascunho</button></div></section></div>';
+      (editing&&(d.kneeNextDay!==''||entries.some(en=>editExerciseFor(en.id)?.knee))?
+        '<div class="field mt-12"><label for="edit-knee-next-day">Joelho no dia seguinte (se avaliado)</label><select id="edit-knee-next-day" data-draft-meta="kneeNextDay">'+painOptions(d.kneeNextDay)+'</select></div>':'')+
+      '<div class="free-completion-actions"><button type="button" class="primary full" data-action="finish">'+(editing?'Salvar alterações':'Salvar treino livre')+'</button>'+
+      '<button type="button" class="button-inline" data-action="cancel">'+(editing?'Cancelar edição':'Descartar rascunho')+'</button></div></section></div>';
   }
 
   function seedSets(ex) {
@@ -1212,8 +1225,48 @@
     if(ex.example) return copy(ex.example);
     return Array.from({length:ex.sets},()=>({load:SETS.allowsZero(ex)?0:'',reps:'',rir:'',warmup:false}));
   }
+  function showHistoryRecord(id){
+    ui.tab='history';ui.editor=null;ui.historyFilter='all';muayMode=false;
+    const index=latestSessions().findIndex(row=>row.id===id);
+    if(index>=0&&index<50)ui.historyStrengthLimit=Math.max(ui.historyStrengthLimit,index+1);
+    render();
+    const card=[...document.querySelectorAll('.history-card')].find(el=>el.dataset.historyId===id);
+    if(card){card.open=true;card.scrollIntoView({block:'start'});}else window.scrollTo(0,0);
+  }
+  function startHistoryEdit(id){
+    if(state.sessions.filter(row=>row.id===id).length!==1)return notify('Não foi possível identificar um registro único. O histórico permanece intacto.');
+    const original=state.sessions.find(row=>row.id===id);
+    if(!original)return notify('Registro original não encontrado.');
+    if(ui.draft){
+      if(ui.draft.editingId===id){
+        ui.tab='plans';ui.editor=null;muayMode=false;render();window.scrollTo(0,0);return;
+      }
+      return notify('Há um treino ou edição em andamento. Conclua ou cancele esse rascunho antes de editar outro registro.');
+    }
+    const created=FREE.fromSession(original);
+    if(created.error)return notify(created.error);
+    if(original.entries.some(en=>!exerciseFor(en.id)))return notify('Há exercícios antigos ausentes do catálogo. O registro foi preservado.');
+    ui.draft=created.draft;ui.tab='plans';ui.editor=null;muayMode=false;
+    ui.freeSearch='';ui.freeAll=true;ui.focusedMode=false;ui.focusedExercise=null;ui.cardioOpen=true;
+    if(!persistDraft()){
+      ui.draft=null;return notify('Não foi possível iniciar uma edição segura. O treino original permanece intacto.');
+    }
+    render();window.scrollTo(0,0);
+  }
+  function deleteHistoryRecord(id){
+    if(state.sessions.filter(row=>row.id===id).length!==1)return notify('Não foi possível identificar um registro único. O histórico permanece intacto.');
+    const original=state.sessions.find(row=>row.id===id);
+    if(!original)return notify('Registro não encontrado.');
+    if(ui.draft?.editingId===id)return notify('Cancele a edição deste treino antes de excluí-lo.');
+    if(!confirm('Excluir permanentemente '+planFor(original.planId).title+' de '+dateBR(original.day)+'? As estatísticas serão recalculadas.'))return;
+    const previous=state.sessions;
+    state.sessions=previous.filter(row=>row.id!==id);
+    if(!save()){state.sessions=previous;return notify('Não foi possível excluir. O registro original permanece intacto.');}
+    render();notify('Treino excluído. Histórico e evolução atualizados.');
+  }
   function startFreeWorkout(origin=''){
     if(ui.draft){
+      if(FREE.isHistoryEdit(ui.draft))return notify('Conclua ou cancele a edição em andamento antes de começar outro treino.');
       if(FREE.isFree(ui.draft)){
         muayMode=false;ui.tab='plans';ui.editor=null;render();window.scrollTo(0,0);return;
       }
@@ -1229,11 +1282,17 @@
     render();window.scrollTo(0,0);
   }
   function addFreeExercise(exercise,isNew=false){
-    if(!FREE.isFree(ui.draft))return;
+    if(!FREE.isEditor(ui.draft))return;
+    const editing=FREE.isHistoryEdit(ui.draft);
     const result=FREE.add(ui.draft,exercise);
     if(result.error)return notify(result.error);
-    if(isNew&&state.exercises.length>=200)return notify('O catálogo pessoal atingiu o limite de exercícios.');
-    if(isNew){
+    if(isNew&&state.exercises.length+(editing?ui.draft.editExercises.length:0)>=200)return notify('O catálogo pessoal atingiu o limite de exercícios.');
+    if(isNew&&editing){
+      const staged={...exercise,active:false};
+      if(!validExercise(staged)||result.draft.editExercises.length>=30)return notify('Exercício inválido ou limite de edição atingido.');
+      result.draft.editExercises.push(staged);
+    }
+    if(isNew&&!editing){
       state.exercises.push({...exercise,active:false});
       if(!save()){state.exercises.pop();return notify('Não foi possível salvar o novo exercício.');}
     }
@@ -1241,11 +1300,11 @@
     ui.draft=result.draft;
     if(!persistDraft()){
       ui.draft=original;
-      if(isNew){state.exercises.pop();save();}
+      if(isNew&&!editing){state.exercises.pop();save();}
       return notify('Não foi possível salvar o novo rascunho; o treino anterior foi preservado.');
     }
-    ui.freeSearch='';ui.freeAll=false;
-    render();document.querySelector('[data-free-exercise="'+exercise.id+'"]')?.scrollIntoView({block:'nearest'});
+    ui.freeSearch='';ui.freeAll=editing;
+    render();[...document.querySelectorAll('[data-free-exercise]')].find(el=>el.dataset.freeExercise===exercise.id)?.scrollIntoView({block:'nearest'});
   }
   function startWorkout(id) {
     if (!DATA.rotation.includes(id)) return;
@@ -1452,7 +1511,7 @@
       el.textContent=treadmillSpeedText(row);
     });
     const freeStatus=document.getElementById('free-completion-status');
-    if(freeStatus&&FREE.isFree(ui.draft))freeStatus.textContent=freeCompletionText(ui.draft);
+    if(freeStatus&&FREE.isEditor(ui.draft))freeStatus.textContent=freeCompletionText(ui.draft);
     const shortcut=document.querySelector('[data-action="focus-cardio"]');
     if(shortcut)shortcut.textContent=parsed.ok&&parsed.totalMinutes?
       'Ver cardio · '+fmt(parsed.totalMinutes)+' min':'+ Adicionar cardio (opcional)';
@@ -2092,7 +2151,11 @@
             <span class="history-chevron" aria-hidden="true">⌄</span>
           </summary>
           <div class="history-content">
-            <button type="button" class="button-inline history-share-action" data-action="share-open" data-id="${esc(session.id)}">Compartilhar conquista desta sessão</button>
+            <div class="history-record-actions" role="group" aria-label="Ações deste treino">
+              <button type="button" class="secondary small-button" data-action="history-edit" data-id="${esc(session.id)}">Editar registro</button>
+              <button type="button" class="secondary small-button history-share-action" data-action="share-open" data-id="${esc(session.id)}" aria-label="Compartilhar conquista desta sessão">Compartilhar</button>
+              <button type="button" class="ghost small-button history-delete-action" data-action="history-delete" data-id="${esc(session.id)}">Excluir</button>
+            </div>
             <ul class="mini-list">${session.entries.map(en=>{
               const ex=exerciseFor(en.id),top=E.topSet(en);
               return `<li><div class="history-exercise"><strong>${esc(ex?.name||en.id)}</strong><br>
@@ -2221,7 +2284,7 @@
         if(status)status.textContent=progress.completed+' de '+progress.total+' exercícios concluídos · '+progress.effectiveSets+(progress.effectiveSets===1?' série efetiva registrada':' séries efetivas registradas');
         const bar=document.querySelector('.focus-progress span');
         if(bar)bar.style.width=(progress.total?Math.round(progress.completed/progress.total*100):0)+'%';
-        if(FREE.isFree(ui.draft)){
+        if(FREE.isEditor(ui.draft)){
           const stats=FREE.count(ui.draft);
           const counter=document.getElementById('free-count');
           if(counter)counter.textContent=stats.performed+' exercícios · '+stats.sets+' séries';
@@ -2291,29 +2354,51 @@
   function finishWorkout() {
     const cardio=CARDIO.parse(ui.draft?.cardio);
     if(!cardio.ok)return notify(cardio.error);
-    const free=FREE.isFree(ui.draft),sessionDay=free?ui.draft.day:today();
-    if(free&&(!FREE.validDay(sessionDay)||sessionDay>today()))
+    const free=FREE.isFree(ui.draft),editing=FREE.isHistoryEdit(ui.draft),sessionDay=free||editing?ui.draft.day:today();
+    const original=editing?state.sessions.find(row=>row.id===ui.draft.editingId):null;
+    if(editing&&(!original||state.sessions.filter(row=>row.id===ui.draft.editingId).length!==1||JSON.stringify(original)!==ui.draft.editOriginal))return notify('O registro original mudou. Cancele a edição e abra-o novamente.');
+    if((free||editing)&&(!FREE.validDay(sessionDay)||sessionDay>today()))
       return notify('Informe uma data válida que não esteja no futuro.');
     const result=[];
     for (const raw of Object.values(ui.draft.entries)) {
-      const ex=exerciseFor(raw.id), sets=[];
+      const ex=editExerciseFor(raw.id), sets=[];
       if(!ex)return notify('Um exercício foi retirado do catálogo. Reabra o registro antes de salvar.');
+      const originalEntry=editing?original.entries.find(row=>row.id===raw.id):null;
+      if(originalEntry&&JSON.stringify(originalEntry)===JSON.stringify(raw)){result.push(copy(originalEntry));continue;}
       for (const row of raw.sets) {
         const load=E.cleanNumber(row.load),reps=E.cleanNumber(row.reps),rir=E.cleanNumber(row.rir);
         if (reps===null) continue; // cargas sugeridas sem execucao nao viram historico
         if (!SETS.performed(row,ex)||
           (rir!==null && (!Number.isInteger(rir)||rir<0||rir>10)))
           return notify(`Confira carga, ${SETS.isTimed(ex)?'segundos':'repetições'} e RIR opcional de ${ex.name}.`);
-        sets.push({load,reps,rir,warmup:!!row.warmup});
+        sets.push({...(editing?row:{}),load,reps,rir,warmup:!!row.warmup});
       }
       if (!sets.some(s=>!s.warmup)) continue;
-      if (ex.knee && (raw.pain==='' || raw.pain===null))
+      const hasPain=raw.pain!==''&&raw.pain!=null;
+      if(ex.knee&&!hasPain&&(!editing||!originalEntry))
         return notify(`Informe a dor no joelho (mesmo que zero) em ${ex.name}.`);
-      result.push({id:ex.id,sets,pain:ex.knee?Number(raw.pain):null});
+      if(ex.knee&&hasPain&&(!Number.isInteger(Number(raw.pain))||Number(raw.pain)<0||Number(raw.pain)>5))
+        return notify('Confira a avaliação de dor no joelho em '+ex.name+'.');
+      result.push({...(editing&&originalEntry?originalEntry:{}),id:ex.id,sets,pain:ex.knee?(hasPain?Number(raw.pain):null):(editing?originalEntry?.pain??null:null)});
     }
     if(!result.length && !(free&&cardio.totalMinutes>0)) return notify(free?
       'Registre pelo menos uma série efetiva ou um cardio com duração maior que zero.':
       'Registre pelo menos uma série efetiva. Na prancha, informe segundos sustentados; nos outros exercícios, repetições e carga. Com peso do corpo, use 0 kg adicionais.');
+    if(editing){
+      const revised=FREE.updateSession(original,ui.draft,result,cardio.entries,today(),state.muay.sessions);
+      if(revised.error)return notify(revised.error);
+      const additions=(ui.draft.editExercises||[]).filter(ex=>result.some(en=>en.id===ex.id)&&!exerciseFor(ex.id));
+      if(additions.some(ex=>!validExercise(ex)||ex.active!==false)||state.exercises.length+additions.length>200)
+        return notify('Confira os exercícios adicionados; o original permanece preservado.');
+      const previousSessions=state.sessions,previousExercises=state.exercises;
+      state.sessions=previousSessions.map(row=>row.id===original.id?revised.session:row);
+      state.exercises=[...previousExercises,...additions];
+      if(!save()){
+        state.sessions=previousSessions;state.exercises=previousExercises;
+        return notify('Não foi possível salvar as alterações. O treino original e o rascunho foram preservados.');
+      }
+      clearDraft();showHistoryRecord(original.id);notify('Treino atualizado. Histórico, evolução e recomendações recalculados.');return;
+    }
     const now=new Date();
     const linked=free?state.muay.sessions.find(row=>row.id===ui.draft.afterMuayId&&row.day===sessionDay):null;
     state.sessions.push({id:`session-${now.getTime()}-${Math.random().toString(36).slice(2,6)}`,planId:ui.draft.planId,
@@ -2907,22 +2992,26 @@
       document.getElementById('calendar-selected-heading')?.scrollIntoView({block:'nearest'});
       return;
     }
+    if(action==='history-edit'){startHistoryEdit(btn.dataset.id);return;}
+    if(action==='history-delete'){deleteHistoryRecord(btn.dataset.id);return;}
     if(action==='free-start'){startFreeWorkout(btn.dataset.origin||'');return;}
-    if(action==='free-expand'&&FREE.isFree(ui.draft)){ui.freeAll=!ui.freeAll;render();return;}
-    if(action==='free-add'&&FREE.isFree(ui.draft)){
-      const found=F.prepareCatalog(btn.dataset.ex,state.exercises);
+    if(action==='free-expand'&&FREE.isEditor(ui.draft)){ui.freeAll=!ui.freeAll;render();return;}
+    if(action==='free-add'&&FREE.isEditor(ui.draft)){
+      const found=F.prepareCatalog(btn.dataset.ex,[...state.exercises,...(ui.draft.editExercises||[])]);
       if(!found)return notify('Exercício não encontrado no catálogo.');
       addFreeExercise(found.exercise,found.isNew);return;
     }
-    if(action==='free-custom-add'&&FREE.isFree(ui.draft)){
+    if(action==='free-custom-add'&&FREE.isEditor(ui.draft)){
       const name=document.getElementById('free-custom-name')?.value||'';
       const bodyweight=document.getElementById('free-custom-mode')?.value==='bodyweight';
       const result=FREE.custom(name,bodyweight);
       if(result.error)return notify(result.error);
       addFreeExercise(result.exercise,true);return;
     }
-    if(action==='free-remove'&&FREE.isFree(ui.draft)){
-      const result=FREE.remove(ui.draft,btn.dataset.ex);
+    if(action==='free-remove'&&FREE.isEditor(ui.draft)){
+      const editing=FREE.isHistoryEdit(ui.draft);
+      if(editing&&!confirm('Retirar este exercício e todas as suas séries deste registro? O original só muda ao salvar.'))return;
+      const result=FREE.remove(ui.draft,btn.dataset.ex,editing);
       if(result.error)return notify(result.error);
       const old=ui.draft;ui.draft=result.draft;
       if(!persistDraft()){ui.draft=old;return notify('Não foi possível salvar a retirada do exercício.');}
@@ -3016,6 +3105,7 @@
     else if(action==='start') startWorkout(btn.dataset.plan);
     else if(action==='add-set') {const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length<12){en.sets.push({load:SETS.allowsZero(en)?0:'',reps:'',rir:'',warmup:false});persistDraft();render();}}
     else if(action==='remove-set'){const en=ui.draft?.entries[btn.dataset.ex];if(en && en.sets.length>1){
+      if(FREE.isHistoryEdit(ui.draft)&&!confirm('Retirar a última série deste registro?'))return;
       en.sets.pop();
       if(ui.draft.extraChoice?.kind==='set'&&ui.draft.extraChoice.id===btn.dataset.ex &&
         en.sets.length===Number(exerciseFor(btn.dataset.ex)?.sets))delete ui.draft.extraChoice;
@@ -3086,7 +3176,12 @@
     else if(action==='resume'){if(ui.draft){ui.tab='plans';
       if(DATA.rotation.includes(ui.draft.planId))ui.plan=ui.draft.planId;
       muayMode=false;render();window.scrollTo(0,0);}}
-    else if(action==='cancel'){if(confirm('Descartar o treino em andamento e apagar seu rascunho salvo neste aparelho?')){clearDraft();render();}}
+    else if(action==='cancel'){
+      const id=ui.draft?.editingId;
+      if(confirm(id?'Cancelar as alterações? O treino registrado permanecerá intacto.':'Descartar o treino em andamento e apagar seu rascunho salvo neste aparelho?')){
+        clearDraft();if(id)showHistoryRecord(id);else render();
+      }
+    }
     else if(action==='edit-ex'){ui.tab='plans';ui.editor={id:btn.dataset.ex};render();window.scrollTo(0,0);}
     else if(action==='add-ex'){ui.editor={id:null,group:btn.dataset.plan};render();window.scrollTo(0,0);}
     else if(action==='exit-editor'){ui.editor=null;render();}
@@ -3175,7 +3270,7 @@
     if(!save())notify('Rascunho não salvo. Exporte seus dados.');
   }
   screen.addEventListener('input',event=>{
-    if(event.target.dataset.freeSearch!==undefined&&FREE.isFree(ui.draft)){
+    if(event.target.dataset.freeSearch!==undefined&&FREE.isEditor(ui.draft)){
       ui.freeSearch=event.target.value.slice(0,120);
       const list=document.getElementById('free-exercise-results');
       if(list)list.innerHTML=renderFreeOptions();
@@ -3210,7 +3305,7 @@
   });
   window.addEventListener('pagehide', () => { if(ui.draft) persistDraft(); });
   screen.addEventListener('change',event=>{
-    if(event.target.dataset.freeDay!==undefined&&FREE.isFree(ui.draft)){
+    if(event.target.dataset.freeDay!==undefined&&FREE.isEditor(ui.draft)){
       const value=event.target.value;
       if(!FREE.validDay(value)||value>today()){
         notify('Informe uma data válida sem ultrapassar hoje.');
@@ -3218,7 +3313,7 @@
       }
       const previous=ui.draft.day,oldLinked=ui.draft.afterMuayId;
       ui.draft.day=value;
-      if(oldLinked)ui.draft.afterMuayId=FREE.linkedMuay(state.muay.sessions,value)?.id||null;
+      if(oldLinked&&!FREE.isHistoryEdit(ui.draft))ui.draft.afterMuayId=FREE.linkedMuay(state.muay.sessions,value)?.id||null;
       if(!persistDraft()){ui.draft.day=previous;ui.draft.afterMuayId=oldLinked;return;}
       render();return;
     }
@@ -3319,7 +3414,7 @@
         window.location.reload();
       }
     });
-    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261127-treadmill1',{updateViaCache:'none'})
+    window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js?v=20261127-history-edit1',{updateViaCache:'none'})
       .catch(err=>console.warn('Offline indisponível',err)));
   }
 })();

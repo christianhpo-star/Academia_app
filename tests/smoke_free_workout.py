@@ -168,6 +168,94 @@ with sync_playwright() as p:
     page=open_app(context,storage)
     page.on('pageerror',lambda err:errors.append(str(err)))
     assert page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"]).sessions')==updated['sessions']
+    # Edit the saved mixed workout. Cancel must leave both history and catalog intact.
+    page.locator('#nav [data-tab="history"]').click()
+    mixed_selector='.history-card[data-history-id="'+saved['id']+'"]'
+    mixed=page.locator(mixed_selector)
+    if not mixed.evaluate('(e)=>e.open'):
+        mixed.locator('summary').first.click()
+    mixed.locator('[data-action="history-edit"]').click()
+    assert page.get_by_role('heading',name='Editar treino').count()==1
+    assert page.locator('#cardio-distance-0').input_value()=='1.25'
+    page.locator('#cardio-distance-0').fill('1.7')
+    page.locator('.history-edit-catalog > summary').click()
+    page.locator('.free-custom > summary').click()
+    page.locator('#free-custom-name').fill('Exercício de teste cancelado')
+    page.locator('#free-custom-mode').select_option('bodyweight')
+    page.locator('[data-action="free-custom-add"]').click()
+    assert page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')==updated
+    page.once('dialog', lambda dialog: dialog.accept())
+    page.get_by_role('button',name='Cancelar edição').click()
+    assert page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')==updated
+
+    # Edit and resume a persisted draft; failed storage must roll back the original.
+    mixed.locator('[data-action="history-edit"]').click()
+    page.locator('[data-free-exercise="abdominal-solo"] [data-field="reps"]').first.fill('22')
+    page.locator('#cardio-distance-0').fill('1.5')
+    page.locator('.history-edit-catalog > summary').click()
+    page.locator('.free-custom > summary').click()
+    page.locator('#free-custom-name').fill('Exercício de teste confirmado')
+    page.locator('#free-custom-mode').select_option('bodyweight')
+    page.locator('[data-action="free-custom-add"]').click()
+    staged=page.locator('.free-exercise-card').last
+    staged.locator('[data-field="reps"]').first.fill('12')
+    assert page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')==updated
+    storage=page.evaluate('structuredClone(window.__testStorage)')
+    page.close()
+    page=open_app(context,storage)
+    page.on('pageerror',lambda err:errors.append(str(err)))
+    mixed=page.locator(mixed_selector)
+    assert page.get_by_role('heading',name='Editar treino').count()==1
+    assert page.locator('#cardio-distance-0').input_value()=='1.5'
+    assert page.locator('.free-exercise-card').count()==4
+    page.set_viewport_size({'width':320,'height':740})
+    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
+    page.evaluate("""() => {
+      window.__oldSetItem=localStorage.setItem;
+      localStorage.setItem=function(k,v){if(k==='forja.academia.v1')throw Error('synthetic quota');return window.__oldSetItem(k,v)};
+    }""")
+    page.get_by_role('button',name='Salvar alterações').click()
+    assert page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')==updated
+    assert page.get_by_role('heading',name='Editar treino').count()==1
+    page.evaluate('localStorage.setItem=window.__oldSetItem')
+    page.get_by_role('button',name='Salvar alterações').click()
+    revised=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
+    assert len(revised['sessions'])==2
+    changed=revised['sessions'][0]
+    assert changed['id']==saved['id'] and changed['timestamp']==saved['timestamp']
+    assert changed['afterMuayId']==saved['afterMuayId']
+    assert changed['entries'][0]['sets'][0]['reps']==22
+    assert changed['cardio'][0]['distanceKm']==1.5
+    assert len(changed['entries'])==4
+    assert revised['sessions'][1]==standalone and revised['muay']==updated['muay']
+    assert revised['exercises'][:-1]==updated['exercises']
+    assert revised['exercises'][-1]['active']==False
+    assert '9 km/h' in mixed.locator('.cardio-history').inner_text()
+    assert page.evaluate("""s=>AcademiaEngine.pendingWorkouts(s.sessions).completed""",revised)==[]
+
+    # A pure cardio session can be corrected and deleted with confirmation.
+    only=page.locator('.history-card[data-history-id="'+standalone['id']+'"]')
+    if not only.evaluate('(e)=>e.open'):
+        only.locator('summary').first.click()
+    only.locator('[data-action="history-edit"]').click()
+    page.locator('#cardio-type-0').select_option('esteira')
+    page.locator('#cardio-minutes-0').fill('20')
+    page.locator('#cardio-distance-0').fill('2')
+    page.get_by_role('button',name='Salvar alterações').click()
+    revised2=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
+    assert revised2['sessions'][1]['id']==standalone['id']
+    assert revised2['sessions'][1]['entries']==[]
+    assert revised2['sessions'][1]['cardio']==[{'type':'esteira','minutes':20,'distanceKm':2}]
+    assert revised2['sessions'][0]==changed
+    page.once('dialog', lambda dialog: dialog.dismiss())
+    only.locator('[data-action="history-delete"]').click()
+    assert page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')==revised2
+    page.once('dialog', lambda dialog: dialog.accept())
+    only.locator('[data-action="history-delete"]').click()
+    remaining=page.evaluate('JSON.parse(window.__testStorage["forja.academia.v1"])')
+    assert remaining['sessions']==[changed]
+    assert remaining['muay']==updated['muay']
+    assert remaining['exercises']==revised['exercises']
     assert not errors, errors
-    print('PASS free workout after Muay: catalog and custom abs, real sets, reload, rotation, map, 320px')
+    print('PASS free workout, history editing, rollback, reload, cardio-only and deletion')
     browser.close()
