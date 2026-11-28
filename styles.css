@@ -1712,3 +1712,13 @@ html:has(.training-controls){scroll-padding-bottom:220px}
 .evo-treadmill-history li{display:flex;justify-content:space-between;gap:8px;border-bottom:1px solid var(--line);padding:6px 0;font-size:12px;flex-wrap:wrap}
 .evo-treadmill-history li span{color:var(--muted)}
 @media(max-width:359px){.cardio-treadmill-metrics{grid-template-columns:minmax(0,1fr)}.cardio-treadmill-metrics p{grid-column:1}}
+
+/* Historical session corrections: one compact action row, with clear destructive action. */
+.history-record-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin:0 0 13px;align-items:stretch}
+.history-record-actions button{min-width:0;min-height:44px;padding:7px 4px;white-space:normal;font-size:12px;overflow-wrap:anywhere;margin:0}
+.history-record-actions .history-delete-action{color:#ef9b9b;border-color:#75464c}
+.history-edit-catalog>summary{font-size:14px;font-weight:750;cursor:pointer;min-height:44px;display:flex;align-items:center;gap:6px}
+.history-edit-catalog>summary:after{content:'+';margin-left:auto;color:var(--lime);font-size:20px}
+.history-edit-catalog[open]>summary:after{content:'−'}
+.history-edit-workout .free-set-warmup{grid-column:2/-1;justify-self:start;font-size:11px;min-height:36px;color:var(--muted)}
+.history-edit-workout .free-set-warmup[aria-pressed=true]{color:#f6c58b}
